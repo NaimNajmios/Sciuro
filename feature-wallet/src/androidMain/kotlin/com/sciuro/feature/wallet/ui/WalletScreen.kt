@@ -46,6 +46,8 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
     
     var selectedAssetType by rememberSaveable { mutableStateOf("Liquid Cash") }
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
+    var showAddTxDialog by rememberSaveable { mutableStateOf(false) }
+    var showFabMenu by remember { mutableStateOf(false) }
     var editingAccountId by rememberSaveable { mutableStateOf<String?>(null) }
     
     // Dialog Form State
@@ -72,9 +74,12 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
         }
     }
     
-    // In a real app, calculate actual totals for invested as well
-    val totalLiquidity = accounts.sumOf { it.balance }
-    val displayTotal = if (selectedAssetType == "Liquid Cash") totalLiquidity else 0.0 // Mock investment
+    val liquidAccounts = accounts.filter { !it.type.equals("Investment", ignoreCase = true) }
+    val investmentAccounts = accounts.filter { it.type.equals("Investment", ignoreCase = true) }
+    
+    val totalLiquidity = liquidAccounts.sumOf { it.balance }
+    val totalInvestments = investmentAccounts.sumOf { it.balance }
+    val displayTotal = if (selectedAssetType == "Liquid Cash") totalLiquidity else totalInvestments
     
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
@@ -95,75 +100,69 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                     modifier = Modifier.padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (selectedAssetType == "Liquid Cash") {
-                        if (accounts.isEmpty()) {
-                            com.najmi.sciuro.core.ui.components.EmptyStateView(
-                                message = "No cash tracked yet. Withdraw from an ATM and it'll show up here automatically."
-                            )
-                        } else {
-                            accounts.forEach { account ->
-                                Card(
-                                    modifier = Modifier.fillMaxWidth().clickable {
-                                        editingAccountId = account.id
-                                        newAccountName = account.name
-                                        newAccountType = if (account.isEWallet) "E-Wallet" else "Bank Account"
-                                        newAccountPackage = account.associatedPackage ?: ""
-                                        newAccountBalance = account.balance.toString()
-                                        showAddDialog = true
-                                    },
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                                    )
+                    val accountsToShow = if (selectedAssetType == "Liquid Cash") liquidAccounts else investmentAccounts
+                    if (accountsToShow.isEmpty()) {
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(
+                            message = if (selectedAssetType == "Liquid Cash") "No cash tracked yet. Withdraw from an ATM and it'll show up here automatically." else "No investments tracked yet."
+                        )
+                    } else {
+                        accountsToShow.forEach { account ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    editingAccountId = account.id
+                                    newAccountName = account.name
+                                    newAccountType = account.type
+                                    newAccountPackage = account.associatedPackage ?: ""
+                                    newAccountBalance = account.balance.toString()
+                                    showAddDialog = true
+                                },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            // Dynamic App Icon or Fallback
-                                            val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
-                                            if (associatedApp != null) {
-                                                Image(
-                                                    bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(40.dp).clip(CircleShape)
-                                                )
-                                            } else {
-                                                Icon(
-                                                    imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(40.dp),
-                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                            
-                                            Column {
-                                                Text(account.name, style = MaterialTheme.typography.titleMedium)
-                                                Text(
-                                                    if (account.isEWallet) "E-Wallet" else "Bank Account", 
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
+                                        // Dynamic App Icon or Fallback
+                                        val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
+                                        if (associatedApp != null) {
+                                            Image(
+                                                bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(40.dp).clip(CircleShape)
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = if (account.type == "Investment") Icons.Filled.AccountBalance else if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(40.dp),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
                                         }
-                                        Text(
-                                            "RM ${"%.2f".format(account.balance)}", 
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                                        )
+                                        
+                                        Column {
+                                            Text(account.name, style = MaterialTheme.typography.titleMedium)
+                                            Text(
+                                                account.type, 
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
                                     }
+                                    Text(
+                                        "RM ${"%.2f".format(account.balance)}", 
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
+                                    )
                                 }
                             }
                         }
-                    } else {
-                        // Investments empty state
-                        com.najmi.sciuro.core.ui.components.EmptyStateView(
-                            message = "No investments tracked yet."
-                        )
                     }
                 }
             }
@@ -171,21 +170,55 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
     }
     
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
-        FloatingActionButton(
-            onClick = { 
-                editingAccountId = null
-                newAccountName = ""
-                newAccountType = "Bank Account"
-                newAccountPackage = ""
-                newAccountBalance = ""
-                showAddDialog = true 
-            },
-            modifier = Modifier.padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = "Add Account")
+        Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(16.dp)) {
+            if (showFabMenu) {
+                SmallFloatingActionButton(
+                    onClick = { 
+                        showFabMenu = false
+                        showAddTxDialog = true 
+                    },
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add Transaction")
+                }
+                SmallFloatingActionButton(
+                    onClick = { 
+                        showFabMenu = false
+                        editingAccountId = null
+                        newAccountName = ""
+                        newAccountType = if (selectedAssetType == "Investments") "Investment" else "Bank Account"
+                        newAccountPackage = ""
+                        newAccountBalance = ""
+                        showAddDialog = true 
+                    },
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Icon(Icons.Filled.AccountBalance, contentDescription = "Add Account")
+                }
+            }
+            FloatingActionButton(
+                onClick = { showFabMenu = !showFabMenu },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(
+                    Icons.Filled.Add, 
+                    contentDescription = "Menu"
+                )
+            }
         }
+    }
+
+    if (showAddTxDialog) {
+        AddTransactionDialog(
+            accounts = accounts,
+            onDismiss = { showAddTxDialog = false },
+            onSave = { accountId, amt, dir, merch ->
+                viewModel.addTransaction(accountId, amt, dir, merch, null)
+            }
+        )
     }
 
     if (showAddDialog) {
@@ -267,23 +300,32 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                     modifier = Modifier.fillMaxWidth()
                 )
                 
-                // Simple toggle for Bank vs E-Wallet
+                // Simple toggle for Bank vs E-Wallet vs Investment
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    FilterChip(
-                        selected = newAccountType == "Bank Account",
-                        onClick = { newAccountType = "Bank Account" },
-                        label = { Text("Bank") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilterChip(
-                        selected = newAccountType == "E-Wallet",
-                        onClick = { newAccountType = "E-Wallet" },
-                        label = { Text("E-Wallet") },
-                        modifier = Modifier.weight(1f)
-                    )
+                    if (selectedAssetType == "Investments") {
+                        FilterChip(
+                            selected = newAccountType == "Investment",
+                            onClick = { newAccountType = "Investment" },
+                            label = { Text("Investment") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        FilterChip(
+                            selected = newAccountType == "Bank Account",
+                            onClick = { newAccountType = "Bank Account" },
+                            label = { Text("Bank") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = newAccountType == "E-Wallet",
+                            onClick = { newAccountType = "E-Wallet" },
+                            label = { Text("E-Wallet") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))

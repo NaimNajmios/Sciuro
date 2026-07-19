@@ -26,7 +26,7 @@ SELECT * FROM account WHERE id = ?;
 
 updateAccount:
 UPDATE account
-SET name = ?, type = ?, balance = ?, associated_package = ?, updated_at = ?
+SET name = ?, type = ?, associated_package = ?, updated_at = ?
 WHERE id = ?;
 
 deleteAccount:

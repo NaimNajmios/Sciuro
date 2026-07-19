@@ -71,7 +71,6 @@ class AccountRepository(
             database.accountQueries.updateAccount(
                 name = account.name,
                 type = account.type,
-                balance = account.balance,
                 associated_package = account.associatedPackage,
                 updated_at = currentTimeMillis(),
                 id = account.id
