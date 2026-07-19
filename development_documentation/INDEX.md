@@ -19,7 +19,7 @@
 | B7 - Budgeting logic | Completed | `core-budget` scaffolded, `BudgetEngine` implemented for rolling 30-day tracking |
 | C1 - Kanban board | Completed | `feature-kanban` UI scaffolded with Jetpack Compose and ViewModels |
 | C2 - Home dashboard & Wallet screen | Completed | Scaffolded `feature-dashboard` and `feature-wallet` UI with ViewModels |
-| C3 - Drilldown screens | Not Started | |
+| C3 - Drilldown screens | Completed | Scaffolded `feature-budgets` UI and assembled app Navigation |
 | D1 - Security hardening | Not Started | |
 | D2 - Full test pass & dogfood | Not Started | |
 | D3 - Personal deployment | Not Started | |

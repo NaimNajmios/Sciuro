@@ -1,0 +1,33 @@
+package com.najmi.sciuro
+
+import android.app.Application
+import com.sciuro.core.ledger.di.ledgerModule
+import com.sciuro.core.budget.di.budgetModule
+import com.sciuro.core.debt.di.debtModule
+import com.sciuro.core.investment.di.investmentModule
+import com.sciuro.feature.dashboard.di.dashboardModule
+import com.sciuro.feature.wallet.di.walletModule
+import com.sciuro.feature.kanban.di.kanbanModule
+import com.sciuro.feature.budgets.di.budgetsModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+
+class SciuroApp : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        
+        startKoin {
+            androidContext(this@SciuroApp)
+            modules(
+                ledgerModule,
+                budgetModule,
+                debtModule,
+                investmentModule,
+                dashboardModule,
+                walletModule,
+                kanbanModule,
+                budgetsModule
+            )
+        }
+    }
+}

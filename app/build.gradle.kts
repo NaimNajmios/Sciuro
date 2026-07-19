@@ -59,6 +59,23 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    
+    // Feature Modules
+    implementation(project(":feature-dashboard"))
+    implementation(project(":feature-wallet"))
+    implementation(project(":feature-kanban"))
+    implementation(project(":feature-budgets"))
+    
+    // Core Modules
+    implementation(project(":core-ledger"))
+    implementation(project(":core-audit"))
+    implementation(project(":core-budget"))
+    implementation(project(":core-debt"))
+    implementation(project(":core-investment"))
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.android)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
