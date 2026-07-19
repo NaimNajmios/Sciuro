@@ -16,7 +16,7 @@
 | B4 - Manual Review Inbox | Completed | Exposed `observeUnreviewedTransactions` Flow for UI consumption |
 | B5 - Debt Ledger module | Completed | `core-debt` scaffolded, `DebtEngine` implemented for automatic payment tracking |
 | B6 - Investment/Gold Savings module | Completed | `core-investment` scaffolded, tracks asset accumulation independently |
-| B7 - Budgeting logic | Not Started | |
+| B7 - Budgeting logic | Completed | `core-budget` scaffolded, `BudgetEngine` implemented for rolling 30-day tracking |
 | C1 - Kanban board | Not Started | |
 | C2 - Home dashboard & Wallet screen | Not Started | |
 | C3 - Drilldown screens | Not Started | |

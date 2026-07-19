@@ -1,0 +1,22 @@
+CREATE TABLE budget_record (
+    id TEXT NOT NULL PRIMARY KEY,
+    category_id TEXT NOT NULL,
+    allocated_amount REAL NOT NULL,
+    current_spent REAL NOT NULL,
+    period TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY(category_id) REFERENCES category(id)
+);
+
+insertBudget:
+INSERT INTO budget_record(id, category_id, allocated_amount, current_spent, period, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+updateBudgetSpent:
+UPDATE budget_record
+SET current_spent = ?, updated_at = ?
+WHERE id = ?;
+
+selectAllBudgets:
+SELECT * FROM budget_record;
