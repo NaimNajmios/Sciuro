@@ -1,0 +1,9 @@
+com.sciuro.core.parsing.core-parsing-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\build\generated\res\pngs\release
+com.sciuro.core.parsing.core-parsing-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\build\generated\res\resValues\release
+com.sciuro.core.parsing.core-parsing-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.sciuro.core.parsing.core-parsing-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.sciuro.core.parsing.core-parsing-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\build\intermediates\merged_res\release\mergeReleaseResources
+com.sciuro.core.parsing.core-parsing-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\src\androidMain\res
+com.sciuro.core.parsing.core-parsing-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\src\androidRelease\res
+com.sciuro.core.parsing.core-parsing-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\src\main\res
+com.sciuro.core.parsing.core-parsing-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-parsing\src\release\res

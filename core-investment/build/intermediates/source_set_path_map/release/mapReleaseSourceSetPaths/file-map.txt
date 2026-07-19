@@ -1,0 +1,9 @@
+com.sciuro.core.investment.core-investment-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\build\generated\res\pngs\release
+com.sciuro.core.investment.core-investment-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\build\generated\res\resValues\release
+com.sciuro.core.investment.core-investment-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.sciuro.core.investment.core-investment-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.sciuro.core.investment.core-investment-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\build\intermediates\merged_res\release\mergeReleaseResources
+com.sciuro.core.investment.core-investment-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\src\androidMain\res
+com.sciuro.core.investment.core-investment-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\src\androidRelease\res
+com.sciuro.core.investment.core-investment-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\src\main\res
+com.sciuro.core.investment.core-investment-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-investment\src\release\res

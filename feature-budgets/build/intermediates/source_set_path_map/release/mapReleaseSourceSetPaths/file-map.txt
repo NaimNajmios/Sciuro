@@ -1,0 +1,9 @@
+com.sciuro.feature.budgets.feature-budgets-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\generated\res\pngs\release
+com.sciuro.feature.budgets.feature-budgets-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\generated\res\resValues\release
+com.sciuro.feature.budgets.feature-budgets-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.sciuro.feature.budgets.feature-budgets-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.sciuro.feature.budgets.feature-budgets-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\merged_res\release\mergeReleaseResources
+com.sciuro.feature.budgets.feature-budgets-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\src\androidMain\res
+com.sciuro.feature.budgets.feature-budgets-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\src\androidRelease\res
+com.sciuro.feature.budgets.feature-budgets-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\src\main\res
+com.sciuro.feature.budgets.feature-budgets-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\src\release\res

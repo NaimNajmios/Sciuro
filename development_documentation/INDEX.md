@@ -1,0 +1,25 @@
+# Sciuro Development Documentation
+
+## Phase Status
+| Phase | Status | Summary |
+|---|---|---|
+| A0 - Engineering foundations | In Progress | Module structure, Koin DI, detekt/ktlint, CI scaffold, SQLDelight + migrations, `development_documentation/` scaffold, test-tier strategy |
+| A1 - Audit Log core | Not Started | |
+| A2 - Ingestion framework | Not Started | |
+| A3 - Bank & e-wallet parsers | Not Started | |
+| A4 - LLM-assisted fallback | Not Started | |
+| A5 - Financial taxonomy & data model | Not Started | |
+| A6 - Actor-critic triage & categorization | Not Started | |
+| B1 - Recurring obligation & debt auto-detection | Not Started | |
+| B2 - Transfer detection | Not Started | |
+| B3 - Balance & reconciliation engine | Not Started | |
+| B4 - Manual Review Inbox | Not Started | |
+| B5 - Debt Ledger module | Not Started | |
+| B6 - Investment/Gold Savings module | Not Started | |
+| B7 - Budgeting logic | Not Started | |
+| C1 - Kanban board | Not Started | |
+| C2 - Home dashboard & Wallet screen | Not Started | |
+| C3 - Drilldown screens | Not Started | |
+| D1 - Security hardening | Not Started | |
+| D2 - Full test pass & dogfood | Not Started | |
+| D3 - Personal deployment | Not Started | |

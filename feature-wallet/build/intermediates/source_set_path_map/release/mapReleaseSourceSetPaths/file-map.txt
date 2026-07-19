@@ -1,0 +1,9 @@
+com.sciuro.feature.wallet.feature-wallet-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\build\generated\res\pngs\release
+com.sciuro.feature.wallet.feature-wallet-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\build\generated\res\resValues\release
+com.sciuro.feature.wallet.feature-wallet-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.sciuro.feature.wallet.feature-wallet-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.sciuro.feature.wallet.feature-wallet-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\build\intermediates\merged_res\release\mergeReleaseResources
+com.sciuro.feature.wallet.feature-wallet-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\src\androidMain\res
+com.sciuro.feature.wallet.feature-wallet-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\src\androidRelease\res
+com.sciuro.feature.wallet.feature-wallet-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\src\main\res
+com.sciuro.feature.wallet.feature-wallet-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-wallet\src\release\res

@@ -1,0 +1,9 @@
+com.sciuro.core.ingestion.core-ingestion-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\build\generated\res\pngs\release
+com.sciuro.core.ingestion.core-ingestion-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\build\generated\res\resValues\release
+com.sciuro.core.ingestion.core-ingestion-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.sciuro.core.ingestion.core-ingestion-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.sciuro.core.ingestion.core-ingestion-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\build\intermediates\merged_res\release\mergeReleaseResources
+com.sciuro.core.ingestion.core-ingestion-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\src\androidMain\res
+com.sciuro.core.ingestion.core-ingestion-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\src\androidRelease\res
+com.sciuro.core.ingestion.core-ingestion-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\src\main\res
+com.sciuro.core.ingestion.core-ingestion-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-ingestion\src\release\res

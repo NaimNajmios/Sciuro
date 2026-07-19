@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml:2:13-83
+INJECTED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml:2:13-83
+	package
+		INJECTED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml
+	xmlns:android
+		ADDED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml:2:23-81
+uses-sdk
+INJECTED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml reason: use-sdk injection requested
+INJECTED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml
+INJECTED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml
+	android:targetSdkVersion
+		INJECTED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-budgets\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17533902041879779747.xml

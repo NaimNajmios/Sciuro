@@ -1,0 +1,9 @@
+com.sciuro.core.obligations.core-obligations-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\build\generated\res\pngs\release
+com.sciuro.core.obligations.core-obligations-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\build\generated\res\resValues\release
+com.sciuro.core.obligations.core-obligations-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.sciuro.core.obligations.core-obligations-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.sciuro.core.obligations.core-obligations-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\build\intermediates\merged_res\release\mergeReleaseResources
+com.sciuro.core.obligations.core-obligations-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\src\androidMain\res
+com.sciuro.core.obligations.core-obligations-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\src\androidRelease\res
+com.sciuro.core.obligations.core-obligations-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\src\main\res
+com.sciuro.core.obligations.core-obligations-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-obligations\src\release\res
