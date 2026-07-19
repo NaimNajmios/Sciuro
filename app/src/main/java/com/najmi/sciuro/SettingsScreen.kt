@@ -1,6 +1,8 @@
 package com.najmi.sciuro
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,7 +47,12 @@ fun SettingsScreen(
         
         SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxHeight()) {
             Spacer(modifier = Modifier.height(16.dp))
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 32.dp)
+            ) {
                 Text(
                     text = "Application Settings",
                     style = MaterialTheme.typography.titleMedium,
@@ -130,28 +137,100 @@ fun SettingsScreen(
                     }
                 }
                 
+                data class SimulationTemplate(val name: String, val packageName: String, val title: String, val text: String)
+                val templates = remember { listOf(
+                    SimulationTemplate("MAE Valid Payment", "com.maybank2u.life", "MAE", "RM15.50 has been deducted from your account for a payment to STARBUCKS on 28 Apr 2024."),
+                    SimulationTemplate("MAE Invalid Format (LLM Test)", "com.maybank2u.life", "MAE Transfer", "Your payment of MYR 45.00 via DuitNow to NETFLIX is complete."),
+                    SimulationTemplate("Garbage/Spam", "com.cimbmalaysia", "Promo", "Get 50% off your next loan application!")
+                ) }
+                
+                var selectedTemplateIndex by remember { mutableStateOf(0) }
+                var simPackageName by remember { mutableStateOf(templates[0].packageName) }
+                var simTitle by remember { mutableStateOf(templates[0].title) }
+                var simText by remember { mutableStateOf(templates[0].text) }
+                var expanded by remember { mutableStateOf(false) }
+
                 Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Pipeline Simulation", style = MaterialTheme.typography.titleSmall)
+                        Text("Dynamic Pipeline Simulator", style = MaterialTheme.typography.titleSmall)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Simulate a MAE bank notification to test the parser.", style = MaterialTheme.typography.bodyMedium)
+                        Text("Test the parser and routing pipeline with custom mock notifications.", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        @OptIn(ExperimentalMaterial3Api::class)
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded }
+                        ) {
+                            OutlinedTextField(
+                                value = templates[selectedTemplateIndex].name,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Scenario Template") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                templates.forEachIndexed { index, template ->
+                                    DropdownMenuItem(
+                                        text = { Text(template.name) },
+                                        onClick = {
+                                            selectedTemplateIndex = index
+                                            simPackageName = template.packageName
+                                            simTitle = template.title
+                                            simText = template.text
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        
                         Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = simPackageName,
+                            onValueChange = { simPackageName = it },
+                            label = { Text("Package Name") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = simTitle,
+                            onValueChange = { simTitle = it },
+                            label = { Text("Notification Title") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = simText,
+                            onValueChange = { simText = it },
+                            label = { Text("Notification Text") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
                         Button(
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 scope.launch {
                                     val event = RawEvent(
                                         id = UUID.randomUUID().toString(),
                                         sourceType = SourceType.NOTIFICATION,
-                                        sourcePackageOrAddress = "com.maybank2u.life",
-                                        title = "MAE",
-                                        text = "RM15.50 has been deducted from your account for a payment to STARBUCKS on 28 Apr 2024.",
+                                        sourcePackageOrAddress = simPackageName,
+                                        title = simTitle,
+                                        text = simText,
                                         timestamp = System.currentTimeMillis()
                                     )
                                     notificationSourceAdapter.emitNotification(event)
                                 }
                             }
                         ) {
-                            Text("Simulate MAE Payment")
+                            Text("Inject Notification")
                         }
                     }
                 }

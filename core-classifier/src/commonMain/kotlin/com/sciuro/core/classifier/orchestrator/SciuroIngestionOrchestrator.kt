@@ -25,8 +25,16 @@ class SciuroIngestionOrchestrator(
         
         job = scope.launch {
             notificationSource.observeEvents().collect { rawEvent ->
+                println("SCIURO_ORCHESTRATOR: Received event from ${rawEvent.sourcePackageOrAddress}")
+                
                 // 1. Parse Event
-                val draft = parserPipeline.process(rawEvent) ?: return@collect
+                val draft = parserPipeline.process(rawEvent)
+                if (draft == null) {
+                    println("SCIURO_ORCHESTRATOR: Parser pipeline returned null. Dropping event.")
+                    return@collect
+                }
+                
+                println("SCIURO_ORCHESTRATOR: Parsed successfully: $draft")
                 
                 // 2. Triage / Auto-Categorize (Naive mapping for now)
                 val categoryId = guessCategoryId(draft.merchant)
@@ -48,9 +56,17 @@ class SciuroIngestionOrchestrator(
                     isReviewed = draft.isConfident && categoryId != null && accountId != null
                 )
                 
-                // 4. Book to Ledger
-                val auditSource = if (draft.isConfident) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
-                transactionRepository.bookTransaction(transaction, source = auditSource)
+                println("SCIURO_ORCHESTRATOR: Booking transaction... categoryId=$categoryId, accountId=$accountId, isReviewed=${transaction.isReviewed}")
+                
+                try {
+                    // 4. Book to Ledger
+                    val auditSource = if (draft.isConfident) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
+                    transactionRepository.bookTransaction(transaction, source = auditSource)
+                    println("SCIURO_ORCHESTRATOR: Successfully booked transaction!")
+                } catch (e: Exception) {
+                    println("SCIURO_ORCHESTRATOR: ERROR booking transaction - ${e.message}")
+                    e.printStackTrace()
+                }
             }
         }
     }

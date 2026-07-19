@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -74,7 +76,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                             }
                         }
 
-                        Card(modifier = Modifier.fillMaxWidth()) {
+                        Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text("Active Budgets", style = MaterialTheme.typography.titleSmall)
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -82,6 +84,56 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                     "${state.activeBudgetsCount} active this month",
                                     style = MaterialTheme.typography.headlineSmall
                                 )
+                            }
+                        }
+                        
+                        Text(
+                            "Recent Transactions",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                        
+                        if (state.recentTransactions.isEmpty()) {
+                            Text("No recent transactions", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                        } else {
+                            state.recentTransactions.forEach { tx ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
+                                                contentDescription = null,
+                                                tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
+                                            )
+                                            Column {
+                                                Text(
+                                                    tx.merchant ?: "Unknown Merchant",
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                                Text(
+                                                    if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = if (tx.is_reviewed == 1L) Color.Gray else MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            "RM ${"%.2f".format(tx.amount)}",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.stateIn
 data class DashboardState(
     val netWorth: Double = 0.0,
     val unreviewedTransactionsCount: Int = 0,
-    val activeBudgetsCount: Int = 0
+    val activeBudgetsCount: Int = 0,
+    val recentTransactions: List<com.sciuro.core.ledger.db.Transaction_record> = emptyList()
 )
 
 class DashboardViewModel(
@@ -25,12 +26,14 @@ class DashboardViewModel(
     val state: StateFlow<DashboardState> = combine(
         accountRepository.observeAccounts(),
         transactionRepository.observeUnreviewedTransactions(),
-        budgetRepository.observeBudgets()
-    ) { accounts, unreviewed, budgets ->
+        budgetRepository.observeBudgets(),
+        transactionRepository.observeAllTransactions()
+    ) { accounts, unreviewed, budgets, allTransactions ->
         DashboardState(
             netWorth = accounts.sumOf { it.balance },
             unreviewedTransactionsCount = unreviewed.size,
-            activeBudgetsCount = budgets.size
+            activeBudgetsCount = budgets.size,
+            recentTransactions = allTransactions.take(10) // Show top 10 recent
         )
     }.stateIn(
         scope = viewModelScope,

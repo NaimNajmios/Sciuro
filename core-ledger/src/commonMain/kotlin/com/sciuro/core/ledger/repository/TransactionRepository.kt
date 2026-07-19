@@ -104,4 +104,10 @@ class TransactionRepository(
             .asFlow()
             .mapToList(Dispatchers.Default)
     }
+
+    fun observeAllTransactions(): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
+        return database.transactionRecordQueries.selectAllTransactions()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+    }
 }
