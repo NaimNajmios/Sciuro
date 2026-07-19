@@ -2,6 +2,8 @@ package com.najmi.sciuro
 
 import android.app.Application
 import com.sciuro.core.ledger.di.ledgerModule
+import com.sciuro.core.ledger.di.databaseModule
+import com.sciuro.core.ledger.di.platformDatabaseModule
 import com.sciuro.core.budget.di.budgetModule
 import com.sciuro.core.debt.di.debtModule
 import com.sciuro.core.investment.di.investmentModule
@@ -19,6 +21,8 @@ class SciuroApp : Application() {
         startKoin {
             androidContext(this@SciuroApp)
             modules(
+                platformDatabaseModule,
+                databaseModule,
                 ledgerModule,
                 budgetModule,
                 debtModule,
