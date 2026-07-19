@@ -1,0 +1,25 @@
+CREATE TABLE debt_record (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    debt_type TEXT NOT NULL,
+    principal_amount REAL NOT NULL,
+    remaining_balance REAL NOT NULL,
+    interest_rate REAL,
+    due_date INTEGER,
+    associated_account_id TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY(associated_account_id) REFERENCES account(id)
+);
+
+insertDebt:
+INSERT INTO debt_record(id, name, debt_type, principal_amount, remaining_balance, interest_rate, due_date, associated_account_id, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateDebtBalance:
+UPDATE debt_record
+SET remaining_balance = ?, updated_at = ?
+WHERE id = ?;
+
+selectAllDebts:
+SELECT * FROM debt_record;

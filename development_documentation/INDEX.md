@@ -14,7 +14,7 @@
 | B2 - Transfer detection | Completed | `TransferDetectionEngine` links dual INFLOW/OUTFLOW notifications |
 | B3 - Balance & reconciliation engine | Completed | `ReconciliationEngine` and `CashAdjustment` schemas to fix ledger drift |
 | B4 - Manual Review Inbox | Completed | Exposed `observeUnreviewedTransactions` Flow for UI consumption |
-| B5 - Debt Ledger module | Not Started | |
+| B5 - Debt Ledger module | Completed | `core-debt` scaffolded, `DebtEngine` implemented for automatic payment tracking |
 | B6 - Investment/Gold Savings module | Not Started | |
 | B7 - Budgeting logic | Not Started | |
 | C1 - Kanban board | Not Started | |
