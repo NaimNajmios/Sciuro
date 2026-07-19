@@ -1,9 +1,0 @@
-com.sciuro.feature.dashboard.feature-dashboard-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\build\generated\res\pngs\release
-com.sciuro.feature.dashboard.feature-dashboard-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\build\generated\res\resValues\release
-com.sciuro.feature.dashboard.feature-dashboard-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
-com.sciuro.feature.dashboard.feature-dashboard-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-com.sciuro.feature.dashboard.feature-dashboard-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\build\intermediates\merged_res\release\mergeReleaseResources
-com.sciuro.feature.dashboard.feature-dashboard-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\src\androidMain\res
-com.sciuro.feature.dashboard.feature-dashboard-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\src\androidRelease\res
-com.sciuro.feature.dashboard.feature-dashboard-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\src\main\res
-com.sciuro.feature.dashboard.feature-dashboard-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-dashboard\src\release\res

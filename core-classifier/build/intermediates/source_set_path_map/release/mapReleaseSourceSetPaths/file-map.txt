@@ -1,9 +1,0 @@
-com.sciuro.core.classifier.core-classifier-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\build\generated\res\pngs\release
-com.sciuro.core.classifier.core-classifier-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\build\generated\res\resValues\release
-com.sciuro.core.classifier.core-classifier-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
-com.sciuro.core.classifier.core-classifier-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-com.sciuro.core.classifier.core-classifier-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\build\intermediates\merged_res\release\mergeReleaseResources
-com.sciuro.core.classifier.core-classifier-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\src\androidMain\res
-com.sciuro.core.classifier.core-classifier-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\src\androidRelease\res
-com.sciuro.core.classifier.core-classifier-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\src\main\res
-com.sciuro.core.classifier.core-classifier-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-classifier\src\release\res

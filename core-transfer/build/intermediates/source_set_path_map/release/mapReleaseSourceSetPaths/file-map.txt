@@ -1,9 +1,0 @@
-com.sciuro.core.transfer.core-transfer-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\build\generated\res\pngs\release
-com.sciuro.core.transfer.core-transfer-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\build\generated\res\resValues\release
-com.sciuro.core.transfer.core-transfer-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
-com.sciuro.core.transfer.core-transfer-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-com.sciuro.core.transfer.core-transfer-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\build\intermediates\merged_res\release\mergeReleaseResources
-com.sciuro.core.transfer.core-transfer-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\src\androidMain\res
-com.sciuro.core.transfer.core-transfer-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\src\androidRelease\res
-com.sciuro.core.transfer.core-transfer-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\src\main\res
-com.sciuro.core.transfer.core-transfer-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-transfer\src\release\res

@@ -1,9 +1,0 @@
-com.sciuro.core.audit.core-audit-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\build\generated\res\pngs\release
-com.sciuro.core.audit.core-audit-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\build\generated\res\resValues\release
-com.sciuro.core.audit.core-audit-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
-com.sciuro.core.audit.core-audit-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-com.sciuro.core.audit.core-audit-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\build\intermediates\merged_res\release\mergeReleaseResources
-com.sciuro.core.audit.core-audit-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\src\androidMain\res
-com.sciuro.core.audit.core-audit-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\src\androidRelease\res
-com.sciuro.core.audit.core-audit-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\src\main\res
-com.sciuro.core.audit.core-audit-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-audit\src\release\res

@@ -1,9 +1,0 @@
-com.sciuro.feature.kanban.feature-kanban-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\build\generated\res\pngs\release
-com.sciuro.feature.kanban.feature-kanban-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\build\generated\res\resValues\release
-com.sciuro.feature.kanban.feature-kanban-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
-com.sciuro.feature.kanban.feature-kanban-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-com.sciuro.feature.kanban.feature-kanban-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\build\intermediates\merged_res\release\mergeReleaseResources
-com.sciuro.feature.kanban.feature-kanban-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\src\androidMain\res
-com.sciuro.feature.kanban.feature-kanban-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\src\androidRelease\res
-com.sciuro.feature.kanban.feature-kanban-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\src\main\res
-com.sciuro.feature.kanban.feature-kanban-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\feature-kanban\src\release\res

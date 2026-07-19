@@ -1,9 +1,0 @@
-com.sciuro.core.llm.core-llm-pngs-0 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\build\generated\res\pngs\release
-com.sciuro.core.llm.core-llm-resValues-1 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\build\generated\res\resValues\release
-com.sciuro.core.llm.core-llm-mergeReleaseResources-2 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
-com.sciuro.core.llm.core-llm-mergeReleaseResources-3 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-com.sciuro.core.llm.core-llm-release-4 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\build\intermediates\merged_res\release\mergeReleaseResources
-com.sciuro.core.llm.core-llm-androidMain-5 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\src\androidMain\res
-com.sciuro.core.llm.core-llm-androidRelease-6 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\src\androidRelease\res
-com.sciuro.core.llm.core-llm-main-7 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\src\main\res
-com.sciuro.core.llm.core-llm-release-8 C:\Users\NAIM\AndroidStudioProjects\Sciuro\core-llm\src\release\res
