@@ -96,4 +96,8 @@ class AccountRepository(
             .asFlow()
             .mapToList(Dispatchers.Default)
     }
+    
+    suspend fun getAccountByPackageName(packageName: String): com.sciuro.core.ledger.db.Account? {
+        return database.accountQueries.selectAccountByPackage(packageName).executeAsOneOrNull()
+    }
 }

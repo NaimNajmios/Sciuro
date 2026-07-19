@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.lottie.compose)
     implementation(libs.androidx.ui.text.google.fonts)
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation(libs.androidx.security.crypto)
     
     // Feature Modules
     implementation(project(":feature-dashboard"))

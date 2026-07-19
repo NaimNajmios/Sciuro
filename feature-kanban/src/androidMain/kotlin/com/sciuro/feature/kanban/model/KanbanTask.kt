@@ -8,5 +8,7 @@ data class KanbanTask(
     val id: String,
     val title: String,
     val description: String,
-    val status: TaskStatus
+    val status: TaskStatus,
+    val accountId: String? = null,
+    val categoryId: String? = null
 )

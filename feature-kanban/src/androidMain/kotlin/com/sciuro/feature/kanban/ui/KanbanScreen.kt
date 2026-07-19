@@ -9,16 +9,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.sciuro.core.ledger.model.Account
 import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import com.sciuro.feature.kanban.viewmodel.KanbanViewModel
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val tasks by viewModel.tasks.collectAsState()
+    val accounts by viewModel.accounts.collectAsState()
     var selectedStatus by remember { mutableStateOf("To Do") }
     
     val currentStatusFilter = when (selectedStatus) {
@@ -58,23 +63,89 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         )
                     } else {
                         filteredTasks.forEach { task ->
+                            var selectedAccount by remember(task.id) { 
+                                mutableStateOf(accounts.find { it.id == task.accountId }) 
+                            }
+                            var accountDropdownExpanded by remember { mutableStateOf(false) }
+
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    containerColor = if (task.accountId == null) MaterialTheme.colorScheme.errorContainer 
+                                                     else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                 )
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = task.title, 
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = task.description, 
-                                        style = MaterialTheme.typography.bodyMedium, 
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = task.title, 
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = if (task.accountId == null) MaterialTheme.colorScheme.onErrorContainer else Color.Unspecified
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = task.description, 
+                                                style = MaterialTheme.typography.bodyMedium, 
+                                                color = if (task.accountId == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        if (task.accountId == null) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Warning,
+                                                contentDescription = "Unassigned Account",
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    
+                                    // Account Selection
+                                    ExposedDropdownMenuBox(
+                                        expanded = accountDropdownExpanded,
+                                        onExpandedChange = { accountDropdownExpanded = it }
+                                    ) {
+                                        OutlinedTextField(
+                                            value = selectedAccount?.name ?: "Select Account",
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            label = { Text("Wallet Account") },
+                                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountDropdownExpanded) },
+                                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                                        )
+                                        ExposedDropdownMenu(
+                                            expanded = accountDropdownExpanded,
+                                            onDismissRequest = { accountDropdownExpanded = false }
+                                        ) {
+                                            accounts.forEach { account ->
+                                                DropdownMenuItem(
+                                                    text = { Text(account.name) },
+                                                    onClick = {
+                                                        selectedAccount = account
+                                                        accountDropdownExpanded = false
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    
+                                    Button(
+                                        onClick = { 
+                                            viewModel.updateTaskStatus(task.id, TaskStatus.DONE, selectedAccount?.id)
+                                        },
+                                        enabled = selectedAccount != null,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Approve")
+                                    }
                                 }
                             }
                         }

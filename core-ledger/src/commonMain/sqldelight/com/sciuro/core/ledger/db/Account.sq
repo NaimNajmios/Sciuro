@@ -24,6 +24,9 @@ SELECT * FROM account;
 selectAccountById:
 SELECT * FROM account WHERE id = ?;
 
+selectAccountByPackage:
+SELECT * FROM account WHERE associated_package = ? LIMIT 1;
+
 updateAccount:
 UPDATE account
 SET name = ?, type = ?, associated_package = ?, updated_at = ?

@@ -18,7 +18,7 @@ data class Category(
 
 data class Transaction(
     val id: String,
-    val accountId: String,
+    val accountId: String?,
     val categoryId: String?,
     val amount: Double,
     val direction: String,

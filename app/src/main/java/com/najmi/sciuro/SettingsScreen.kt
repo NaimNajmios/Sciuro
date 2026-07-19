@@ -16,11 +16,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.sciuro.core.parsing.config.SettingsProvider
+import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
+import com.sciuro.core.ingestion.model.RawEvent
+import com.sciuro.core.ingestion.model.SourceType
+import java.util.UUID
+import org.koin.compose.koinInject
 
 @Composable
-fun SettingsScreen() {
-    var isLlmOptIn by rememberSaveable { mutableStateOf(true) }
-    var apiKey by rememberSaveable { mutableStateOf("") }
+fun SettingsScreen(settingsProvider: SettingsProvider = koinInject()) {
+    var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
+    var apiKey by rememberSaveable { mutableStateOf(settingsProvider.getApiKey() ?: "") }
     var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
     
     val scope = rememberCoroutineScope()
@@ -51,7 +57,10 @@ fun SettingsScreen() {
                             Text("Use Groq Llama 3 for Fallback", style = MaterialTheme.typography.bodyMedium)
                             Switch(
                                 checked = isLlmOptIn, 
-                                onCheckedChange = { isLlmOptIn = it }
+                                onCheckedChange = { 
+                                    isLlmOptIn = it
+                                    settingsProvider.setLlmEnabled(it)
+                                }
                             )
                         }
                         
@@ -59,7 +68,10 @@ fun SettingsScreen() {
                             Spacer(modifier = Modifier.height(16.dp))
                             OutlinedTextField(
                                 value = apiKey,
-                                onValueChange = { apiKey = it },
+                                onValueChange = { 
+                                    apiKey = it
+                                    settingsProvider.setApiKey(it)
+                                },
                                 label = { Text("Groq API Key") },
                                 singleLine = true,
                                 visualTransformation = PasswordVisualTransformation(),
@@ -111,6 +123,32 @@ fun SettingsScreen() {
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+                
+                Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Pipeline Simulation", style = MaterialTheme.typography.titleSmall)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Simulate a MAE bank notification to test the parser.", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    val event = RawEvent(
+                                        id = UUID.randomUUID().toString(),
+                                        sourceType = SourceType.NOTIFICATION,
+                                        sourcePackageOrAddress = "com.maybank2u.life",
+                                        title = "MAE",
+                                        text = "RM15.50 has been deducted from your account for a payment to STARBUCKS on 28 Apr 2024.",
+                                        timestamp = System.currentTimeMillis()
+                                    )
+                                    notificationSourceAdapter.emitNotification(event)
+                                }
+                            }
+                        ) {
+                            Text("Simulate MAE Payment")
                         }
                     }
                 }

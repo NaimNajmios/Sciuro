@@ -52,26 +52,48 @@ class TransactionRepository(
             )
             
             // 2. Adjust account balance
-            val balanceDelta = if (transaction.direction == "INFLOW") transaction.amount else -transaction.amount
-            accountRepository.updateBalance(transaction.accountId, balanceDelta)
+            if (transaction.accountId != null) {
+                val balanceDelta = if (transaction.direction == "INFLOW") transaction.amount else -transaction.amount
+                accountRepository.updateBalance(transaction.accountId, balanceDelta)
+            }
             
             transaction
         }
     }
     
-    suspend fun reviewTransaction(transactionId: String, newCategoryId: String?) {
+    suspend fun reviewTransaction(transactionId: String, newCategoryId: String?, newAccountId: String? = null) {
+        val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+        
         withAudit(
             entityType = EntityType.TRANSACTION,
             entityId = transactionId,
             action = AuditAction.RECLASSIFY,
-            beforeState = "is_reviewed=0",
-            afterState = "is_reviewed=1, category_id=$newCategoryId",
+            beforeState = "is_reviewed=0, account=${oldTx.account_id}",
+            afterState = "is_reviewed=1, category_id=$newCategoryId, account=$newAccountId",
             source = AuditSource.USER_MANUAL
         ) {
             val now = currentTimeMillis()
-            if (newCategoryId != null) {
+            
+            // Reverse old balance if it was assigned
+            if (oldTx.account_id != null) {
+                val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
+                accountRepository.updateBalance(oldTx.account_id, oldBalanceDelta)
+            }
+            
+            val targetAccountId = newAccountId ?: oldTx.account_id
+            
+            // Apply new balance if there's a target account
+            if (targetAccountId != null) {
+                val newBalanceDelta = if (oldTx.direction == "INFLOW") oldTx.amount else -oldTx.amount
+                accountRepository.updateBalance(targetAccountId, newBalanceDelta)
+            }
+            
+            if (newCategoryId != null && targetAccountId != null) {
+                database.transactionRecordQueries.updateAccountAndCategory(targetAccountId, newCategoryId, now, transactionId)
+            } else if (newCategoryId != null) {
                 database.transactionRecordQueries.updateCategory(newCategoryId, now, transactionId)
             }
+            
             database.transactionRecordQueries.markAsReviewed(now, transactionId)
         }
     }

@@ -8,7 +8,8 @@ val classifierModule = module {
         SciuroIngestionOrchestrator(
             notificationSource = get(),
             parserPipeline = get(),
-            transactionRepository = get()
+            transactionRepository = get(),
+            accountRepository = get()
         ) 
     }
 }

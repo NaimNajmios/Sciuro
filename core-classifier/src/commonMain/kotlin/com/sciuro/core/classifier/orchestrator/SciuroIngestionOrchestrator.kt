@@ -5,6 +5,7 @@ import com.sciuro.core.audit.util.generateUuid
 import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
 import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.ledger.repository.TransactionRepository
+import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.parsing.engine.SciuroParserPipeline
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -14,7 +15,8 @@ import kotlinx.coroutines.launch
 class SciuroIngestionOrchestrator(
     private val notificationSource: NotificationSourceAdapter,
     private val parserPipeline: SciuroParserPipeline,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val accountRepository: AccountRepository
 ) {
     private var job: Job? = null
 
@@ -29,17 +31,21 @@ class SciuroIngestionOrchestrator(
                 // 2. Triage / Auto-Categorize (Naive mapping for now)
                 val categoryId = guessCategoryId(draft.merchant)
                 
-                // 3. Map to Ledger Transaction
+                // 3. Match Account
+                val matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
+                val accountId = matchedAccount?.id
+                
+                // 4. Map to Ledger Transaction
                 val transaction = Transaction(
                     id = generateUuid(),
-                    accountId = guessAccountId(draft.accountOrChannel),
+                    accountId = accountId,
                     categoryId = categoryId,
                     amount = draft.amount,
                     direction = draft.direction.name,
                     merchant = draft.merchant,
                     timestamp = draft.timestamp,
                     referenceId = draft.referenceId,
-                    isReviewed = draft.isConfident && categoryId != null // Send to Inbox if LLM parsed OR unmapped category
+                    isReviewed = draft.isConfident && categoryId != null && accountId != null
                 )
                 
                 // 4. Book to Ledger

@@ -5,6 +5,7 @@ import com.sciuro.core.parsing.engine.LlmFallbackParser
 import com.sciuro.core.parsing.engine.SciuroParserPipeline
 import com.sciuro.core.parsing.rule.bank.*
 import com.sciuro.core.parsing.rule.ewallet.*
+import com.sciuro.core.parsing.config.SettingsProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -37,7 +38,10 @@ val parsingModule = module {
     single {
         LlmFallbackParser(
             httpClient = get(),
-            apiKeyProvider = { null } // Will be provided by settings/key-store
+            apiKeyProvider = { 
+                val settings = get<SettingsProvider>()
+                if (settings.isLlmEnabled()) settings.getApiKey() else null 
+            }
         )
     }
     

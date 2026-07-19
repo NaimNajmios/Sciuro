@@ -1,6 +1,6 @@
 CREATE TABLE transaction_record (
     id TEXT NOT NULL PRIMARY KEY,
-    account_id TEXT NOT NULL,
+    account_id TEXT,
     category_id TEXT,
     amount REAL NOT NULL,
     direction TEXT NOT NULL,
@@ -28,8 +28,16 @@ UPDATE transaction_record
 SET category_id = ?, updated_at = ?
 WHERE id = ?;
 
+updateAccountAndCategory:
+UPDATE transaction_record
+SET account_id = ?, category_id = ?, updated_at = ?
+WHERE id = ?;
+
 selectUnreviewedTransactions:
 SELECT * FROM transaction_record WHERE is_reviewed = 0 ORDER BY timestamp DESC;
 
 selectAllTransactions:
 SELECT * FROM transaction_record ORDER BY timestamp DESC;
+
+selectTransactionById:
+SELECT * FROM transaction_record WHERE id = ?;
