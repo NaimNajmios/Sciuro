@@ -18,13 +18,23 @@ import com.sciuro.core.parsing.config.SettingsProvider
 import com.najmi.sciuro.config.EncryptedSettingsProvider
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.koin.dsl.module
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import com.sciuro.core.classifier.orchestrator.SciuroIngestionOrchestrator
 
 val appModule = module {
     single<SettingsProvider> { EncryptedSettingsProvider(get()) }
 }
 
-class SciuroApp : Application() {
+class SciuroApp : Application(), KoinComponent {
+    
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val orchestrator: SciuroIngestionOrchestrator by inject()
+    
     override fun onCreate() {
         super.onCreate()
         
@@ -47,5 +57,8 @@ class SciuroApp : Application() {
                 ingestionModule
             )
         }
+        
+        // Start the ingestion orchestrator to process raw events
+        orchestrator.startListening(appScope)
     }
 }

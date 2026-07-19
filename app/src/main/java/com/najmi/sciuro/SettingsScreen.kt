@@ -24,7 +24,10 @@ import java.util.UUID
 import org.koin.compose.koinInject
 
 @Composable
-fun SettingsScreen(settingsProvider: SettingsProvider = koinInject()) {
+fun SettingsScreen(
+    settingsProvider: SettingsProvider = koinInject(),
+    notificationSourceAdapter: NotificationSourceAdapter = koinInject()
+) {
     var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
     var apiKey by rememberSaveable { mutableStateOf(settingsProvider.getApiKey() ?: "") }
     var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
