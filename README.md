@@ -11,6 +11,10 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 * **Kanban Workflow:** A unified task management and issue tracking system deeply integrated into the development process.
 * **Transfer Detection:** Intelligent identification of cross-account transfers to prevent duplicate ledger entries.
 
+## Project Status
+
+The project is fully functional and has completed **Phase D (Personal Deployment)**. All core modules—including the multi-source ingestion engine, automated budget tracking, Kanban workflow, and UI feature modules—are fully integrated and tested.
+
 ## Architecture
 
 Sciuro is built using a strict modular Kotlin Multiplatform structure:
@@ -44,7 +48,8 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
    ./gradlew detekt
    ```
 
-## Documentation Paper Trail
+## Documentation & Agent Rules
 
 To maintain Sprint-grade engineering discipline, all architectural decisions, bugs, and phase transitions are documented in the `development_documentation/` directory. 
 - See `INDEX.md` for a complete list of design docs (ADRs) and progress logs.
+- See `AGENTS.md` in the root directory for the strict engineering rules and philosophical tenets that all contributors (including AI agents) must follow.
