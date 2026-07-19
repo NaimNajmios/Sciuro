@@ -13,7 +13,7 @@
 | B1 - Recurring obligation & debt auto-detection | Completed | `ObligationDetectionEngine` to scan ledger for recurring merchant patterns |
 | B2 - Transfer detection | Completed | `TransferDetectionEngine` links dual INFLOW/OUTFLOW notifications |
 | B3 - Balance & reconciliation engine | Completed | `ReconciliationEngine` and `CashAdjustment` schemas to fix ledger drift |
-| B4 - Manual Review Inbox | Not Started | |
+| B4 - Manual Review Inbox | Completed | Exposed `observeUnreviewedTransactions` Flow for UI consumption |
 | B5 - Debt Ledger module | Not Started | |
 | B6 - Investment/Gold Savings module | Not Started | |
 | B7 - Budgeting logic | Not Started | |

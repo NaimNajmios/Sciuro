@@ -9,6 +9,11 @@ import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.model.Transaction
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+
 class TransactionRepository(
     auditRepository: AuditRepository,
     private val database: SciuroDatabase,
@@ -69,5 +74,12 @@ class TransactionRepository(
             }
             database.transactionRecordQueries.markAsReviewed(now, transactionId)
         }
+    }
+
+    fun observeUnreviewedTransactions(): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
+        // We use an arbitrary dispatcher since we might not have IO in commonMain
+        return database.transactionRecordQueries.selectUnreviewedTransactions()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
     }
 }
