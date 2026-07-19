@@ -1,0 +1,23 @@
+CREATE TABLE investment_record (
+    id TEXT NOT NULL PRIMARY KEY,
+    asset_symbol TEXT NOT NULL,
+    asset_name TEXT NOT NULL,
+    units_held REAL NOT NULL,
+    average_buy_price REAL NOT NULL,
+    associated_account_id TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY(associated_account_id) REFERENCES account(id)
+);
+
+insertInvestment:
+INSERT INTO investment_record(id, asset_symbol, asset_name, units_held, average_buy_price, associated_account_id, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+updateInvestment:
+UPDATE investment_record
+SET units_held = ?, average_buy_price = ?, updated_at = ?
+WHERE id = ?;
+
+selectAllInvestments:
+SELECT * FROM investment_record;

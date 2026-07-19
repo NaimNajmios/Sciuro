@@ -15,7 +15,7 @@
 | B3 - Balance & reconciliation engine | Completed | `ReconciliationEngine` and `CashAdjustment` schemas to fix ledger drift |
 | B4 - Manual Review Inbox | Completed | Exposed `observeUnreviewedTransactions` Flow for UI consumption |
 | B5 - Debt Ledger module | Completed | `core-debt` scaffolded, `DebtEngine` implemented for automatic payment tracking |
-| B6 - Investment/Gold Savings module | Not Started | |
+| B6 - Investment/Gold Savings module | Completed | `core-investment` scaffolded, tracks asset accumulation independently |
 | B7 - Budgeting logic | Not Started | |
 | C1 - Kanban board | Not Started | |
 | C2 - Home dashboard & Wallet screen | Not Started | |
