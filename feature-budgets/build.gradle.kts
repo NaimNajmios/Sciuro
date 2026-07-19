@@ -15,6 +15,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+    implementation(project(":core-ui"))
                 implementation(libs.koin.core)
                 implementation(project(":core-ledger"))
                 implementation(project(":core-budget"))
@@ -22,6 +23,7 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
+    implementation(project(":core-ui"))
                 implementation(libs.androidx.core.ktx)
                 implementation(libs.androidx.lifecycle.runtime.ktx)
                 implementation(libs.androidx.activity.compose)
@@ -49,3 +51,4 @@ android {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
 }
+

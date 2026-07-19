@@ -164,27 +164,25 @@ Every Lottie moment has a static fallback (the mascot's resting frame as a plain
 
 ---
 
-## 5. Core Composable Library
+## 5. Core Composable Library (Ported from Sprint)
 
-Built once in `feature-*` shared UI modules, reused everywhere — this is what keeps "state of the art" achievable for a solo dev instead of hand-building every screen from scratch.
+Built once in `core-ui` shared module, reused everywhere — this is what keeps "state of the art" achievable for a solo dev instead of hand-building every screen from scratch. We have directly ported the proven components from the Sprint app:
 
 | Composable | Purpose | Handles |
 |---|---|---|
+| `HeroPanel` + `WaveChart` | The pure black top section with bezier curve | Trend visualization, range switching via `PillToggle` |
+| `SheetList` | -24dp overlapping bottom-sheet container | Nested scrolling, drag handle |
+| `TransactionCard` | Adapted from Sprint's `SessionCard` | Merchant name, timestamp, amount (Plex Mono) + **8dp Category Dot** |
+| `BudgetProgressRow`| Adapted from Sprint's `ContextBreakdownRow` | Animated `LinearProgressIndicator` (1000ms tween) for spend vs limit |
+| `ActionCard` / `HealthCard` | Adapted from Sprint Settings | Supabase sync status, background service monitoring |
+| `SessionInspectorSheet`| Adapted from Sprint's Session Modal | AI confidence metrics (Green/Orange/Red), dropdowns, save/ignore |
 | `SciuroCard` | Base card with the restrained-neomorphic treatment | Elevation variants, press state |
-| `AmountText` | Currency-formatted text with automatic sign-based coloring (income/expense/transfer) | Locale-aware RM formatting, tabular figures |
-| `StatusPill` | Small rounded label (e.g. "Due in 3 days," "Pending Review," "3 active BNPL") | Color-coded by `signal.*` tokens |
-| `SciuroButton` | Primary/secondary/tertiary/destructive variants | Loading spinner state built in (button shows a small inline spinner instead of text when awaiting a result) |
-| `IconBadge` | Category/channel icon in a tinted circular background | Standard sizing (24/32/40dp variants) |
-| `StatusKanbanBoard` | Generic status-driven board (from the v4 plan's Kanban section) | Column definitions, card auto-move animation, empty-column state |
-| `SciuroBottomSheet` | Standard modal sheet wrapper | Drag handle, scrim, nested-scroll support |
-| `ConfirmationDialog` | Destructive/important confirmations | Two-action layout, danger-styled confirm button when relevant |
-| `SnackbarHost` (Sciuro-themed) | Undo-able quick actions | Auto-dismiss timing, single-action "Undo" |
-| `SwipeableRow` | Review Inbox swipe-to-confirm/dismiss | Left/right swipe actions, resistance/threshold tuning |
-| `SegmentedControl` | Time-range pickers (This Month / Last Month / Custom) | — |
-| `ProgressRing` | Budget usage, debt payoff %, investment allocation | Animated fill on data change |
-| `SkeletonBlock` | Loading placeholder (shimmer) | Configurable shape (line, card, circle) for composing skeleton layouts per screen |
-| `EmptyStateView` | Standardized empty-state layout (Lottie/illustration + message + optional CTA) | Takes a config object so every screen's empty state is visually consistent, only copy/asset changes |
-| `RunwayCounter` | The home screen's animated big number | Count-up/down animation, temperature color interpolation |
+| `AmountText` | Currency-formatted text with automatic sign-based coloring | Locale-aware RM formatting, tabular figures |
+| `StatusPill` | Small rounded label (e.g. "Due in 3 days") | Color-coded by `signal.*` tokens |
+| `StatusKanbanBoard` | Generic status-driven board (Sprint `KanbanColumn`) | Column definitions, card auto-move animation |
+| `SegmentedControl` | Time-range pickers / View mode switches | `PillToggle` integration |
+| `SkeletonBlock` | Loading placeholder (shimmer) | Configurable shape for composing skeletons |
+| `EmptyStateView` | Standardized empty-state layout | Takes a config object so every screen's empty state is visually consistent |
 
 ---
 

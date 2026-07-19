@@ -9,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import com.sciuro.feature.kanban.viewmodel.KanbanViewModel
@@ -17,29 +19,72 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val tasks by viewModel.tasks.collectAsState()
+    var selectedStatus by remember { mutableStateOf("To Do") }
     
-    Row(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        KanbanColumn("To Do", tasks.filter { it.status == TaskStatus.TODO }, Modifier.weight(1f))
-        Spacer(modifier = Modifier.width(8.dp))
-        KanbanColumn("In Progress", tasks.filter { it.status == TaskStatus.IN_PROGRESS }, Modifier.weight(1f))
-        Spacer(modifier = Modifier.width(8.dp))
-        KanbanColumn("Done", tasks.filter { it.status == TaskStatus.DONE }, Modifier.weight(1f))
+    val currentStatusFilter = when (selectedStatus) {
+        "To Do" -> TaskStatus.TODO
+        "In Progress" -> TaskStatus.IN_PROGRESS
+        "Done" -> TaskStatus.DONE
+        else -> TaskStatus.TODO
     }
-}
-
-@Composable
-fun KanbanColumn(title: String, tasks: List<KanbanTask>, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxHeight().background(Color.LightGray.copy(alpha = 0.2f)).padding(8.dp)) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(tasks) { task ->
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = task.title, style = MaterialTheme.typography.bodyLarge)
-                        Text(text = task.description, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+    
+    val filteredTasks = tasks.filter { it.status == currentStatusFilter }
+    
+    // In a real app, calculate actual totals
+    val activeDebt = 5000.00
+    
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            HeroPanel(
+                title = "Active Debt & Bills",
+                heroFigure = "RM ${"%.2f".format(activeDebt)}",
+                toggleOptions = listOf("To Do", "In Progress", "Done"),
+                selectedToggle = selectedStatus,
+                onToggleSelected = { selectedStatus = it }
+            )
+        }
+        
+        item {
+            SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (filteredTasks.isEmpty()) {
+                        Text(
+                            text = "No tasks in this list.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else {
+                        filteredTasks.forEach { task ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = task.title, 
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = task.description, 
+                                        style = MaterialTheme.typography.bodyMedium, 
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
+

@@ -54,6 +54,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core-ui"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -63,6 +64,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.lottie.compose)
+    implementation(libs.androidx.ui.text.google.fonts)
     implementation("androidx.navigation:navigation-compose:2.7.7")
     
     // Feature Modules

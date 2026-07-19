@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import com.najmi.sciuro.ui.theme.SciuroTheme
+import com.najmi.sciuro.core.ui.theme.SciuroTheme
 import com.sciuro.feature.dashboard.ui.DashboardScreen
 import com.sciuro.feature.wallet.ui.WalletScreen
 import com.sciuro.feature.kanban.ui.KanbanScreen
