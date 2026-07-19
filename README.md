@@ -14,7 +14,11 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 ## Architecture
 
 Sciuro is built using a strict modular Kotlin Multiplatform structure:
-* **Core Modules** (`core-*`): Reusable domain layers, such as `:core-ledger`, `:core-audit`, `:core-ingestion`, and `:core-llm`.
+* **Core Modules** (`core-*`): Reusable domain layers and intelligence engines:
+  - `:core-ledger`, `:core-audit`: Foundational persistence and traceability.
+  - `:core-ingestion`, `:core-parsing`, `:core-llm`: Notification extraction and LLM fallback parsing.
+  - `:core-classifier`: The central Orchestrator that triages parsed data.
+  - `:core-obligations`, `:core-transfer`, `:core-debt`, `:core-investment`, `:core-budget`: Specialized intelligence engines that track assets, liabilities, recurring expenses, and budget thresholds.
 * **Feature Modules** (`feature-*`): User-facing capabilities, such as `:feature-dashboard`, `:feature-wallet`, `:feature-budgets`, and `:feature-kanban`.
 
 **Tech Stack:**

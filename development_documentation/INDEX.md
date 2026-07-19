@@ -17,7 +17,7 @@
 | B5 - Debt Ledger module | Completed | `core-debt` scaffolded, `DebtEngine` implemented for automatic payment tracking |
 | B6 - Investment/Gold Savings module | Completed | `core-investment` scaffolded, tracks asset accumulation independently |
 | B7 - Budgeting logic | Completed | `core-budget` scaffolded, `BudgetEngine` implemented for rolling 30-day tracking |
-| C1 - Kanban board | Not Started | |
+| C1 - Kanban board | Completed | `feature-kanban` UI scaffolded with Jetpack Compose and ViewModels |
 | C2 - Home dashboard & Wallet screen | Not Started | |
 | C3 - Drilldown screens | Not Started | |
 | D1 - Security hardening | Not Started | |
