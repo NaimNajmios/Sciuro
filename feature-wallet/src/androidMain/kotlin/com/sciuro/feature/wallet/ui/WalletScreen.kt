@@ -42,7 +42,10 @@ data class AppInfo(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
+fun WalletScreen(
+    onAccountClick: (String) -> Unit,
+    viewModel: WalletViewModel = koinViewModel()
+) {
     val accounts by viewModel.accounts.collectAsState()
     val investments by viewModel.investments.collectAsState()
     val context = LocalContext.current
@@ -116,12 +119,7 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                             accounts.forEach { account ->
                                 Card(
                                     modifier = Modifier.fillMaxWidth().clickable {
-                                        editingAccountId = account.id
-                                        newAccountName = account.name
-                                        newAccountType = if (account.isEWallet) "E-Wallet" else "Bank Account"
-                                        newAccountPackage = account.associatedPackage ?: ""
-                                        newAccountBalance = account.balance.toString()
-                                        showAddAccountDialog = true
+                                        onAccountClick(account.id)
                                     },
                                     colors = CardDefaults.cardColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)

@@ -41,3 +41,6 @@ SELECT * FROM transaction_record ORDER BY timestamp DESC;
 
 selectTransactionById:
 SELECT * FROM transaction_record WHERE id = ?;
+
+selectTransactionsByAccount:
+SELECT * FROM transaction_record WHERE account_id = ? ORDER BY timestamp DESC;

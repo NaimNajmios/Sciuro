@@ -10,6 +10,7 @@ import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.model.Account
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 
@@ -99,5 +100,27 @@ class AccountRepository(
     
     suspend fun getAccountByPackageName(packageName: String): com.sciuro.core.ledger.db.Account? {
         return database.accountQueries.selectAccountByPackage(packageName).executeAsOneOrNull()
+    }
+
+    suspend fun ensureDefaultAccountExists() {
+        val accounts = database.accountQueries.selectAllAccounts().executeAsList()
+        if (accounts.isEmpty()) {
+            createAccount(
+                Account(
+                    id = "default-${currentTimeMillis()}",
+                    name = "Personal Wallet",
+                    type = "Cash",
+                    currency = "MYR",
+                    balance = 0.0,
+                    associatedPackage = null
+                )
+            )
+        }
+    }
+
+    fun observeAccountById(accountId: String): Flow<com.sciuro.core.ledger.db.Account?> {
+        return database.accountQueries.selectAccountById(accountId)
+            .asFlow()
+            .mapToOneOrNull(Dispatchers.Default)
     }
 }

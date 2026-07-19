@@ -121,7 +121,22 @@ fun SciuroMainScreen() {
     ) { innerPadding ->
         NavHost(navController, startDestination = "dashboard", Modifier.padding(innerPadding)) {
             composable("dashboard") { DashboardScreen() }
-            composable("wallet") { WalletScreen() }
+            composable("wallet") { 
+                WalletScreen(onAccountClick = { accountId ->
+                    navController.navigate("account_detail/$accountId")
+                }) 
+            }
+            composable(
+                "account_detail/{accountId}",
+                arguments = listOf(androidx.navigation.navArgument("accountId") { type = androidx.navigation.NavType.StringType })
+            ) { backStackEntry ->
+                val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
+                // We'll pass the SavedStateHandle to the koinViewModel by defining it in the Koin module, 
+                // but for now we just load the screen. Koin handles SavedStateHandle injection automatically.
+                com.sciuro.feature.wallet.ui.AccountDetailScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
             composable("budgets") { BudgetsScreen() }
             composable("kanban") { KanbanScreen() }
             composable("settings") { SettingsScreen() }
