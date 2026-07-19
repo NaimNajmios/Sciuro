@@ -37,46 +37,52 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 
                 // Content inside the sheet
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    if (state.unreviewedTransactionsCount > 0) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Warning,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                    if (state.unreviewedTransactionsCount == 0 && state.activeBudgetsCount == 0) {
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(
+                            message = "Nothing gathered yet — once your bank notifications start coming in, this is where they'll show up."
+                        )
+                    } else {
+                        if (state.unreviewedTransactionsCount > 0) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
                                 )
-                                Column {
-                                    Text(
-                                        "Review Inbox",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onErrorContainer
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Warning,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onErrorContainer
                                     )
-                                    Text(
-                                        "${state.unreviewedTransactionsCount} items pending your review",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onErrorContainer
-                                    )
+                                    Column {
+                                        Text(
+                                            "Review Inbox",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                        Text(
+                                            "${state.unreviewedTransactionsCount} items pending your review",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Active Budgets", style = MaterialTheme.typography.titleSmall)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "${state.activeBudgetsCount} active this month",
-                                style = MaterialTheme.typography.headlineSmall
-                            )
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("Active Budgets", style = MaterialTheme.typography.titleSmall)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "${state.activeBudgetsCount} active this month",
+                                    style = MaterialTheme.typography.headlineSmall
+                                )
+                            }
                         }
                     }
                 }

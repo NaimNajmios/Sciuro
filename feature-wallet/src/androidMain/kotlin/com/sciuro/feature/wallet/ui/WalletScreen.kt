@@ -45,11 +45,8 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                 ) {
                     if (selectedAssetType == "Liquid Cash") {
                         if (accounts.isEmpty()) {
-                            Text(
-                                text = "No accounts available.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(16.dp)
+                            com.najmi.sciuro.core.ui.components.EmptyStateView(
+                                message = "No cash tracked yet. Withdraw from an ATM and it'll show up here automatically."
                             )
                         } else {
                             accounts.forEach { account ->
@@ -83,11 +80,8 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                         }
                     } else {
                         // Investments empty state
-                        Text(
-                            text = "No investments tracked yet.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(16.dp)
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(
+                            message = "No investments tracked yet."
                         )
                     }
                 }
