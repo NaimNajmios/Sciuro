@@ -5,8 +5,8 @@
 |---|---|---|
 | A0 - Engineering foundations | Completed | Module structure, Koin DI, detekt/ktlint, CI scaffold, SQLDelight + migrations, `development_documentation/` scaffold, test-tier strategy |
 | A1 - Audit Log core | Completed | AuditLog entity, SQLDelight schema, AuditRepository, and Repository-wrapper pattern |
-| A2 - Ingestion framework | In Progress | `IngestionSource` abstraction, `NotificationSourceAdapter`, and staging buffer |
-| A3 - Bank & e-wallet parsers | Not Started | |
+| A2 - Ingestion framework | Completed | `IngestionSource` abstraction, `NotificationSourceAdapter`, and staging buffer |
+| A3 - Bank & e-wallet parsers | In Progress | CIMB, Maybank, BSN, TNG, GrabPay, Boost, ShopeePay and fixture regression suite |
 | A4 - LLM-assisted fallback | Not Started | |
 | A5 - Financial taxonomy & data model | Not Started | |
 | A6 - Actor-critic triage & categorization | Not Started | |
