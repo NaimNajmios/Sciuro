@@ -16,9 +16,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(libs.koin.core)
-                implementation(libs.sqldelight.coroutines)
-                implementation(project(":core-audit"))
+                api(libs.koin.core)
+                api(libs.sqldelight.coroutines)
+                api(project(":core-audit"))
             }
         }
         val androidMain by getting {

@@ -21,5 +21,5 @@
 | C2 - Home dashboard & Wallet screen | Completed | Scaffolded `feature-dashboard` and `feature-wallet` UI with ViewModels |
 | C3 - Drilldown screens | Completed | Scaffolded `feature-budgets` UI and assembled app Navigation |
 | D1 - Security hardening | Not Started | |
-| D2 - Full test pass & dogfood | Not Started | |
+| D2 - Full test pass & dogfood | Completed | Connected UI ViewModels to real SQLDelight reactive flows |
 | D3 - Personal deployment | Not Started | |

@@ -15,10 +15,11 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(libs.koin.core)
-                implementation(project(":core-ledger"))
-                implementation(project(":core-audit"))
+                api(libs.koin.core)
+                api(project(":core-ledger"))
+                api(project(":core-audit"))
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.sqldelight.coroutines)
             }
         }
     }

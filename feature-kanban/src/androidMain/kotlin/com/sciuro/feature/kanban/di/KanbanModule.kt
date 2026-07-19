@@ -5,5 +5,5 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val kanbanModule = module {
-    viewModel { KanbanViewModel() }
+    viewModel { KanbanViewModel(get()) }
 }

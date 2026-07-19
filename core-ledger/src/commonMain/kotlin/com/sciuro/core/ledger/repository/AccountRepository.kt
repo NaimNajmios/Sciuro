@@ -8,6 +8,10 @@ import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.model.Account
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 
 class AccountRepository(
     auditRepository: AuditRepository,
@@ -52,5 +56,11 @@ class AccountRepository(
                 id = accountId
             )
         }
+    }
+    
+    fun observeAccounts(): Flow<List<com.sciuro.core.ledger.db.Account>> {
+        return database.accountQueries.selectAllAccounts()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
     }
 }

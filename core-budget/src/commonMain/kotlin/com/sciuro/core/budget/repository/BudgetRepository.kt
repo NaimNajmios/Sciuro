@@ -8,6 +8,10 @@ import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.budget.model.Budget
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 
 class BudgetRepository(
     auditRepository: AuditRepository,
@@ -35,5 +39,11 @@ class BudgetRepository(
             )
             budget
         }
+    }
+
+    fun observeBudgets(): Flow<List<com.sciuro.core.ledger.db.Budget_record>> {
+        return database.budgetQueries.selectAllBudgets()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
     }
 }
