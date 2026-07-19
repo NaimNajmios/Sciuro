@@ -16,6 +16,11 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(libs.koin.core)
+                implementation(project(":core-ingestion"))
+                implementation(project(":core-parsing"))
+                implementation(project(":core-ledger"))
+                implementation(project(":core-audit"))
+                implementation(libs.kotlinx.coroutines.core)
             }
         }
     }
