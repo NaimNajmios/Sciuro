@@ -9,4 +9,5 @@ val ledgerModule = module {
     single { com.sciuro.core.ledger.repository.AccountRepository(get(), get()) }
     single { com.sciuro.core.ledger.repository.CategoryRepository(get(), get()) }
     single { com.sciuro.core.ledger.repository.TransactionRepository(get(), get(), get()) }
+    single { com.sciuro.core.ledger.engine.ReconciliationEngine(get(), get(), get()) }
 }

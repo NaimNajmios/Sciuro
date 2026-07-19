@@ -12,7 +12,7 @@
 | A6 - Actor-critic triage & categorization | Completed | `SciuroIngestionOrchestrator`, basic static heuristic engine, inbox routing |
 | B1 - Recurring obligation & debt auto-detection | Completed | `ObligationDetectionEngine` to scan ledger for recurring merchant patterns |
 | B2 - Transfer detection | Completed | `TransferDetectionEngine` links dual INFLOW/OUTFLOW notifications |
-| B3 - Balance & reconciliation engine | Not Started | |
+| B3 - Balance & reconciliation engine | Completed | `ReconciliationEngine` and `CashAdjustment` schemas to fix ledger drift |
 | B4 - Manual Review Inbox | Not Started | |
 | B5 - Debt Ledger module | Not Started | |
 | B6 - Investment/Gold Savings module | Not Started | |
