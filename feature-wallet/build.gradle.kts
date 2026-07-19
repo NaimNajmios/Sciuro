@@ -18,6 +18,7 @@ kotlin {
     implementation(project(":core-ui"))
                 implementation(libs.koin.core)
                 implementation(project(":core-ledger"))
+                implementation(project(":core-investment"))
             }
         }
         val androidMain by getting {

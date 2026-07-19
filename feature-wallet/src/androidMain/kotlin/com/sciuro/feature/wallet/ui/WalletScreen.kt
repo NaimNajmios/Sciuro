@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Toll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -42,19 +44,28 @@ data class AppInfo(
 @Composable
 fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
     val accounts by viewModel.accounts.collectAsState()
+    val investments by viewModel.investments.collectAsState()
     val context = LocalContext.current
     
     var selectedAssetType by rememberSaveable { mutableStateOf("Liquid Cash") }
-    var showAddDialog by rememberSaveable { mutableStateOf(false) }
-    var showAddTxDialog by rememberSaveable { mutableStateOf(false) }
-    var showFabMenu by remember { mutableStateOf(false) }
-    var editingAccountId by rememberSaveable { mutableStateOf<String?>(null) }
+    var showAddAccountDialog by rememberSaveable { mutableStateOf(false) }
+    var showAddInvestmentDialog by rememberSaveable { mutableStateOf(false) }
     
-    // Dialog Form State
+    // Account Form State
+    var editingAccountId by rememberSaveable { mutableStateOf<String?>(null) }
     var newAccountName by rememberSaveable { mutableStateOf("") }
     var newAccountType by rememberSaveable { mutableStateOf("Bank Account") }
     var newAccountPackage by rememberSaveable { mutableStateOf("") }
     var newAccountBalance by rememberSaveable { mutableStateOf("") }
+    
+    // Investment Form State
+    var editingInvestmentId by rememberSaveable { mutableStateOf<String?>(null) }
+    var newAssetType by rememberSaveable { mutableStateOf("Stock") }
+    var newAssetSymbol by rememberSaveable { mutableStateOf("") }
+    var newAssetName by rememberSaveable { mutableStateOf("") }
+    var newUnitsHeld by rememberSaveable { mutableStateOf("") }
+    var newAvgBuyPrice by rememberSaveable { mutableStateOf("") }
+    var newAssociatedAccountId by rememberSaveable { mutableStateOf("") }
     
     var installedApps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
 
@@ -63,7 +74,6 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
             val pm = context.packageManager
             val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
             val appList = packages.mapNotNull { info ->
-                // Only include apps that can be launched by the user (avoids system noise)
                 if (pm.getLaunchIntentForPackage(info.packageName) != null) {
                     val appName = pm.getApplicationLabel(info).toString()
                     val icon = pm.getApplicationIcon(info)
@@ -74,11 +84,8 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
         }
     }
     
-    val liquidAccounts = accounts.filter { !it.type.equals("Investment", ignoreCase = true) }
-    val investmentAccounts = accounts.filter { it.type.equals("Investment", ignoreCase = true) }
-    
-    val totalLiquidity = liquidAccounts.sumOf { it.balance }
-    val totalInvestments = investmentAccounts.sumOf { it.balance }
+    val totalLiquidity = accounts.sumOf { it.balance }
+    val totalInvestments = investments.sumOf { it.unitsHeld * it.averageBuyPrice }
     val displayTotal = if (selectedAssetType == "Liquid Cash") totalLiquidity else totalInvestments
     
     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -100,66 +107,124 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                     modifier = Modifier.padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val accountsToShow = if (selectedAssetType == "Liquid Cash") liquidAccounts else investmentAccounts
-                    if (accountsToShow.isEmpty()) {
-                        com.najmi.sciuro.core.ui.components.EmptyStateView(
-                            message = if (selectedAssetType == "Liquid Cash") "No cash tracked yet. Withdraw from an ATM and it'll show up here automatically." else "No investments tracked yet."
-                        )
-                    } else {
-                        accountsToShow.forEach { account ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth().clickable {
-                                    editingAccountId = account.id
-                                    newAccountName = account.name
-                                    newAccountType = account.type
-                                    newAccountPackage = account.associatedPackage ?: ""
-                                    newAccountBalance = account.balance.toString()
-                                    showAddDialog = true
-                                },
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                    if (selectedAssetType == "Liquid Cash") {
+                        if (accounts.isEmpty()) {
+                            com.najmi.sciuro.core.ui.components.EmptyStateView(
+                                message = "No cash tracked yet. Withdraw from an ATM and it'll show up here automatically."
+                            )
+                        } else {
+                            accounts.forEach { account ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().clickable {
+                                        editingAccountId = account.id
+                                        newAccountName = account.name
+                                        newAccountType = if (account.isEWallet) "E-Wallet" else "Bank Account"
+                                        newAccountPackage = account.associatedPackage ?: ""
+                                        newAccountBalance = account.balance.toString()
+                                        showAddAccountDialog = true
+                                    },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                    )
                                 ) {
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        // Dynamic App Icon or Fallback
-                                        val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
-                                        if (associatedApp != null) {
-                                            Image(
-                                                bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(40.dp).clip(CircleShape)
-                                            )
-                                        } else {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
+                                            if (associatedApp != null) {
+                                                Image(
+                                                    bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(40.dp).clip(CircleShape)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(40.dp),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            
+                                            Column {
+                                                Text(account.name, style = MaterialTheme.typography.titleMedium)
+                                                Text(
+                                                    if (account.isEWallet) "E-Wallet" else "Bank Account", 
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            "RM ${"%.2f".format(account.balance)}", 
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Investments
+                        if (investments.isEmpty()) {
+                            com.najmi.sciuro.core.ui.components.EmptyStateView(
+                                message = "No investments tracked yet."
+                            )
+                        } else {
+                            investments.forEach { investment ->
+                                val investmentValue = investment.unitsHeld * investment.averageBuyPrice
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().clickable {
+                                        editingInvestmentId = investment.id
+                                        newAssetType = investment.assetType
+                                        newAssetSymbol = investment.assetSymbol
+                                        newAssetName = investment.assetName
+                                        newUnitsHeld = investment.unitsHeld.toString()
+                                        newAvgBuyPrice = investment.averageBuyPrice.toString()
+                                        newAssociatedAccountId = investment.associatedAccountId ?: ""
+                                        showAddInvestmentDialog = true
+                                    },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                    )
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
                                             Icon(
-                                                imageVector = if (account.type == "Investment") Icons.Filled.AccountBalance else if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
+                                                imageVector = if (investment.assetType == "Gold") Icons.Filled.Toll else Icons.AutoMirrored.Filled.TrendingUp,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(40.dp),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
+                                            
+                                            Column {
+                                                Text(investment.assetSymbol, style = MaterialTheme.typography.titleMedium)
+                                                Text(
+                                                    "${investment.assetType} • ${investment.unitsHeld} units", 
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
                                         }
-                                        
-                                        Column {
-                                            Text(account.name, style = MaterialTheme.typography.titleMedium)
-                                            Text(
-                                                account.type, 
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
+                                        Text(
+                                            "RM ${"%.2f".format(investmentValue)}", 
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
+                                        )
                                     }
-                                    Text(
-                                        "RM ${"%.2f".format(account.balance)}", 
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                                    )
                                 }
                             }
                         }
@@ -170,60 +235,37 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
     }
     
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
-        Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(16.dp)) {
-            if (showFabMenu) {
-                SmallFloatingActionButton(
-                    onClick = { 
-                        showFabMenu = false
-                        showAddTxDialog = true 
-                    },
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add Transaction")
+        FloatingActionButton(
+            onClick = { 
+                if (selectedAssetType == "Liquid Cash") {
+                    editingAccountId = null
+                    newAccountName = ""
+                    newAccountType = "Bank Account"
+                    newAccountPackage = ""
+                    newAccountBalance = ""
+                    showAddAccountDialog = true 
+                } else {
+                    editingInvestmentId = null
+                    newAssetType = "Stock"
+                    newAssetSymbol = ""
+                    newAssetName = ""
+                    newUnitsHeld = ""
+                    newAvgBuyPrice = ""
+                    newAssociatedAccountId = ""
+                    showAddInvestmentDialog = true
                 }
-                SmallFloatingActionButton(
-                    onClick = { 
-                        showFabMenu = false
-                        editingAccountId = null
-                        newAccountName = ""
-                        newAccountType = if (selectedAssetType == "Investments") "Investment" else "Bank Account"
-                        newAccountPackage = ""
-                        newAccountBalance = ""
-                        showAddDialog = true 
-                    },
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    Icon(Icons.Filled.AccountBalance, contentDescription = "Add Account")
-                }
-            }
-            FloatingActionButton(
-                onClick = { showFabMenu = !showFabMenu },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(
-                    Icons.Filled.Add, 
-                    contentDescription = "Menu"
-                )
-            }
+            },
+            modifier = Modifier.padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "Add")
         }
     }
 
-    if (showAddTxDialog) {
-        AddTransactionDialog(
-            accounts = accounts,
-            onDismiss = { showAddTxDialog = false },
-            onSave = { accountId, amt, dir, merch ->
-                viewModel.addTransaction(accountId, amt, dir, merch, null)
-            }
-        )
-    }
-
-    if (showAddDialog) {
+    if (showAddAccountDialog) {
         ModalBottomSheet(
-            onDismissRequest = { showAddDialog = false },
+            onDismissRequest = { showAddAccountDialog = false },
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             Column(
@@ -256,7 +298,7 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                     
                     OutlinedTextField(
                         value = displayValue,
-                        onValueChange = { newAccountPackage = it }, // Fallback for manual typing
+                        onValueChange = { newAccountPackage = it },
                         label = { Text("Associated App (Optional)") },
                         placeholder = { Text("Search apps...") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -266,7 +308,7 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                     
                     val filteredApps = installedApps.filter { 
                         it.name.contains(newAccountPackage, ignoreCase = true) || it.packageName.contains(newAccountPackage, ignoreCase = true)
-                    }.take(30) // Cap to 30 to prevent UI lag on large dropdowns
+                    }.take(30)
                     
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -300,31 +342,27 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                     modifier = Modifier.fillMaxWidth()
                 )
                 
-                // Simple toggle for Bank vs E-Wallet vs Investment
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (selectedAssetType == "Investments") {
-                        FilterChip(
-                            selected = newAccountType == "Investment",
-                            onClick = { newAccountType = "Investment" },
-                            label = { Text("Investment") },
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        FilterChip(
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        SegmentedButton(
                             selected = newAccountType == "Bank Account",
                             onClick = { newAccountType = "Bank Account" },
-                            label = { Text("Bank") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        FilterChip(
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                        ) {
+                            Text("Bank Account")
+                        }
+                        SegmentedButton(
                             selected = newAccountType == "E-Wallet",
                             onClick = { newAccountType = "E-Wallet" },
-                            label = { Text("E-Wallet") },
-                            modifier = Modifier.weight(1f)
-                        )
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                        ) {
+                            Text("E-Wallet")
+                        }
                     }
                 }
                 
@@ -338,7 +376,7 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                         OutlinedButton(
                             onClick = {
                                 viewModel.deleteAccount(editingAccountId!!)
-                                showAddDialog = false
+                                showAddAccountDialog = false
                             },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -366,10 +404,196 @@ fun WalletScreen(viewModel: WalletViewModel = koinViewModel()) {
                                     balance = balance
                                 )
                             }
-                            showAddDialog = false
+                            showAddAccountDialog = false
                         },
                         modifier = Modifier.weight(if (editingAccountId != null) 1f else 2f),
                         enabled = newAccountName.isNotBlank()
+                    ) {
+                        Text("Save")
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAddInvestmentDialog) {
+        ModalBottomSheet(
+            onDismissRequest = { showAddInvestmentDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    if (editingInvestmentId == null) "Add Investment" else "Edit Investment",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        SegmentedButton(
+                            selected = newAssetType == "Stock",
+                            onClick = { newAssetType = "Stock" },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                        ) {
+                            Text("Stock")
+                        }
+                        SegmentedButton(
+                            selected = newAssetType == "Gold",
+                            onClick = { newAssetType = "Gold" },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                        ) {
+                            Text("Gold")
+                        }
+                    }
+                }
+                
+                if (newAssetType == "Stock") {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = newAssetSymbol,
+                            onValueChange = { newAssetSymbol = it.uppercase() },
+                            label = { Text("Symbol") },
+                            placeholder = { Text("e.g. AAPL") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = newAssetName,
+                            onValueChange = { newAssetName = it },
+                            label = { Text("Name") },
+                            placeholder = { Text("e.g. Apple Inc.") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = newAssetName,
+                        onValueChange = { newAssetName = it },
+                        label = { Text("Account Name") },
+                        placeholder = { Text("e.g. Maybank Gold Account") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = newUnitsHeld,
+                        onValueChange = { newUnitsHeld = it },
+                        label = { Text(if (newAssetType == "Gold") "Grams Held" else "Units Held") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = newAvgBuyPrice,
+                        onValueChange = { newAvgBuyPrice = it },
+                        label = { Text("Avg Price (RM)") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                var accountExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = accountExpanded,
+                    onExpandedChange = { accountExpanded = !accountExpanded }
+                ) {
+                    val selectedAccount = accounts.find { it.id == newAssociatedAccountId }
+                    OutlinedTextField(
+                        value = selectedAccount?.name ?: "None",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Funding Account (Optional)") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("None") },
+                            onClick = {
+                                newAssociatedAccountId = ""
+                                accountExpanded = false
+                            }
+                        )
+                        accounts.forEach { acc ->
+                            DropdownMenuItem(
+                                text = { Text(acc.name) },
+                                onClick = {
+                                    newAssociatedAccountId = acc.id
+                                    accountExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (editingInvestmentId != null) {
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.deleteInvestment(editingInvestmentId!!)
+                                showAddInvestmentDialog = false
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Delete")
+                        }
+                    }
+                    
+                    Button(
+                        onClick = {
+                            val units = newUnitsHeld.toDoubleOrNull() ?: 0.0
+                            val price = newAvgBuyPrice.toDoubleOrNull() ?: 0.0
+                            val finalSymbol = if (newAssetType == "Gold") "XAU" else newAssetSymbol
+                            
+                            if (editingInvestmentId == null) {
+                                viewModel.addInvestment(
+                                    assetSymbol = finalSymbol,
+                                    assetName = newAssetName,
+                                    assetType = newAssetType,
+                                    unitsHeld = units,
+                                    averageBuyPrice = price,
+                                    associatedAccountId = newAssociatedAccountId
+                                )
+                            } else {
+                                viewModel.updateInvestment(
+                                    id = editingInvestmentId!!,
+                                    assetSymbol = finalSymbol,
+                                    assetName = newAssetName,
+                                    assetType = newAssetType,
+                                    unitsHeld = units,
+                                    averageBuyPrice = price,
+                                    associatedAccountId = newAssociatedAccountId
+                                )
+                            }
+                            showAddInvestmentDialog = false
+                        },
+                        modifier = Modifier.weight(if (editingInvestmentId != null) 1f else 2f),
+                        enabled = (newAssetType == "Gold" || newAssetSymbol.isNotBlank()) && newAssetName.isNotBlank() && newUnitsHeld.isNotBlank() && newAvgBuyPrice.isNotBlank()
                     ) {
                         Text("Save")
                     }

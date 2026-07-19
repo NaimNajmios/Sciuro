@@ -14,11 +14,14 @@ import com.sciuro.core.ledger.engine.ReconciliationEngine
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.audit.util.currentTimeMillis
+import com.sciuro.core.investment.repository.InvestmentRepository
+import com.sciuro.core.investment.model.Investment
 
 class WalletViewModel(
     private val accountRepository: AccountRepository,
     private val reconciliationEngine: ReconciliationEngine,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val investmentRepository: InvestmentRepository
 ) : ViewModel() {
     
     val accounts: StateFlow<List<WalletAccount>> = accountRepository.observeAccounts()
@@ -34,6 +37,13 @@ class WalletViewModel(
                 )
             }
         }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+        
+    val investments: StateFlow<List<Investment>> = investmentRepository.observeInvestments()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -91,6 +101,44 @@ class WalletViewModel(
                 ),
                 source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL
             )
+        }
+    }
+    
+    fun addInvestment(assetSymbol: String, assetName: String, assetType: String, unitsHeld: Double, averageBuyPrice: Double, associatedAccountId: String?) {
+        viewModelScope.launch {
+            investmentRepository.createInvestment(
+                Investment(
+                    id = java.util.UUID.randomUUID().toString(),
+                    assetSymbol = assetSymbol,
+                    assetName = assetName,
+                    assetType = assetType,
+                    unitsHeld = unitsHeld,
+                    averageBuyPrice = averageBuyPrice,
+                    associatedAccountId = associatedAccountId.takeIf { !it.isNullOrBlank() }
+                )
+            )
+        }
+    }
+    
+    fun updateInvestment(id: String, assetSymbol: String, assetName: String, assetType: String, unitsHeld: Double, averageBuyPrice: Double, associatedAccountId: String?) {
+        viewModelScope.launch {
+            investmentRepository.updateInvestment(
+                Investment(
+                    id = id,
+                    assetSymbol = assetSymbol,
+                    assetName = assetName,
+                    assetType = assetType,
+                    unitsHeld = unitsHeld,
+                    averageBuyPrice = averageBuyPrice,
+                    associatedAccountId = associatedAccountId.takeIf { !it.isNullOrBlank() }
+                )
+            )
+        }
+    }
+    
+    fun deleteInvestment(id: String) {
+        viewModelScope.launch {
+            investmentRepository.deleteInvestment(id)
         }
     }
 }

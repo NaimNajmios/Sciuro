@@ -2,6 +2,7 @@ CREATE TABLE investment_record (
     id TEXT NOT NULL PRIMARY KEY,
     asset_symbol TEXT NOT NULL,
     asset_name TEXT NOT NULL,
+    asset_type TEXT NOT NULL,
     units_held REAL NOT NULL,
     average_buy_price REAL NOT NULL,
     associated_account_id TEXT,
@@ -11,13 +12,16 @@ CREATE TABLE investment_record (
 );
 
 insertInvestment:
-INSERT INTO investment_record(id, asset_symbol, asset_name, units_held, average_buy_price, associated_account_id, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO investment_record(id, asset_symbol, asset_name, asset_type, units_held, average_buy_price, associated_account_id, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateInvestment:
 UPDATE investment_record
-SET units_held = ?, average_buy_price = ?, updated_at = ?
+SET asset_symbol = ?, asset_name = ?, asset_type = ?, units_held = ?, average_buy_price = ?, associated_account_id = ?, updated_at = ?
 WHERE id = ?;
+
+deleteInvestment:
+DELETE FROM investment_record WHERE id = ?;
 
 selectAllInvestments:
 SELECT * FROM investment_record;

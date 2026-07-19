@@ -8,6 +8,12 @@ import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.investment.model.Investment
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+
+import kotlinx.coroutines.flow.map
 
 class InvestmentRepository(
     auditRepository: AuditRepository,
@@ -28,6 +34,7 @@ class InvestmentRepository(
                 id = investment.id,
                 asset_symbol = investment.assetSymbol,
                 asset_name = investment.assetName,
+                asset_type = investment.assetType,
                 units_held = investment.unitsHeld,
                 average_buy_price = investment.averageBuyPrice,
                 associated_account_id = investment.associatedAccountId,
@@ -54,7 +61,70 @@ class InvestmentRepository(
             afterState = "units: $newUnitsHeld, avg_price: $newAvgPrice",
             source = AuditSource.SYSTEM_AUTO
         ) {
-            database.investmentQueries.updateInvestment(newUnitsHeld, newAvgPrice, currentTimeMillis(), investmentId)
+            database.investmentQueries.updateInvestment(
+                asset_symbol = investment.asset_symbol,
+                asset_name = investment.asset_name,
+                asset_type = investment.asset_type,
+                units_held = newUnitsHeld,
+                average_buy_price = newAvgPrice,
+                associated_account_id = investment.associated_account_id,
+                updated_at = currentTimeMillis(),
+                id = investmentId
+            )
         }
+    }
+    
+    suspend fun updateInvestment(investment: Investment) {
+        withAudit(
+            entityType = EntityType.INVESTMENT_ACCOUNT,
+            entityId = investment.id,
+            action = AuditAction.UPDATE,
+            beforeState = "Update Investment",
+            afterState = investment.toString(),
+            source = AuditSource.USER_MANUAL
+        ) {
+            database.investmentQueries.updateInvestment(
+                asset_symbol = investment.assetSymbol,
+                asset_name = investment.assetName,
+                asset_type = investment.assetType,
+                units_held = investment.unitsHeld,
+                average_buy_price = investment.averageBuyPrice,
+                associated_account_id = investment.associatedAccountId,
+                updated_at = currentTimeMillis(),
+                id = investment.id
+            )
+        }
+    }
+    
+    suspend fun deleteInvestment(investmentId: String) {
+        withAudit(
+            entityType = EntityType.INVESTMENT_ACCOUNT,
+            entityId = investmentId,
+            action = AuditAction.DELETE,
+            beforeState = "Delete Investment",
+            afterState = null,
+            source = AuditSource.USER_MANUAL
+        ) {
+            database.investmentQueries.deleteInvestment(investmentId)
+        }
+    }
+    
+    fun observeInvestments(): Flow<List<Investment>> {
+        return database.investmentQueries.selectAllInvestments()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list ->
+                list.map {
+                    Investment(
+                        id = it.id,
+                        assetSymbol = it.asset_symbol,
+                        assetName = it.asset_name,
+                        assetType = it.asset_type,
+                        unitsHeld = it.units_held,
+                        averageBuyPrice = it.average_buy_price,
+                        associatedAccountId = it.associated_account_id
+                    )
+                }
+            }
     }
 }

@@ -26,8 +26,12 @@ class InvestmentEngine(
             
             if (kotlin.math.abs(totalInvested - investment.units_held) > 0.01) {
                 database.investmentQueries.updateInvestment(
+                    asset_symbol = investment.asset_symbol,
+                    asset_name = investment.asset_name,
+                    asset_type = investment.asset_type,
                     units_held = totalInvested,
                     average_buy_price = 1.0, 
+                    associated_account_id = investment.associated_account_id,
                     updated_at = com.sciuro.core.audit.util.currentTimeMillis(),
                     id = investment.id
                 )
