@@ -18,6 +18,7 @@ kotlin {
             dependencies {
                 implementation(libs.koin.core)
                 implementation(libs.sqldelight.coroutines)
+                implementation(project(":core-audit"))
             }
         }
         val androidMain by getting {

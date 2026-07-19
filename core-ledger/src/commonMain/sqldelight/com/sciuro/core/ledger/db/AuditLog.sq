@@ -1,0 +1,24 @@
+CREATE TABLE AuditLogEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    entityType TEXT NOT NULL,
+    entityId TEXT NOT NULL,
+    action TEXT NOT NULL,
+    beforeState TEXT,
+    afterState TEXT,
+    source TEXT NOT NULL,
+    confidence REAL,
+    timestamp INTEGER NOT NULL
+);
+
+insertLog:
+INSERT INTO AuditLogEntity(id, entityType, entityId, action, beforeState, afterState, source, confidence, timestamp)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getLogsForEntity:
+SELECT * FROM AuditLogEntity
+WHERE entityId = ? AND entityType = ?
+ORDER BY timestamp DESC;
+
+getAllLogs:
+SELECT * FROM AuditLogEntity
+ORDER BY timestamp DESC;
