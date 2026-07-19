@@ -8,7 +8,7 @@
 | A2 - Ingestion framework | Completed | `IngestionSource` abstraction, `NotificationSourceAdapter`, and staging buffer |
 | A3 - Bank & e-wallet parsers | Completed | CIMB, Maybank, BSN, TNG, GrabPay, Boost, ShopeePay and fixture regression suite |
 | A4 - LLM-assisted fallback | Completed | Groq Llama 3 API integration, Opt-in architecture, `SciuroParserPipeline` |
-| A5 - Financial taxonomy & data model | Not Started | |
+| A5 - Financial taxonomy & data model | Completed | Ledger SQLDelight schemas (Account, Category, TransactionRecord) and Koin Repositories |
 | A6 - Actor-critic triage & categorization | Not Started | |
 | B1 - Recurring obligation & debt auto-detection | Not Started | |
 | B2 - Transfer detection | Not Started | |

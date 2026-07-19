@@ -1,0 +1,15 @@
+CREATE TABLE category (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    icon TEXT,
+    color TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+insertCategory:
+INSERT INTO category(id, name, icon, color, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
+selectAllCategories:
+SELECT * FROM category;

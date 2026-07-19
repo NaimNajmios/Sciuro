@@ -8,7 +8,9 @@ enum class EntityType {
     CASH_ADJUSTMENT, 
     BUDGET, 
     INVESTMENT_ACCOUNT, 
-    EWALLET_ACCOUNT
+    EWALLET_ACCOUNT,
+    ACCOUNT,
+    CATEGORY
 }
 
 enum class AuditAction {

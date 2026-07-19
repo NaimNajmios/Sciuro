@@ -1,0 +1,24 @@
+CREATE TABLE account (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'MYR',
+    balance REAL NOT NULL DEFAULT 0.0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+insertAccount:
+INSERT INTO account(id, name, type, currency, balance, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+updateBalance:
+UPDATE account
+SET balance = balance + ?, updated_at = ?
+WHERE id = ?;
+
+selectAllAccounts:
+SELECT * FROM account;
+
+selectAccountById:
+SELECT * FROM account WHERE id = ?;
