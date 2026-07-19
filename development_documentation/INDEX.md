@@ -3,8 +3,8 @@
 ## Phase Status
 | Phase | Status | Summary |
 |---|---|---|
-| A0 - Engineering foundations | In Progress | Module structure, Koin DI, detekt/ktlint, CI scaffold, SQLDelight + migrations, `development_documentation/` scaffold, test-tier strategy |
-| A1 - Audit Log core | Not Started | |
+| A0 - Engineering foundations | Completed | Module structure, Koin DI, detekt/ktlint, CI scaffold, SQLDelight + migrations, `development_documentation/` scaffold, test-tier strategy |
+| A1 - Audit Log core | In Progress | AuditLog entity, SQLDelight schema, AuditRepository, and Repository-wrapper pattern |
 | A2 - Ingestion framework | Not Started | |
 | A3 - Bank & e-wallet parsers | Not Started | |
 | A4 - LLM-assisted fallback | Not Started | |
