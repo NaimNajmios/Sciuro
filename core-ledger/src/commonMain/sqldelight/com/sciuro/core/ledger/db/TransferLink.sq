@@ -1,0 +1,17 @@
+CREATE TABLE transfer_link (
+    id TEXT NOT NULL PRIMARY KEY,
+    outflow_transaction_id TEXT NOT NULL,
+    inflow_transaction_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY(outflow_transaction_id) REFERENCES transaction_record(id),
+    FOREIGN KEY(inflow_transaction_id) REFERENCES transaction_record(id)
+);
+
+insertTransferLink:
+INSERT INTO transfer_link(id, outflow_transaction_id, inflow_transaction_id, amount, created_at)
+VALUES (?, ?, ?, ?, ?);
+
+selectTransferLinkByTransactionId:
+SELECT * FROM transfer_link
+WHERE outflow_transaction_id = :transactionId OR inflow_transaction_id = :transactionId;

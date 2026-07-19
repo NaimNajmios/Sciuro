@@ -11,7 +11,7 @@
 | A5 - Financial taxonomy & data model | Completed | Ledger SQLDelight schemas (Account, Category, TransactionRecord) and Koin Repositories |
 | A6 - Actor-critic triage & categorization | Completed | `SciuroIngestionOrchestrator`, basic static heuristic engine, inbox routing |
 | B1 - Recurring obligation & debt auto-detection | Completed | `ObligationDetectionEngine` to scan ledger for recurring merchant patterns |
-| B2 - Transfer detection | Not Started | |
+| B2 - Transfer detection | Completed | `TransferDetectionEngine` links dual INFLOW/OUTFLOW notifications |
 | B3 - Balance & reconciliation engine | Not Started | |
 | B4 - Manual Review Inbox | Not Started | |
 | B5 - Debt Ledger module | Not Started | |
