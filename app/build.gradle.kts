@@ -76,11 +76,17 @@ dependencies {
     implementation(project(":feature-budgets"))
     
     // Core Modules
+    implementation(project(":core-ingestion"))
+    implementation(project(":core-parsing"))
+    implementation(project(":core-llm"))
+    implementation(project(":core-classifier"))
     implementation(project(":core-ledger"))
     implementation(project(":core-audit"))
     implementation(project(":core-budget"))
     implementation(project(":core-debt"))
     implementation(project(":core-investment"))
+    implementation(project(":core-obligations"))
+    implementation(project(":core-transfer"))
     implementation(libs.koin.androidx.compose)
     implementation(libs.koin.android)
 

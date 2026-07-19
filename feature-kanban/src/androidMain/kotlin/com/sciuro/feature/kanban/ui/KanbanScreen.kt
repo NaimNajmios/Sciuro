@@ -53,11 +53,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     if (filteredTasks.isEmpty()) {
-                        Text(
-                            text = "No tasks in this list.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(16.dp)
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(
+                            message = "No tasks in this list."
                         )
                     } else {
                         filteredTasks.forEach { task ->

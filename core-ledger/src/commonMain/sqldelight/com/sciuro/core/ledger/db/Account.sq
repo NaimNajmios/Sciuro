@@ -4,13 +4,14 @@ CREATE TABLE account (
     type TEXT NOT NULL,
     currency TEXT NOT NULL DEFAULT 'MYR',
     balance REAL NOT NULL DEFAULT 0.0,
+    associated_package TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
 );
 
 insertAccount:
-INSERT INTO account(id, name, type, currency, balance, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT INTO account(id, name, type, currency, balance, associated_package, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 updateBalance:
 UPDATE account
@@ -22,3 +23,11 @@ SELECT * FROM account;
 
 selectAccountById:
 SELECT * FROM account WHERE id = ?;
+
+updateAccount:
+UPDATE account
+SET name = ?, type = ?, balance = ?, associated_package = ?, updated_at = ?
+WHERE id = ?;
+
+deleteAccount:
+DELETE FROM account WHERE id = ?;

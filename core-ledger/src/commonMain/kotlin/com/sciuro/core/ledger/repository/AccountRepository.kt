@@ -34,6 +34,7 @@ class AccountRepository(
                 type = account.type,
                 currency = account.currency,
                 balance = account.balance,
+                associated_package = account.associatedPackage,
                 created_at = now,
                 updated_at = now
             )
@@ -55,6 +56,39 @@ class AccountRepository(
                 updated_at = currentTimeMillis(),
                 id = accountId
             )
+        }
+    }
+    
+    suspend fun updateAccount(account: Account) {
+        withAudit(
+            entityType = EntityType.ACCOUNT,
+            entityId = account.id,
+            action = AuditAction.UPDATE,
+            beforeState = "Update Account",
+            afterState = account.toString(),
+            source = AuditSource.USER_MANUAL
+        ) {
+            database.accountQueries.updateAccount(
+                name = account.name,
+                type = account.type,
+                balance = account.balance,
+                associated_package = account.associatedPackage,
+                updated_at = currentTimeMillis(),
+                id = account.id
+            )
+        }
+    }
+    
+    suspend fun deleteAccount(accountId: String) {
+        withAudit(
+            entityType = EntityType.ACCOUNT,
+            entityId = accountId,
+            action = AuditAction.DELETE,
+            beforeState = "Delete Account",
+            afterState = null,
+            source = AuditSource.USER_MANUAL
+        ) {
+            database.accountQueries.deleteAccount(accountId)
         }
     }
     
