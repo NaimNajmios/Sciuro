@@ -22,4 +22,4 @@
 | C3 - Drilldown screens | Completed | Scaffolded `feature-budgets` UI and assembled app Navigation |
 | D1 - Security hardening | Completed | Disabled Android auto-backup for the database domains |
 | D2 - Full test pass & dogfood | Completed | Connected UI ViewModels to real SQLDelight reactive flows |
-| D3 - Personal deployment | Not Started | |
+| D3 - Personal deployment | Completed | Sideloaded APK built with multiple architecture support |
