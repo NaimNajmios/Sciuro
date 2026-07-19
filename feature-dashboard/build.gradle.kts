@@ -16,6 +16,23 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(libs.koin.core)
+                implementation(project(":core-ledger"))
+                implementation(project(":core-budget"))
+                implementation(project(":core-debt"))
+                implementation(project(":core-investment"))
+            }
+        }
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.androidx.core.ktx)
+                implementation(libs.androidx.lifecycle.runtime.ktx)
+                implementation(libs.androidx.activity.compose)
+                implementation(project.dependencies.platform(libs.androidx.compose.bom))
+                implementation(libs.androidx.ui)
+                implementation(libs.androidx.ui.graphics)
+                implementation(libs.androidx.ui.tooling.preview)
+                implementation(libs.androidx.material3)
+                implementation(libs.koin.androidx.compose)
             }
         }
     }
@@ -26,5 +43,11 @@ android {
     compileSdk = 34
     defaultConfig {
         minSdk = 24
+    }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
     }
 }
