@@ -10,7 +10,7 @@
 | A4 - LLM-assisted fallback | Completed | Groq Llama 3 API integration, Opt-in architecture, `SciuroParserPipeline` |
 | A5 - Financial taxonomy & data model | Completed | Ledger SQLDelight schemas (Account, Category, TransactionRecord) and Koin Repositories |
 | A6 - Actor-critic triage & categorization | Completed | `SciuroIngestionOrchestrator`, basic static heuristic engine, inbox routing |
-| B1 - Recurring obligation & debt auto-detection | Not Started | |
+| B1 - Recurring obligation & debt auto-detection | Completed | `ObligationDetectionEngine` to scan ledger for recurring merchant patterns |
 | B2 - Transfer detection | Not Started | |
 | B3 - Balance & reconciliation engine | Not Started | |
 | B4 - Manual Review Inbox | Not Started | |
