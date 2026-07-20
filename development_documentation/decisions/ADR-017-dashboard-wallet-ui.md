@@ -14,3 +14,9 @@ As the primary entry point for Sciuro, the Home Dashboard and Wallet screens mus
 ## Consequences
 - The application now has a structural UI layer to present financial standing.
 - In the integration phase, we simply need to swap the ViewModel `MutableStateFlow` assignments with reactive `Flow` outputs from `core-ledger` repositories.
+
+## Update (Phase C Finalization)
+- Replaced mock data with real flows driven by `TransactionRepository` and `AccountRepository`.
+- Refactored `DashboardScreen` to use `SwipeToDismissBox` for transaction inbox triage, paired with account selection prompts to enforce strict ledger matching.
+- Upgraded `WalletScreen` with Compose `HorizontalPager`, eliminating static list constraints and permitting dynamic rendering of transactions tailored to actively swiped accounts.
+- Resolved IME keyboard interference using `adjustResize` and strict `imePadding()` modifiers on BottomSheets.

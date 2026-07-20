@@ -8,4 +8,13 @@ All notable changes to this project will be documented in this file.
 - Soft-deletion mechanics for `Account` and `Investment` via new `status` column.
 - Undeletable constraint for the core system "Personal Wallet" utilizing a new `is_system` flag.
 - Safe `archiveAccount` action in the Wallet UI for non-system accounts.
+- Keyboard overlay fixes using `adjustResize` and `Modifier.imePadding()` across `DashboardScreen`, `WalletScreen`, and `OnboardingScreen`.
+- Transaction triage mechanics (Approve/Reject) on Dashboard with `SwipeToDismiss` and account selection prompts.
+- `HorizontalPager` hero section on the Wallet Screen, enabling dynamic filtering of recent transactions based on the currently swiped account.
+- Direct "Reject" action button alongside "Approve" for Kanban task review.
+
+### Fixed
+- SQL database bug where `transaction_record.account_id` was not saved during transaction approval.
+
+### Changed
 - Initial project scaffold and documentation structure setup.
