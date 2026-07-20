@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.feature.wallet.viewmodel.AccountDetailViewModel
+import kotlinx.coroutines.launch
+import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
+import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +29,12 @@ fun AccountDetailScreen(
     viewModel: AccountDetailViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+    
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
+    var showArchiveDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     
     // Automatically go back if account is deleted and state updates to null
     LaunchedEffect(state.account) {
@@ -58,8 +67,7 @@ fun AccountDetailScreen(
                                 text = { Text("Archive Account") },
                                 onClick = {
                                     expanded = false
-                                    viewModel.archiveAccount()
-                                    onNavigateBack()
+                                    showArchiveDialog = true
                                 }
                             )
                             DropdownMenuItem(
@@ -67,8 +75,7 @@ fun AccountDetailScreen(
                                 leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                                 onClick = {
                                     expanded = false
-                                    viewModel.deleteAccount()
-                                    onNavigateBack()
+                                    showDeleteDialog = true
                                 }
                             )
                         }
@@ -165,5 +172,37 @@ fun AccountDetailScreen(
                 }
             }
         }
+    }
+
+    if (showArchiveDialog) {
+        SciuroConfirmationDialog(
+            title = "Archive Account",
+            message = "Are you sure you want to archive this account? It will be hidden from the main wallet views but historical transactions will be kept.",
+            confirmText = "Archive",
+            isDestructive = false,
+            onConfirm = {
+                viewModel.archiveAccount()
+                showArchiveDialog = false
+                coroutineScope.launch { snackbarHostState.showSnackbar("Account archived") }
+                onNavigateBack()
+            },
+            onDismiss = { showArchiveDialog = false }
+        )
+    }
+
+    if (showDeleteDialog) {
+        SciuroConfirmationDialog(
+            title = "Delete Account",
+            message = "Are you sure you want to permanently delete this account? This action cannot be undone.",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.deleteAccount()
+                showDeleteDialog = false
+                coroutineScope.launch { snackbarHostState.showSnackbar("Account deleted") }
+                onNavigateBack()
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
     }
 }

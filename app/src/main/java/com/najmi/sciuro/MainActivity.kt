@@ -22,6 +22,7 @@ import com.sciuro.feature.dashboard.ui.DashboardScreen
 import com.sciuro.feature.wallet.ui.WalletScreen
 import com.sciuro.feature.kanban.ui.KanbanScreen
 import com.sciuro.feature.budgets.ui.BudgetsScreen
+import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
@@ -76,6 +77,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SciuroMainScreen() {
     val navController = rememberNavController()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     val items = listOf(
         Pair("dashboard", Icons.Filled.Home),
@@ -140,9 +142,11 @@ fun SciuroMainScreen() {
         return
     }
     
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
+    CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            bottomBar = {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
@@ -188,5 +192,6 @@ fun SciuroMainScreen() {
             composable("kanban") { KanbanScreen() }
             composable("settings") { SettingsScreen() }
         }
+    }
     }
 }

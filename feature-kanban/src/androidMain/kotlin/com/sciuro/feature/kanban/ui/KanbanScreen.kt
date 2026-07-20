@@ -22,6 +22,9 @@ import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import com.sciuro.feature.kanban.viewmodel.KanbanViewModel
 import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.launch
+import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
+import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -41,6 +44,10 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     
     // In a real app, calculate actual totals
     val activeDebt = 5000.00
+    
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
+    var taskToReject by remember { mutableStateOf<KanbanTask?>(null) }
     
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
@@ -156,7 +163,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                     ) {
                                         OutlinedButton(
                                             onClick = { 
-                                                viewModel.updateTaskStatus(task.id, TaskStatus.REJECTED, null)
+                                                taskToReject = task
                                             },
                                             modifier = Modifier.weight(1f),
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -167,6 +174,9 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                             text = "Approve",
                                             onClick = { 
                                                 viewModel.updateTaskStatus(task.id, TaskStatus.DONE, selectedAccount?.id)
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar("Task Approved")
+                                                }
                                             },
                                             enabled = selectedAccount != null,
                                             modifier = Modifier.weight(1f)
@@ -178,6 +188,23 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 }
             }
         }
+    }
+
+    taskToReject?.let { task ->
+        SciuroConfirmationDialog(
+            title = "Reject Task",
+            message = "Are you sure you want to reject '${task.title}'? It will be removed from the active workflow.",
+            confirmText = "Reject",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.updateTaskStatus(task.id, TaskStatus.REJECTED, null)
+                taskToReject = null
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Task Rejected")
+                }
+            },
+            onDismiss = { taskToReject = null }
+        )
     }
 }
 

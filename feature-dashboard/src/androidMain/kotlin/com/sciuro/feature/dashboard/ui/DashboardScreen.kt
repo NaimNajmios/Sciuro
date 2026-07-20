@@ -21,6 +21,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
+import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
@@ -55,6 +58,10 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     var editTxAccountId by remember { mutableStateOf<String?>(null) }
     var editTxDirection by remember { mutableStateOf("OUTFLOW") }
     var editTxCategoryId by remember { mutableStateOf<String?>(null) }
+    
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
     
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -197,6 +204,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                                     }
                                                     SwipeToDismissBoxValue.EndToStart -> {
                                                         viewModel.rejectTransaction(tx.id)
+                                                        coroutineScope.launch { snackbarHostState.showSnackbar("Transaction rejected") }
                                                         true
                                                     }
                                                     else -> false
@@ -305,6 +313,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     onClick = {
                         viewModel.approveTransaction(pendingApprovalTxId!!, selectedAccountIdForApproval)
                         pendingApprovalTxId = null
+                        coroutineScope.launch { snackbarHostState.showSnackbar("Transaction approved") }
                     },
                     enabled = selectedAccountIdForApproval != null
                 ) {
@@ -338,6 +347,9 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     categoryId = categoryId ?: (if (direction == "OUTFLOW") "cat_exp_9" else "cat_inc_6")
                 )
                 showAddTransactionDialog = false
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Transaction saved successfully")
+                }
             }
         )
     }
@@ -414,8 +426,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 ) {
                     OutlinedButton(
                         onClick = {
-                            viewModel.deleteTransaction(editingTxId!!)
-                            showEditTransactionDialog = false
+                            showDeleteConfirmation = true
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -435,12 +446,33 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                 accountId = editTxAccountId
                             )
                             showEditTransactionDialog = false
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Transaction updated")
+                            }
                         },
                         modifier = Modifier.weight(1f),
                         enabled = editTxAmount.isNotBlank() && editTxAccountId != null
                     )
                 }
         }
+    }
+
+    if (showDeleteConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Delete Transaction",
+            message = "Are you sure you want to delete this transaction? This action cannot be undone.",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.deleteTransaction(editingTxId!!)
+                showDeleteConfirmation = false
+                showEditTransactionDialog = false
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Transaction deleted")
+                }
+            },
+            onDismiss = { showDeleteConfirmation = false }
+        )
     }
 }
 

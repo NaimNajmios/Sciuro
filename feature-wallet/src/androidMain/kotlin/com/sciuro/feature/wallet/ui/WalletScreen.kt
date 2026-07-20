@@ -40,6 +40,9 @@ import androidx.core.graphics.drawable.toBitmap
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.feature.wallet.viewmodel.WalletViewModel
+import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
+import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
@@ -58,6 +61,11 @@ fun WalletScreen(
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val investments by viewModel.investments.collectAsState()
+    
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    var showDeleteInvestmentDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     
     var selectedAssetType by rememberSaveable { mutableStateOf("Liquid Cash") }
@@ -469,8 +477,7 @@ fun WalletScreen(
                     if (editingAccountId != null) {
                         OutlinedButton(
                             onClick = {
-                                viewModel.deleteAccount(editingAccountId!!)
-                                showAddAccountDialog = false
+                                showDeleteAccountDialog = true
                             },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -499,6 +506,9 @@ fun WalletScreen(
                                 )
                             }
                             showAddAccountDialog = false
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(if (editingAccountId == null) "Account created" else "Account updated")
+                            }
                         },
                         modifier = Modifier.weight(if (editingAccountId != null) 1f else 2f),
                         enabled = newAccountName.isNotBlank()
@@ -649,8 +659,7 @@ fun WalletScreen(
                     if (editingInvestmentId != null) {
                         OutlinedButton(
                             onClick = {
-                                viewModel.deleteInvestment(editingInvestmentId!!)
-                                showAddInvestmentDialog = false
+                                showDeleteInvestmentDialog = true
                             },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -686,6 +695,9 @@ fun WalletScreen(
                                 )
                             }
                             showAddInvestmentDialog = false
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(if (editingInvestmentId == null) "Investment created" else "Investment updated")
+                            }
                         },
                         modifier = Modifier.weight(if (editingInvestmentId != null) 1f else 2f),
                         enabled = (newAssetType == "Gold" || newAssetSymbol.isNotBlank()) && newAssetName.isNotBlank() && newUnitsHeld.isNotBlank() && newAvgBuyPrice.isNotBlank()
@@ -812,5 +824,37 @@ fun WalletScreen(
                 }
             }
         }
+    }
+
+    if (showDeleteAccountDialog) {
+        SciuroConfirmationDialog(
+            title = "Delete Account",
+            message = "Are you sure you want to delete this account? This will also remove any related transactions.",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.deleteAccount(editingAccountId!!)
+                showDeleteAccountDialog = false
+                showAddAccountDialog = false
+                coroutineScope.launch { snackbarHostState.showSnackbar("Account deleted") }
+            },
+            onDismiss = { showDeleteAccountDialog = false }
+        )
+    }
+
+    if (showDeleteInvestmentDialog) {
+        SciuroConfirmationDialog(
+            title = "Delete Investment",
+            message = "Are you sure you want to delete this investment asset? This action cannot be undone.",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.deleteInvestment(editingInvestmentId!!)
+                showDeleteInvestmentDialog = false
+                showAddInvestmentDialog = false
+                coroutineScope.launch { snackbarHostState.showSnackbar("Investment deleted") }
+            },
+            onDismiss = { showDeleteInvestmentDialog = false }
+        )
     }
 }
