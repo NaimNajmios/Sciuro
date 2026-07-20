@@ -36,12 +36,21 @@ class LlmFallbackParser(
 
         val prompt = """
             Extract the financial transaction details from the following notification text.
+            You must accurately capture the entity on the other side of the transaction (the sender if money is received, or the receiver if money is spent).
+            Because this system uses a single "merchant" text field to describe that entity, you must format the "merchant" field as a comprehensive label.
+            
+            Rules for the "merchant" field:
+            1. Identify if the transaction is "Personal" (e.g., transferring money to a friend's bank account, DuitNow to an individual) or "Business" (e.g., retail store, restaurant, Shopee, corporate payroll).
+            2. Identify the exact name of the sender (if INFLOW) or receiver (if OUTFLOW) from the text.
+            3. Combine them into this format: "EntityName (Type)". Examples: "Ahmad Ali (Personal)", "Starbucks Coffee (Business)", "Salary Deposit (Business)".
+            4. If the name is completely missing, default to "Unknown Entity (Personal/Business)".
+            
             Respond strictly in valid JSON format matching this schema:
             {
-                "amount": double,
-                "direction": "INFLOW" or "OUTFLOW",
-                "merchant": "string or null",
-                "accountOrChannel": "string or null"
+                "amount": double, // The exact numerical amount
+                "direction": "INFLOW" or "OUTFLOW", // INFLOW if money is received, OUTFLOW if money is sent/spent
+                "merchant": "string", // The formatted label e.g. "John Doe (Personal)"
+                "accountOrChannel": "string or null" // The account name/number or channel if visible
             }
             
             Title: ${event.title}

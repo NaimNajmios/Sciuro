@@ -35,6 +35,13 @@ class SciuroNotificationService : NotificationListenerService() {
 
         if (title.isBlank() && text.isBlank()) return
 
+        // Heuristic Pre-Filtering for Aggregators (Email)
+        if (packageName in IngestionConfig.aggregatorPackages) {
+            if (!isFinancialAggregatorNotification(title, text)) {
+                return // Drop it before it hits the pipeline
+            }
+        }
+
         val rawEvent = RawEvent(
             id = UUID.randomUUID().toString(),
             sourceType = SourceType.NOTIFICATION,
@@ -47,5 +54,25 @@ class SciuroNotificationService : NotificationListenerService() {
         serviceScope.launch {
             notificationSourceAdapter.emitNotification(rawEvent)
         }
+    }
+
+    /**
+     * Very lightweight heuristic to drop obvious spam or non-financial emails.
+     * We look for common keywords found in banking email subjects/titles.
+     */
+    private fun isFinancialAggregatorNotification(title: String, text: String): Boolean {
+        val lowerTitle = title.lowercase()
+        val lowerText = text.lowercase()
+
+        val hasBankingTitle = lowerTitle.contains("m2u") || 
+                              lowerTitle.contains("cimb notification") ||
+                              lowerTitle.contains("transaction") ||
+                              lowerTitle.contains("funds received") ||
+                              lowerTitle.contains("transfer") ||
+                              lowerTitle.contains("receipt")
+                              
+        val hasCurrencySymbol = lowerText.contains("rm")
+
+        return hasBankingTitle || hasCurrencySymbol
     }
 }
