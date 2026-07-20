@@ -38,6 +38,11 @@ UPDATE transaction_record
 SET account_id = ?, category_id = ?, updated_at = ?
 WHERE id = ?;
 
+updateTransactionDetails:
+UPDATE transaction_record
+SET amount = ?, merchant = ?, category_id = ?, account_id = ?, updated_at = ?
+WHERE id = ?;
+
 selectUnreviewedTransactions:
 SELECT * FROM transaction_record WHERE is_reviewed = 0 ORDER BY timestamp DESC;
 

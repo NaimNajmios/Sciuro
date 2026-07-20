@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Toll
 import androidx.compose.material3.*
+import androidx.compose.material3.FilterChip
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -77,6 +79,15 @@ fun WalletScreen(
     var newUnitsHeld by rememberSaveable { mutableStateOf("") }
     var newAvgBuyPrice by rememberSaveable { mutableStateOf("") }
     var newAssociatedAccountId by rememberSaveable { mutableStateOf("") }
+    
+    // Transaction Edit State
+    var showEditTransactionDialog by rememberSaveable { mutableStateOf(false) }
+    var editingTxId by rememberSaveable { mutableStateOf<String?>(null) }
+    var editTxAmount by rememberSaveable { mutableStateOf("") }
+    var editTxMerchant by rememberSaveable { mutableStateOf("") }
+    var editTxAccountId by rememberSaveable { mutableStateOf<String?>(null) }
+    var editTxDirection by rememberSaveable { mutableStateOf("OUTFLOW") }
+    var editTxCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
     
     var installedApps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
 
@@ -266,7 +277,15 @@ fun WalletScreen(
                             } else {
                                 accountTx.take(20).forEach { tx ->
                                     Card(
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier.fillMaxWidth().clickable {
+                                            editingTxId = tx.id
+                                            editTxAmount = tx.amount.toString()
+                                            editTxMerchant = tx.merchant ?: ""
+                                            editTxAccountId = tx.account_id
+                                            editTxDirection = tx.direction
+                                            editTxCategoryId = tx.category_id
+                                            showEditTransactionDialog = true
+                                        },
                                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                                     ) {
                                         Row(
@@ -670,6 +689,123 @@ fun WalletScreen(
                         },
                         modifier = Modifier.weight(if (editingInvestmentId != null) 1f else 2f),
                         enabled = (newAssetType == "Gold" || newAssetSymbol.isNotBlank()) && newAssetName.isNotBlank() && newUnitsHeld.isNotBlank() && newAvgBuyPrice.isNotBlank()
+                    ) {
+                        Text("Save")
+                    }
+                }
+            }
+        }
+    }
+
+    if (showEditTransactionDialog) {
+        ModalBottomSheet(
+            onDismissRequest = { showEditTransactionDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
+                
+                OutlinedTextField(
+                    value = editTxAmount,
+                    onValueChange = { editTxAmount = it },
+                    label = { Text("Amount (RM)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                OutlinedTextField(
+                    value = editTxMerchant,
+                    onValueChange = { editTxMerchant = it },
+                    label = { Text("Merchant / Note") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                var accountExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = accountExpanded,
+                    onExpandedChange = { accountExpanded = it }
+                ) {
+                    val selAcc = accounts.find { it.id == editTxAccountId }
+                    OutlinedTextField(
+                        value = selAcc?.name ?: "Select Account",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Wallet Account") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false }
+                    ) {
+                        accounts.forEach { acc ->
+                            DropdownMenuItem(
+                                text = { Text(acc.name) },
+                                onClick = {
+                                    editTxAccountId = acc.id
+                                    accountExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                Text("Category", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val expenseCats by viewModel.expenseCategories.collectAsState()
+                val incomeCats by viewModel.incomeCategories.collectAsState()
+                val relevantCategories = if (editTxDirection == "OUTFLOW") expenseCats else incomeCats
+                
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(relevantCategories) { cat ->
+                        FilterChip(
+                            selected = editTxCategoryId == cat.id,
+                            onClick = { editTxCategoryId = cat.id },
+                            label = { Text(cat.name) }
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.deleteTransaction(editingTxId!!)
+                            showEditTransactionDialog = false
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Delete")
+                    }
+                    
+                    Button(
+                        onClick = {
+                            val amt = editTxAmount.toDoubleOrNull() ?: 0.0
+                            viewModel.editTransaction(
+                                transactionId = editingTxId!!,
+                                amount = amt,
+                                merchant = editTxMerchant,
+                                categoryId = editTxCategoryId,
+                                accountId = editTxAccountId
+                            )
+                            showEditTransactionDialog = false
+                        },
+                        modifier = Modifier.weight(1f),
+                        enabled = editTxAmount.isNotBlank() && editTxAccountId != null
                     ) {
                         Text("Save")
                     }

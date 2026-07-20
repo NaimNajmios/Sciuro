@@ -2,7 +2,10 @@ package com.sciuro.feature.dashboard.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material3.FilterChip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -14,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -33,9 +37,19 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     var newDirection by remember { mutableStateOf("OUTFLOW") }
     var newMerchant by remember { mutableStateOf("") }
     var newAccountId by remember { mutableStateOf<String?>(null) }
+    var newCategoryId by remember { mutableStateOf<String?>(null) }
     
     var pendingApprovalTxId by remember { mutableStateOf<String?>(null) }
     var selectedAccountIdForApproval by remember { mutableStateOf<String?>(null) }
+    
+    // Edit Transaction State
+    var showEditTransactionDialog by remember { mutableStateOf(false) }
+    var editingTxId by remember { mutableStateOf<String?>(null) }
+    var editTxAmount by remember { mutableStateOf("") }
+    var editTxMerchant by remember { mutableStateOf("") }
+    var editTxAccountId by remember { mutableStateOf<String?>(null) }
+    var editTxDirection by remember { mutableStateOf("OUTFLOW") }
+    var editTxCategoryId by remember { mutableStateOf<String?>(null) }
     
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -121,7 +135,15 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                     @Composable
                                     fun TransactionCard() {
                                         Card(
-                                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable {
+                                                editingTxId = tx.id
+                                                editTxAmount = tx.amount.toString()
+                                                editTxMerchant = tx.merchant ?: ""
+                                                editTxAccountId = tx.account_id
+                                                editTxDirection = tx.direction
+                                                editTxCategoryId = tx.category_id
+                                                showEditTransactionDialog = true
+                                            },
                                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                                         ) {
                                             Row(
@@ -390,6 +412,21 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     }
                 }
                 
+                Text("Category", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val relevantCategories = if (newDirection == "OUTFLOW") state.expenseCategories else state.incomeCategories
+                    items(relevantCategories) { cat ->
+                        FilterChip(
+                            selected = newCategoryId == cat.id,
+                            onClick = { newCategoryId = cat.id },
+                            label = { Text(cat.name) }
+                        )
+                    }
+                }
+                
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Button(
@@ -401,7 +438,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                 direction = newDirection,
                                 merchant = newMerchant,
                                 accountId = newAccountId,
-                                categoryId = null // We'll leave category mapping out of manual entry for now or add it later
+                                categoryId = newCategoryId ?: (if (newDirection == "OUTFLOW") "cat_exp_9" else "cat_inc_6") // Default to Others
                             )
                             showAddTransactionDialog = false
                         }
@@ -410,6 +447,120 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     enabled = newAmount.isNotBlank() && newMerchant.isNotBlank()
                 ) {
                     Text("Save Transaction")
+                }
+            }
+        }
+    }
+
+    if (showEditTransactionDialog) {
+        ModalBottomSheet(
+            onDismissRequest = { showEditTransactionDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
+                
+                OutlinedTextField(
+                    value = editTxAmount,
+                    onValueChange = { editTxAmount = it },
+                    label = { Text("Amount (RM)") },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                OutlinedTextField(
+                    value = editTxMerchant,
+                    onValueChange = { editTxMerchant = it },
+                    label = { Text("Merchant / Note") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                var accountExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = accountExpanded,
+                    onExpandedChange = { accountExpanded = it }
+                ) {
+                    val selAcc = state.accounts.find { it.id == editTxAccountId }
+                    OutlinedTextField(
+                        value = selAcc?.name ?: "Select Account",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Wallet Account") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false }
+                    ) {
+                        state.accounts.forEach { acc ->
+                            DropdownMenuItem(
+                                text = { Text(acc.name) },
+                                onClick = {
+                                    editTxAccountId = acc.id
+                                    accountExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                Text("Category", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val relevantCategories = if (editTxDirection == "OUTFLOW") state.expenseCategories else state.incomeCategories
+                    items(relevantCategories) { cat ->
+                        FilterChip(
+                            selected = editTxCategoryId == cat.id,
+                            onClick = { editTxCategoryId = cat.id },
+                            label = { Text(cat.name) }
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.deleteTransaction(editingTxId!!)
+                            showEditTransactionDialog = false
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Delete")
+                    }
+                    
+                    Button(
+                        onClick = {
+                            val amt = editTxAmount.toDoubleOrNull() ?: 0.0
+                            viewModel.editTransaction(
+                                transactionId = editingTxId!!,
+                                amount = amt,
+                                merchant = editTxMerchant,
+                                categoryId = editTxCategoryId,
+                                accountId = editTxAccountId
+                            )
+                            showEditTransactionDialog = false
+                        },
+                        modifier = Modifier.weight(1f),
+                        enabled = editTxAmount.isNotBlank() && editTxAccountId != null
+                    ) {
+                        Text("Save")
+                    }
                 }
             }
         }

@@ -17,11 +17,14 @@ import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.investment.repository.InvestmentRepository
 import com.sciuro.core.investment.model.Investment
 
+import com.sciuro.core.ledger.repository.CategoryRepository
+
 class WalletViewModel(
     private val accountRepository: AccountRepository,
     private val reconciliationEngine: ReconciliationEngine,
     private val transactionRepository: TransactionRepository,
-    private val investmentRepository: InvestmentRepository
+    private val investmentRepository: InvestmentRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
     
     val accounts: StateFlow<List<WalletAccount>> = accountRepository.observeAccounts()
@@ -51,6 +54,20 @@ class WalletViewModel(
         )
         
     val allTransactions: StateFlow<List<com.sciuro.core.ledger.db.Transaction_record>> = transactionRepository.observeAllTransactions()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+        
+    val expenseCategories: StateFlow<List<com.sciuro.core.ledger.model.Category>> = categoryRepository.observeCategoriesByType("OUTFLOW")
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val incomeCategories: StateFlow<List<com.sciuro.core.ledger.model.Category>> = categoryRepository.observeCategoriesByType("INFLOW")
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -108,6 +125,24 @@ class WalletViewModel(
                 ),
                 source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL
             )
+        }
+    }
+    
+    fun editTransaction(transactionId: String, amount: Double, merchant: String, categoryId: String?, accountId: String?) {
+        viewModelScope.launch {
+            transactionRepository.editTransaction(
+                transactionId = transactionId,
+                newAmount = amount,
+                newMerchant = merchant,
+                newCategoryId = categoryId,
+                newAccountId = accountId
+            )
+        }
+    }
+    
+    fun deleteTransaction(transactionId: String) {
+        viewModelScope.launch {
+            transactionRepository.deleteTransaction(transactionId)
         }
     }
     

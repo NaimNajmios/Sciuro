@@ -14,6 +14,7 @@ data class Account(
 data class Category(
     val id: String,
     val name: String,
+    val type: String,
     val icon: String? = null,
     val color: String? = null
 )

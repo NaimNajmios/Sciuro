@@ -132,6 +132,67 @@ class TransactionRepository(
         }
     }
 
+    suspend fun deleteTransaction(transactionId: String) {
+        val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+        
+        withAudit(
+            entityType = EntityType.TRANSACTION,
+            entityId = transactionId,
+            action = AuditAction.DELETE,
+            beforeState = oldTx.toString(),
+            afterState = null,
+            source = AuditSource.USER_MANUAL
+        ) {
+            if (oldTx.account_id != null) {
+                val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
+                accountRepository.updateBalance(oldTx.account_id, oldBalanceDelta)
+            }
+            database.transactionRecordQueries.deleteTransaction(transactionId)
+        }
+    }
+
+    suspend fun editTransaction(
+        transactionId: String,
+        newAmount: Double,
+        newMerchant: String,
+        newCategoryId: String?,
+        newAccountId: String?
+    ) {
+        val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+        
+        withAudit(
+            entityType = EntityType.TRANSACTION,
+            entityId = transactionId,
+            action = AuditAction.UPDATE,
+            beforeState = oldTx.toString(),
+            afterState = "amount=$newAmount, merchant=$newMerchant, category=$newCategoryId, account=$newAccountId",
+            source = AuditSource.USER_MANUAL
+        ) {
+            val now = currentTimeMillis()
+            
+            // Revert old balance
+            if (oldTx.account_id != null) {
+                val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
+                accountRepository.updateBalance(oldTx.account_id, oldBalanceDelta)
+            }
+            
+            // Apply new balance
+            if (newAccountId != null) {
+                val newBalanceDelta = if (oldTx.direction == "INFLOW") newAmount else -newAmount
+                accountRepository.updateBalance(newAccountId, newBalanceDelta)
+            }
+            
+            database.transactionRecordQueries.updateTransactionDetails(
+                amount = newAmount,
+                merchant = newMerchant,
+                category_id = newCategoryId,
+                account_id = newAccountId,
+                updated_at = now,
+                id = transactionId
+            )
+        }
+    }
+
     fun observeUnreviewedTransactions(): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
         // We use an arbitrary dispatcher since we might not have IO in commonMain
         return database.transactionRecordQueries.selectUnreviewedTransactions()

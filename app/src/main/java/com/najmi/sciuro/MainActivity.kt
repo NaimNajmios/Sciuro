@@ -27,15 +27,49 @@ import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.filled.Settings
 
+import android.os.Build
+import android.Manifest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.najmi.sciuro.worker.ReviewReminderWorker
+import java.util.concurrent.TimeUnit
+
 class MainActivity : ComponentActivity() {
+    
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        // Permission handled
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        
+        setupWorkers()
+
         setContent {
             SciuroTheme {
                 SciuroMainScreen()
             }
         }
+    }
+    
+    private fun setupWorkers() {
+        val reminderWork = PeriodicWorkRequestBuilder<ReviewReminderWorker>(30, TimeUnit.MINUTES)
+            .build()
+            
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "ReviewReminder",
+            ExistingPeriodicWorkPolicy.KEEP,
+            reminderWork
+        )
     }
 }
 
