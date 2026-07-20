@@ -23,3 +23,4 @@
 | D1 - Security hardening | Completed | Disabled Android auto-backup for the database domains |
 | D2 - Full test pass & dogfood | Completed | Connected UI ViewModels to real SQLDelight reactive flows |
 | D3 - Personal deployment | Completed | Sideloaded APK built with multiple architecture support |
+| D4 - Initial Setup & Onboarding | Completed | Compose navigation for initial Personal Wallet setup and account soft-deletion schemas |

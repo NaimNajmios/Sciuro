@@ -10,6 +10,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 * **Audit-First Architecture:** Every data mutation passes through a unified Audit Log, ensuring complete traceability.
 * **Kanban Workflow:** A unified task management and issue tracking system deeply integrated into the development process.
 * **Transfer Detection:** Intelligent identification of cross-account transfers to prevent duplicate ledger entries.
+* **Guided Onboarding:** Initial setup flow securely initializes system ledgers with physical cash on hand.
 
 ## Project Status
 
