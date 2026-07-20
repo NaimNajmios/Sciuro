@@ -23,6 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.FastTransactionSheet
+import com.najmi.sciuro.core.ui.components.FastTxOption
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -315,172 +320,46 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     }
     
     if (showAddTransactionDialog) {
-        ModalBottomSheet(
+        val accountOptions = state.accounts.map { FastTxOption(it.id, it.name) }
+        val expCatOptions = state.expenseCategories.map { FastTxOption(it.id, it.name) }
+        val incCatOptions = state.incomeCategories.map { FastTxOption(it.id, it.name) }
+        
+        FastTransactionSheet(
+            accounts = accountOptions,
+            expenseCategories = expCatOptions,
+            incomeCategories = incCatOptions,
             onDismissRequest = { showAddTransactionDialog = false },
-            containerColor = MaterialTheme.colorScheme.surface
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp)
-                    .imePadding()
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    "Manual Entry",
-                    style = MaterialTheme.typography.headlineSmall
+            onSubmit = { amount, direction, merchant, categoryId, accountId ->
+                viewModel.bookManualTransaction(
+                    amount = amount,
+                    direction = direction,
+                    merchant = merchant,
+                    accountId = accountId,
+                    categoryId = categoryId ?: (if (direction == "OUTFLOW") "cat_exp_9" else "cat_inc_6")
                 )
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    SingleChoiceSegmentedButtonRow(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        SegmentedButton(
-                            selected = newDirection == "OUTFLOW",
-                            onClick = { newDirection = "OUTFLOW" },
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                        ) {
-                            Text("Expense")
-                        }
-                        SegmentedButton(
-                            selected = newDirection == "INFLOW",
-                            onClick = { newDirection = "INFLOW" },
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                        ) {
-                            Text("Income")
-                        }
-                    }
-                }
-
-                OutlinedTextField(
-                    value = newAmount,
-                    onValueChange = { newAmount = it },
-                    label = { Text("Amount (RM)") },
-                    singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                OutlinedTextField(
-                    value = newMerchant,
-                    onValueChange = { newMerchant = it },
-                    label = { Text("Description / Merchant") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                var accountExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = accountExpanded,
-                    onExpandedChange = { accountExpanded = !accountExpanded }
-                ) {
-                    val selectedAccount = state.accounts.find { it.id == newAccountId }
-                    OutlinedTextField(
-                        value = selectedAccount?.name ?: "None",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Account (Optional)") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
-                        singleLine = true
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = accountExpanded,
-                        onDismissRequest = { accountExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("None") },
-                            onClick = {
-                                newAccountId = null
-                                accountExpanded = false
-                            }
-                        )
-                        state.accounts.forEach { acc ->
-                            DropdownMenuItem(
-                                text = { Text(acc.name) },
-                                onClick = {
-                                    newAccountId = acc.id
-                                    accountExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                Text("Category", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    val relevantCategories = if (newDirection == "OUTFLOW") state.expenseCategories else state.incomeCategories
-                    items(relevantCategories) { cat ->
-                        FilterChip(
-                            selected = newCategoryId == cat.id,
-                            onClick = { newCategoryId = cat.id },
-                            label = { Text(cat.name) }
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Button(
-                    onClick = {
-                        val amount = newAmount.toDoubleOrNull() ?: 0.0
-                        if (amount > 0 && newMerchant.isNotBlank()) {
-                            viewModel.bookManualTransaction(
-                                amount = amount,
-                                direction = newDirection,
-                                merchant = newMerchant,
-                                accountId = newAccountId,
-                                categoryId = newCategoryId ?: (if (newDirection == "OUTFLOW") "cat_exp_9" else "cat_inc_6") // Default to Others
-                            )
-                            showAddTransactionDialog = false
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = newAmount.isNotBlank() && newMerchant.isNotBlank()
-                ) {
-                    Text("Save Transaction")
-                }
+                showAddTransactionDialog = false
             }
-        }
+        )
     }
 
     if (showEditTransactionDialog) {
-        ModalBottomSheet(
-            onDismissRequest = { showEditTransactionDialog = false },
-            containerColor = MaterialTheme.colorScheme.surface
+        SciuroBottomSheet(
+            onDismissRequest = { showEditTransactionDialog = false }
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
-                
-                OutlinedTextField(
-                    value = editTxAmount,
-                    onValueChange = { editTxAmount = it },
-                    label = { Text("Amount (RM)") },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                OutlinedTextField(
-                    value = editTxMerchant,
-                    onValueChange = { editTxMerchant = it },
-                    label = { Text("Merchant / Note") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+            Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
+            
+            SciuroTextField(
+                value = editTxAmount,
+                onValueChange = { editTxAmount = it },
+                label = "Amount (RM)",
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
+            )
+            
+            SciuroTextField(
+                value = editTxMerchant,
+                onValueChange = { editTxMerchant = it },
+                label = "Merchant / Note"
+            )
                 
                 var accountExpanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
@@ -488,13 +367,13 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     onExpandedChange = { accountExpanded = it }
                 ) {
                     val selAcc = state.accounts.find { it.id == editTxAccountId }
-                    OutlinedTextField(
+                    SciuroTextField(
                         value = selAcc?.name ?: "Select Account",
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Wallet Account") },
+                        label = "Wallet Account",
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor()
                     )
                     ExposedDropdownMenu(
                         expanded = accountExpanded,
@@ -544,7 +423,8 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         Text("Delete")
                     }
                     
-                    Button(
+                    SciuroPrimaryButton(
+                        text = "Save",
                         onClick = {
                             val amt = editTxAmount.toDoubleOrNull() ?: 0.0
                             viewModel.editTransaction(
@@ -558,11 +438,8 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         },
                         modifier = Modifier.weight(1f),
                         enabled = editTxAmount.isNotBlank() && editTxAccountId != null
-                    ) {
-                        Text("Save")
-                    }
+                    )
                 }
-            }
         }
     }
 }

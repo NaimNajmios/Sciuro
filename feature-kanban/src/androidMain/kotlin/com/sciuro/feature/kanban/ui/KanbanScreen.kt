@@ -11,15 +11,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.foundation.ExperimentalFoundationApi
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.components.PillToggle
+import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.sciuro.core.ledger.model.Account
 import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import com.sciuro.feature.kanban.viewmodel.KanbanViewModel
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val tasks by viewModel.tasks.collectAsState()
@@ -38,31 +42,41 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     // In a real app, calculate actual totals
     val activeDebt = 5000.00
     
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        item {
-            HeroPanel(
-                title = "Active Debt & Bills",
-                heroFigure = "RM ${"%.2f".format(activeDebt)}",
-                toggleOptions = listOf("To Do", "In Progress", "Done"),
-                selectedToggle = selectedStatus,
-                onToggleSelected = { selectedStatus = it }
-            )
-        }
+    Column(modifier = Modifier.fillMaxSize()) {
+        HeroPanel(
+            title = "Active Debt & Bills",
+            heroFigure = "RM ${"%.2f".format(activeDebt)}",
+            toggleOptions = emptyList(),
+            selectedToggle = "",
+            onToggleSelected = {}
+        )
         
-        item {
-            SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (filteredTasks.isEmpty()) {
+        SheetList(modifier = Modifier.offset(y = (-24).dp).weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                PillToggle(
+                    options = listOf("To Do", "In Progress", "Done"),
+                    selectedOption = selectedStatus,
+                    onOptionSelected = { selectedStatus = it }
+                )
+            }
+            
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (filteredTasks.isEmpty()) {
+                    item {
                         com.najmi.sciuro.core.ui.components.EmptyStateView(
                             message = "No tasks in this list."
                         )
-                    } else {
-                        filteredTasks.forEach { task ->
+                    }
+                } else {
+                    items(filteredTasks) { task ->
                             var selectedAccount by remember(task.id) { 
                                 mutableStateOf(accounts.find { it.id == task.accountId }) 
                             }
@@ -110,14 +124,13 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                         expanded = accountDropdownExpanded,
                                         onExpandedChange = { accountDropdownExpanded = it }
                                     ) {
-                                        OutlinedTextField(
+                                        SciuroTextField(
                                             value = selectedAccount?.name ?: "Select Account",
                                             onValueChange = {},
                                             readOnly = true,
-                                            label = { Text("Wallet Account") },
+                                            label = "Wallet Account",
                                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountDropdownExpanded) },
-                                            modifier = Modifier.fillMaxWidth().menuAnchor(),
-                                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                                            modifier = Modifier.menuAnchor()
                                         )
                                         ExposedDropdownMenu(
                                             expanded = accountDropdownExpanded,
@@ -150,19 +163,17 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                         ) {
                                             Text("Reject")
                                         }
-                                        Button(
+                                        SciuroPrimaryButton(
+                                            text = "Approve",
                                             onClick = { 
                                                 viewModel.updateTaskStatus(task.id, TaskStatus.DONE, selectedAccount?.id)
                                             },
                                             enabled = selectedAccount != null,
                                             modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text("Approve")
-                                        }
+                                        )
                                     }
                                 }
                             }
-                        }
                     }
                 }
             }

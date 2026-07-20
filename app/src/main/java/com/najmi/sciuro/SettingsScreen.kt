@@ -24,6 +24,9 @@ import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import java.util.UUID
 import org.koin.compose.koinInject
+import androidx.compose.ui.platform.LocalContext
+import com.najmi.sciuro.core.ui.theme.ThemeManager
+import com.najmi.sciuro.core.ui.theme.ThemePreference
 
 @Composable
 fun SettingsScreen(
@@ -45,6 +48,10 @@ fun SettingsScreen(
             onToggleSelected = {}
         )
         
+        val context = LocalContext.current
+        val themeManager = remember { ThemeManager.getInstance(context) }
+        val themePref by themeManager.themePreference.collectAsState()
+        
         SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxHeight()) {
             Spacer(modifier = Modifier.height(16.dp))
             Column(
@@ -58,6 +65,22 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+                
+                Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Appearance", style = MaterialTheme.typography.titleSmall)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ThemePreference.values().forEach { pref ->
+                                FilterChip(
+                                    selected = themePref == pref,
+                                    onClick = { themeManager.setTheme(pref) },
+                                    label = { Text(pref.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }) }
+                                )
+                            }
+                        }
+                    }
+                }
                 
                 Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {

@@ -15,7 +15,10 @@ All notable changes to this project will be documented in this file.
 - Background WorkManager reminders that push periodic local notifications every 30 minutes for unreviewed transactions.
 - Persistent categorized transaction logging (Income/Expense pills) supported by automated schema seeding.
 - Direct "Reject" action button alongside "Approve" for Kanban task review.
-
+- UI Standardization: Replaced all scattered inline modals, text fields, and buttons with a centralized `core-ui` design system using `SciuroBottomSheet`, `SciuroTextField`, and `SciuroPrimaryButton`.
+- "Calculator-First" Fast Transaction logging using `FastTransactionSheet` for immediate manual numerical input.
+- System-wide 3-way Appearance theme toggling (Light, Dark, System) managed by persistent `ThemeManager` in the new Settings view.
+- Kanban UI refactoring, migrating the status filter layout into a sticky `PillToggle` above the task list for rapid filtering.
 ### Fixed
 - SQL database bug where `transaction_record.account_id` was not saved during transaction approval.
 

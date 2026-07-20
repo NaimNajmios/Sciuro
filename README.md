@@ -11,6 +11,8 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 * **Kanban Workflow:** A unified task management and issue tracking system deeply integrated into the development process.
 * **Transfer Detection:** Intelligent identification of cross-account transfers to prevent duplicate ledger entries.
 * **Guided Onboarding:** Initial setup flow securely initializes system ledgers with physical cash on hand.
+* **Fast Logging Workflow:** Calculator-first, numpad-driven transaction entry screens with pre-filled category pills and descriptions for near-instant offline transaction recording.
+* **UI Standardization & Theming:** Unified design system utilizing custom wrappers (`SciuroBottomSheet`, `SciuroTextField`) across all feature modules, with a robust 3-way persistent Appearance toggling (Light, Dark, System default).
 * **Interactive UI Triage:** Swipe-to-dismiss capabilities for fast transaction approvals and dynamically updated swipeable wallet interfaces to track cash and investments.
 * **Proactive Notifications:** Background WorkManager integration periodically alerts users to review newly ingested financial transactions.
 
