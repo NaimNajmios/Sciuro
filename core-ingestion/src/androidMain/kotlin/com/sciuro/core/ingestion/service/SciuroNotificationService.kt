@@ -64,15 +64,17 @@ class SciuroNotificationService : NotificationListenerService() {
         val lowerTitle = title.lowercase()
         val lowerText = text.lowercase()
 
-        val hasBankingTitle = lowerTitle.contains("m2u") || 
-                              lowerTitle.contains("cimb notification") ||
-                              lowerTitle.contains("transaction") ||
-                              lowerTitle.contains("funds received") ||
-                              lowerTitle.contains("transfer") ||
-                              lowerTitle.contains("receipt")
-                              
-        val hasCurrencySymbol = lowerText.contains("rm")
+        val combinedText = "$lowerTitle $lowerText"
 
-        return hasBankingTitle || hasCurrencySymbol
+        val hasBankingKeywords = combinedText.contains("m2u") || 
+                                 combinedText.contains("cimb notification") ||
+                                 combinedText.contains("transaction") ||
+                                 combinedText.contains("funds received") ||
+                                 combinedText.contains("transfer") ||
+                                 combinedText.contains("receipt")
+                              
+        val hasCurrencySymbol = combinedText.contains("rm")
+
+        return hasBankingKeywords || hasCurrencySymbol
     }
 }

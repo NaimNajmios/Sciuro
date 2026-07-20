@@ -12,6 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import com.sciuro.core.ledger.repository.CategoryRepository
+import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
+import com.sciuro.core.ingestion.model.RawEvent
+import com.sciuro.core.ingestion.model.SourceType
+import java.util.UUID
 
 data class DashboardState(
     val netWorth: Double = 0.0,
@@ -27,7 +31,8 @@ class DashboardViewModel(
     private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
     private val budgetRepository: BudgetRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val notificationSourceAdapter: NotificationSourceAdapter
 ) : ViewModel() {
     
     init {
@@ -126,6 +131,20 @@ class DashboardViewModel(
     fun deleteTransaction(transactionId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             transactionRepository.deleteTransaction(transactionId)
+        }
+    }
+
+    fun simulateNotification(title: String, text: String, packageName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val rawEvent = RawEvent(
+                id = UUID.randomUUID().toString(),
+                sourceType = SourceType.NOTIFICATION,
+                sourcePackageOrAddress = packageName,
+                title = title,
+                text = text,
+                timestamp = System.currentTimeMillis()
+            )
+            notificationSourceAdapter.emitNotification(rawEvent)
         }
     }
 }
