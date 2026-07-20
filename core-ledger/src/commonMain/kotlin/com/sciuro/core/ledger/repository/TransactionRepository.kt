@@ -92,6 +92,8 @@ class TransactionRepository(
                 database.transactionRecordQueries.updateAccountAndCategory(targetAccountId, newCategoryId, now, transactionId)
             } else if (newCategoryId != null) {
                 database.transactionRecordQueries.updateCategory(newCategoryId, now, transactionId)
+            } else if (targetAccountId != null) {
+                database.transactionRecordQueries.updateAccount(targetAccountId, now, transactionId)
             }
             
             database.transactionRecordQueries.markAsReviewed(now, transactionId)

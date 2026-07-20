@@ -28,6 +28,11 @@ UPDATE transaction_record
 SET category_id = ?, updated_at = ?
 WHERE id = ?;
 
+updateAccount:
+UPDATE transaction_record
+SET account_id = ?, updated_at = ?
+WHERE id = ?;
+
 updateAccountAndCategory:
 UPDATE transaction_record
 SET account_id = ?, category_id = ?, updated_at = ?
