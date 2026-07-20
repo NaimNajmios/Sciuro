@@ -104,11 +104,6 @@ fun WalletScreen(
     val accountPagerState = rememberPagerState(pageCount = { maxOf(1, accounts.size) })
     val investmentPagerState = rememberPagerState(pageCount = { maxOf(1, investments.size) })
     
-    val currentAccountPage = accountPagerState.currentPage
-    
-    val activeAccount = accounts.getOrNull(currentAccountPage)
-    val accountTx = allTransactions.filter { it.account_id == activeAccount?.id }
-    
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
             Column(
@@ -261,6 +256,10 @@ fun WalletScreen(
                     Text("Recent Transactions", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
                     
                     if (selectedAssetType == "Liquid Cash" && accounts.isNotEmpty()) {
+                        val currentAccountPage = accountPagerState.currentPage
+                        val activeAccount = accounts.getOrNull(currentAccountPage)
+                        val accountTx = if (activeAccount != null) allTransactions.filter { it.account_id == activeAccount.id } else emptyList()
+
                         if (activeAccount != null) {
                             if (accountTx.isEmpty()) {
                                 com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No transactions for this account.")

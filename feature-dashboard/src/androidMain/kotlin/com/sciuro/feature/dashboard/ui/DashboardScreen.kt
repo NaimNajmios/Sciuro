@@ -34,6 +34,9 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     var newMerchant by remember { mutableStateOf("") }
     var newAccountId by remember { mutableStateOf<String?>(null) }
     
+    var pendingApprovalTxId by remember { mutableStateOf<String?>(null) }
+    var selectedAccountIdForApproval by remember { mutableStateOf<String?>(null) }
+    
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
@@ -161,8 +164,9 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                             confirmValueChange = {
                                                 when(it) {
                                                     SwipeToDismissBoxValue.StartToEnd -> {
-                                                        viewModel.approveTransaction(tx.id)
-                                                        true
+                                                        pendingApprovalTxId = tx.id
+                                                        selectedAccountIdForApproval = tx.account_id
+                                                        false
                                                     }
                                                     SwipeToDismissBoxValue.EndToStart -> {
                                                         viewModel.rejectTransaction(tx.id)
@@ -221,13 +225,71 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 showAddTransactionDialog = true 
             },
             modifier = Modifier
-                .align(androidx.compose.ui.Alignment.BottomEnd)
+                .align(Alignment.BottomEnd)
                 .padding(16.dp),
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add Transaction")
         }
+    }
+    
+    if (pendingApprovalTxId != null) {
+        AlertDialog(
+            onDismissRequest = { pendingApprovalTxId = null },
+            title = { Text("Approve Transaction") },
+            text = {
+                var accountExpanded by remember { mutableStateOf(false) }
+                Column {
+                    Text("Select an account for this transaction:")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ExposedDropdownMenuBox(
+                        expanded = accountExpanded,
+                        onExpandedChange = { accountExpanded = it }
+                    ) {
+                        val selAcc = state.accounts.find { it.id == selectedAccountIdForApproval }
+                        OutlinedTextField(
+                            value = selAcc?.name ?: "Select Account",
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = accountExpanded,
+                            onDismissRequest = { accountExpanded = false }
+                        ) {
+                            state.accounts.forEach { acc ->
+                                DropdownMenuItem(
+                                    text = { Text(acc.name) },
+                                    onClick = {
+                                        selectedAccountIdForApproval = acc.id
+                                        accountExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.approveTransaction(pendingApprovalTxId!!, selectedAccountIdForApproval)
+                        pendingApprovalTxId = null
+                    },
+                    enabled = selectedAccountIdForApproval != null
+                ) {
+                    Text("Approve")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingApprovalTxId = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
     
     if (showAddTransactionDialog) {

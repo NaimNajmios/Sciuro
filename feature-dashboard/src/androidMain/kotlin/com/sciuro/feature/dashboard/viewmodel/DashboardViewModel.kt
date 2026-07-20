@@ -74,9 +74,13 @@ class DashboardViewModel(
         }
     }
 
-    fun approveTransaction(transactionId: String) {
+    fun approveTransaction(transactionId: String, accountId: String? = null) {
         viewModelScope.launch(Dispatchers.IO) {
-            transactionRepository.approveTransaction(transactionId)
+            if (accountId != null) {
+                transactionRepository.reviewTransaction(transactionId, null, accountId)
+            } else {
+                transactionRepository.approveTransaction(transactionId)
+            }
         }
     }
 
