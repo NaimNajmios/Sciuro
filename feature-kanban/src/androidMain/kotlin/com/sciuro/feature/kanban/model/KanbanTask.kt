@@ -1,7 +1,7 @@
 package com.sciuro.feature.kanban.model
 
 enum class TaskStatus {
-    TODO, IN_PROGRESS, DONE
+    TODO, IN_PROGRESS, DONE, REJECTED
 }
 
 data class KanbanTask(

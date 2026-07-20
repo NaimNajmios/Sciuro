@@ -44,3 +44,6 @@ SELECT * FROM transaction_record WHERE id = ?;
 
 selectTransactionsByAccount:
 SELECT * FROM transaction_record WHERE account_id = ? ORDER BY timestamp DESC;
+
+deleteTransaction:
+DELETE FROM transaction_record WHERE id = ?;

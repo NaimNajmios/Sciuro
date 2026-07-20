@@ -98,6 +98,38 @@ class TransactionRepository(
         }
     }
 
+    suspend fun approveTransaction(transactionId: String) {
+        withAudit(
+            entityType = EntityType.TRANSACTION,
+            entityId = transactionId,
+            action = AuditAction.UPDATE,
+            beforeState = "is_reviewed=0",
+            afterState = "is_reviewed=1",
+            source = AuditSource.USER_MANUAL
+        ) {
+            database.transactionRecordQueries.markAsReviewed(currentTimeMillis(), transactionId)
+        }
+    }
+
+    suspend fun rejectTransaction(transactionId: String) {
+        val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+        
+        withAudit(
+            entityType = EntityType.TRANSACTION,
+            entityId = transactionId,
+            action = AuditAction.DELETE,
+            beforeState = "Reject Transaction",
+            afterState = null,
+            source = AuditSource.USER_MANUAL
+        ) {
+            if (oldTx.account_id != null) {
+                val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
+                accountRepository.updateBalance(oldTx.account_id, oldBalanceDelta)
+            }
+            database.transactionRecordQueries.deleteTransaction(transactionId)
+        }
+    }
+
     fun observeUnreviewedTransactions(): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
         // We use an arbitrary dispatcher since we might not have IO in commonMain
         return database.transactionRecordQueries.selectUnreviewedTransactions()

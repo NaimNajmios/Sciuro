@@ -8,8 +8,13 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -110,42 +115,94 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                 Text("No transactions found", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
                             } else {
                                 state.allTransactions.forEach { tx ->
-                                    Card(
-                                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                    @Composable
+                                    fun TransactionCard() {
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                                         ) {
                                             Row(
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Icon(
-                                                    imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
-                                                    contentDescription = null,
-                                                    tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
+                                                        contentDescription = null,
+                                                        tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
+                                                    )
+                                                    Column {
+                                                        Text(
+                                                            tx.merchant ?: "Unknown Merchant",
+                                                            style = MaterialTheme.typography.titleMedium
+                                                        )
+                                                        Text(
+                                                            if (tx.is_reviewed == 1L) "Reviewed" else "Swipe right to approve, left to reject",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = if (tx.is_reviewed == 1L) Color.Gray else MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
+                                                }
+                                                Text(
+                                                    "RM ${"%.2f".format(tx.amount)}",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
                                                 )
-                                                Column {
-                                                    Text(
-                                                        tx.merchant ?: "Unknown Merchant",
-                                                        style = MaterialTheme.typography.titleMedium
-                                                    )
-                                                    Text(
-                                                        if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = if (tx.is_reviewed == 1L) Color.Gray else MaterialTheme.colorScheme.error
-                                                    )
+                                            }
+                                        }
+                                    }
+
+                                    if (tx.is_reviewed == 0L) {
+                                        val dismissState = rememberSwipeToDismissBoxState(
+                                            confirmValueChange = {
+                                                when(it) {
+                                                    SwipeToDismissBoxValue.StartToEnd -> {
+                                                        viewModel.approveTransaction(tx.id)
+                                                        true
+                                                    }
+                                                    SwipeToDismissBoxValue.EndToStart -> {
+                                                        viewModel.rejectTransaction(tx.id)
+                                                        true
+                                                    }
+                                                    else -> false
                                                 }
                                             }
-                                            Text(
-                                                "RM ${"%.2f".format(tx.amount)}",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
-                                            )
+                                        )
+                                        SwipeToDismissBox(
+                                            state = dismissState,
+                                            backgroundContent = {
+                                                val color = when (dismissState.targetValue) {
+                                                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
+                                                    SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935)
+                                                    else -> Color.Transparent
+                                                }
+                                                val icon = when (dismissState.targetValue) {
+                                                    SwipeToDismissBoxValue.StartToEnd -> Icons.Filled.Check
+                                                    SwipeToDismissBoxValue.EndToStart -> Icons.Filled.Delete
+                                                    else -> null
+                                                }
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(bottom = 8.dp)
+                                                        .clip(CardDefaults.shape)
+                                                        .background(color),
+                                                    contentAlignment = if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
+                                                ) {
+                                                    if (icon != null) {
+                                                        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.padding(horizontal = 20.dp))
+                                                    }
+                                                }
+                                            }
+                                        ) {
+                                            TransactionCard()
                                         }
+                                    } else {
+                                        TransactionCard()
                                     }
                                 }
                             }
@@ -182,6 +239,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 32.dp)
+                    .imePadding()
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {

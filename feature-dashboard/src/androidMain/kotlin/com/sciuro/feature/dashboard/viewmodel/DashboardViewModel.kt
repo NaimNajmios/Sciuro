@@ -73,4 +73,16 @@ class DashboardViewModel(
             )
         }
     }
+
+    fun approveTransaction(transactionId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            transactionRepository.approveTransaction(transactionId)
+        }
+    }
+
+    fun rejectTransaction(transactionId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            transactionRepository.rejectTransaction(transactionId)
+        }
+    }
 }

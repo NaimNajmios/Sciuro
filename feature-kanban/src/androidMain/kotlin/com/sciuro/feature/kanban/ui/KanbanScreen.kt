@@ -137,14 +137,28 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                     
                                     Spacer(modifier = Modifier.height(16.dp))
                                     
-                                    Button(
-                                        onClick = { 
-                                            viewModel.updateTaskStatus(task.id, TaskStatus.DONE, selectedAccount?.id)
-                                        },
-                                        enabled = selectedAccount != null,
-                                        modifier = Modifier.fillMaxWidth()
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text("Approve")
+                                        OutlinedButton(
+                                            onClick = { 
+                                                viewModel.updateTaskStatus(task.id, TaskStatus.REJECTED, null)
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                        ) {
+                                            Text("Reject")
+                                        }
+                                        Button(
+                                            onClick = { 
+                                                viewModel.updateTaskStatus(task.id, TaskStatus.DONE, selectedAccount?.id)
+                                            },
+                                            enabled = selectedAccount != null,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Approve")
+                                        }
                                     }
                                 }
                             }

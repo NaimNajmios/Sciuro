@@ -3,16 +3,21 @@ package com.sciuro.feature.wallet.ui
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Toll
 import androidx.compose.material3.*
@@ -23,6 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.util.lerp
+import kotlin.math.absoluteValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -40,7 +48,7 @@ data class AppInfo(
     val icon: Drawable
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun WalletScreen(
     onAccountClick: (String) -> Unit,
@@ -91,15 +99,155 @@ fun WalletScreen(
     val totalInvestments = investments.sumOf { it.unitsHeld * it.averageBuyPrice }
     val displayTotal = if (selectedAssetType == "Liquid Cash") totalLiquidity else totalInvestments
     
+    val allTransactions by viewModel.allTransactions.collectAsState()
+    
+    val accountPagerState = rememberPagerState(pageCount = { maxOf(1, accounts.size) })
+    val investmentPagerState = rememberPagerState(pageCount = { maxOf(1, investments.size) })
+    
+    val currentAccountPage = accountPagerState.currentPage
+    
+    val activeAccount = accounts.getOrNull(currentAccountPage)
+    val accountTx = allTransactions.filter { it.account_id == activeAccount?.id }
+    
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
-            HeroPanel(
-                title = "Total $selectedAssetType",
-                heroFigure = "RM ${"%.2f".format(displayTotal)}",
-                toggleOptions = listOf("Liquid Cash", "Investments"),
-                selectedToggle = selectedAssetType,
-                onToggleSelected = { selectedAssetType = it }
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.padding(bottom = 24.dp)) {
+                    SegmentedButton(
+                        selected = selectedAssetType == "Liquid Cash",
+                        onClick = { selectedAssetType = "Liquid Cash" },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                    ) {
+                        Text("Liquid Cash")
+                    }
+                    SegmentedButton(
+                        selected = selectedAssetType == "Investments",
+                        onClick = { selectedAssetType = "Investments" },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                    ) {
+                        Text("Investments")
+                    }
+                }
+                
+                if (selectedAssetType == "Liquid Cash") {
+                    if (accounts.isEmpty()) {
+                        Text("No accounts found", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    } else {
+                        HorizontalPager(
+                            state = accountPagerState,
+                            contentPadding = PaddingValues(horizontal = 32.dp),
+                            pageSpacing = 16.dp
+                        ) { page ->
+                            val account = accounts.getOrNull(page)
+                            if (account != null) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().height(180.dp).clickable { onAccountClick(account.id) },
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+                                    shape = MaterialTheme.shapes.extraLarge
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(account.name, style = MaterialTheme.typography.titleLarge)
+                                            val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
+                                            if (associatedApp != null) {
+                                                Image(
+                                                    bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(32.dp).clip(CircleShape)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            "RM ${"%.2f".format(account.balance)}",
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
+                                        )
+                                        Text(
+                                            if (account.isEWallet) "E-Wallet" else "Bank Account",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (investments.isEmpty()) {
+                        Text("No investments found", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    } else {
+                        HorizontalPager(
+                            state = investmentPagerState,
+                            contentPadding = PaddingValues(horizontal = 32.dp),
+                            pageSpacing = 16.dp
+                        ) { page ->
+                            val inv = investments.getOrNull(page)
+                            if (inv != null) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().height(180.dp).clickable {
+                                        editingInvestmentId = inv.id
+                                        newAssetType = inv.assetType
+                                        newAssetSymbol = inv.assetSymbol
+                                        newAssetName = inv.assetName
+                                        newUnitsHeld = inv.unitsHeld.toString()
+                                        newAvgBuyPrice = inv.averageBuyPrice.toString()
+                                        newAssociatedAccountId = inv.associatedAccountId ?: ""
+                                        showAddInvestmentDialog = true
+                                    },
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiary),
+                                    shape = MaterialTheme.shapes.extraLarge
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(inv.assetSymbol, style = MaterialTheme.typography.titleLarge)
+                                            Icon(
+                                                imageVector = if (inv.assetType == "Gold") Icons.Filled.Toll else Icons.AutoMirrored.Filled.TrendingUp,
+                                                contentDescription = null
+                                            )
+                                        }
+                                        val valNow = inv.unitsHeld * inv.averageBuyPrice
+                                        Text(
+                                            "RM ${"%.2f".format(valNow)}",
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
+                                        )
+                                        Text(
+                                            "${inv.assetName} • ${inv.unitsHeld} units",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         item {
@@ -107,125 +255,54 @@ fun WalletScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 80.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (selectedAssetType == "Liquid Cash") {
-                        if (accounts.isEmpty()) {
-                            com.najmi.sciuro.core.ui.components.EmptyStateView(
-                                message = "No cash tracked yet. Withdraw from an ATM and it'll show up here automatically."
-                            )
-                        } else {
-                            accounts.forEach { account ->
-                                Card(
-                                    modifier = Modifier.fillMaxWidth().clickable {
-                                        onAccountClick(account.id)
-                                    },
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                                    )
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                    Text("Recent Transactions", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+                    
+                    if (selectedAssetType == "Liquid Cash" && accounts.isNotEmpty()) {
+                        if (activeAccount != null) {
+                            if (accountTx.isEmpty()) {
+                                com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No transactions for this account.")
+                            } else {
+                                accountTx.take(20).forEach { tx ->
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                                     ) {
                                         Row(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
-                                            if (associatedApp != null) {
-                                                Image(
-                                                    bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(40.dp).clip(CircleShape)
-                                                )
-                                            } else {
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
                                                 Icon(
-                                                    imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
+                                                    imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
                                                     contentDescription = null,
-                                                    modifier = Modifier.size(40.dp),
-                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
                                                 )
+                                                Column {
+                                                    Text(tx.merchant ?: "Unknown Merchant", style = MaterialTheme.typography.titleMedium)
+                                                    Text(if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed", style = MaterialTheme.typography.bodySmall, color = if (tx.is_reviewed == 1L) Color.Gray else MaterialTheme.colorScheme.primary)
+                                                }
                                             }
-                                            
-                                            Column {
-                                                Text(account.name, style = MaterialTheme.typography.titleMedium)
-                                                Text(
-                                                    if (account.isEWallet) "E-Wallet" else "Bank Account", 
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                        Text(
-                                            "RM ${"%.2f".format(account.balance)}", 
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // Investments
-                        if (investments.isEmpty()) {
-                            com.najmi.sciuro.core.ui.components.EmptyStateView(
-                                message = "No investments tracked yet."
-                            )
-                        } else {
-                            investments.forEach { investment ->
-                                val investmentValue = investment.unitsHeld * investment.averageBuyPrice
-                                Card(
-                                    modifier = Modifier.fillMaxWidth().clickable {
-                                        editingInvestmentId = investment.id
-                                        newAssetType = investment.assetType
-                                        newAssetSymbol = investment.assetSymbol
-                                        newAssetName = investment.assetName
-                                        newUnitsHeld = investment.unitsHeld.toString()
-                                        newAvgBuyPrice = investment.averageBuyPrice.toString()
-                                        newAssociatedAccountId = investment.associatedAccountId ?: ""
-                                        showAddInvestmentDialog = true
-                                    },
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                                    )
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                imageVector = if (investment.assetType == "Gold") Icons.Filled.Toll else Icons.AutoMirrored.Filled.TrendingUp,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(40.dp),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            Text(
+                                                "RM ${"%.2f".format(tx.amount)}", 
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
                                             )
-                                            
-                                            Column {
-                                                Text(investment.assetSymbol, style = MaterialTheme.typography.titleMedium)
-                                                Text(
-                                                    "${investment.assetType} • ${investment.unitsHeld} units", 
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
                                         }
-                                        Text(
-                                            "RM ${"%.2f".format(investmentValue)}", 
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                                        )
                                     }
                                 }
                             }
                         }
+                    } else if (selectedAssetType == "Investments" && investments.isNotEmpty()) {
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(message = "Investment transactions are currently tracked manually.")
+                    } else {
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No data available.")
                     }
                 }
             }
@@ -270,6 +347,7 @@ fun WalletScreen(
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 32.dp)
+                    .imePadding()
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -423,6 +501,7 @@ fun WalletScreen(
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 32.dp)
+                    .imePadding()
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {

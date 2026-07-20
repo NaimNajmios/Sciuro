@@ -50,6 +50,13 @@ class WalletViewModel(
             initialValue = emptyList()
         )
         
+    val allTransactions: StateFlow<List<com.sciuro.core.ledger.db.Transaction_record>> = transactionRepository.observeAllTransactions()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+        
     fun addAccount(name: String, type: String, associatedPackage: String, initialBalance: Double) {
         viewModelScope.launch {
             accountRepository.createAccount(

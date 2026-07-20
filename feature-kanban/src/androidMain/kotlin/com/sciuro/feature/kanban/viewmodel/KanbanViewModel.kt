@@ -49,11 +49,13 @@ class KanbanViewModel(
         )
     
     fun updateTaskStatus(taskId: String, newStatus: TaskStatus, newAccountId: String? = null) {
-        // In a full implementation, moving to "DONE" would trigger transactionRepository.reviewTransaction()
         if (newStatus == TaskStatus.DONE) {
             viewModelScope.launch {
-                // We assume the user has categorized it via a prompt, but for now we just mark reviewed without a new category
                 transactionRepository.reviewTransaction(taskId, null, newAccountId)
+            }
+        } else if (newStatus == TaskStatus.REJECTED) {
+            viewModelScope.launch {
+                transactionRepository.rejectTransaction(taskId)
             }
         }
     }
