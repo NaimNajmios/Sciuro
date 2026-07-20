@@ -37,7 +37,9 @@ class AccountRepository(
                 balance = account.balance,
                 associated_package = account.associatedPackage,
                 created_at = now,
-                updated_at = now
+                updated_at = now,
+                is_system = if (account.isSystem) 1L else 0L,
+                status = account.status
             )
             account
         }
@@ -80,6 +82,11 @@ class AccountRepository(
     }
     
     suspend fun deleteAccount(accountId: String) {
+        val account = database.accountQueries.selectAccountById(accountId).executeAsOneOrNull()
+        if (account?.is_system == 1L) {
+            throw IllegalStateException("Cannot delete a system account")
+        }
+        
         withAudit(
             entityType = EntityType.ACCOUNT,
             entityId = accountId,
@@ -88,7 +95,32 @@ class AccountRepository(
             afterState = null,
             source = AuditSource.USER_MANUAL
         ) {
-            database.accountQueries.deleteAccount(accountId)
+            database.accountQueries.updateAccountStatus(
+                status = "DELETED",
+                updated_at = currentTimeMillis(),
+                id = accountId
+            )
+        }
+    }
+    
+    suspend fun archiveAccount(accountId: String) {
+        val account = database.accountQueries.selectAccountById(accountId).executeAsOneOrNull()
+        if (account?.is_system == 1L) {
+            throw IllegalStateException("Cannot archive a system account")
+        }
+        withAudit(
+            entityType = EntityType.ACCOUNT,
+            entityId = accountId,
+            action = AuditAction.UPDATE,
+            beforeState = "Archive Account",
+            afterState = null,
+            source = AuditSource.USER_MANUAL
+        ) {
+            database.accountQueries.updateAccountStatus(
+                status = "ARCHIVED",
+                updated_at = currentTimeMillis(),
+                id = accountId
+            )
         }
     }
     
@@ -112,7 +144,8 @@ class AccountRepository(
                     type = "Cash",
                     currency = "MYR",
                     balance = 0.0,
-                    associatedPackage = null
+                    associatedPackage = null,
+                    isSystem = true
                 )
             )
         }

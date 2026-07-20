@@ -40,4 +40,10 @@ class AccountDetailViewModel(
             accountRepository.deleteAccount(accountId)
         }
     }
+
+    fun archiveAccount() {
+        viewModelScope.launch {
+            accountRepository.archiveAccount(accountId)
+        }
+    }
 }

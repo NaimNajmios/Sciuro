@@ -8,20 +8,21 @@ CREATE TABLE investment_record (
     associated_account_id TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
     FOREIGN KEY(associated_account_id) REFERENCES account(id)
 );
 
 insertInvestment:
-INSERT INTO investment_record(id, asset_symbol, asset_name, asset_type, units_held, average_buy_price, associated_account_id, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO investment_record(id, asset_symbol, asset_name, asset_type, units_held, average_buy_price, associated_account_id, created_at, updated_at, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateInvestment:
 UPDATE investment_record
 SET asset_symbol = ?, asset_name = ?, asset_type = ?, units_held = ?, average_buy_price = ?, associated_account_id = ?, updated_at = ?
 WHERE id = ?;
 
-deleteInvestment:
-DELETE FROM investment_record WHERE id = ?;
+updateInvestmentStatus:
+UPDATE investment_record SET status = ?, updated_at = ? WHERE id = ?;
 
 selectAllInvestments:
-SELECT * FROM investment_record;
+SELECT * FROM investment_record WHERE status != 'DELETED';

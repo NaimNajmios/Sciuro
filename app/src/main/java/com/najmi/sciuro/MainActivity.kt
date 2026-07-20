@@ -93,6 +93,19 @@ fun SciuroMainScreen() {
         return
     }
     
+    val onboardingViewModel: com.sciuro.feature.wallet.viewmodel.OnboardingViewModel = org.koin.androidx.compose.koinViewModel()
+    val onboardingState by onboardingViewModel.state.collectAsState()
+    
+    if (onboardingState.isLoading) {
+        // Show blank or loading while checking database
+        return
+    }
+    
+    if (!onboardingState.isOnboardingComplete) {
+        com.sciuro.feature.wallet.ui.OnboardingScreen(viewModel = onboardingViewModel)
+        return
+    }
+    
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {

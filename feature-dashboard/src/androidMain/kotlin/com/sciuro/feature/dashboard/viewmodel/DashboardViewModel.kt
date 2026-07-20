@@ -45,11 +45,7 @@ class DashboardViewModel(
         initialValue = DashboardState()
     )
 
-    init {
-        viewModelScope.launch {
-            accountRepository.ensureDefaultAccountExists()
-        }
-    }
+    // Removed ensureDefaultAccountExists() as it's now handled by the Onboarding flow.
 
     fun bookManualTransaction(
         amount: Double,

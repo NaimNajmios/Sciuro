@@ -7,5 +7,6 @@ data class Investment(
     val assetType: String,
     val unitsHeld: Double,
     val averageBuyPrice: Double,
-    val associatedAccountId: String?
+    val associatedAccountId: String?,
+    val status: String = "ACTIVE"
 )

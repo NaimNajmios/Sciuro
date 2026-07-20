@@ -1,6 +1,6 @@
 # Sciuro — UAT Checklist
 
-**116 test cases across 23 modules.** Companion checklist to `sciuro-uat-test-tracker.xlsx` — same 116 tests, Obsidian/markdown-native checkbox format instead of a spreadsheet.
+**116 test cases across 23 modules.** Companion checklist to `sciuro-uat-test-tracker.xlsx`. Each module includes: the **user flow** with the specific UI element involved at every step, how that module's **UX intertwines with other modules** (which Domain Event fires and what else reacts), and a **developer test flow** for testing without depending on real bank activity.
 
 ## How to use this
 
@@ -9,6 +9,15 @@
 - **Phase** tags reference the v4 engineering plan's milestones (`A0–A6`, `B1–B7`, `C1–C3`, `D1–D3`) — a guide for sequencing, not a rigid contract.
 - Priority: 🔴 Critical (must be correct before anything else is trustworthy) · 🟠 High (core module correctness) · 🟡 Medium (UX polish/secondary paths) · 🟢 Low (nice-to-have/deferred).
 - Bank/e-wallet sources assumed throughout: CIMB, Maybank, BSN, Touch 'n Go eWallet, GrabPay, Boost, ShopeePay.
+- UI element names (`RunwayCounter`/`HeroPanel`-pattern, `SheetList`, `PillToggle`, `StatusKanbanBoard`, `SwipeableRow`, `SciuroBottomSheet`, `SciuroCard`, `IconBadge`, `StatusPill`, `ProgressRing`, `EmptyStateView`, `SkeletonBlock`) reference the shared composable library from the UI/UX plan.
+
+## Developer Test Infrastructure (Recommended)
+
+Three debug-only tools get referenced repeatedly below — worth building once, early, rather than re-solving per module. None of these ship in a release build.
+
+1. **Notification Simulator** — a hidden screen that lets you paste raw notification text and pick a source package (CIMB/Maybank/BSN/TNG/GrabPay/Boost/ShopeePay), then injects it directly into the real intake pipeline.
+2. **Debug Data Seeder** — directly writes account balances, debt states, obligation statuses, or budget totals into the database, so a test can start from a specific scenario instantly instead of accumulating real data.
+3. **Domain Event Log** — lists every DomainEvent as it fires, in order, with its payload. This is what makes the Cross-Module Cascade tests actually verifiable in one place instead of checking five screens by hand.
 
 ---
 
@@ -42,6 +51,23 @@
 
 ## Onboarding
 
+**User flow (UI elements named at each step):**
+1. Welcome screen (splash Lottie mark, monochrome) explains the minimal-interaction philosophy in 2-3 swipeable beats
+2. Permission step: a plain-language rationale line renders above a `SciuroButton` ("Grant Access") — the OS permission dialog only appears after this, never before
+3. Tap `SciuroButton` → OS notification-listener permission dialog → grant or deny
+4. On grant, app transitions (`motion.transition`) into Home; on deny, a persistent but non-blocking banner (same visual weight as the Review Inbox "action needed" banner) offers a path back to Settings
+5. Home renders its `EmptyStateView` (zero-transaction squirrel pose) since no notifications have been captured yet
+
+**How this intertwines with other modules:**
+- Granting access here is what unlocks every other module — nothing downstream (Parsing, Triage, Kanban, Home) has anything to react to until the first real notification lands
+- No Domain Event fires from onboarding itself; it's purely a permission-state gate in front of the rest of the pipeline
+
+**Developer test flow:**
+1. Add a debug-only "Reset onboarding" toggle (Settings → Developer) to re-run the flow repeatedly without reinstalling
+2. Test the decline branch by revoking notification-listener access via Settings → Notification access, or the equivalent adb notification-listener command, then relaunch
+
+**Test cases:**
+
 - [ ] **ONB-01 — Welcome & philosophy explainer displays** 🟡 `Medium · Milestone C`
     - *Feature:* First-run experience
     - *Precondition:* Fresh install, first launch
@@ -73,6 +99,18 @@
 ---
 
 ## Notification Capture
+
+**User flow:** None by design — this module is intentionally passive/background. The user takes no direct action to trigger it; it's only ever observed indirectly through its effects on other screens.
+
+**How this intertwines with other modules:**
+- A captured notification (while the app is foregrounded) surfaces as a small, non-blocking toast — `SnackbarHost`-style, auto-dismissing (~3s), tappable into Transaction Detail — this is the one visible UI moment this module produces on its own
+- Every capture is the root trigger for the entire downstream chain: Parsing → Triage → Categorization/Transfer-matching → Recurring/Debt updates → Balance recalculation → Kanban/Budget/Runway/Net Position → AuditLog. Nothing else in the app moves without this firing first
+
+**Developer test flow:**
+1. Build a debug-only Notification Simulator screen: paste raw notification text, pick a source package (CIMB/Maybank/BSN/TNG/etc.), inject it directly into the same intake pipeline the real NotificationListenerService uses — this becomes the single most-used tool for the rest of development
+2. For lower-level pipeline checks, adb shell cmd notification post can post a real system notification from a test package, though it won't carry a bank app's exact extras
+
+**Test cases:**
 
 - [ ] **NOT-01 — CIMB Clicks notification is captured** 🔴 `Critical · A2`
     - *Feature:* Bank capture — CIMB
@@ -119,6 +157,18 @@
 ---
 
 ## Parsing
+
+**User flow:** None by design — this module is intentionally passive/background. The user takes no direct action to trigger it; it's only ever observed indirectly through its effects on other screens.
+
+**How this intertwines with other modules:**
+- Fully invisible to the user by design — its only observable trace is the extractionMethod (REGEX vs LLM_FALLBACK) shown quietly inside Transaction Detail's audit history, for anyone who goes looking
+- A failed/low-confidence extraction is what populates the Review Inbox `SwipeableRow` list — that's the one UI consequence a parsing shortfall has
+
+**Developer test flow:**
+1. Maintain a test/resources/notification_fixtures/ folder of anonymized real notification samples per bank, channel, and language — run parser unit tests against these on every change
+2. Use the Notification Simulator to verify a new fixture end-to-end before committing it, so the unit test and the real pipeline agree
+
+**Test cases:**
 
 - [ ] **PAR-01 — CIMB DuitNow QR payment parses correctly** 🔴 `Critical · A3`
     - *Feature:* CIMB — DuitNow QR
@@ -180,6 +230,21 @@
 
 ## Triage & Categorization
 
+**User flow (UI elements named at each step):**
+1. Low-confidence case: item appears as a `SwipeableRow` in Review Inbox, with the proposed `IconBadge` + category name already filled in — swipe right to confirm, left to dismiss/recategorize
+2. High-confidence case: no interaction at all — the transaction simply appears already-categorized in whichever list surfaces it (Category Drilldown, Home's recent-activity strip)
+3. Manual correction path: open the transaction from any list → `SciuroBottomSheet` (Transaction Detail) → tap the category `IconBadge` → pick a new one from a `PillToggle`-style category picker → save
+
+**How this intertwines with other modules:**
+- Confirming in Review Inbox fires `TransactionCategorized` + `MerchantRuleLearned` together — the item's `SwipeableRow` flies off-screen, the Review Inbox nav badge count rolls down by one (digit-transition, not a jump-cut), and every *future* transaction from that same merchant now skips Review Inbox entirely
+- A manual recategorization from Transaction Detail fires `TransactionRecategorized`, writing an AuditLog before/after pair, and updates that transaction's category everywhere it's rendered (Category Drilldown, Budgets progress ring) without needing to reload those screens separately
+
+**Developer test flow:**
+1. Unit test the triage/classifier function directly against mocked merchant + amount + channel input — no UI needed
+2. Use the Notification Simulator for full-pipeline verification once the unit-level logic passes
+
+**Test cases:**
+
 - [ ] **CAT-01 — Genuine purchase is triaged as SPEND** 🔴 `Critical · A6`
     - *Feature:* Spend triage
     - *Precondition:* A normal merchant purchase notification
@@ -225,6 +290,20 @@
 ---
 
 ## Transfer Detection
+
+**User flow (UI elements named at each step):**
+1. Clean auto-match: no interaction — both legs quietly resolve into a TransferLink, visible only if you open either transaction's detail sheet and see the linked-transfer indicator
+2. Unmatched case: item appears in Review Inbox as a `SwipeableRow` with two actions instead of the usual categorize choice — "This is me" / "Someone else", rendered as two `SciuroButton`s beneath the transaction summary
+
+**How this intertwines with other modules:**
+- Confirming "This is me" fires `TransferMatched` + `RecipientRuleLearned` — both affected account `SciuroCard` rows on Home pulse softly and simultaneously (reinforcing "this moved, it didn't vanish"), both legs are retroactively excluded from that month's Category Drilldown and Budgets totals, and future transfers to the same recipient auto-match without asking again
+- Confirming "Someone else" instead fires normal `TransactionCategorized` — it becomes an ordinary spend/income transaction with no special treatment from that point on
+
+**Developer test flow:**
+1. Feed a paired source-debit + destination-credit notification via the Notification Simulator with an adjustable time gap, to test the matching window's boundary directly
+2. Unit test the matching engine against synthetic TransferLink candidates, including deliberately ambiguous ones (same amount, different people)
+
+**Test cases:**
 
 - [ ] **TRF-01 — Self-transfer between two banks auto-matches** 🔴 `Critical · B2`
     - *Feature:* Bank-to-bank matching
@@ -272,6 +351,20 @@
 
 ## Physical Cash Wallet
 
+**User flow (UI elements named at each step):**
+1. Tap the centered FAB → it expands into 2-3 quick actions (icon-labeled `SciuroButton`s) → tap "Log cash spend" → a minimal inline field (amount + optional category `IconBadge`) → confirm — no full-screen form
+2. Tap "Recount cash" from the Wallet screen → `SciuroBottomSheet` opens as a 3-step wizard: enter actual amount (`AmountText` input) → the variance renders live beneath it, color-coded via the same `signal.warning`/`signal.danger` tokens used elsewhere → optional remark field → confirm
+
+**How this intertwines with other modules:**
+- A logged spend or a completed recount fires `CashDebited`/`CashRecounted`, which count-animates (`motion.count`) the Cash balance on the Wallet screen's hero figure, the Home account-summary row, and the Net Position tile all at once
+- Critically, a recount variance explicitly does *not* touch any `StatusPill`/`ProgressRing` on Budgets or Category Drilldown — the CashAdjustment lives only in the Wallet screen's own Adjustments log, by design, so a lost RM20 note never quietly inflates a spend category
+
+**Developer test flow:**
+1. Seed CashAccount balance directly via a debug data seeder to set up specific drift scenarios instantly, instead of performing real ATM withdrawals repeatedly
+2. Unit test the CashAdjustment variance/remark logic directly
+
+**Test cases:**
+
 - [ ] **CSH-01 — Cash balance starts correctly at first use** 🟡 `Medium · B2`
     - *Feature:* Balance initialization
     - *Precondition:* Fresh install, no cash activity yet
@@ -311,6 +404,18 @@
 
 ## E-Wallet Accounts
 
+**User flow (UI elements named at each step):**
+1. Wallet screen → e-wallet section renders each provider as its own `SciuroCard` with a provider `IconBadge` → tap a card to open its transaction list (a `SheetList`-pattern beneath a small hero balance)
+
+**How this intertwines with other modules:**
+- A bank-to-e-wallet reload fires `TransferMatched` on both legs, the same way a bank-to-bank transfer does — both the source bank's `SciuroCard` on Home and the destination e-wallet's `SciuroCard` on Wallet update together
+- An e-wallet spend flows through the exact same Triage/Categorization pipeline as a bank spend — if low-confidence, it lands in the same Review Inbox `SwipeableRow` list, no separate e-wallet-specific review queue
+
+**Developer test flow:**
+1. Notification Simulator with the TNG/GrabPay/Boost/ShopeePay package identity selected
+
+**Test cases:**
+
 - [ ] **EWL-01 — Touch 'n Go eWallet notification is captured and parsed** 🔴 `Critical · A2/A3`
     - *Feature:* TNG capture
     - *Precondition:* TNG eWallet installed and allowlisted
@@ -349,6 +454,21 @@
 ---
 
 ## Recurring Obligations
+
+**User flow (UI elements named at each step):**
+1. A detected pattern surfaces as an inline `SciuroCard` proposal — not a blocking sheet — appearing atop the Kanban board with Confirm/Dismiss `SciuroButton`s directly on the card
+2. Tap Confirm → the card animates into becoming a permanent entry on the `StatusKanbanBoard`, landing in Upcoming or Due Soon depending on its next expected date
+3. Editing: tap any existing Kanban card → `SciuroBottomSheet` detail view → adjust amount/date fields → save
+
+**How this intertwines with other modules:**
+- Confirming fires `RecurringObligationConfirmed`, which does three things at once: the card appears on the Kanban board, Home's "next 3 bills due" horizontal strip re-evaluates whether this new obligation now belongs in it, and the Runway hero figure's forward projection silently recalculates to account for it — all from one tap, no separate step for each
+- A matching transaction arriving later fires `ObligationCycleSettled`, animating (`animateItem()`/`motion.card-move`) the card from Due Soon straight into Settled with no drag required
+
+**Developer test flow:**
+1. Seed 2-3 synthetic matching transactions via the Notification Simulator, spaced at the expected cadence, to trigger detection without waiting through real months
+2. Unit test the pattern-matching threshold (occurrence count, amount tolerance) directly against a list of synthetic transactions
+
+**Test cases:**
 
 - [ ] **OBL-01 — New recurring bill is proposed after repeated occurrences** 🟠 `High · B1`
     - *Feature:* Auto-detection
@@ -395,6 +515,21 @@
 ---
 
 ## Debt Ledger
+
+**User flow (UI elements named at each step):**
+1. FAB → "Add informal debt" → a deliberately minimal `SciuroBottomSheet` with exactly 3 fields (amount, counterparty, direction) → save
+2. Debt Overview screen renders each debt as a `SciuroCard` with a `ProgressRing` showing payoff progress → tap any card for its full trajectory detail
+3. BNPL risk state renders as a `StatusPill` at the top of the screen, not a popup, when 3+ plans are active
+
+**How this intertwines with other modules:**
+- An installment transaction settling a linked obligation fires both `ObligationCycleSettled` and `DebtBalanceUpdated` in the same instant — the Kanban card settles *and* the `ProgressRing` on Debt Overview advances together, from one notification
+- When the final installment lands, `DebtFullyPaidOff` fires: the monochrome-squirrel celebration Lottie plays (the one deliberately "loud" moment in the whole app), a shape-morph confirm animation runs (the one place Sciuro uses that effect), and the debt archives itself out of the active Debt Overview list without any manual dismissal
+
+**Developer test flow:**
+1. Seed a Debt with a near-zero balance directly via the debug data seeder to test the payoff-celebration trigger without waiting through a real repayment schedule
+2. Seed 3+ active BNPL entries to verify the risk flag without opening that many real BNPL plans
+
+**Test cases:**
 
 - [ ] **DBT-01 — PTPTN entry tracks balance, repayment, and due date correctly** 🟠 `High · B5`
     - *Feature:* PTPTN setup
@@ -449,6 +584,20 @@
 
 ## Balance & Reconciliation
 
+**User flow (UI elements named at each step):**
+1. No dedicated screen — balances render as `AmountText` inside each account's `SciuroCard` row on Home, updating live as transactions confirm
+2. Pull-to-refresh gesture on Home triggers a manual reconciliation check, replacing the default spinner with the small squirrel-peek Lottie moment
+
+**How this intertwines with other modules:**
+- A drift detection doesn't interrupt with a popup — it surfaces as a subtle indicator on the affected account's `SciuroCard` (consistent with "silence by default"), and resolves itself silently once a later Avail-Bal-bearing notification confirms the correct figure
+- Every balance change anywhere (bank, cash, e-wallet, investment) is one of the inputs the Net Position rollup listens for, so a reconciliation event ripples there too, even though it has no screen of its own
+
+**Developer test flow:**
+1. Feed a notification sequence via the Simulator with one deliberately skipped, then a later Avail-Bal-bearing notification, to verify driftFlag triggers correctly
+2. Unit test the reconciliation math directly against known balance sequences
+
+**Test cases:**
+
 - [ ] **BAL-01 — Running balance matches the real bank app** 🔴 `Critical · B3`
     - *Feature:* Per-account accuracy
     - *Precondition:* Normal transaction activity on one account over several days
@@ -480,6 +629,20 @@
 ---
 
 ## Investment / Gold
+
+**User flow (UI elements named at each step):**
+1. First-time setup: More → Investment → `SciuroButton` "Add investment account" → enter provider + starting weight via a short `SciuroBottomSheet` form
+2. Ongoing entry: "Add transaction" → Buy/Sell toggle (`PillToggle`) → weight + price fields → save
+3. The Investment tile itself mirrors the Home hero-figure pattern (`HeroPanel`-style: big weight/value figure, small chart underneath) both on its own screen and as a secondary tile on Home
+
+**How this intertwines with other modules:**
+- A price refresh fires `InvestmentPriceRefreshed`, which count-transitions (`motion.count`) the displayed value on *both* the Investment screen's hero figure and the Net Position rollup simultaneously — two renderings of the same recalculation, not two separate updates
+- A manual buy/sell entry fires `InvestmentTransactionRecorded`, which only ever changes the stored weight (unitBalance) — the MYR value shown is always freshly computed from that weight and the latest price, never stored as ground truth
+
+**Developer test flow:**
+1. Add a debug toggle to force a specific fake gold price response, to test valuation math and the count-up/down animation without depending on the real market moving
+
+**Test cases:**
 
 - [ ] **INV-01 — Gold Investment Account is created with correct starting weight** 🟠 `High · B6`
     - *Feature:* Account creation
@@ -520,6 +683,19 @@
 
 ## Budgeting
 
+**User flow (UI elements named at each step):**
+1. More → Budgets → tap a category `SciuroCard` → set/edit limit via an inline field → save
+2. Ongoing state renders as a `ProgressRing` + `StatusPill` per category, both here and mirrored on that category's Category Drilldown screen
+
+**How this intertwines with other modules:**
+- Crossing 80% or 100% fires `BudgetThresholdCrossed`, which shifts the `StatusPill` color on *both* the Budgets screen and the Category Drilldown screen at once — one event, two renderings, never out of sync — plus an optional system notification only if the person has opted in
+- Budget totals are computed only from transactions with legType = SPEND/INCOME; anything tagged TRANSFER by the Transfer Detection module is structurally excluded before it ever reaches this calculation, not filtered out after the fact
+
+**Developer test flow:**
+1. Seed category spend totals directly via the debug data seeder to jump straight to the 80%/100% threshold states, instead of generating dozens of real transactions
+
+**Test cases:**
+
 - [ ] **BUD-01 — Setting a category budget limit works correctly** 🟠 `High · B7`
     - *Feature:* Manual limit setting
     - *Precondition:* On the Budgets screen
@@ -559,6 +735,17 @@
 
 ## Audit Log
 
+**User flow (UI elements named at each step):**
+1. Open any Transaction/Debt/Obligation's `SciuroBottomSheet` detail view → tap "History" → a plain-language timeline renders ("categorized as Food & Dining, auto, 94% confidence → recategorized as Transport, you, 2 days later")
+
+**How this intertwines with other modules:**
+- This screen doesn't originate anything — it's the one place that renders the accumulated trace of every other module's Domain Events. Every cascade described elsewhere in this document (categorization, transfer matches, obligation settlements, debt updates, cash adjustments, budget changes, investment entries) writes here automatically, since AuditLog subscribes to the event bus as a universal listener rather than being called explicitly by each feature
+
+**Developer test flow:**
+1. Repository-level test: perform a mutation in a unit test and assert an AuditLog row was written with the correct before/after JSON — correctness doesn't need the UI, only the display formatting does
+
+**Test cases:**
+
 - [ ] **AUD-01 — Every new transaction produces an AuditLog entry** 🔴 `Critical · A1`
     - *Feature:* Creation logging
     - *Precondition:* Any new transaction is confirmed
@@ -597,6 +784,18 @@
 ---
 
 ## Cross-Module Cascades
+
+**User flow (UI elements named at each step):**
+1. There's no dedicated screen for this module — its "UI" is the sum of every ripple effect described throughout this document. The clearest single example: confirming nothing at all (a bill notification just arrives) results in the Kanban card settling, the Budgets `ProgressRing` advancing, the Home Runway figure recalculating, and an AuditLog entry appearing — four screens updating from one event the user never directly touched
+2. The one place a user *does* feel this directly is the live-capture toast (see Notification Capture) and the account-row pulse on Home (see Transfer Detection) — both are the visible tip of a cascade running underneath
+
+**How this intertwines with other modules:**
+- Every row in the cascade catalog (CAS-01 through CAS-06) is this module's real content — see those test cases directly for the specific event chains
+
+**Developer test flow:**
+1. Build a debug-only Domain Event Log screen listing every DomainEvent as it fires, in order, with its payload — trigger one root event via the Notification Simulator and watch the entire cascade fire in the log without manually checking five different screens by hand
+
+**Test cases:**
 
 - [ ] **CAS-01 — One bill payment updates Kanban, Budget, Runway, and Audit together** 🔴 `Critical · B1/B7/C2`
     - *Feature:* Bill payment cascade
@@ -644,6 +843,17 @@
 
 ## Net Position
 
+**User flow (UI elements named at each step):**
+1. Rendered as a smaller secondary figure beneath the Home Runway hero figure, or one tap into its own screen for the full per-account breakdown
+
+**How this intertwines with other modules:**
+- This figure has no independent trigger of its own — it's a subscriber to nearly every other module's events (`TransactionCategorized`, `TransferMatched`, `CashCredited`/`CashDebited`, `DebtBalanceUpdated`, `InvestmentPriceRefreshed`) and simply recomputes the sum fresh each time any of them fire, rather than being incrementally updated by each module individually
+
+**Developer test flow:**
+1. Seed known values across every account type via the debug data seeder, compute the expected total by hand, compare against the displayed figure
+
+**Test cases:**
+
 - [ ] **NET-01 — Net Position correctly sums all account types minus debt** 🟡 `Medium · B7`
     - *Feature:* Aggregation accuracy
     - *Precondition:* Bank, cash, e-wallet, investment, and debt data all present
@@ -668,6 +878,18 @@
 ---
 
 ## Review Inbox
+
+**User flow (UI elements named at each step):**
+1. Never a bottom-nav tab — reached via a prominent banner (red `errorContainer`-tinted, matching Sprint's real "action needed" pattern) that only renders when the inbox is non-empty
+2. Inside: a list of `SwipeableRow` items — swipe right to confirm the suggested action, left to dismiss/reject, or long-press a merchant name for a bulk re-categorize action across every pending item from that merchant
+
+**How this intertwines with other modules:**
+- Every resolution here is a dispatch point back into whichever module the item originated from — a categorization confirm feeds Triage & Categorization's `MerchantRuleLearned`, a transfer confirm feeds Transfer Detection's `RecipientRuleLearned` — and the nav banner's item count decrements with a digit-roll animation as each is cleared, disappearing entirely once the inbox is empty again
+
+**Developer test flow:**
+1. Temporarily lower the classification-confidence threshold via a debug config flag to force more items into the inbox, or seed several unrecognized-merchant transactions via the Simulator
+
+**Test cases:**
 
 - [ ] **REV-01 — Uncertain transactions appear in the Review Inbox** 🔴 `Critical · B4`
     - *Feature:* Low-confidence surfacing
@@ -708,6 +930,18 @@
 
 ## Kanban Board
 
+**User flow (UI elements named at each step):**
+1. Kanban tab → `StatusKanbanBoard` renders three columns (Upcoming / Due Soon / Settled) → tap any card for its `SciuroBottomSheet` detail → for informal debt cards only, a manual "Mark settled" `SciuroButton` is available (bank-linked cards have no such button — they only ever move automatically)
+
+**How this intertwines with other modules:**
+- Every card's column membership is a pure rendering of its underlying RecurringObligation/Debt `status` field — this board owns no data of its own, so it can never drift out of sync with what Debt Ledger or the Budgets/Runway calculations believe is true
+- A settlement event moves a card using `animateItem()`/`motion.card-move`, the same spring-based mechanic used for the Review Inbox's card removal, kept visually consistent across the app rather than being a bespoke Kanban-only animation
+
+**Developer test flow:**
+1. Seed obligations/debts directly at various status values via the debug data seeder to populate all three columns instantly for a visual QA pass, instead of waiting for real detection cycles
+
+**Test cases:**
+
 - [ ] **KAN-01 — Bills & Debt board shows the correct three columns** 🟠 `High · C1`
     - *Feature:* Column structure
     - *Precondition:* Any obligations/debts exist
@@ -746,6 +980,20 @@
 ---
 
 ## Home Dashboard
+
+**User flow (UI elements named at each step):**
+1. Landing screen on open: the Runway hero figure (`HeroPanel`-pattern) leads, with a `PillToggle` for time range if applicable, sitting above a `SheetList` of account `SciuroCard` rows (the sheet-over-hero pull-up layout)
+2. Tap the Runway figure → `SharedTransitionLayout` expansion shows exactly which RecurringObligations were subtracted to reach that number
+3. Tap a bill in the horizontal "next 3 due" strip → shared-element transition into Kanban, pre-scrolled and highlighting that card
+
+**How this intertwines with other modules:**
+- Home is the single screen that aggregates the most other modules at once: Runway depends on Balance & Reconciliation + Recurring Obligations + income-pattern detection; the account rows depend on every transaction/transfer event; the bills strip depends on Kanban's status data; Net Position (if shown here) depends on nearly everything else besides
+- Because all of these are derived, not stored, Home never needs to be told to refresh by another module — it simply recomputes whenever its own event subscriptions fire
+
+**Developer test flow:**
+1. Seed a specific balance + obligation combination via the debug data seeder to deterministically hit each runway temperature state (healthy/warning/danger) for visual QA
+
+**Test cases:**
 
 - [ ] **HOM-01 — Safe-to-spend figure calculates correctly against known data** 🔴 `Critical · C2`
     - *Feature:* Runway calculation
@@ -786,6 +1034,18 @@
 
 ## Navigation & UI Shell
 
+**User flow (UI elements named at each step):**
+1. Bottom nav: 4 fixed destinations (Home · Kanban · Wallet · More) plus one centered, elevated FAB as a 5th visual slot that is not itself a destination
+2. Review Inbox is deliberately absent from this bar — see Review Inbox's own flow for how it's actually reached
+
+**How this intertwines with other modules:**
+- The FAB's expanded quick-action menu is a dispatch point into three other modules at once (Physical Cash Wallet, Debt Ledger, manual transaction entry) — it doesn't own any of that logic itself, it's purely a navigational shortcut
+
+**Developer test flow:**
+1. Compose UI/instrumentation tests asserting every destination is reachable and every back-stack pops correctly; manual pass specifically for the predictive-back gesture feel, since that's not meaningfully assertable in an automated test
+
+**Test cases:**
+
 - [ ] **NAV-01 — Bottom nav shows exactly 4 destinations plus a centered FAB** 🟡 `Medium · C1-C3`
     - *Feature:* Nav structure
     - *Precondition:* App is in normal use
@@ -817,6 +1077,19 @@
 ---
 
 ## Security
+
+**User flow (UI elements named at each step):**
+1. Settings → toggle biometric/PIN lock (standard list row + switch) → close and reopen the app → system biometric prompt gates entry
+2. Settings → Backup → `SciuroButton` "Export" → system share sheet with the resulting encrypted file
+
+**How this intertwines with other modules:**
+- Security sits underneath every other module rather than beside them — it doesn't react to Domain Events, it gates access to the surface all of them render on
+
+**Developer test flow:**
+1. adb pull the raw SQLite file and inspect it with a hex viewer / file command — it should not show a readable 'SQLite format 3' header if encryption is working
+2. Route the device through a debugging proxy (e.g. mitmproxy) during a normal session to confirm no transaction text, amounts, or account identifiers appear in any outbound analytics/crash payload
+
+**Test cases:**
 
 - [ ] **SEC-01 — Local database is encrypted, not plaintext** 🔴 `Critical · D1`
     - *Feature:* Encryption at rest
@@ -857,6 +1130,18 @@
 
 ## Empty/Loading States
 
+**User flow (UI elements named at each step):**
+1. Any screen visited before its underlying data exists renders `EmptyStateView` (tailored copy + monochrome squirrel pose per screen, see the earlier empty-state table)
+2. A cold data load renders `SkeletonBlock`-composed shimmer shapes matching the eventual layout, before either real content or the empty state resolves
+
+**How this intertwines with other modules:**
+- These states are themselves reactions to the *absence* of events from other modules — an empty Kanban board, for instance, is simply what Kanban Board's `StatusKanbanBoard` renders when no RecurringObligation/Debt events have fired yet, not a separate code path to keep in sync
+
+**Developer test flow:**
+1. Add a debug menu toggle to force any screen into its empty state or a simulated slow-load state on demand, instead of wiping the database or throttling the network by hand each time
+
+**Test cases:**
+
 - [ ] **UIX-01 — Every major screen has an appropriate first-use empty state** 🟡 `Medium · B/C (per-module)`
     - *Feature:* Empty states coverage
     - *Precondition:* Fresh install or a screen with no data yet
@@ -896,6 +1181,17 @@
 
 ## Settings
 
+**User flow (UI elements named at each step):**
+1. Settings tab → standard list rows with switches/values (allowlist management, LLM opt-in, appearance, backup) — deliberately the calmest, least animated screen in the app, consistent with it being a utility surface rather than a glanceable one
+
+**How this intertwines with other modules:**
+- The LLM opt-in toggle is the one Settings switch with a direct cross-module effect: flipping it off immediately stops Parsing's LLM-fallback path and Triage's LLM-critic pass from making any network call, falling back to regex-only and lower-confidence-routes-to-Review-Inbox behavior instead
+
+**Developer test flow:**
+1. For the LLM opt-in toggle specifically: verify via a network proxy that no external call fires while it's off, and that fallback resumes correctly once re-enabled
+
+**Test cases:**
+
 - [ ] **SET-01 — Adding/removing tracked apps works correctly** 🟠 `High · A2/D1`
     - *Feature:* Allowlist management
     - *Precondition:* Settings > notification sources
@@ -927,6 +1223,17 @@
 ---
 
 ## Desktop Companion
+
+**User flow (UI elements named at each step):**
+1. Desktop app mirrors the phone's `HeroPanel`/`SheetList` pattern in a read-only layout — no FAB, no swipe actions, no bottom sheets, since nothing here is meant to be edited
+
+**How this intertwines with other modules:**
+- Purely a downstream renderer of whatever the phone's event-sourced state currently is at sync time — it originates no Domain Events of its own
+
+**Developer test flow:**
+1. Point a desktop debug build at a test export/sync file with known seeded values and compare every rendered figure against the expected values by hand
+
+**Test cases:**
 
 - [ ] **DSK-01 — Windows desktop viewer displays synced data correctly** 🟢 `Low · Deferred/Future`
     - *Feature:* Read-only sync view

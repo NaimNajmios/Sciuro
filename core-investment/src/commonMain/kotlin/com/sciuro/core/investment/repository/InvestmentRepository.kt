@@ -39,7 +39,8 @@ class InvestmentRepository(
                 average_buy_price = investment.averageBuyPrice,
                 associated_account_id = investment.associatedAccountId,
                 created_at = now,
-                updated_at = now
+                updated_at = now,
+                status = investment.status
             )
             investment
         }
@@ -105,7 +106,11 @@ class InvestmentRepository(
             afterState = null,
             source = AuditSource.USER_MANUAL
         ) {
-            database.investmentQueries.deleteInvestment(investmentId)
+            database.investmentQueries.updateInvestmentStatus(
+                status = "DELETED",
+                updated_at = currentTimeMillis(),
+                id = investmentId
+            )
         }
     }
     
@@ -122,7 +127,8 @@ class InvestmentRepository(
                         assetType = it.asset_type,
                         unitsHeld = it.units_held,
                         averageBuyPrice = it.average_buy_price,
-                        associatedAccountId = it.associated_account_id
+                        associatedAccountId = it.associated_account_id,
+                        status = it.status
                     )
                 }
             }

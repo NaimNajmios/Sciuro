@@ -6,12 +6,14 @@ CREATE TABLE account (
     balance REAL NOT NULL DEFAULT 0.0,
     associated_package TEXT,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    is_system INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'ACTIVE'
 );
 
 insertAccount:
-INSERT INTO account(id, name, type, currency, balance, associated_package, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO account(id, name, type, currency, balance, associated_package, created_at, updated_at, is_system, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateBalance:
 UPDATE account
@@ -19,18 +21,18 @@ SET balance = balance + ?, updated_at = ?
 WHERE id = ?;
 
 selectAllAccounts:
-SELECT * FROM account;
+SELECT * FROM account WHERE status != 'DELETED';
 
 selectAccountById:
-SELECT * FROM account WHERE id = ?;
+SELECT * FROM account WHERE id = ? AND status != 'DELETED';
 
 selectAccountByPackage:
-SELECT * FROM account WHERE associated_package = ? LIMIT 1;
+SELECT * FROM account WHERE associated_package = ? AND status != 'DELETED' LIMIT 1;
 
 updateAccount:
 UPDATE account
 SET name = ?, type = ?, associated_package = ?, updated_at = ?
 WHERE id = ?;
 
-deleteAccount:
-DELETE FROM account WHERE id = ?;
+updateAccountStatus:
+UPDATE account SET status = ?, updated_at = ? WHERE id = ?;

@@ -53,15 +53,25 @@ fun AccountDetailScreen(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
-                        DropdownMenuItem(
-                            text = { Text("Delete Account", color = MaterialTheme.colorScheme.error) },
-                            leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                expanded = false
-                                viewModel.deleteAccount()
-                                onNavigateBack()
-                            }
-                        )
+                        if (state.account?.is_system == 0L) {
+                            DropdownMenuItem(
+                                text = { Text("Archive Account") },
+                                onClick = {
+                                    expanded = false
+                                    viewModel.archiveAccount()
+                                    onNavigateBack()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete Account", color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                onClick = {
+                                    expanded = false
+                                    viewModel.deleteAccount()
+                                    onNavigateBack()
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

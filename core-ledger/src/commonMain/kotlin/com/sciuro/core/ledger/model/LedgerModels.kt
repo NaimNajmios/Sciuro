@@ -6,7 +6,9 @@ data class Account(
     val type: String,
     val currency: String = "MYR",
     val balance: Double = 0.0,
-    val associatedPackage: String? = null
+    val associatedPackage: String? = null,
+    val isSystem: Boolean = false,
+    val status: String = "ACTIVE"
 )
 
 data class Category(
