@@ -23,7 +23,13 @@ data class ResponseFormat(
 
 @Serializable
 data class ChatResponse(
-    val choices: List<ChatChoice>
+    val choices: List<ChatChoice>? = null,
+    val error: ChatError? = null
+)
+
+@Serializable
+data class ChatError(
+    val message: String? = null
 )
 
 @Serializable

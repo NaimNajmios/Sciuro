@@ -190,7 +190,7 @@ fun SciuroMainScreen() {
             }
             composable("budgets") { BudgetsScreen() }
             composable("kanban") { KanbanScreen() }
-            composable("settings") { SettingsScreen() }
+            composable("settings") { com.sciuro.feature.settings.ui.SettingsScreen() }
         }
     }
     }

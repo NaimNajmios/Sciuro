@@ -26,6 +26,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import com.sciuro.core.classifier.orchestrator.SciuroIngestionOrchestrator
 
+import com.sciuro.feature.settings.di.settingsModule
+
 val appModule = module {
     single<SettingsProvider> { EncryptedSettingsProvider(get()) }
 }
@@ -51,6 +53,7 @@ class SciuroApp : Application(), KoinComponent {
                 walletModule,
                 kanbanModule,
                 budgetsModule,
+                settingsModule,
                 appModule,
                 parsingModule,
                 classifierModule,

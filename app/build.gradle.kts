@@ -76,6 +76,7 @@ dependencies {
     implementation(project(":feature-wallet"))
     implementation(project(":feature-kanban"))
     implementation(project(":feature-budgets"))
+    implementation(project(":feature-settings"))
     
     // Core Modules
     implementation(project(":core-ingestion"))

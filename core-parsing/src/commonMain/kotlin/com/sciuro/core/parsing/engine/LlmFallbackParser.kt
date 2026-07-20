@@ -58,7 +58,7 @@ class LlmFallbackParser(
         """.trimIndent()
 
         val request = ChatRequest(
-            model = "llama3-8b-8192", // Groq Llama 3 8B
+            model = "llama-3.1-8b-instant", // Updated from decommissioned llama3-8b-8192
             messages = listOf(
                 ChatMessage(role = "system", content = "You are a specialized financial data extraction tool. You only output valid JSON."),
                 ChatMessage(role = "user", content = prompt)
@@ -74,7 +74,12 @@ class LlmFallbackParser(
                 setBody(request)
             }.body()
             
-            val jsonString = response.choices.firstOrNull()?.message?.content ?: return null
+            if (response.error != null) {
+                println("Groq API Error: ${response.error.message}")
+                return null
+            }
+            
+            val jsonString = response.choices?.firstOrNull()?.message?.content ?: return null
             
             val result = json.decodeFromString<LlmResult>(jsonString)
             

@@ -134,16 +134,6 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                 }
                             }
                             
-                            // DEBUG BUTTON
-                            TextButton(onClick = {
-                                viewModel.simulateNotification(
-                                    title = "m2u Notification",
-                                    text = "Please find the details of the transfer below: A transfer of RM 50.00 has been successfully processed from my M2U account.",
-                                    packageName = "com.google.android.gm"
-                                )
-                            }) {
-                                Text("Debug: Simulate m2u Email")
-                            }
                             
                             Text(
                                 "Transaction History",
