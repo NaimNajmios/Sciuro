@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - Keyboard overlay fixes using `adjustResize` and `Modifier.imePadding()` across `DashboardScreen`, `WalletScreen`, and `OnboardingScreen`.
 - Transaction triage mechanics (Approve/Reject) on Dashboard with `SwipeToDismiss` and account selection prompts.
 - `HorizontalPager` hero section on the Wallet Screen, enabling dynamic filtering of recent transactions based on the currently swiped account.
+- Full Transaction CRUD (Create, Read, Update, Delete) with automatic ledger balance reconciliation and audit logging.
+- Background WorkManager reminders that push periodic local notifications every 30 minutes for unreviewed transactions.
+- Persistent categorized transaction logging (Income/Expense pills) supported by automated schema seeding.
 - Direct "Reject" action button alongside "Approve" for Kanban task review.
 
 ### Fixed

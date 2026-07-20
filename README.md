@@ -12,6 +12,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 * **Transfer Detection:** Intelligent identification of cross-account transfers to prevent duplicate ledger entries.
 * **Guided Onboarding:** Initial setup flow securely initializes system ledgers with physical cash on hand.
 * **Interactive UI Triage:** Swipe-to-dismiss capabilities for fast transaction approvals and dynamically updated swipeable wallet interfaces to track cash and investments.
+* **Proactive Notifications:** Background WorkManager integration periodically alerts users to review newly ingested financial transactions.
 
 ## Project Status
 
@@ -31,6 +32,7 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 * **Dependency Injection:** [Koin](https://insert-koin.io/)
 * **Local Persistence:** [SQLDelight](https://cashapp.github.io/sqldelight/)
 * **Static Analysis:** [Detekt](https://detekt.dev/)
+* **Background Tasks:** WorkManager (Android)
 * **UI Framework:** Jetpack Compose (Android)
 
 ## Development Setup
