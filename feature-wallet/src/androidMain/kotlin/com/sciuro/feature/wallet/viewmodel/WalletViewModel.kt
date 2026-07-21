@@ -36,7 +36,8 @@ class WalletViewModel(
                     balance = it.balance,
                     isEWallet = it.type.lowercase().contains("ewallet") || it.type.lowercase().contains("e-wallet"),
                     type = it.type,
-                    associatedPackage = it.associated_package
+                    associatedPackage = it.associated_package,
+                    color = it.color
                 )
             }
         }
@@ -74,7 +75,7 @@ class WalletViewModel(
             initialValue = emptyList()
         )
         
-    fun addAccount(name: String, type: String, associatedPackage: String, initialBalance: Double) {
+    fun addAccount(name: String, type: String, associatedPackage: String, initialBalance: Double, color: String? = null) {
         viewModelScope.launch {
             accountRepository.createAccount(
                 com.sciuro.core.ledger.model.Account(
@@ -82,13 +83,14 @@ class WalletViewModel(
                     name = name,
                     type = type,
                     balance = initialBalance,
-                    associatedPackage = associatedPackage.takeIf { it.isNotBlank() }
+                    associatedPackage = associatedPackage.takeIf { it.isNotBlank() },
+                    color = color
                 )
             )
         }
     }
 
-    fun updateAccount(id: String, name: String, type: String, associatedPackage: String, balance: Double) {
+    fun updateAccount(id: String, name: String, type: String, associatedPackage: String, balance: Double, color: String? = null) {
         viewModelScope.launch {
             accountRepository.updateAccount(
                 com.sciuro.core.ledger.model.Account(
@@ -96,7 +98,8 @@ class WalletViewModel(
                     name = name,
                     type = type,
                     balance = balance, // Deprecated usage for balance, preserved for model integrity
-                    associatedPackage = associatedPackage.takeIf { it.isNotBlank() }
+                    associatedPackage = associatedPackage.takeIf { it.isNotBlank() },
+                    color = color
                 )
             )
             reconciliationEngine.reconcileAccount(id, balance)

@@ -6,5 +6,6 @@ data class WalletAccount(
     val balance: Double,
     val isEWallet: Boolean,
     val type: String,
-    val associatedPackage: String?
+    val associatedPackage: String?,
+    val color: String?
 )

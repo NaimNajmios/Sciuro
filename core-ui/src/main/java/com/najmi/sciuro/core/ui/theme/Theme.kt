@@ -19,7 +19,7 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = SignalTransfer,
     background = DarkSurfaceBase,
     surface = DarkSurfaceSheet,
-    surfaceVariant = SurfaceHero,
+    surfaceVariant = DarkSurfaceVariant,
     onPrimary = Color.Black,
     onSecondary = Color.White,
     onTertiary = Color.White,
@@ -35,19 +35,18 @@ private val LightColorScheme = lightColorScheme(
     tertiary = SignalTransfer,
     background = LightSurfaceBase,
     surface = LightSurfaceSheet,
-    surfaceVariant = SurfaceHero,
+    surfaceVariant = LightSurfaceVariant,
     onPrimary = Color.White,
     onSecondary = Color.Black,
     onTertiary = Color.Black,
     onBackground = Color.Black,
     onSurface = Color.Black,
-    onSurfaceVariant = Color.White,
+    onSurfaceVariant = Color.Black,
     error = SignalDanger
 )
 
 @Composable
 fun SciuroTheme(
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -60,13 +59,7 @@ fun SciuroTheme(
         ThemePreference.SYSTEM_DEFAULT -> isSystemInDarkTheme()
     }
 
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

@@ -39,7 +39,8 @@ class AccountRepository(
                 created_at = now,
                 updated_at = now,
                 is_system = if (account.isSystem) 1L else 0L,
-                status = account.status
+                status = account.status,
+                color = account.color
             )
             account
         }
@@ -75,6 +76,7 @@ class AccountRepository(
                 name = account.name,
                 type = account.type,
                 associated_package = account.associatedPackage,
+                color = account.color,
                 updated_at = currentTimeMillis(),
                 id = account.id
             )

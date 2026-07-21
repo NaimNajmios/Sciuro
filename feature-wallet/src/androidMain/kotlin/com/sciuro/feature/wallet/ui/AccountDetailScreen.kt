@@ -14,6 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.feature.wallet.viewmodel.AccountDetailViewModel
@@ -35,6 +41,20 @@ fun AccountDetailScreen(
     val coroutineScope = rememberCoroutineScope()
     var showArchiveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showColorDialog by remember { mutableStateOf(false) }
+    var selectedColor by remember { mutableStateOf<String?>(null) }
+    
+    val presetColors = listOf(
+        null,
+        "#4CAF50", // Green
+        "#2196F3", // Blue
+        "#F44336", // Red
+        "#9C27B0", // Purple
+        "#FF9800", // Orange
+        "#607D8B", // Blue Grey
+        "#1A1A1A", // Dark
+        "#795548"  // Brown
+    )
     
     // Automatically go back if account is deleted and state updates to null
     LaunchedEffect(state.account) {
@@ -63,6 +83,15 @@ fun AccountDetailScreen(
                         onDismissRequest = { expanded = false }
                     ) {
                         if (state.account?.is_system == 0L) {
+                            DropdownMenuItem(
+                                text = { Text("Change Color") },
+                                leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                                onClick = {
+                                    expanded = false
+                                    selectedColor = state.account?.color
+                                    showColorDialog = true
+                                }
+                            )
                             DropdownMenuItem(
                                 text = { Text("Archive Account") },
                                 onClick = {
@@ -150,12 +179,13 @@ fun AccountDetailScreen(
                                             Column {
                                                 Text(
                                                     tx.merchant ?: "Unknown Merchant",
-                                                    style = MaterialTheme.typography.titleMedium
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface
                                                 )
                                                 Text(
                                                     if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed",
                                                     style = MaterialTheme.typography.bodySmall,
-                                                    color = if (tx.is_reviewed == 1L) Color.Gray else MaterialTheme.colorScheme.error
+                                                    color = if (tx.is_reviewed == 1L) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
                                                 )
                                             }
                                         }
@@ -203,6 +233,57 @@ fun AccountDetailScreen(
                 onNavigateBack()
             },
             onDismiss = { showDeleteDialog = false }
+        )
+    }
+
+    if (showColorDialog) {
+        AlertDialog(
+            onDismissRequest = { showColorDialog = false },
+            title = { Text("Choose Account Color") },
+            text = {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    items(presetColors) { colorHex ->
+                        val isSelected = selectedColor == colorHex
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (colorHex == null) MaterialTheme.colorScheme.surfaceVariant 
+                                    else try { Color(android.graphics.Color.parseColor(colorHex)) } catch(e: Exception) { MaterialTheme.colorScheme.surfaceVariant }
+                                )
+                                .clickable { selectedColor = colorHex },
+                            contentAlignment = androidx.compose.ui.Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clip(CircleShape)
+                                        .background(if (colorHex == null) MaterialTheme.colorScheme.onSurface else Color.White)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateAccountColor(selectedColor)
+                    showColorDialog = false
+                    coroutineScope.launch { snackbarHostState.showSnackbar("Account color updated") }
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showColorDialog = false }) {
+                    Text("Cancel")
+                }
+            }
         )
     }
 }

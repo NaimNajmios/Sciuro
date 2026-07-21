@@ -46,4 +46,22 @@ class AccountDetailViewModel(
             accountRepository.archiveAccount(accountId)
         }
     }
+
+    fun updateAccountColor(color: String?) {
+        viewModelScope.launch {
+            val account = state.value.account ?: return@launch
+            val domainAccount = com.sciuro.core.ledger.model.Account(
+                id = account.id,
+                name = account.name,
+                type = account.type,
+                currency = account.currency,
+                balance = account.balance,
+                associatedPackage = account.associated_package,
+                isSystem = account.is_system == 1L,
+                status = account.status,
+                color = color
+            )
+            accountRepository.updateAccount(domainAccount)
+        }
+    }
 }

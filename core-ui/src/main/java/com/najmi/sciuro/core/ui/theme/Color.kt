@@ -8,6 +8,9 @@ val LightSurfaceSheet = Color(0xFFFFFFFF)
 val DarkSurfaceBase = Color(0xFF121316)
 val DarkSurfaceSheet = Color(0xFF1C1D21)
 
+val LightSurfaceVariant = Color(0xFFF2F2F2)
+val DarkSurfaceVariant = Color(0xFF25262A)
+
 val SurfaceHero = Color(0xFF000000)
 val SurfaceHeroGlow = Color(0xFF111111)
 

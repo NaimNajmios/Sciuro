@@ -8,7 +8,8 @@ data class Account(
     val balance: Double = 0.0,
     val associatedPackage: String? = null,
     val isSystem: Boolean = false,
-    val status: String = "ACTIVE"
+    val status: String = "ACTIVE",
+    val color: String? = null
 )
 
 data class Category(

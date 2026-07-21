@@ -176,12 +176,13 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                                     Column {
                                                         Text(
                                                             tx.merchant ?: "Unknown Merchant",
-                                                            style = MaterialTheme.typography.titleMedium
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            color = MaterialTheme.colorScheme.onSurface
                                                         )
                                                         Text(
                                                             if (tx.is_reviewed == 1L) "Reviewed" else "Swipe right to approve, left to reject",
                                                             style = MaterialTheme.typography.bodySmall,
-                                                            color = if (tx.is_reviewed == 1L) Color.Gray else MaterialTheme.colorScheme.primary
+                                                            color = if (tx.is_reviewed == 1L) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
                                                         )
                                                     }
                                                 }
