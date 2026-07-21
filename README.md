@@ -37,6 +37,23 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 * **Background Tasks:** WorkManager (Android)
 * **UI Framework:** Jetpack Compose (Android)
 
+## Developer Tools
+
+Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with five tabs:
+
+| Tab | Description |
+|---|---|
+| **Simulator** | Manual pipeline: enter package/title/text and run through all parser rules. Includes a dynamic package+template picker sourced from `FixtureLibrary` (31 fixtures across 7 rules). |
+| **Sources** | Read-only view of all 35 allowed notification packages grouped by Bank / E-Wallet / Aggregator. |
+| **Ingestion Log** | Dead-letter event viewer with pending/dead-letter counts, per-event error display, and resend capability. |
+| **Diagnostics** | Per-rule match/no-match analysis with extracted fields. Shows LLM debug info (prompt, response, latency) when LLM fallback is triggered. |
+| **Data Tools** | Clear Inbox (unreviewed transactions) with confirmation dialog. |
+
+**Key classes:**
+- `SimulationEngine` (`core-parsing`) — runs the full parser pipeline and captures per-rule results, LLM latency, and debug info in a `SimulationResult`.
+- `FixtureLibrary` (`core-parsing`) — shared fixture data (31 cases) used by both tests and the simulator UI.
+- `SimulationResult` / `RuleMatchResult` / `LlmDebugInfo` — data classes for diagnostic output.
+
 ## Development Setup
 
 1. **Requirements:**
@@ -49,7 +66,12 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
    ./gradlew build
    ```
 
-3. **Running Static Analysis (Detekt):**
+3. **Running Parser Tests:**
+   ```bash
+   ./gradlew :core-parsing:testDebugUnitTest
+   ```
+
+4. **Running Static Analysis (Detekt):**
    ```bash
    ./gradlew detekt
    ```

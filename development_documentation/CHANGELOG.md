@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Developer Tools Enhancement (DT1-7): Full 5-tab `DeveloperSettingsScreen` restructure with Simulator, Sources, Ingestion Log, Diagnostics, and Data Tools tabs.
+- `SimulationEngine` in `core-parsing`: runs the full parser pipeline, captures per-rule match/no-match results, LLM latency, and debug info into a `SimulationResult`.
+- `FixtureLibrary` in `core-parsing`: 31 fixtures from all 7 parser rules, shared between tests and simulator UI.
+- Dynamic package+template picker in Simulator tab, sourced from `FixtureLibrary` and `IngestionConfig.allowedPackages`.
+- Dead-letter event viewer (Tab 3) with pending/dead-letter count strip and per-event error display.
+- Parser Diagnostics tab (Tab 4) showing per-rule match/no-match analysis with extracted fields.
+- LLM debug panel in Diagnostics tab: prompt, raw response, latency, model used.
+- `LlmFallbackParser.lastDebugCapture`: captures prompt/response/latency on every LLM call for developer tooling.
+- `ParserTestCase` data class moved from `commonTest` to `commonMain` so it's shared between test fixtures and UI fixtures.
+- Confirmation dialog in Data Tools for "Clear Inbox" destructive action.
 - Multi-step Onboarding setup flow capturing user's initial cash balance.
 - Soft-deletion mechanics for `Account` and `Investment` via new `status` column.
 - Undeletable constraint for the core system "Personal Wallet" utilizing a new `is_system` flag.
