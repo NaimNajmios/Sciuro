@@ -217,56 +217,59 @@ fun WalletScreen(
                                 colors = CardDefaults.cardColors(containerColor = containerCol, contentColor = contentCol),
                                 shape = MaterialTheme.shapes.extraLarge
                             ) {
-                                Box(modifier = Modifier.fillMaxSize()) {
-                                    Column(
-                                        modifier = Modifier.fillMaxSize().padding(24.dp).clickable { onAccountClick(account.id) },
-                                        verticalArrangement = Arrangement.SpaceBetween
+                                Column(
+                                    modifier = Modifier.fillMaxSize().padding(24.dp).clickable { onAccountClick(account.id) },
+                                    verticalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(account.name, style = MaterialTheme.typography.titleLarge)
-                                            val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
-                                            if (associatedApp != null) {
-                                                Image(
-                                                    bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(32.dp).clip(CircleShape)
-                                                )
-                                            } else {
-                                                Icon(
-                                                    imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
-                                                    contentDescription = null
-                                                )
-                                            }
+                                        Text(account.name, style = MaterialTheme.typography.titleLarge)
+                                        val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
+                                        if (associatedApp != null) {
+                                            Image(
+                                                bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(32.dp).clip(CircleShape)
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
+                                                contentDescription = null
+                                            )
                                         }
-                                        Text(
-                                            "RM ${"%.2f".format(account.balance)}",
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                                        )
+                                    }
+                                    Text(
+                                        "RM ${"%.2f".format(account.balance)}",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Text(
                                             if (account.isEWallet) "E-Wallet" else "Bank Account",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = contentCol.copy(alpha = 0.7f)
                                         )
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            recountAccountId = account.id
-                                            recountDeclaredBalance = ""
-                                            recountReason = ""
-                                            showRecountDialog = true
-                                        },
-                                        modifier = Modifier.align(Alignment.BottomEnd)
-                                    ) {
-                                        Icon(
-                                            Icons.Filled.Calculate,
-                                            contentDescription = "Recount",
-                                            tint = contentCol.copy(alpha = 0.6f)
-                                        )
+                                        IconButton(
+                                            onClick = {
+                                                recountAccountId = account.id
+                                                recountDeclaredBalance = ""
+                                                recountReason = ""
+                                                showRecountDialog = true
+                                            }
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Calculate,
+                                                contentDescription = "Recount",
+                                                tint = contentCol.copy(alpha = 0.6f)
+                                            )
+                                        }
                                     }
                                 }
                             }
