@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.theme.SurfaceHero
 import com.najmi.sciuro.core.ui.components.AdjustmentCard
 import com.najmi.sciuro.core.ui.components.AdjustmentBottomSheet
 import com.sciuro.feature.wallet.viewmodel.AccountDetailViewModel
@@ -72,22 +73,52 @@ fun AccountDetailScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            HeroPanel(
-                title = account.name,
-                heroFigure = "RM ${"%.2f".format(account.balance)}",
-                toggleOptions = emptyList(),
-                selectedToggle = "",
-                onToggleSelected = { },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Back",
-                            tint = Color.White
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(SurfaceHero)
+            ) {
+                HeroPanel(
+                    title = account.name,
+                    heroFigure = "RM ${"%.2f".format(account.balance)}",
+                    toggleOptions = emptyList(),
+                    selectedToggle = "",
+                    onToggleSelected = { },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 20.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    FilledTonalButton(
+                        onClick = { showAdjustmentDialog = true },
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = Color.White.copy(alpha = 0.15f),
+                            contentColor = Color.White
                         )
+                    ) {
+                        Icon(
+                            Icons.Filled.Tune,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Adjust Balance")
                     }
                 }
-            )
+            }
 
             Box(modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd).padding(top = 36.dp, end = 16.dp)) {
                 var expanded by remember { mutableStateOf(false) }
@@ -130,26 +161,9 @@ fun AccountDetailScreen(
                     }
                 }
             }
-
-            FilledTonalButton(
-                onClick = { showAdjustmentDialog = true },
-                modifier = Modifier.align(androidx.compose.ui.Alignment.BottomEnd).padding(end = 24.dp, bottom = 28.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = Color.White.copy(alpha = 0.15f),
-                    contentColor = Color.White
-                )
-            ) {
-                Icon(
-                    Icons.Filled.Tune,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Adjust Balance")
-            }
         }
 
-        SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
+        SheetList(modifier = Modifier.fillMaxWidth().weight(1f)) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Column(
