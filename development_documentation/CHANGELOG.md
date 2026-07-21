@@ -21,7 +21,10 @@ All notable changes to this project will be documented in this file.
 - Kanban UI refactoring, migrating the status filter layout into a sticky `PillToggle` above the task list for rapid filtering.
 - Dedicated `DeveloperSettingsScreen` to isolate development and simulation tools from the primary user Settings menu.
 - Removed arbitrary pagination/limiting in the Wallet Account Associated App selection, ensuring all installed packages are searchable.
+- Added manual transaction direction correction (Income/Expense segmented toggle) to the Kanban "Review Transaction" task flow, enabling precise classification before ledger commit.
+- Expanded `FastTransactionSheet` preset label options to include an "Others" pill.
 ### Fixed
+- Fixed runtime crash caused by missing `transferModule` injection in Koin configuration for `DashboardViewModel`.
 - SQL database bug where `transaction_record.account_id` was not saved during transaction approval.
 
 ### Changed
