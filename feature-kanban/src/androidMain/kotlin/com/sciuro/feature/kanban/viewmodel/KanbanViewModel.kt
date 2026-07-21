@@ -30,7 +30,8 @@ class KanbanViewModel(
                     description = "Amount: RM ${tx.amount} (${tx.direction})",
                     status = TaskStatus.TODO,
                     accountId = tx.account_id,
-                    categoryId = tx.category_id
+                    categoryId = tx.category_id,
+                    direction = tx.direction
                 )
             }
         }
@@ -48,10 +49,10 @@ class KanbanViewModel(
             initialValue = emptyList()
         )
     
-    fun updateTaskStatus(taskId: String, newStatus: TaskStatus, newAccountId: String? = null) {
+    fun updateTaskStatus(taskId: String, newStatus: TaskStatus, newAccountId: String? = null, newDirection: String? = null) {
         if (newStatus == TaskStatus.DONE) {
             viewModelScope.launch {
-                transactionRepository.reviewTransaction(taskId, null, newAccountId)
+                transactionRepository.reviewTransaction(taskId, null, newAccountId, newDirection)
             }
         } else if (newStatus == TaskStatus.REJECTED) {
             viewModelScope.launch {

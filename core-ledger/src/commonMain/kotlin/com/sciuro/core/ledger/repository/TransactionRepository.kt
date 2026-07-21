@@ -61,7 +61,7 @@ class TransactionRepository(
         }
     }
     
-    suspend fun reviewTransaction(transactionId: String, newCategoryId: String?, newAccountId: String? = null) {
+    suspend fun reviewTransaction(transactionId: String, newCategoryId: String?, newAccountId: String? = null, newDirection: String? = null) {
         val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
         
         withAudit(
@@ -81,20 +81,23 @@ class TransactionRepository(
             }
             
             val targetAccountId = newAccountId ?: oldTx.account_id
+            val finalDirection = newDirection ?: oldTx.direction
             
             // Apply new balance if there's a target account
             if (targetAccountId != null) {
-                val newBalanceDelta = if (oldTx.direction == "INFLOW") oldTx.amount else -oldTx.amount
+                val newBalanceDelta = if (finalDirection == "INFLOW") oldTx.amount else -oldTx.amount
                 accountRepository.updateBalance(targetAccountId, newBalanceDelta)
             }
             
-            if (newCategoryId != null && targetAccountId != null) {
-                database.transactionRecordQueries.updateAccountAndCategory(targetAccountId, newCategoryId, now, transactionId)
-            } else if (newCategoryId != null) {
-                database.transactionRecordQueries.updateCategory(newCategoryId, now, transactionId)
-            } else if (targetAccountId != null) {
-                database.transactionRecordQueries.updateAccount(targetAccountId, now, transactionId)
-            }
+            database.transactionRecordQueries.updateTransactionDetails(
+                amount = oldTx.amount,
+                direction = finalDirection,
+                merchant = oldTx.merchant,
+                category_id = newCategoryId ?: oldTx.category_id,
+                account_id = targetAccountId,
+                updated_at = now,
+                id = transactionId
+            )
             
             database.transactionRecordQueries.markAsReviewed(now, transactionId)
         }
@@ -154,6 +157,7 @@ class TransactionRepository(
     suspend fun editTransaction(
         transactionId: String,
         newAmount: Double,
+        newDirection: String,
         newMerchant: String,
         newCategoryId: String?,
         newAccountId: String?
@@ -178,12 +182,13 @@ class TransactionRepository(
             
             // Apply new balance
             if (newAccountId != null) {
-                val newBalanceDelta = if (oldTx.direction == "INFLOW") newAmount else -newAmount
+                val newBalanceDelta = if (newDirection == "INFLOW") newAmount else -newAmount
                 accountRepository.updateBalance(newAccountId, newBalanceDelta)
             }
             
             database.transactionRecordQueries.updateTransactionDetails(
                 amount = newAmount,
+                direction = newDirection,
                 merchant = newMerchant,
                 category_id = newCategoryId,
                 account_id = newAccountId,

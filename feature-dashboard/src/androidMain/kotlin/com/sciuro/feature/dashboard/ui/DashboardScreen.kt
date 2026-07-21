@@ -339,13 +339,14 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
             expenseCategories = expCatOptions,
             incomeCategories = incCatOptions,
             onDismissRequest = { showAddTransactionDialog = false },
-            onSubmit = { amount, direction, merchant, categoryId, accountId ->
+            onSubmit = { amount, direction, merchant, categoryId, accountId, destinationAccountId ->
                 viewModel.bookManualTransaction(
                     amount = amount,
                     direction = direction,
                     merchant = merchant,
                     accountId = accountId,
-                    categoryId = categoryId ?: (if (direction == "OUTFLOW") "cat_exp_9" else "cat_inc_6")
+                    categoryId = categoryId ?: (if (direction == "OUTFLOW") "cat_exp_9" else "cat_inc_6"),
+                    destinationAccountId = destinationAccountId
                 )
                 showAddTransactionDialog = false
                 coroutineScope.launch {
@@ -373,6 +374,25 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 onValueChange = { editTxMerchant = it },
                 label = "Merchant / Note"
             )
+            
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            ) {
+                SegmentedButton(
+                    selected = editTxDirection == "OUTFLOW",
+                    onClick = { editTxDirection = "OUTFLOW"; editTxCategoryId = null },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                ) {
+                    Text("Expense")
+                }
+                SegmentedButton(
+                    selected = editTxDirection == "INFLOW",
+                    onClick = { editTxDirection = "INFLOW"; editTxCategoryId = null },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                ) {
+                    Text("Income")
+                }
+            }
                 
                 var accountExpanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
@@ -442,6 +462,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                             viewModel.editTransaction(
                                 transactionId = editingTxId!!,
                                 amount = amt,
+                                direction = editTxDirection,
                                 merchant = editTxMerchant,
                                 categoryId = editTxCategoryId,
                                 accountId = editTxAccountId

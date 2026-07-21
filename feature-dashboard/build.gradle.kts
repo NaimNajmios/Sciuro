@@ -22,6 +22,7 @@ kotlin {
                 implementation(project(":core-debt"))
                 implementation(project(":core-investment"))
                 implementation(project(":core-ingestion"))
+                implementation(project(":core-transfer"))
             }
         }
         val androidMain by getting {

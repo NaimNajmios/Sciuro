@@ -22,14 +22,15 @@ fun FastTransactionSheet(
     expenseCategories: List<FastTxOption>,
     incomeCategories: List<FastTxOption>,
     onDismissRequest: () -> Unit,
-    onSubmit: (amount: Double, direction: String, merchant: String, categoryId: String?, accountId: String?) -> Unit
+    onSubmit: (amount: Double, direction: String, merchant: String, categoryId: String?, accountId: String?, destinationAccountId: String?) -> Unit
 ) {
     var amountStr by remember { mutableStateOf("0") }
     var direction by remember { mutableStateOf("OUTFLOW") }
     var categoryId by remember { mutableStateOf<String?>(null) }
     var accountId by remember { mutableStateOf<String?>(null) }
+    var destinationAccountId by remember { mutableStateOf<String?>(null) }
     var merchant by remember { mutableStateOf("") }
-    val presetLabels = listOf("Breakfast", "Lunch", "Dinner", "Coffee", "Groceries", "Transport", "Shopping", "Salary")
+    val presetLabels = listOf("Breakfast", "Lunch", "Dinner", "Coffee", "Groceries", "Transport", "Shopping", "Salary", "Others")
 
     SciuroBottomSheet(onDismissRequest = onDismissRequest) {
         // Amount Display
@@ -48,16 +49,23 @@ fun FastTransactionSheet(
             SegmentedButton(
                 selected = direction == "OUTFLOW",
                 onClick = { direction = "OUTFLOW"; categoryId = null },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
             ) {
                 Text("Expense")
             }
             SegmentedButton(
                 selected = direction == "INFLOW",
                 onClick = { direction = "INFLOW"; categoryId = null },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
             ) {
                 Text("Income")
+            }
+            SegmentedButton(
+                selected = direction == "TRANSFER",
+                onClick = { direction = "TRANSFER"; categoryId = null },
+                shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
+            ) {
+                Text("Transfer")
             }
         }
 
@@ -78,20 +86,22 @@ fun FastTransactionSheet(
         }
 
         // Category Selection
-        Text("Category", style = MaterialTheme.typography.labelLarge)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val cats = if (direction == "OUTFLOW") expenseCategories else incomeCategories
-            items(cats) { cat ->
-                FilterChip(
-                    selected = categoryId == cat.id,
-                    onClick = { categoryId = cat.id },
-                    label = { Text(cat.name) }
-                )
+        if (direction != "TRANSFER") {
+            Text("Category", style = MaterialTheme.typography.labelLarge)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val cats = if (direction == "OUTFLOW") expenseCategories else incomeCategories
+                items(cats) { cat ->
+                    FilterChip(
+                        selected = categoryId == cat.id,
+                        onClick = { categoryId = cat.id },
+                        label = { Text(cat.name) }
+                    )
+                }
             }
         }
 
         // Account Selection
-        Text("Source Account", style = MaterialTheme.typography.labelLarge)
+        Text(if (direction == "TRANSFER") "Source Account" else "Account", style = MaterialTheme.typography.labelLarge)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(accounts) { acc ->
                 FilterChip(
@@ -99,6 +109,19 @@ fun FastTransactionSheet(
                     onClick = { accountId = acc.id },
                     label = { Text(acc.name) }
                 )
+            }
+        }
+
+        if (direction == "TRANSFER") {
+            Text("Destination Account", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(accounts.filter { it.id != accountId }) { acc ->
+                    FilterChip(
+                        selected = destinationAccountId == acc.id,
+                        onClick = { destinationAccountId = acc.id },
+                        label = { Text(acc.name) }
+                    )
+                }
             }
         }
 
@@ -127,10 +150,10 @@ fun FastTransactionSheet(
                 val amt = amountStr.toDoubleOrNull() ?: 0.0
                 if (amt > 0) {
                     val finalMerchant = merchant.ifBlank { "Manual Entry" }
-                    onSubmit(amt, direction, finalMerchant, categoryId, accountId)
+                    onSubmit(amt, direction, finalMerchant, categoryId, accountId, destinationAccountId)
                 }
             },
-            isSaveEnabled = (amountStr.toDoubleOrNull() ?: 0.0) > 0 && accountId != null && categoryId != null
+            isSaveEnabled = (amountStr.toDoubleOrNull() ?: 0.0) > 0 && accountId != null && (if (direction == "TRANSFER") destinationAccountId != null else categoryId != null)
         )
     }
 }

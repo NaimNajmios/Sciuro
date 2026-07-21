@@ -40,7 +40,7 @@ WHERE id = ?;
 
 updateTransactionDetails:
 UPDATE transaction_record
-SET amount = ?, merchant = ?, category_id = ?, account_id = ?, updated_at = ?
+SET amount = ?, direction = ?, merchant = ?, category_id = ?, account_id = ?, updated_at = ?
 WHERE id = ?;
 
 selectUnreviewedTransactions:

@@ -11,6 +11,7 @@ import com.sciuro.feature.dashboard.di.dashboardModule
 import com.sciuro.feature.wallet.di.walletModule
 import com.sciuro.feature.kanban.di.kanbanModule
 import com.sciuro.feature.budgets.di.budgetsModule
+import com.sciuro.core.transfer.di.transferModule
 import com.sciuro.core.parsing.di.parsingModule
 import com.sciuro.core.classifier.di.classifierModule
 import com.sciuro.core.ingestion.di.ingestionModule
@@ -57,7 +58,8 @@ class SciuroApp : Application(), KoinComponent {
                 appModule,
                 parsingModule,
                 classifierModule,
-                ingestionModule
+                ingestionModule,
+                transferModule
             )
         }
         

@@ -739,6 +739,25 @@ fun WalletScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
                 
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SegmentedButton(
+                        selected = editTxDirection == "OUTFLOW",
+                        onClick = { editTxDirection = "OUTFLOW"; editTxCategoryId = null },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                    ) {
+                        Text("Expense")
+                    }
+                    SegmentedButton(
+                        selected = editTxDirection == "INFLOW",
+                        onClick = { editTxDirection = "INFLOW"; editTxCategoryId = null },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                    ) {
+                        Text("Income")
+                    }
+                }
+                
                 var accountExpanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
                     expanded = accountExpanded,
@@ -810,6 +829,7 @@ fun WalletScreen(
                             viewModel.editTransaction(
                                 transactionId = editingTxId!!,
                                 amount = amt,
+                                direction = editTxDirection,
                                 merchant = editTxMerchant,
                                 categoryId = editTxCategoryId,
                                 accountId = editTxAccountId

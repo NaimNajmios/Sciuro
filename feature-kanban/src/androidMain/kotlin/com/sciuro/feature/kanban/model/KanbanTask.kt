@@ -10,5 +10,6 @@ data class KanbanTask(
     val description: String,
     val status: TaskStatus,
     val accountId: String? = null,
-    val categoryId: String? = null
+    val categoryId: String? = null,
+    val direction: String? = null
 )

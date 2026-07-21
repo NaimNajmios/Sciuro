@@ -27,7 +27,8 @@ class DashboardViewModel(
     private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
     private val budgetRepository: BudgetRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val transferRepository: com.sciuro.core.transfer.repository.TransferRepository
 ) : ViewModel() {
     
     init {
@@ -73,25 +74,53 @@ class DashboardViewModel(
         direction: String,
         merchant: String,
         accountId: String?,
-        categoryId: String?
+        categoryId: String?,
+        destinationAccountId: String? = null
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val transaction = com.sciuro.core.ledger.model.Transaction(
-                id = java.util.UUID.randomUUID().toString(),
-                accountId = accountId,
-                categoryId = categoryId,
-                amount = amount,
-                direction = direction,
-                merchant = merchant,
-                timestamp = System.currentTimeMillis(),
-                referenceId = null,
-                isReviewed = true // Manual transactions are inherently reviewed
-            )
-            transactionRepository.bookTransaction(
-                transaction = transaction,
-                source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL,
-                confidence = 1.0f
-            )
+            if (direction == "TRANSFER" && destinationAccountId != null) {
+                val outTxId = java.util.UUID.randomUUID().toString()
+                val inTxId = java.util.UUID.randomUUID().toString()
+                
+                val outTx = com.sciuro.core.ledger.model.Transaction(
+                    id = outTxId, accountId = accountId, categoryId = "cat_transfer", amount = amount, direction = "OUTFLOW",
+                    merchant = "Transfer to $destinationAccountId", timestamp = System.currentTimeMillis(), referenceId = inTxId, isReviewed = true
+                )
+                val inTx = com.sciuro.core.ledger.model.Transaction(
+                    id = inTxId, accountId = destinationAccountId, categoryId = "cat_transfer", amount = amount, direction = "INFLOW",
+                    merchant = "Transfer from $accountId", timestamp = System.currentTimeMillis(), referenceId = outTxId, isReviewed = true
+                )
+                
+                transactionRepository.bookTransaction(outTx, source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL, confidence = 1.0f)
+                transactionRepository.bookTransaction(inTx, source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL, confidence = 1.0f)
+                
+                transferRepository.linkTransactions(
+                    com.sciuro.core.transfer.model.TransferLink(
+                        id = java.util.UUID.randomUUID().toString(),
+                        outflowTransactionId = outTxId,
+                        inflowTransactionId = inTxId,
+                        amount = amount,
+                        createdAt = System.currentTimeMillis()
+                    )
+                )
+            } else {
+                val transaction = com.sciuro.core.ledger.model.Transaction(
+                    id = java.util.UUID.randomUUID().toString(),
+                    accountId = accountId,
+                    categoryId = categoryId,
+                    amount = amount,
+                    direction = direction,
+                    merchant = merchant,
+                    timestamp = System.currentTimeMillis(),
+                    referenceId = null,
+                    isReviewed = true // Manual transactions are inherently reviewed
+                )
+                transactionRepository.bookTransaction(
+                    transaction = transaction,
+                    source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL,
+                    confidence = 1.0f
+                )
+            }
         }
     }
 
@@ -111,11 +140,12 @@ class DashboardViewModel(
         }
     }
 
-    fun editTransaction(transactionId: String, amount: Double, merchant: String, categoryId: String?, accountId: String?) {
+    fun editTransaction(transactionId: String, amount: Double, direction: String, merchant: String, categoryId: String?, accountId: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             transactionRepository.editTransaction(
                 transactionId = transactionId,
                 newAmount = amount,
+                newDirection = direction,
                 newMerchant = merchant,
                 newCategoryId = categoryId,
                 newAccountId = accountId

@@ -87,6 +87,9 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             var selectedAccount by remember(task.id) { 
                                 mutableStateOf(accounts.find { it.id == task.accountId }) 
                             }
+                            var selectedDirection by remember(task.id) {
+                                mutableStateOf(task.direction ?: "OUTFLOW")
+                            }
                             var accountDropdownExpanded by remember { mutableStateOf(false) }
 
                             Card(
@@ -125,6 +128,28 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                     }
                                     
                                     Spacer(modifier = Modifier.height(8.dp))
+                                    
+                                    // Direction Selection
+                                    if (task.title.startsWith("Review Transaction")) {
+                                        SingleChoiceSegmentedButtonRow(
+                                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                                        ) {
+                                            SegmentedButton(
+                                                selected = selectedDirection == "OUTFLOW",
+                                                onClick = { selectedDirection = "OUTFLOW" },
+                                                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                                            ) {
+                                                Text("Expense")
+                                            }
+                                            SegmentedButton(
+                                                selected = selectedDirection == "INFLOW",
+                                                onClick = { selectedDirection = "INFLOW" },
+                                                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                                            ) {
+                                                Text("Income")
+                                            }
+                                        }
+                                    }
                                     
                                     // Account Selection
                                     ExposedDropdownMenuBox(
@@ -173,7 +198,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                         SciuroPrimaryButton(
                                             text = "Approve",
                                             onClick = { 
-                                                viewModel.updateTaskStatus(task.id, TaskStatus.DONE, selectedAccount?.id)
+                                                viewModel.updateTaskStatus(task.id, TaskStatus.DONE, selectedAccount?.id, selectedDirection)
                                                 coroutineScope.launch {
                                                     snackbarHostState.showSnackbar("Task Approved")
                                                 }

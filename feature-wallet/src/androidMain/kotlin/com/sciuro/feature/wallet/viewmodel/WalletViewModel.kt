@@ -128,11 +128,12 @@ class WalletViewModel(
         }
     }
     
-    fun editTransaction(transactionId: String, amount: Double, merchant: String, categoryId: String?, accountId: String?) {
+    fun editTransaction(transactionId: String, amount: Double, direction: String, merchant: String, categoryId: String?, accountId: String?) {
         viewModelScope.launch {
             transactionRepository.editTransaction(
                 transactionId = transactionId,
                 newAmount = amount,
+                newDirection = direction,
                 newMerchant = merchant,
                 newCategoryId = categoryId,
                 newAccountId = accountId
