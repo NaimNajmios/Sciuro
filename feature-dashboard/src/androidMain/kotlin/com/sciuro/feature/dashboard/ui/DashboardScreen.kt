@@ -42,6 +42,31 @@ import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     var selectedRange by remember { mutableStateOf("All Time") }
+    var selectedTypeFilter by remember { mutableStateOf("All") }
+    val filterOptions = listOf("All", "Income", "Expense")
+
+    val filteredTransactions = remember(state.allTransactions, selectedRange, selectedTypeFilter) {
+        state.allTransactions.filter { tx ->
+            val matchesTime = when (selectedRange) {
+                "This Month" -> {
+                    val cal = java.util.Calendar.getInstance()
+                    cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    cal.set(java.util.Calendar.MINUTE, 0)
+                    cal.set(java.util.Calendar.SECOND, 0)
+                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                    tx.timestamp >= cal.timeInMillis
+                }
+                else -> true
+            }
+            val matchesType = when (selectedTypeFilter) {
+                "Income" -> tx.direction == "INFLOW"
+                "Expense" -> tx.direction == "OUTFLOW"
+                else -> true
+            }
+            matchesTime && matchesType
+        }
+    }
     
     var showAddTransactionDialog by remember { mutableStateOf(false) }
     var newAmount by remember { mutableStateOf("") }
@@ -175,13 +200,27 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
-                            
-                            if (state.allTransactions.isEmpty()) {
+
+                            LazyRow(
+                                modifier = Modifier.padding(bottom = 12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(filterOptions) { filter ->
+                                    FilterChip(
+                                        selected = selectedTypeFilter == filter,
+                                        onClick = { selectedTypeFilter = filter },
+                                        label = { Text(filter) }
+                                    )
+                                }
+                            }
+
+                            if (filteredTransactions.isEmpty()) {
+                                val noMatching = state.allTransactions.isNotEmpty()
                                 com.najmi.sciuro.core.ui.components.EmptyStateView(
-                                    message = "No transactions yet."
+                                    message = if (noMatching) "No transactions match the current filter." else "No transactions yet."
                                 )
                             } else {
-                                state.allTransactions.forEach { tx ->
+                                filteredTransactions.forEach { tx ->
                                     @Composable
                                     fun TransactionCard() {
                                         Card(
