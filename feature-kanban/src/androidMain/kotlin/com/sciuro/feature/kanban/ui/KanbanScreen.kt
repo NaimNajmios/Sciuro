@@ -67,7 +67,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 PillToggle(
                     options = listOf("To Do", "In Progress", "Done"),
                     selectedOption = selectedStatus,
-                    onOptionSelected = { selectedStatus = it }
+                    onOptionSelected = { selectedStatus = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
             

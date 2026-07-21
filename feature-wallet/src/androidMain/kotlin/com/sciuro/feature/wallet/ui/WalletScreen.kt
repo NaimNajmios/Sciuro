@@ -125,49 +125,17 @@ fun WalletScreen(
     val investmentPagerState = rememberPagerState(pageCount = { maxOf(1, investments.size) })
     
     Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(com.najmi.sciuro.core.ui.theme.SurfaceHero)
-                .padding(top = 48.dp, bottom = 48.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                    Text(
-                        text = if (selectedAssetType == "Liquid Cash") "Total Liquidity" else "Total Investments",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "RM ${"%.2f".format(displayTotal)}",
-                        style = MaterialTheme.typography.displaySmall,
-                        color = Color.White,
-                        fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            com.najmi.sciuro.core.ui.components.PillToggle(
-                options = listOf("Liquid Cash", "Investments"),
-                selectedOption = selectedAssetType,
-                onOptionSelected = { selectedAssetType = it },
-                isOnDarkSurface = true,
-                modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth()
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            if (selectedAssetType == "Liquid Cash") {
-                if (accounts.isEmpty()) {
-                    Text("No accounts found", color = Color.White, modifier = Modifier.padding(16.dp))
-                } else {
+        HeroPanel(
+            title = if (selectedAssetType == "Liquid Cash") "Total Liquidity" else "Total Investments",
+            heroFigure = "RM ${"%.2f".format(displayTotal)}",
+            toggleOptions = listOf("Liquid Cash", "Investments"),
+            selectedToggle = selectedAssetType,
+            onToggleSelected = { selectedAssetType = it },
+            bottomContent = {
+                if (selectedAssetType == "Liquid Cash") {
+                    if (accounts.isEmpty()) {
+                        Text("No accounts found", color = Color.White, modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp))
+                    } else {
                     HorizontalPager(
                         state = accountPagerState,
                         contentPadding = PaddingValues(horizontal = 32.dp),
@@ -279,12 +247,14 @@ fun WalletScreen(
                 }
             }
         }
+        )
         
         SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
             Spacer(modifier = Modifier.height(24.dp))
             
             LazyColumn(
-                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().weight(1f),
+                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
@@ -300,8 +270,7 @@ fun WalletScreen(
                             if (accountTx.isEmpty()) {
                                 item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No transactions for this account.") }
                             } else {
-                                items(accountTx.take(20).size) { idx ->
-                                    val tx = accountTx[idx]
+                                items(accountTx.take(20)) { tx ->
                                     Card(
                                         modifier = Modifier.fillMaxWidth().clickable {
                                             editingTxId = tx.id
@@ -351,12 +320,8 @@ fun WalletScreen(
                                 }
                             }
                         }
-                    } else if (selectedAssetType == "Investments") {
-                        item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "Investment transactions coming soon.") }
-                    } else if (selectedAssetType == "Investments" && investments.isNotEmpty()) {
-                        item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "Investment transactions are currently tracked manually.") }
                     } else {
-                        item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No data available.") }
+                        item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No investment transactions yet.") }
                     }
             }
         }

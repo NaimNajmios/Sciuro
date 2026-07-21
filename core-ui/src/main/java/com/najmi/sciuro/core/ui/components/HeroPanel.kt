@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SurfaceHero
 
 @Composable
@@ -25,51 +26,62 @@ fun HeroPanel(
     selectedToggle: String,
     onToggleSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    chartData: List<Float>? = null
+    chartData: List<Float>? = null,
+    bottomContent: @Composable (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(SurfaceHero)
-            .padding(top = 48.dp, bottom = 32.dp) // Bottom padding allows sheet overlap
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+                .padding(top = 48.dp, bottom = 32.dp)
         ) {
-            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = heroFigure,
-                    style = MaterialTheme.typography.displayLarge,
-                    color = Color.White
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = heroFigure,
+                        style = MaterialTheme.typography.displayLarge,
+                        color = Color.White,
+                        fontFamily = IBMPlexMono
+                    )
+                }
+                
+                PillToggle(
+                    options = toggleOptions,
+                    selectedOption = selectedToggle,
+                    onOptionSelected = onToggleSelected,
+                    isOnDarkSurface = true
                 )
             }
             
-            PillToggle(
-                options = toggleOptions,
-                selectedOption = selectedToggle,
-                onOptionSelected = onToggleSelected,
-                isOnDarkSurface = true
-            )
+            if (!chartData.isNullOrEmpty()) {
+                Spacer(modifier = Modifier.height(32.dp))
+                WaveChart(
+                    data = chartData, 
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                )
+            }
         }
         
-        if (!chartData.isNullOrEmpty()) {
-            Spacer(modifier = Modifier.height(32.dp))
-            WaveChart(
-                data = chartData, 
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-            )
+        if (bottomContent != null) {
+            bottomContent()
         }
     }
 }

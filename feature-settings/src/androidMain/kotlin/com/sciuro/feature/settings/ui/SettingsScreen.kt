@@ -1,7 +1,8 @@
 package com.sciuro.feature.settings.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -15,6 +16,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.core.parsing.config.SettingsProvider
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 import com.najmi.sciuro.core.ui.theme.ThemeManager
@@ -27,7 +30,6 @@ import org.koin.compose.koinInject
 import java.net.HttpURLConnection
 import java.net.URL
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateToDeveloperSettings: () -> Unit = {},
@@ -38,38 +40,35 @@ fun SettingsScreen(
     var apiKey by rememberSaveable { mutableStateOf(settingsProvider.getApiKey() ?: "") }
     var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
 
-
-
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val themeManager = remember { ThemeManager.getInstance(context) }
     val themePref by themeManager.themePreference.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") }
-            )
-        }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-        ) {
-            // --- Application Settings ---
-            item {
+    Column(modifier = Modifier.fillMaxSize()) {
+        HeroPanel(
+            title = "Settings",
+            heroFigure = "",
+            toggleOptions = emptyList(),
+            selectedToggle = "",
+            onToggleSelected = {}
+        )
+
+        SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxSize()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 32.dp)
+            ) {
                 Text(
                     "Application Settings",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
-            }
 
-            // --- Appearance ---
-            item {
                 Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Appearance", style = MaterialTheme.typography.titleMedium)
@@ -85,10 +84,7 @@ fun SettingsScreen(
                         }
                     }
                 }
-            }
 
-            // --- LLM Classification ---
-            item {
                 Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("LLM Classification", style = MaterialTheme.typography.titleMedium)
@@ -168,10 +164,7 @@ fun SettingsScreen(
                         }
                     }
                 }
-            }
 
-            // --- Developer Options Link ---
-            item {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     onClick = onNavigateToDeveloperSettings

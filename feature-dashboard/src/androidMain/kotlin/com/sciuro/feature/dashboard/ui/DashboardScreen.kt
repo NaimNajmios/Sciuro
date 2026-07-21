@@ -142,7 +142,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                             )
                             
                             if (state.allTransactions.isEmpty()) {
-                                Text("No transactions found", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                                com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No transactions found")
                             } else {
                                 state.allTransactions.forEach { tx ->
                                     @Composable
