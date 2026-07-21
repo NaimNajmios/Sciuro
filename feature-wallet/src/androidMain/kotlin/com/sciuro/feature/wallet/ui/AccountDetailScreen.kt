@@ -82,16 +82,16 @@ fun AccountDetailScreen(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
+                        DropdownMenuItem(
+                            text = { Text("Change Color") },
+                            leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                            onClick = {
+                                expanded = false
+                                selectedColor = state.account?.color
+                                showColorDialog = true
+                            }
+                        )
                         if (state.account?.is_system == 0L) {
-                            DropdownMenuItem(
-                                text = { Text("Change Color") },
-                                leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
-                                onClick = {
-                                    expanded = false
-                                    selectedColor = state.account?.color
-                                    showColorDialog = true
-                                }
-                            )
                             DropdownMenuItem(
                                 text = { Text("Archive Account") },
                                 onClick = {

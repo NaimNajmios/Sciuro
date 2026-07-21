@@ -176,11 +176,11 @@ fun WalletScreen(
                         val account = accounts.getOrNull(page)
                         if (account != null) {
                             val containerCol = if (account.color != null) {
-                                try { Color(android.graphics.Color.parseColor(account.color)) } catch(e: Exception) { MaterialTheme.colorScheme.primary }
+                                try { Color(android.graphics.Color.parseColor(account.color)) } catch(e: Exception) { MaterialTheme.colorScheme.surfaceVariant }
                             } else {
-                                MaterialTheme.colorScheme.primary
+                                MaterialTheme.colorScheme.surfaceVariant
                             }
-                            val contentCol = if (account.color != null) Color.White else MaterialTheme.colorScheme.onPrimary
+                            val contentCol = if (account.color != null) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             
                             Card(
                                 modifier = Modifier.fillMaxWidth().height(180.dp).clickable { onAccountClick(account.id) },
