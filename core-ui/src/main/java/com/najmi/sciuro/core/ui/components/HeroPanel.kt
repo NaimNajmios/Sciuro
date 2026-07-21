@@ -25,7 +25,8 @@ fun HeroPanel(
     selectedToggle: String,
     onToggleSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    chartData: List<Float>? = null
+    chartData: List<Float>? = null,
+    navigationIcon: @Composable (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
@@ -40,6 +41,11 @@ fun HeroPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
+            if (navigationIcon != null) {
+                Box(modifier = Modifier.padding(end = 8.dp)) {
+                    navigationIcon()
+                }
+            }
             Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                 Text(
                     text = title,

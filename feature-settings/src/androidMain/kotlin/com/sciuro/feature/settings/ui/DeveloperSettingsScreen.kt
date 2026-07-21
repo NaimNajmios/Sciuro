@@ -2,9 +2,12 @@ package com.sciuro.feature.settings.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -26,7 +29,16 @@ fun DeveloperSettingsScreen(
             heroFigure = "Tools",
             toggleOptions = emptyList(),
             selectedToggle = "",
-            onToggleSelected = {}
+            onToggleSelected = {},
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
+                }
+            }
         )
 
         SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
