@@ -7,6 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import com.sciuro.core.budget.repository.BudgetRepository
 import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
+import com.sciuro.core.ledger.repository.CashAdjustmentRepository
+import com.sciuro.core.audit.util.currentTimeMillis
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -20,7 +22,8 @@ data class DashboardState(
     val allTransactions: List<com.sciuro.core.ledger.db.Transaction_record> = emptyList(),
     val accounts: List<com.sciuro.core.ledger.db.Account> = emptyList(),
     val expenseCategories: List<com.sciuro.core.ledger.model.Category> = emptyList(),
-    val incomeCategories: List<com.sciuro.core.ledger.model.Category> = emptyList()
+    val incomeCategories: List<com.sciuro.core.ledger.model.Category> = emptyList(),
+    val recentAdjustmentCount: Int = 0
 )
 
 class DashboardViewModel(
@@ -28,7 +31,8 @@ class DashboardViewModel(
     private val transactionRepository: TransactionRepository,
     private val budgetRepository: BudgetRepository,
     private val categoryRepository: CategoryRepository,
-    private val transferRepository: com.sciuro.core.transfer.repository.TransferRepository
+    private val transferRepository: com.sciuro.core.transfer.repository.TransferRepository,
+    private val cashAdjustmentRepository: CashAdjustmentRepository
 ) : ViewModel() {
     
     init {
@@ -43,7 +47,8 @@ class DashboardViewModel(
         budgetRepository.observeBudgets(),
         transactionRepository.observeAllTransactions(),
         categoryRepository.observeCategoriesByType("OUTFLOW"),
-        categoryRepository.observeCategoriesByType("INFLOW")
+        categoryRepository.observeCategoriesByType("INFLOW"),
+        cashAdjustmentRepository.observeAllAdjustments()
     ) { data ->
         val accounts = data[0] as List<com.sciuro.core.ledger.db.Account>
         val unreviewed = data[1] as List<com.sciuro.core.ledger.db.Transaction_record>
@@ -51,6 +56,10 @@ class DashboardViewModel(
         val allTransactions = data[3] as List<com.sciuro.core.ledger.db.Transaction_record>
         val expenseCats = data[4] as List<com.sciuro.core.ledger.model.Category>
         val incomeCats = data[5] as List<com.sciuro.core.ledger.model.Category>
+        val allAdjustments = data[6] as List<com.sciuro.core.ledger.db.Cash_adjustment>
+        
+        val oneWeekAgo = currentTimeMillis() - 7L * 24L * 60L * 60L * 1000L
+        val recentAdjustments = allAdjustments.filter { it.timestamp > oneWeekAgo }
         
         DashboardState(
             netWorth = accounts.sumOf { it.balance },
@@ -59,7 +68,8 @@ class DashboardViewModel(
             allTransactions = allTransactions,
             accounts = accounts,
             expenseCategories = expenseCats,
-            incomeCategories = incomeCats
+            incomeCategories = incomeCats,
+            recentAdjustmentCount = recentAdjustments.size
         )
     }.stateIn(
         scope = viewModelScope,

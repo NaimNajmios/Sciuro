@@ -14,3 +14,18 @@ VALUES (?, ?, ?, ?, ?, ?);
 
 selectAdjustmentsByAccount:
 SELECT * FROM cash_adjustment WHERE account_id = ?;
+
+selectAdjustmentsByAccountOrdered:
+SELECT * FROM cash_adjustment WHERE account_id = ? ORDER BY timestamp DESC;
+
+selectAdjustmentCountByAccount:
+SELECT COUNT(*) FROM cash_adjustment WHERE account_id = ?;
+
+selectAllAdjustments:
+SELECT * FROM cash_adjustment ORDER BY timestamp DESC;
+
+deleteAdjustment:
+DELETE FROM cash_adjustment WHERE id = ?;
+
+selectRecentAdjustments:
+SELECT * FROM cash_adjustment WHERE timestamp > ? ORDER BY timestamp DESC;

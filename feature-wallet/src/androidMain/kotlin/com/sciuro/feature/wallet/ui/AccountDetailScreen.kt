@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,16 +18,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.components.AdjustmentCard
+import com.najmi.sciuro.core.ui.components.AdjustmentBottomSheet
 import com.sciuro.feature.wallet.viewmodel.AccountDetailViewModel
+import com.sciuro.feature.wallet.viewmodel.TimelineItem
 import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import org.koin.androidx.compose.koinViewModel
+
+private val filterOptions = listOf("All", "Transactions", "Adjustments", "Income", "Expense")
 
 @Composable
 fun AccountDetailScreen(
@@ -40,6 +46,7 @@ fun AccountDetailScreen(
     var showArchiveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showColorDialog by remember { mutableStateOf(false) }
+    var showAdjustmentDialog by remember { mutableStateOf(false) }
     var selectedColor by remember { mutableStateOf<String?>(null) }
 
     val presetColors = listOf(
@@ -96,6 +103,14 @@ fun AccountDetailScreen(
                     onDismissRequest = { expanded = false }
                 ) {
                     DropdownMenuItem(
+                        text = { Text("Adjust Balance") },
+                        leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null) },
+                        onClick = {
+                            expanded = false
+                            showAdjustmentDialog = true
+                        }
+                    )
+                    DropdownMenuItem(
                         text = { Text("Change Color") },
                         leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
                         onClick = {
@@ -139,47 +154,81 @@ fun AccountDetailScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
-                if (state.transactions.isEmpty()) {
+                LazyRow(
+                    modifier = Modifier.padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(filterOptions) { filter ->
+                        FilterChip(
+                            selected = state.selectedFilter == filter,
+                            onClick = { viewModel.setFilter(filter) },
+                            label = { Text(filter) }
+                        )
+                    }
+                }
+
+                if (state.timeline.isEmpty()) {
                     com.najmi.sciuro.core.ui.components.EmptyStateView(
-                        message = "No transactions found for this account."
+                        message = if (state.selectedFilter == "Adjustments") "No adjustments recorded for this account."
+                                   else if (state.selectedFilter == "All" && state.transactions.isEmpty() && state.adjustments.isEmpty()) "No transactions or adjustments found for this account."
+                                   else "No items match the current filter."
                     )
                 } else {
-                    state.transactions.forEach { tx ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    for (item in state.timeline) {
+                        when (item) {
+                            is TimelineItem.TransactionItem -> {
+                                val tx = item.tx
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                                 ) {
-                                    Icon(
-                                        imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
-                                        contentDescription = null,
-                                        tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
-                                    )
-                                    Column {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
+                                                contentDescription = null,
+                                                tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
+                                            )
+                                            Column {
+                                                Text(
+                                                    tx.merchant ?: "Unknown Merchant",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = if (tx.is_reviewed == 1L) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
                                         Text(
-                                            tx.merchant ?: "Unknown Merchant",
+                                            "RM ${"%.2f".format(tx.amount)}",
                                             style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = if (tx.is_reviewed == 1L) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
+                                            color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 }
-                                Text(
-                                    "RM ${"%.2f".format(tx.amount)}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
+                            }
+                            is TimelineItem.AdjustmentItem -> {
+                                val adj = item.adjustment
+                                AdjustmentCard(
+                                    reason = adj.reason,
+                                    amount = adj.amount,
+                                    formattedTime = "",
+                                    onClick = {
+                                        viewModel.deleteCorrection(adj.id)
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Adjustment removed")
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -187,6 +236,20 @@ fun AccountDetailScreen(
                 }
             }
         }
+    }
+
+    if (showAdjustmentDialog && state.account != null) {
+        AdjustmentBottomSheet(
+            currentBalance = state.account!!.balance,
+            onDismiss = { showAdjustmentDialog = false },
+            onConfirm = { amount, reason ->
+                viewModel.recordCorrection(amount, reason)
+                showAdjustmentDialog = false
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Balance adjustment recorded")
+                }
+            }
+        )
     }
 
     if (showArchiveDialog) {

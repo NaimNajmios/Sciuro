@@ -34,6 +34,9 @@ import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
 
+import com.najmi.sciuro.core.ui.components.AdjustmentCard
+import com.najmi.sciuro.core.ui.theme.IBMPlexMono
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
@@ -133,7 +136,39 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                     )
                                 }
                             }
-                            
+
+                            if (state.recentAdjustmentCount > 0) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                                    )
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(
+                                                "Balance Adjustments",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                            )
+                                            Text(
+                                                "${state.recentAdjustmentCount} this week",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                                            )
+                                        }
+                                        Text(
+                                            if (state.recentAdjustmentCount == 1) "View in Wallet" else "View in Wallet",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
                             
                             Text(
                                 "Transaction History",

@@ -17,6 +17,10 @@ class ReconciliationEngine(
 ) : AuditableRepository(auditRepository) {
 
     suspend fun reconcileAccount(accountId: String, declaredBalance: Double) {
+        reconcileAccountWithReason(accountId, declaredBalance, "MANUAL_OVERRIDE")
+    }
+
+    suspend fun reconcileAccountWithReason(accountId: String, declaredBalance: Double, reason: String) {
         // 1. Calculate sum of all transactions for this account
         val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
             .filter { it.account_id == accountId }
@@ -57,7 +61,7 @@ class ReconciliationEngine(
                     id = adjustmentId,
                     account_id = accountId,
                     amount = diff,
-                    reason = "MANUAL_OVERRIDE",
+                    reason = reason,
                     timestamp = now,
                     created_at = now
                 )

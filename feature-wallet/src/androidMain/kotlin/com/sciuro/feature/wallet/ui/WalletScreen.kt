@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Toll
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.*
 import androidx.compose.material3.FilterChip
 import androidx.compose.runtime.*
@@ -40,9 +41,16 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.components.AdjustmentCard
+import com.najmi.sciuro.core.ui.components.AdjustmentBottomSheet
 import com.sciuro.feature.wallet.viewmodel.WalletViewModel
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
+import com.najmi.sciuro.core.ui.components.AdjustmentReasonPresets
+import com.najmi.sciuro.core.ui.components.PillToggle
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -90,6 +98,16 @@ fun WalletScreen(
     var newAvgBuyPrice by rememberSaveable { mutableStateOf("") }
     var newAssociatedAccountId by rememberSaveable { mutableStateOf("") }
     
+    // Recount State
+    var showRecountDialog by rememberSaveable { mutableStateOf(false) }
+    var recountAccountId by rememberSaveable { mutableStateOf<String?>(null) }
+    var recountDeclaredBalance by rememberSaveable { mutableStateOf("") }
+    var recountReason by rememberSaveable { mutableStateOf("") }
+    var recountReasonExpanded by remember { mutableStateOf(false) }
+
+    // Transaction list filter
+    var txFilter by rememberSaveable { mutableStateOf("All") }
+
     // Transaction Edit State
     var showEditTransactionDialog by rememberSaveable { mutableStateOf(false) }
     var editingTxId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -120,6 +138,7 @@ fun WalletScreen(
     val displayTotal = if (selectedAssetType == "Liquid Cash") totalLiquidity else totalInvestments
     
     val allTransactions by viewModel.allTransactions.collectAsState()
+    val allAdjustments by viewModel.allAdjustments.collectAsState()
     
     val accountPagerState = rememberPagerState(pageCount = { maxOf(1, accounts.size) })
     val investmentPagerState = rememberPagerState(pageCount = { maxOf(1, investments.size) })
@@ -198,40 +217,57 @@ fun WalletScreen(
                                 colors = CardDefaults.cardColors(containerColor = containerCol, contentColor = contentCol),
                                 shape = MaterialTheme.shapes.extraLarge
                             ) {
-                                Column(
-                                    modifier = Modifier.fillMaxSize().padding(24.dp),
-                                    verticalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    Column(
+                                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text(account.name, style = MaterialTheme.typography.titleLarge)
-                                        val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
-                                        if (associatedApp != null) {
-                                            Image(
-                                                bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(32.dp).clip(CircleShape)
-                                            )
-                                        } else {
-                                            Icon(
-                                                imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
-                                                contentDescription = null
-                                            )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(account.name, style = MaterialTheme.typography.titleLarge)
+                                            val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
+                                            if (associatedApp != null) {
+                                                Image(
+                                                    bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(32.dp).clip(CircleShape)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
+                                                    contentDescription = null
+                                                )
+                                            }
                                         }
+                                        Text(
+                                            "RM ${"%.2f".format(account.balance)}",
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
+                                        )
+                                        Text(
+                                            if (account.isEWallet) "E-Wallet" else "Bank Account",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = contentCol.copy(alpha = 0.7f)
+                                        )
                                     }
-                                    Text(
-                                        "RM ${"%.2f".format(account.balance)}",
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                                    )
-                                    Text(
-                                        if (account.isEWallet) "E-Wallet" else "Bank Account",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = contentCol.copy(alpha = 0.7f)
-                                    )
+                                    IconButton(
+                                        onClick = {
+                                            recountAccountId = account.id
+                                            recountDeclaredBalance = ""
+                                            recountReason = ""
+                                            showRecountDialog = true
+                                        },
+                                        modifier = Modifier.align(Alignment.BottomEnd)
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Calculate,
+                                            contentDescription = "Recount",
+                                            tint = contentCol.copy(alpha = 0.6f)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -307,6 +343,21 @@ fun WalletScreen(
         SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
             Spacer(modifier = Modifier.height(24.dp))
             
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 8.dp)
+            ) {
+                PillToggle(
+                    options = listOf("All", "Transactions", "Adjustments"),
+                    selectedOption = txFilter,
+                    onOptionSelected = { txFilter = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    fillWidth = true
+                )
+            }
+            
             LazyColumn(
                 modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -320,8 +371,26 @@ fun WalletScreen(
                         val activeAccount = accounts.getOrNull(currentAccountPage)
                         val accountTx = if (activeAccount != null) allTransactions.filter { it.account_id == activeAccount.id } else emptyList()
 
+                        val accountAdjustments = if (activeAccount != null) allAdjustments.filter { it.account_id == activeAccount.id } else emptyList()
+
                         if (activeAccount != null) {
-                            if (accountTx.isEmpty()) {
+                            if (txFilter == "Adjustments") {
+                                if (accountAdjustments.isEmpty()) {
+                                    item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No adjustments for this account.") }
+                                } else {
+                                    items(accountAdjustments.size) { idx ->
+                                        val adj = accountAdjustments[idx]
+                                        AdjustmentCard(
+                                            reason = adj.reason,
+                                            amount = adj.amount,
+                                            formattedTime = "",
+                                            onClick = {
+                                                viewModel.recordCorrection(activeAccount.id, 0.0, adj.reason)
+                                            }
+                                        )
+                                    }
+                                }
+                            } else if (accountTx.isEmpty()) {
                                 item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No transactions for this account.") }
                             } else {
                                 items(accountTx.take(20).size) { idx ->
@@ -951,6 +1020,102 @@ fun WalletScreen(
             },
             onDismiss = { showDeleteInvestmentDialog = false }
         )
+    }
+
+    if (showRecountDialog && recountAccountId != null) {
+        val recountAccount = accounts.find { it.id == recountAccountId }
+        val currentBalance = recountAccount?.balance ?: 0.0
+        val parsedDeclared = recountDeclaredBalance.toDoubleOrNull()
+        val variance = if (parsedDeclared != null) parsedDeclared - currentBalance else null
+
+        SciuroBottomSheet(onDismissRequest = { showRecountDialog = false }) {
+            Text("Recount Balance", style = MaterialTheme.typography.headlineSmall)
+
+            Text(
+                "Current Balance: RM ${"%.2f".format(currentBalance)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            SciuroTextField(
+                value = recountDeclaredBalance,
+                onValueChange = { recountDeclaredBalance = it },
+                label = "Actual Balance (RM)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+
+            if (variance != null && kotlin.math.abs(variance) > 0.01) {
+                val varianceColor = if (variance >= 0) Color(0xFF4CAF50) else Color(0xFFE53935)
+                Text(
+                    "Variance: ${if (variance >= 0) "+" else ""}RM ${"%.2f".format(variance)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = varianceColor,
+                    fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
+                )
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = recountReasonExpanded,
+                onExpandedChange = { recountReasonExpanded = !recountReasonExpanded }
+            ) {
+                OutlinedTextField(
+                    value = recountReason.ifBlank { "Select reason..." },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Reason") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = recountReasonExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = recountReasonExpanded,
+                    onDismissRequest = { recountReasonExpanded = false }
+                ) {
+                    AdjustmentReasonPresets.forEach { preset ->
+                        DropdownMenuItem(
+                            text = { Text(preset) },
+                            onClick = {
+                                recountReason = preset
+                                recountReasonExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { showRecountDialog = false },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Cancel")
+                }
+                Button(
+                    onClick = {
+                        if (variance != null && recountReason.isNotBlank() && kotlin.math.abs(variance) > 0.01) {
+                            viewModel.recountBalance(recountAccountId!!, parsedDeclared!!, recountReason)
+                            showRecountDialog = false
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Balance recounted")
+                            }
+                        } else if (variance != null && kotlin.math.abs(variance) <= 0.01) {
+                            showRecountDialog = false
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Balance already matches — no adjustment needed")
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = recountDeclaredBalance.isNotBlank() && recountReason.isNotBlank()
+                ) {
+                    Text("Save Recount")
+                }
+            }
+        }
     }
 }
 }

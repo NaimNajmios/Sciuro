@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 
 import com.sciuro.core.ledger.engine.ReconciliationEngine
 import com.sciuro.core.ledger.repository.TransactionRepository
+import com.sciuro.core.ledger.repository.CashAdjustmentRepository
 import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.investment.repository.InvestmentRepository
@@ -24,7 +25,8 @@ class WalletViewModel(
     private val reconciliationEngine: ReconciliationEngine,
     private val transactionRepository: TransactionRepository,
     private val investmentRepository: InvestmentRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val cashAdjustmentRepository: CashAdjustmentRepository
 ) : ViewModel() {
     
     val accounts: StateFlow<List<WalletAccount>> = accountRepository.observeAccounts()
@@ -75,6 +77,29 @@ class WalletViewModel(
             initialValue = emptyList()
         )
         
+    val allAdjustments: StateFlow<List<com.sciuro.core.ledger.db.Cash_adjustment>> = cashAdjustmentRepository.observeAllAdjustments()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    fun recordCorrection(accountId: String, amount: Double, reason: String) {
+        viewModelScope.launch {
+            cashAdjustmentRepository.createAdjustment(
+                accountId = accountId,
+                amount = amount,
+                reason = reason
+            )
+        }
+    }
+
+    fun recountBalance(accountId: String, declaredBalance: Double, reason: String) {
+        viewModelScope.launch {
+            reconciliationEngine.reconcileAccountWithReason(accountId, declaredBalance, reason)
+        }
+    }
+
     fun addAccount(name: String, type: String, associatedPackage: String, initialBalance: Double, color: String? = null) {
         viewModelScope.launch {
             accountRepository.createAccount(
