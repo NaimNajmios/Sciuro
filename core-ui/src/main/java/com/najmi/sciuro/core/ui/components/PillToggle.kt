@@ -21,7 +21,8 @@ fun PillToggle(
     selectedOption: String,
     onOptionSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    isOnDarkSurface: Boolean = false
+    isOnDarkSurface: Boolean = false,
+    fillWidth: Boolean = false
 ) {
     val containerColor = if (isOnDarkSurface) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f)
     val activeColor = if (isOnDarkSurface) Color.White else BrandPrimaryLight
@@ -35,13 +36,14 @@ fun PillToggle(
             .padding(4.dp)
     ) {
         Row(
-            modifier = Modifier.wrapContentSize(),
+            modifier = if (fillWidth) Modifier.fillMaxWidth() else Modifier.wrapContentSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             options.forEach { option ->
                 val isSelected = option == selectedOption
                 Box(
                     modifier = Modifier
+                        .then(if (fillWidth) Modifier.weight(1f) else Modifier)
                         .clip(RoundedCornerShape(20.dp))
                         .background(if (isSelected) activeColor else Color.Transparent)
                         .clickable { onOptionSelected(option) }

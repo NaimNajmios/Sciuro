@@ -6,26 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.List
-import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.*
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -48,12 +36,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.najmi.sciuro.worker.ReviewReminderWorker
 import java.util.concurrent.TimeUnit
-
-private data class NavItem(
-    val route: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
-)
 
 class MainActivity : ComponentActivity() {
     
@@ -98,11 +80,11 @@ fun SciuroMainScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
     
     val items = listOf(
-        NavItem("dashboard", Icons.Filled.Home, Icons.Outlined.Home),
-        NavItem("kanban", Icons.Filled.List, Icons.Outlined.List),
-        NavItem("wallet", Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart),
-        NavItem("budgets", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircle),
-        NavItem("settings", Icons.Filled.Settings, Icons.Outlined.Settings)
+        Pair("dashboard", Icons.Filled.Home),
+        Pair("kanban", Icons.Filled.List),
+        Pair("wallet", Icons.Filled.ShoppingCart),
+        Pair("budgets", Icons.Filled.CheckCircle),
+        Pair("settings", Icons.Filled.Settings)
     )
     
     val context = LocalContext.current
@@ -169,25 +151,13 @@ fun SciuroMainScreen() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
                 
-                items.forEach { item ->
-                    val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                items.forEach { screen ->
                     NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.route
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = item.route.replaceFirstChar { it.uppercase() },
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = if (selected) 13.sp else 12.sp
-                            )
-                        },
-                        selected = selected,
+                        icon = { Icon(screen.second, contentDescription = screen.first) },
+                        label = { Text(screen.first.replaceFirstChar { it.uppercase() }) },
+                        selected = currentDestination?.hierarchy?.any { it.route == screen.first } == true,
                         onClick = {
-                            navController.navigate(item.route) {
+                            navController.navigate(screen.first) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -196,11 +166,11 @@ fun SciuroMainScreen() {
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            indicatorColor = MaterialTheme.colorScheme.surfaceVariant
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = androidx.compose.ui.graphics.Color.Gray.copy(alpha = 0.6f),
+                            unselectedTextColor = androidx.compose.ui.graphics.Color.Gray.copy(alpha = 0.6f)
                         )
                     )
                 }

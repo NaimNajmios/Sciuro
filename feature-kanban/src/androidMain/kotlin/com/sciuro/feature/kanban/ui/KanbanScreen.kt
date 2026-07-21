@@ -68,7 +68,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                     options = listOf("To Do", "In Progress", "Done"),
                     selectedOption = selectedStatus,
                     onOptionSelected = { selectedStatus = it },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    fillWidth = true
                 )
             }
             

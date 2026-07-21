@@ -1,8 +1,7 @@
 package com.sciuro.feature.settings.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -16,12 +15,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
-import com.najmi.sciuro.core.ui.components.HeroPanel
-import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.core.parsing.config.SettingsProvider
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
+import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.SheetList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,116 +47,41 @@ fun SettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = "Settings",
-            heroFigure = "",
+            heroFigure = "Config",
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {}
         )
 
-        SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxSize()) {
+        SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
             Spacer(modifier = Modifier.height(16.dp))
-            Column(
+
+            LazyColumn(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = 32.dp)
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
-                Text(
-                    "Application Settings",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-
-                Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Appearance", style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ThemePreference.values().forEach { pref ->
-                                FilterChip(
-                                    selected = themePref == pref,
-                                    onClick = { themeManager.setTheme(pref) },
-                                    label = { Text(pref.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }) }
-                                )
-                            }
-                        }
-                    }
+                item {
+                    Text(
+                        "Application Settings",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
                 }
 
-                Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("LLM Classification", style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Use Groq Llama 3 for Fallback", style = MaterialTheme.typography.bodyMedium)
-                            Switch(
-                                checked = isLlmOptIn,
-                                onCheckedChange = {
-                                    isLlmOptIn = it
-                                    settingsProvider.setLlmEnabled(it)
-                                }
-                            )
-                        }
-
-                        if (isLlmOptIn) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            OutlinedTextField(
-                                value = apiKey,
-                                onValueChange = {
-                                    apiKey = it
-                                    settingsProvider.setApiKey(it)
-                                },
-                                label = { Text("Groq API Key") },
-                                singleLine = true,
-                                visualTransformation = PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
+                item {
+                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Appearance", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
-
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Button(
-                                    onClick = {
-                                        testStatus = "Testing..."
-                                        scope.launch {
-                                            testStatus = withContext(Dispatchers.IO) {
-                                                try {
-                                                    val url = URL("https://api.groq.com/openai/v1/models")
-                                                    val connection = url.openConnection() as HttpURLConnection
-                                                    connection.requestMethod = "GET"
-                                                    connection.setRequestProperty("Authorization", "Bearer $apiKey")
-                                                    connection.connectTimeout = 5000
-                                                    connection.readTimeout = 5000
-
-                                                    when (connection.responseCode) {
-                                                        200 -> "Success! Connection established."
-                                                        401 -> "Error: Invalid API Key."
-                                                        else -> "Error: ${connection.responseCode}"
-                                                    }
-                                                } catch (e: Exception) {
-                                                    "Failed: ${e.message}"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    enabled = apiKey.isNotBlank()
-                                ) {
-                                    Text("Test Connection")
-                                }
-
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                testStatus?.let {
-                                    Text(
-                                        text = it,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = if (it.startsWith("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                ThemePreference.values().forEach { pref ->
+                                    FilterChip(
+                                        selected = themePref == pref,
+                                        onClick = { themeManager.setTheme(pref) },
+                                        label = { Text(pref.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }) }
                                     )
                                 }
                             }
@@ -165,17 +89,101 @@ fun SettingsScreen(
                     }
                 }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    onClick = onNavigateToDeveloperSettings
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                item {
+                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("LLM Classification", style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Use Groq Llama 3 for Fallback", style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = isLlmOptIn,
+                                    onCheckedChange = {
+                                        isLlmOptIn = it
+                                        settingsProvider.setLlmEnabled(it)
+                                    }
+                                )
+                            }
+
+                            if (isLlmOptIn) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                OutlinedTextField(
+                                    value = apiKey,
+                                    onValueChange = {
+                                        apiKey = it
+                                        settingsProvider.setApiKey(it)
+                                    },
+                                    label = { Text("Groq API Key") },
+                                    singleLine = true,
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Button(
+                                        onClick = {
+                                            testStatus = "Testing..."
+                                            scope.launch {
+                                                testStatus = withContext(Dispatchers.IO) {
+                                                    try {
+                                                        val url = URL("https://api.groq.com/openai/v1/models")
+                                                        val connection = url.openConnection() as HttpURLConnection
+                                                        connection.requestMethod = "GET"
+                                                        connection.setRequestProperty("Authorization", "Bearer $apiKey")
+                                                        connection.connectTimeout = 5000
+                                                        connection.readTimeout = 5000
+
+                                                        when (connection.responseCode) {
+                                                            200 -> "Success! Connection established."
+                                                            401 -> "Error: Invalid API Key."
+                                                            else -> "Error: ${connection.responseCode}"
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        "Failed: ${e.message}"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        enabled = apiKey.isNotBlank()
+                                    ) {
+                                        Text("Test Connection")
+                                    }
+
+                                    Spacer(modifier = Modifier.width(16.dp))
+
+                                    testStatus?.let {
+                                        Text(
+                                            text = it,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (it.startsWith("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        onClick = onNavigateToDeveloperSettings
                     ) {
-                        Text("Developer Options", style = MaterialTheme.typography.titleMedium)
-                        Icon(Icons.Filled.ArrowForward, contentDescription = "Developer Options")
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Developer Options", style = MaterialTheme.typography.titleMedium)
+                            Icon(Icons.Filled.ArrowForward, contentDescription = "Developer Options")
+                        }
                     }
                 }
             }
