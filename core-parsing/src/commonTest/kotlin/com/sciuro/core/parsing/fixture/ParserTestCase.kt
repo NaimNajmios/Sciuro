@@ -6,6 +6,7 @@ import com.sciuro.core.parsing.model.TransactionDirection
 import com.sciuro.core.parsing.rule.ParserRule
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 data class ParserTestCase(
     val description: String,
@@ -13,9 +14,10 @@ data class ParserTestCase(
     val title: String,
     val text: String,
     val expectedAmount: Double,
-    val expectedDirection: TransactionDirection,
+    val expectedDirection: TransactionDirection?,
     val expectedMerchant: String? = null,
-    val expectedAccount: String? = null
+    val expectedAccount: String? = null,
+    val expectNull: Boolean = false
 ) {
     fun toRawEvent(): RawEvent = RawEvent(
         id = "test-id",
@@ -30,12 +32,18 @@ data class ParserTestCase(
 fun runParserTests(parserRule: ParserRule, testCases: List<ParserTestCase>) {
     testCases.forEach { testCase ->
         val rawEvent = testCase.toRawEvent()
-        
-        // Assert that the rule acknowledges it can handle this event
+
+        if (testCase.expectNull) {
+            assertEquals(false, parserRule.matches(rawEvent), "Rule should NOT match for: ${testCase.description}")
+            val result = parserRule.extract(rawEvent)
+            assertNull(result, "Parser should return null for: ${testCase.description}")
+            return@forEach
+        }
+
         assertEquals(true, parserRule.matches(rawEvent), "Rule should match package: ${testCase.packageName}")
-        
+
         val result = parserRule.extract(rawEvent)
-        
+
         assertNotNull(result, "Parser failed to extract data for test case: ${testCase.description}")
         assertEquals(testCase.expectedAmount, result.amount, "Amount mismatch for test case: ${testCase.description}")
         assertEquals(testCase.expectedDirection, result.direction, "Direction mismatch for test case: ${testCase.description}")

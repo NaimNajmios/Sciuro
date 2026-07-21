@@ -26,6 +26,24 @@ class BoostParserRuleTest {
                 expectedAmount = 5.50,
                 expectedDirection = TransactionDirection.OUTFLOW,
                 expectedMerchant = "WARUNG PAK ALI"
+            ),
+            ParserTestCase(
+                description = "Boost Inflow (received)",
+                packageName = "my.com.myboost",
+                title = "Money Received",
+                text = "You have received RM 100.00 from SIAU KEE.",
+                expectedAmount = 100.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = "SIAU KEE"
+            ),
+            ParserTestCase(
+                description = "Boost Inflow (top-up)",
+                packageName = "my.com.myboost",
+                title = "Top-Up",
+                text = "Top-Up successful! RM 30.00 has been credited to your Boost account.",
+                expectedAmount = 30.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null
             )
         )
         runParserTests(BoostParserRule(), cases)

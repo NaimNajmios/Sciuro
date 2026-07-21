@@ -9,7 +9,8 @@ val classifierModule = module {
             notificationSource = get(),
             parserPipeline = get(),
             transactionRepository = get(),
-            accountRepository = get()
+            accountRepository = get(),
+            rawEventRepository = get()
         ) 
     }
 }

@@ -25,3 +25,4 @@
 | D3 - Personal deployment | Completed | Sideloaded APK built with multiple architecture support |
 | D4 - Initial Setup & Onboarding | Completed | Compose navigation for initial Personal Wallet setup and account soft-deletion schemas |
 | E1 - UI/UX Modernization | Completed | Standardized UI wrappers, 3-way Appearance theming, FastTransactionSheet numpad workflow, Kanban sticky filter |
+| A3.5 - Reliability Hardening | Completed | Fault isolation (per-event try/catch, restart), durable capture (RawEventStaging table), direction bug fix (nullable, inflow keywords, confidence scoring), LLM hardening (HttpTimeout, retry, circuit breaker, externalized config), OEM resilience (lifecycle hooks, WorkManager reconciliation, explicit manifest) |

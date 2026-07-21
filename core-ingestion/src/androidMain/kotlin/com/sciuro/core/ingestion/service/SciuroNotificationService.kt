@@ -7,6 +7,7 @@ import com.sciuro.core.ingestion.config.IngestionConfig
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
+import com.sciuro.core.ledger.repository.RawEventRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,17 +17,40 @@ import java.util.UUID
 
 class SciuroNotificationService : NotificationListenerService() {
 
-    // Injecting the singleton adapter so it feeds directly into the app's pipeline
     private val notificationSourceAdapter: NotificationSourceAdapter by inject()
+    private val rawEventRepository: RawEventRepository by inject()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        val activeNotifications = getActiveNotifications()
+        if (activeNotifications != null) {
+            serviceScope.launch {
+                for (sbn in activeNotifications) {
+                    processAndPersistNotification(sbn)
+                }
+            }
+        }
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        val cn = android.content.ComponentName(this, SciuroNotificationService::class.java)
+        NotificationListenerService.requestRebind(cn)
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         sbn ?: return
 
+        serviceScope.launch {
+            processAndPersistNotification(sbn)
+        }
+    }
+
+    private suspend fun processAndPersistNotification(sbn: StatusBarNotification) {
         val packageName = sbn.packageName
-        
-        // Discard anything that's not from our allowlisted financial apps
+
         if (packageName !in IngestionConfig.allowedPackages) return
 
         val notification = sbn.notification
@@ -35,13 +59,13 @@ class SciuroNotificationService : NotificationListenerService() {
 
         if (title.isBlank() && text.isBlank()) return
 
-        // Heuristic Pre-Filtering for Aggregators (Email)
         if (packageName in IngestionConfig.aggregatorPackages) {
             if (!isFinancialAggregatorNotification(title, text)) {
-                return // Drop it before it hits the pipeline
+                return
             }
         }
 
+        val capturedAt = System.currentTimeMillis()
         val rawEvent = RawEvent(
             id = UUID.randomUUID().toString(),
             sourceType = SourceType.NOTIFICATION,
@@ -51,9 +75,19 @@ class SciuroNotificationService : NotificationListenerService() {
             timestamp = sbn.postTime
         )
 
-        serviceScope.launch {
-            notificationSourceAdapter.emitNotification(rawEvent)
-        }
+        // Persist to staging table first — durable capture before any processing
+        rawEventRepository.persistRawEvent(
+            id = rawEvent.id,
+            sourceType = rawEvent.sourceType.name,
+            sourcePackageOrAddress = rawEvent.sourcePackageOrAddress,
+            title = rawEvent.title,
+            text = rawEvent.text,
+            timestamp = rawEvent.timestamp,
+            capturedAt = capturedAt
+        )
+
+        // Then emit to pipeline for immediate processing
+        notificationSourceAdapter.emitNotification(rawEvent)
     }
 
     /**
@@ -66,13 +100,13 @@ class SciuroNotificationService : NotificationListenerService() {
 
         val combinedText = "$lowerTitle $lowerText"
 
-        val hasBankingKeywords = combinedText.contains("m2u") || 
+        val hasBankingKeywords = combinedText.contains("m2u") ||
                                  combinedText.contains("cimb notification") ||
                                  combinedText.contains("transaction") ||
                                  combinedText.contains("funds received") ||
                                  combinedText.contains("transfer") ||
                                  combinedText.contains("receipt")
-                              
+
         val hasCurrencySymbol = combinedText.contains("rm")
 
         return hasBankingKeywords || hasCurrencySymbol

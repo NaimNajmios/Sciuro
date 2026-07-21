@@ -17,13 +17,27 @@ class TngParserRule : ParserRule {
         
         val amount = extractAmount(text) ?: extractAmount(event.title) ?: return null
         
-        val isOutflow = text.contains("paid", ignoreCase = true) || 
+        val isOutflow = text.contains("paid", ignoreCase = true) ||
                         text.contains("membayar", ignoreCase = true) ||
                         text.contains("transferred", ignoreCase = true)
-                        
-        val direction = if (isOutflow) TransactionDirection.OUTFLOW else TransactionDirection.INFLOW
+
+        val isInflow = text.contains("received", ignoreCase = true) ||
+                       text.contains("top-up", ignoreCase = true) ||
+                       text.contains("credited", ignoreCase = true) ||
+                       text.contains("masuk", ignoreCase = true)
+
+        val direction = when {
+            isOutflow -> TransactionDirection.OUTFLOW
+            isInflow -> TransactionDirection.INFLOW
+            else -> null
+        }
         val merchant = extractMerchant(text)
-        
+
+        val confidenceScore = (if (amount > 0) 0.3f else 0f) +
+                              (if (direction != null) 0.3f else 0f) +
+                              (if (merchant != null) 0.2f else 0f) +
+                              0.2f
+
         return StructuredDraft(
             amount = amount,
             direction = direction,
@@ -31,7 +45,7 @@ class TngParserRule : ParserRule {
             accountOrChannel = "TNG eWallet",
             referenceId = null,
             timestamp = event.timestamp,
-            isConfident = merchant != null
+            confidenceScore = confidenceScore
         )
     }
 }

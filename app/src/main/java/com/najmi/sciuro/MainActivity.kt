@@ -31,9 +31,12 @@ import androidx.compose.material.icons.filled.Settings
 import android.os.Build
 import android.Manifest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.najmi.sciuro.worker.IngestionReconciliationWorker
 import com.najmi.sciuro.worker.ReviewReminderWorker
 import java.util.concurrent.TimeUnit
 
@@ -65,11 +68,23 @@ class MainActivity : ComponentActivity() {
     private fun setupWorkers() {
         val reminderWork = PeriodicWorkRequestBuilder<ReviewReminderWorker>(30, TimeUnit.MINUTES)
             .build()
-            
+
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "ReviewReminder",
             ExistingPeriodicWorkPolicy.KEEP,
             reminderWork
+        )
+
+        val reconciliationWork = PeriodicWorkRequestBuilder<IngestionReconciliationWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build())
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "IngestionReconciliation",
+            ExistingPeriodicWorkPolicy.KEEP,
+            reconciliationWork
         )
     }
 }

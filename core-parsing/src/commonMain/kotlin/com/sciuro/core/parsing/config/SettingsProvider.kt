@@ -5,4 +5,5 @@ interface SettingsProvider {
     fun setLlmEnabled(enabled: Boolean)
     fun getApiKey(): String?
     fun setApiKey(apiKey: String)
+    fun getLlmConfig(): LlmParsingConfig = LlmParsingConfig()
 }

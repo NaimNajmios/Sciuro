@@ -26,6 +26,24 @@ class TngParserRuleTest {
                 expectedAmount = 12.00,
                 expectedDirection = TransactionDirection.OUTFLOW,
                 expectedMerchant = "NINJA VAN"
+            ),
+            ParserTestCase(
+                description = "TNG Inflow (received)",
+                packageName = "my.com.tngdigital.ewallet",
+                title = "Money Received",
+                text = "You have received RM 50.00 from AHMAD ALI.",
+                expectedAmount = 50.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = "AHMAD ALI"
+            ),
+            ParserTestCase(
+                description = "TNG Inflow (top-up)",
+                packageName = "my.com.tngdigital.ewallet",
+                title = "Top-Up Successful",
+                text = "Top-Up Successful! RM 100.00 has been credited to your TNG eWallet.",
+                expectedAmount = 100.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null
             )
         )
         runParserTests(TngParserRule(), cases)

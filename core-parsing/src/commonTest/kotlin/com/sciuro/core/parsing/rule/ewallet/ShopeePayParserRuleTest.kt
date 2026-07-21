@@ -26,6 +26,24 @@ class ShopeePayParserRuleTest {
                 expectedAmount = 30.00,
                 expectedDirection = TransactionDirection.OUTFLOW,
                 expectedMerchant = "SPEEDMART"
+            ),
+            ParserTestCase(
+                description = "ShopeePay Inflow (refund)",
+                packageName = "com.shopee.my",
+                title = "Refund",
+                text = "Refund of RM 15.00 has been credited to your ShopeePay wallet.",
+                expectedAmount = 15.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null
+            ),
+            ParserTestCase(
+                description = "ShopeePay Inflow (received)",
+                packageName = "com.shopee.my",
+                title = "Money Received",
+                text = "You have received RM 200.00 from Shopee Seller.",
+                expectedAmount = 200.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = "Shopee Seller"
             )
         )
         runParserTests(ShopeePayParserRule(), cases)

@@ -6,7 +6,9 @@ import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
 import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.ledger.repository.AccountRepository
+import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.parsing.engine.SciuroParserPipeline
+import com.sciuro.core.parsing.model.DEFAULT_CONFIDENCE_THRESHOLD
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -16,58 +18,92 @@ class SciuroIngestionOrchestrator(
     private val notificationSource: NotificationSourceAdapter,
     private val parserPipeline: SciuroParserPipeline,
     private val transactionRepository: TransactionRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val rawEventRepository: RawEventRepository,
+    private val confidenceThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD
 ) {
     private var job: Job? = null
 
     fun startListening(scope: CoroutineScope) {
         if (job?.isActive == true) return
-        
+
         job = scope.launch {
-            notificationSource.observeEvents().collect { rawEvent ->
-                println("SCIURO_ORCHESTRATOR: Received event from ${rawEvent.sourcePackageOrAddress}")
-                
-                // 1. Parse Event
-                val draft = parserPipeline.process(rawEvent)
-                if (draft == null) {
-                    println("SCIURO_ORCHESTRATOR: Parser pipeline returned null. Dropping event.")
-                    return@collect
+            try {
+                notificationSource.observeEvents().collect { rawEvent ->
+                    processOneEvent(rawEvent)
                 }
-                
-                println("SCIURO_ORCHESTRATOR: Parsed successfully: $draft")
-                
-                // 2. Triage / Auto-Categorize (Naive mapping for now)
-                val categoryId = guessCategoryId(draft.merchant)
-                
-                // 3. Match Account
-                val matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
-                val accountId = matchedAccount?.id
-                
-                // 4. Map to Ledger Transaction
-                val transaction = Transaction(
-                    id = generateUuid(),
-                    accountId = accountId,
-                    categoryId = categoryId,
-                    amount = draft.amount,
-                    direction = draft.direction.name,
-                    merchant = draft.merchant,
-                    timestamp = draft.timestamp,
-                    referenceId = draft.referenceId,
-                    isReviewed = draft.isConfident && categoryId != null && accountId != null
-                )
-                
-                println("SCIURO_ORCHESTRATOR: Booking transaction... categoryId=$categoryId, accountId=$accountId, isReviewed=${transaction.isReviewed}")
-                
-                try {
-                    // 4. Book to Ledger
-                    val auditSource = if (draft.isConfident) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
-                    transactionRepository.bookTransaction(transaction, source = auditSource)
-                    println("SCIURO_ORCHESTRATOR: Successfully booked transaction!")
-                } catch (e: Exception) {
-                    println("SCIURO_ORCHESTRATOR: ERROR booking transaction - ${e.message}")
-                    e.printStackTrace()
+            } catch (e: Exception) {
+                println("SCIURO_ORCHESTRATOR: Collector failed - ${e.message}")
+                e.printStackTrace()
+            }
+        }
+
+        job?.invokeOnCompletion { throwable ->
+            if (throwable != null) {
+                println("SCIURO_ORCHESTRATOR: Collector job terminated with error, restarting...")
+                job = scope.launch {
+                    try {
+                        notificationSource.observeEvents().collect { rawEvent ->
+                            processOneEvent(rawEvent)
+                        }
+                    } catch (e: Exception) {
+                        println("SCIURO_ORCHESTRATOR: Collector failed again - ${e.message}")
+                        e.printStackTrace()
+                    }
                 }
             }
+        }
+    }
+
+    private suspend fun processOneEvent(rawEvent: com.sciuro.core.ingestion.model.RawEvent) {
+        try {
+            rawEventRepository.markProcessing(rawEvent.id)
+
+            println("SCIURO_ORCHESTRATOR: Received event from ${rawEvent.sourcePackageOrAddress}")
+
+            val draft = parserPipeline.process(rawEvent)
+            if (draft == null) {
+                println("SCIURO_ORCHESTRATOR: Parser pipeline returned null. Marking dead letter.")
+                rawEventRepository.markDeadLetter(rawEvent.id, "Parser pipeline returned null")
+                return
+            }
+
+            println("SCIURO_ORCHESTRATOR: Parsed successfully: $draft")
+
+            val directionName = draft.direction?.name ?: run {
+                println("SCIURO_ORCHESTRATOR: Direction unknown for event ${rawEvent.id}. Marking dead letter.")
+                rawEventRepository.markDeadLetter(rawEvent.id, "Direction could not be determined")
+                return
+            }
+
+            val categoryId = guessCategoryId(draft.merchant)
+
+            val matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
+            val accountId = matchedAccount?.id
+
+            val transaction = Transaction(
+                id = generateUuid(),
+                accountId = accountId,
+                categoryId = categoryId,
+                amount = draft.amount,
+                direction = directionName,
+                merchant = draft.merchant,
+                timestamp = draft.timestamp,
+                referenceId = draft.referenceId,
+                isReviewed = draft.confidenceScore >= confidenceThreshold && categoryId != null && accountId != null
+            )
+
+            println("SCIURO_ORCHESTRATOR: Booking transaction... categoryId=$categoryId, accountId=$accountId, isReviewed=${transaction.isReviewed}")
+
+            val auditSource = if (draft.confidenceScore >= confidenceThreshold) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
+            transactionRepository.bookTransaction(transaction, source = auditSource)
+            println("SCIURO_ORCHESTRATOR: Successfully booked transaction!")
+
+            rawEventRepository.markProcessed(rawEvent.id)
+        } catch (e: Exception) {
+            println("SCIURO_ORCHESTRATOR: Error processing event ${rawEvent.id} - ${e.message}")
+            e.printStackTrace()
+            rawEventRepository.markDeadLetter(rawEvent.id, "Unhandled exception: ${e.message}")
         }
     }
 
@@ -75,7 +111,7 @@ class SciuroIngestionOrchestrator(
         job?.cancel()
         job = null
     }
-    
+
     private fun guessCategoryId(merchant: String?): String? {
         if (merchant == null) return null
         val lower = merchant.lowercase()
@@ -87,7 +123,7 @@ class SciuroIngestionOrchestrator(
             else -> null
         }
     }
-    
+
     private fun guessAccountId(channel: String?): String {
         return "acc_${channel?.lowercase()?.replace(" ", "_") ?: "unknown"}"
     }

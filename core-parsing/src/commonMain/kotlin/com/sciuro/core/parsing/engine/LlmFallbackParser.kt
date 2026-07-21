@@ -1,6 +1,7 @@
 package com.sciuro.core.parsing.engine
 
 import com.sciuro.core.ingestion.model.RawEvent
+import com.sciuro.core.parsing.config.LlmParsingConfig
 import com.sciuro.core.parsing.llm.ChatMessage
 import com.sciuro.core.parsing.llm.ChatRequest
 import com.sciuro.core.parsing.llm.ChatResponse
@@ -9,17 +10,20 @@ import com.sciuro.core.parsing.model.StructuredDraft
 import com.sciuro.core.parsing.model.TransactionDirection
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import java.io.IOException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
 
 class LlmFallbackParser(
     private val httpClient: HttpClient,
-    private val apiKeyProvider: () -> String?
+    private val apiKeyProvider: () -> String?,
+    private val config: LlmParsingConfig = LlmParsingConfig()
 ) {
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -31,8 +35,29 @@ class LlmFallbackParser(
         val accountOrChannel: String? = null
     )
 
+    private var consecutiveFailures = 0
+    private var circuitBrokenUntil: Long = 0
+
+    fun isCircuitBroken(): Boolean {
+        if (System.currentTimeMillis() >= circuitBrokenUntil) {
+            consecutiveFailures = 0
+            return false
+        }
+        return true
+    }
+
+    fun resetCircuitBreaker() {
+        consecutiveFailures = 0
+        circuitBrokenUntil = 0
+    }
+
     suspend fun parse(event: RawEvent): StructuredDraft? {
-        val apiKey = apiKeyProvider() ?: return null // Opt-in: silently skip if no key
+        if (isCircuitBroken()) {
+            println("SCIURO_LLM: Circuit breaker open. Skipping LLM call.")
+            return null
+        }
+
+        val apiKey = apiKeyProvider() ?: return null
 
         val prompt = """
             Extract the financial transaction details from the following notification text.
@@ -58,31 +83,37 @@ class LlmFallbackParser(
         """.trimIndent()
 
         val request = ChatRequest(
-            model = "llama-3.1-8b-instant", // Updated from decommissioned llama3-8b-8192
+            model = config.modelName,
             messages = listOf(
                 ChatMessage(role = "system", content = "You are a specialized financial data extraction tool. You only output valid JSON."),
                 ChatMessage(role = "user", content = prompt)
             ),
             response_format = ResponseFormat(type = "json_object"),
-            temperature = 0.0
+            temperature = config.temperature
         )
 
         return try {
-            val response: ChatResponse = httpClient.post("https://api.groq.com/openai/v1/chat/completions") {
+            val response: ChatResponse = httpClient.post(config.endpointUrl) {
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Bearer $apiKey")
                 setBody(request)
             }.body()
-            
+
+            consecutiveFailures = 0
+
             if (response.error != null) {
-                println("Groq API Error: ${response.error.message}")
+                println("SCIURO_LLM: API error: ${response.error.message}")
+                onFailure("API error: ${response.error.message}")
                 return null
             }
-            
-            val jsonString = response.choices?.firstOrNull()?.message?.content ?: return null
-            
+
+            val jsonString = response.choices?.firstOrNull()?.message?.content ?: run {
+                onFailure("Empty response from LLM")
+                return null
+            }
+
             val result = json.decodeFromString<LlmResult>(jsonString)
-            
+
             StructuredDraft(
                 amount = result.amount,
                 direction = result.direction,
@@ -90,11 +121,33 @@ class LlmFallbackParser(
                 accountOrChannel = result.accountOrChannel ?: event.sourcePackageOrAddress,
                 referenceId = null,
                 timestamp = event.timestamp,
-                isConfident = false // LLM outputs always go to manual review for safety
+                confidenceScore = 0.0f
             )
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (e: HttpRequestTimeoutException) {
+            println("SCIURO_LLM: Request timed out")
+            onFailure("Request timed out")
             null
+        } catch (e: IOException) {
+            println("SCIURO_LLM: Network error: ${e.message}")
+            onFailure("Network error: ${e.message}")
+            null
+        } catch (e: kotlinx.serialization.SerializationException) {
+            println("SCIURO_LLM: Malformed response: ${e.message}")
+            onFailure("Malformed response: ${e.message}")
+            null
+        } catch (e: Exception) {
+            println("SCIURO_LLM: Unexpected error: ${e.message}")
+            e.printStackTrace()
+            onFailure("Unexpected error: ${e.message}")
+            null
+        }
+    }
+
+    private fun onFailure(reason: String) {
+        consecutiveFailures++
+        if (consecutiveFailures >= config.circuitBreakerThreshold) {
+            circuitBrokenUntil = System.currentTimeMillis() + config.cooldownMs
+            println("SCIURO_LLM: Circuit breaker opened after $consecutiveFailures failures until $circuitBrokenUntil")
         }
     }
 }

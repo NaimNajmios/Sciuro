@@ -17,6 +17,7 @@ kotlin {
             dependencies {
                 implementation(libs.koin.core)
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(project(":core-ledger"))
             }
         }
         val androidMain by getting {

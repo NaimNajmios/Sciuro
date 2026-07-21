@@ -29,6 +29,36 @@ class CimbParserRuleTest {
                 expectedDirection = TransactionDirection.OUTFLOW,
                 expectedMerchant = "TENAGA NASIONAL",
                 expectedAccount = "CIMB"
+            ),
+            ParserTestCase(
+                description = "CIMB Inflow (credited)",
+                packageName = "com.cimbmalaysia",
+                title = "Deposit",
+                text = "RM 5000.00 has been credited to your account ending 5678.",
+                expectedAmount = 5000.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null,
+                expectedAccount = "CIMB"
+            ),
+            ParserTestCase(
+                description = "CIMB Inflow BM (masuk)",
+                packageName = "com.cimbmalaysia",
+                title = "Deposit",
+                text = "RM 250.00 telah masuk ke dalam akaun anda berakhir 5678.",
+                expectedAmount = 250.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null,
+                expectedAccount = "CIMB"
+            ),
+            ParserTestCase(
+                description = "CIMB Ambiguous (no direction keywords)",
+                packageName = "com.cimbmalaysia",
+                title = "Notification",
+                text = "RM 100.00 from account ending 1234.",
+                expectedAmount = 100.00,
+                expectedDirection = null,
+                expectedMerchant = null,
+                expectedAccount = "CIMB"
             )
         )
         

@@ -26,6 +26,24 @@ class GrabPayParserRuleTest {
                 expectedAmount = 18.00,
                 expectedDirection = TransactionDirection.OUTFLOW,
                 expectedMerchant = "BURGER KING"
+            ),
+            ParserTestCase(
+                description = "GrabPay Inflow (received)",
+                packageName = "com.grabtaxi.passenger",
+                title = "Refund",
+                text = "Refund of RM 25.00 has been credited to your GrabPay wallet.",
+                expectedAmount = 25.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null
+            ),
+            ParserTestCase(
+                description = "GrabPay Inflow (top-up)",
+                packageName = "com.grabtaxi.passenger",
+                title = "Top-Up",
+                text = "RM 50.00 has been credited to your GrabPay wallet via top-up.",
+                expectedAmount = 50.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null
             )
         )
         runParserTests(GrabPayParserRule(), cases)

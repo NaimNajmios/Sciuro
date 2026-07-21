@@ -26,6 +26,24 @@ class BsnParserRuleTest {
                 expectedAmount = 15.00,
                 expectedDirection = TransactionDirection.OUTFLOW,
                 expectedMerchant = "TEALIVE"
+            ),
+            ParserTestCase(
+                description = "BSN Inflow (credited)",
+                packageName = "com.bsn.mybsn",
+                title = "SMS",
+                text = "BSN: RM 2000.00 has been credited to your account. Ref: 456.",
+                expectedAmount = 2000.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null
+            ),
+            ParserTestCase(
+                description = "BSN Ambiguous (no direction)",
+                packageName = "com.bsn.mybsn",
+                title = "SMS",
+                text = "BSN: RM 50.00 from account ending 789.",
+                expectedAmount = 50.00,
+                expectedDirection = null,
+                expectedMerchant = null
             )
         )
         runParserTests(BsnParserRule(), cases)
