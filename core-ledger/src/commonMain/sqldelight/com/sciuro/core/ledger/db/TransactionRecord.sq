@@ -8,6 +8,9 @@ CREATE TABLE transaction_record (
     timestamp INTEGER NOT NULL,
     reference_id TEXT,
     is_reviewed INTEGER NOT NULL DEFAULT 0,
+    extraction_method TEXT,
+    confidence REAL,
+    raw_event_id TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
     FOREIGN KEY(account_id) REFERENCES account(id),
@@ -15,8 +18,8 @@ CREATE TABLE transaction_record (
 );
 
 insertTransaction:
-INSERT INTO transaction_record(id, account_id, category_id, amount, direction, merchant, timestamp, reference_id, is_reviewed, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO transaction_record(id, account_id, category_id, amount, direction, merchant, timestamp, reference_id, is_reviewed, extraction_method, confidence, raw_event_id, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 markAsReviewed:
 UPDATE transaction_record

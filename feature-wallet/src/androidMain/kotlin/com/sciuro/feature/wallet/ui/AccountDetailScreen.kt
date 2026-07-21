@@ -26,6 +26,9 @@ import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.theme.SurfaceHero
 import com.najmi.sciuro.core.ui.components.AdjustmentCard
 import com.najmi.sciuro.core.ui.components.AdjustmentBottomSheet
+import com.najmi.sciuro.core.ui.components.AuditEventDisplay
+import com.najmi.sciuro.core.ui.components.TransactionCard
+import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
 import com.sciuro.feature.wallet.viewmodel.AccountDetailViewModel
 import com.sciuro.feature.wallet.viewmodel.TimelineItem
 import kotlinx.coroutines.launch
@@ -49,6 +52,19 @@ fun AccountDetailScreen(
     var showColorDialog by remember { mutableStateOf(false) }
     var showAdjustmentDialog by remember { mutableStateOf(false) }
     var selectedColor by remember { mutableStateOf<String?>(null) }
+    var showDetailSheet by remember { mutableStateOf(false) }
+    var selectedTxForDetail by remember { mutableStateOf<com.sciuro.core.ledger.db.Transaction_record?>(null) }
+    var detailData by remember { mutableStateOf<com.sciuro.feature.wallet.viewmodel.TransactionDetailData?>(null) }
+
+    LaunchedEffect(showDetailSheet, selectedTxForDetail) {
+        if (showDetailSheet && selectedTxForDetail != null) {
+            detailData = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                viewModel.loadTransactionDetail(selectedTxForDetail!!)
+            }
+        } else {
+            detailData = null
+        }
+    }
 
     val presetColors = listOf(
         null,
@@ -201,44 +217,21 @@ fun AccountDetailScreen(
                         when (item) {
                             is TimelineItem.TransactionItem -> {
                                 val tx = item.tx
-                                Card(
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
-                                                contentDescription = null,
-                                                tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
-                                            )
-                                            Column {
-                                                Text(
-                                                    tx.merchant ?: "Unknown Merchant",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                                Text(
-                                                    if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = if (tx.is_reviewed == 1L) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
-                                                )
-                                            }
-                                        }
-                                        Text(
-                                            "RM ${"%.2f".format(tx.amount)}",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
-                                        )
+                                val isTransfer = tx.category_id == "cat_transfer"
+                                val statusText = if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed"
+                                TransactionCard(
+                                    merchantName = tx.merchant ?: "Unknown Merchant",
+                                    amount = "RM ${"%.2f".format(tx.amount)}",
+                                    direction = tx.direction,
+                                    statusText = statusText,
+                                    isTransfer = isTransfer,
+                                    confidence = tx.confidence,
+                                    extractionMethod = tx.extraction_method,
+                                    onClick = {
+                                        selectedTxForDetail = tx
+                                        showDetailSheet = true
                                     }
-                                }
+                                )
                             }
                             is TimelineItem.AdjustmentItem -> {
                                 val adj = item.adjustment
@@ -259,6 +252,57 @@ fun AccountDetailScreen(
                 }
             }
         }
+    }
+
+    if (showDetailSheet && selectedTxForDetail != null) {
+        val tx = selectedTxForDetail!!
+        val isTransfer = detailData?.transferLink != null || tx.category_id == "cat_transfer"
+        val rawEvent = detailData?.rawEvent
+        val auditLogs = detailData?.auditLogs ?: emptyList()
+        val formattedTimestamp = java.text.SimpleDateFormat("d MMM yyyy, h:mm a", java.util.Locale.getDefault())
+            .format(java.util.Date(tx.timestamp))
+        val auditEvents = auditLogs.map { log ->
+            val actionLabel = when (log.action.name) {
+                "CREATE" -> "Created"
+                "UPDATE" -> "Edited"
+                "RECLASSIFY" -> "Recategorized"
+                "DELETE" -> "Deleted"
+                else -> log.action.name
+            }
+            val sourceLabel = when (log.source.name) {
+                "SYSTEM_AUTO" -> "auto"
+                "USER_MANUAL" -> "you"
+                "LLM_INFERRED" -> "AI"
+                else -> log.source.name
+            }
+            val detail = log.afterState ?: log.beforeState ?: ""
+            AuditEventDisplay(
+                label = "$actionLabel ($sourceLabel)",
+                detail = detail,
+                isCurrent = false
+            )
+        }
+
+        TransactionDetailSheet(
+            showSheet = showDetailSheet,
+            onDismiss = { showDetailSheet = false },
+            merchantName = tx.merchant ?: "Unknown Merchant",
+            amount = "RM ${"%.2f".format(tx.amount)}",
+            direction = tx.direction,
+            timestamp = formattedTimestamp,
+            extractionMethod = tx.extraction_method,
+            confidence = tx.confidence,
+            rawEventTitle = rawEvent?.title,
+            rawEventText = rawEvent?.text,
+            hasTransferLink = isTransfer,
+            auditEvents = auditEvents,
+            onEditClick = {
+                showDetailSheet = false
+            },
+            onDeleteClick = {
+                showDetailSheet = false
+            }
+        )
     }
 
     if (showAdjustmentDialog && state.account != null) {

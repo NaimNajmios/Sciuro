@@ -37,5 +37,8 @@ SELECT MAX(captured_at) AS last_captured_at FROM raw_event_staging;
 countPending:
 SELECT COUNT(*) FROM raw_event_staging WHERE status = 'PENDING';
 
+selectRawEventById:
+SELECT * FROM raw_event_staging WHERE id = ?;
+
 countDeadLetter:
 SELECT COUNT(*) FROM raw_event_staging WHERE status = 'DEAD_LETTER';

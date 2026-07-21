@@ -18,6 +18,8 @@ kotlin {
     implementation(project(":core-ui"))
                 implementation(libs.koin.core)
                 implementation(project(":core-ledger"))
+                implementation(project(":core-audit"))
+                implementation(project(":core-transfer"))
                 implementation(project(":core-investment"))
             }
         }

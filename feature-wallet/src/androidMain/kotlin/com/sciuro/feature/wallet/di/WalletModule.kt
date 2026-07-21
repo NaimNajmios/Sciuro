@@ -8,6 +8,6 @@ import org.koin.dsl.module
 
 val walletModule = module {
     viewModel { WalletViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { AccountDetailViewModel(get(), get(), get(), get()) }
+    viewModel { AccountDetailViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { OnboardingViewModel(get()) }
 }

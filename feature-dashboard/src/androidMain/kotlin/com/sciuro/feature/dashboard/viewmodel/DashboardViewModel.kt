@@ -4,11 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import com.sciuro.core.audit.model.AuditLog
+import com.sciuro.core.audit.model.EntityType
+import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.budget.repository.BudgetRepository
+import com.sciuro.core.ledger.db.Raw_event_staging
 import com.sciuro.core.ledger.repository.AccountRepository
+import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.ledger.repository.CashAdjustmentRepository
 import com.sciuro.core.audit.util.currentTimeMillis
+import com.sciuro.core.transfer.model.TransferLink
+import com.sciuro.core.transfer.repository.TransferRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -26,13 +33,21 @@ data class DashboardState(
     val recentAdjustmentCount: Int = 0
 )
 
+data class TransactionDetailData(
+    val auditLogs: List<AuditLog> = emptyList(),
+    val transferLink: TransferLink? = null,
+    val rawEvent: Raw_event_staging? = null
+)
+
 class DashboardViewModel(
     private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
     private val budgetRepository: BudgetRepository,
     private val categoryRepository: CategoryRepository,
-    private val transferRepository: com.sciuro.core.transfer.repository.TransferRepository,
-    private val cashAdjustmentRepository: CashAdjustmentRepository
+    private val transferRepository: TransferRepository,
+    private val cashAdjustmentRepository: CashAdjustmentRepository,
+    private val auditRepository: AuditRepository,
+    private val rawEventRepository: RawEventRepository
 ) : ViewModel() {
     
     init {
@@ -94,11 +109,13 @@ class DashboardViewModel(
                 
                 val outTx = com.sciuro.core.ledger.model.Transaction(
                     id = outTxId, accountId = accountId, categoryId = "cat_transfer", amount = amount, direction = "OUTFLOW",
-                    merchant = "Transfer to $destinationAccountId", timestamp = System.currentTimeMillis(), referenceId = inTxId, isReviewed = true
+                    merchant = "Transfer to $destinationAccountId", timestamp = System.currentTimeMillis(), referenceId = inTxId, isReviewed = true,
+                    extractionMethod = "MANUAL", confidence = 1.0
                 )
                 val inTx = com.sciuro.core.ledger.model.Transaction(
                     id = inTxId, accountId = destinationAccountId, categoryId = "cat_transfer", amount = amount, direction = "INFLOW",
-                    merchant = "Transfer from $accountId", timestamp = System.currentTimeMillis(), referenceId = outTxId, isReviewed = true
+                    merchant = "Transfer from $accountId", timestamp = System.currentTimeMillis(), referenceId = outTxId, isReviewed = true,
+                    extractionMethod = "MANUAL", confidence = 1.0
                 )
                 
                 transactionRepository.bookTransaction(outTx, source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL, confidence = 1.0f)
@@ -123,7 +140,9 @@ class DashboardViewModel(
                     merchant = merchant,
                     timestamp = System.currentTimeMillis(),
                     referenceId = null,
-                    isReviewed = true // Manual transactions are inherently reviewed
+                    isReviewed = true,
+                    extractionMethod = "MANUAL",
+                    confidence = 1.0
                 )
                 transactionRepository.bookTransaction(
                     transaction = transaction,
@@ -167,5 +186,16 @@ class DashboardViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             transactionRepository.deleteTransaction(transactionId)
         }
+    }
+
+    suspend fun loadTransactionDetail(tx: com.sciuro.core.ledger.db.Transaction_record): TransactionDetailData {
+        val auditLogs = auditRepository.getLogsForEntity(tx.id, EntityType.TRANSACTION)
+        val transferLink = transferRepository.getTransferForTransaction(tx.id)
+        val rawEvent = tx.raw_event_id?.let { rawEventRepository.getRawEventById(it) }
+        return TransactionDetailData(
+            auditLogs = auditLogs,
+            transferLink = transferLink,
+            rawEvent = rawEvent
+        )
     }
 }

@@ -62,6 +62,10 @@ class RawEventRepository(
         return database.rawEventStagingQueries.countPending().executeAsOne()
     }
 
+    suspend fun getRawEventById(id: String): Raw_event_staging? {
+        return database.rawEventStagingQueries.selectRawEventById(id).executeAsOneOrNull()
+    }
+
     suspend fun countDeadLetter(): Long {
         return database.rawEventStagingQueries.countDeadLetter().executeAsOne()
     }

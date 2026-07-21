@@ -47,6 +47,9 @@ class TransactionRepository(
                 timestamp = transaction.timestamp,
                 reference_id = transaction.referenceId,
                 is_reviewed = if (transaction.isReviewed) 1L else 0L,
+                extraction_method = transaction.extractionMethod,
+                confidence = transaction.confidence?.toDouble(),
+                raw_event_id = transaction.rawEventId,
                 created_at = now,
                 updated_at = now
             )

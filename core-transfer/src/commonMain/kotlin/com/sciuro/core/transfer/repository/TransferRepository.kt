@@ -16,6 +16,20 @@ class TransferRepository(
     private val transactionRepository: TransactionRepository
 ) : AuditableRepository(auditRepository) {
 
+    suspend fun getTransferForTransaction(transactionId: String): TransferLink? {
+        return database.transferLinkQueries.selectTransferLinkByTransactionId(transactionId)
+            .executeAsOneOrNull()
+            ?.let { entity ->
+                TransferLink(
+                    id = entity.id,
+                    outflowTransactionId = entity.outflow_transaction_id,
+                    inflowTransactionId = entity.inflow_transaction_id,
+                    amount = entity.amount,
+                    createdAt = entity.created_at
+                )
+            }
+    }
+
     suspend fun linkTransactions(transferLink: TransferLink): TransferLink {
         return withAudit(
             entityType = EntityType.TRANSFER_LINK,

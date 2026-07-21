@@ -81,6 +81,8 @@ class SciuroIngestionOrchestrator(
             val matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
             val accountId = matchedAccount?.id
 
+            val extractionMethod = if (draft.confidenceScore >= confidenceThreshold) "REGEX" else "LLM_FALLBACK"
+
             val transaction = Transaction(
                 id = generateUuid(),
                 accountId = accountId,
@@ -90,7 +92,10 @@ class SciuroIngestionOrchestrator(
                 merchant = draft.merchant,
                 timestamp = draft.timestamp,
                 referenceId = draft.referenceId,
-                isReviewed = draft.confidenceScore >= confidenceThreshold && categoryId != null && accountId != null
+                isReviewed = draft.confidenceScore >= confidenceThreshold && categoryId != null && accountId != null,
+                extractionMethod = extractionMethod,
+                confidence = draft.confidenceScore.toDouble(),
+                rawEventId = rawEvent.id
             )
 
             println("SCIURO_ORCHESTRATOR: Booking transaction... categoryId=$categoryId, accountId=$accountId, isReviewed=${transaction.isReviewed}")

@@ -13,6 +13,22 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalGroceryStore
+import androidx.compose.material.icons.filled.LocalHospital
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -35,6 +51,9 @@ import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
 
 import com.najmi.sciuro.core.ui.components.AdjustmentCard
+import com.najmi.sciuro.core.ui.components.AuditEventDisplay
+import com.najmi.sciuro.core.ui.components.TransactionCard
+import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +63,10 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     var selectedRange by remember { mutableStateOf("All Time") }
     var selectedTypeFilter by remember { mutableStateOf("All") }
     val filterOptions = listOf("All", "Income", "Expense")
+
+    val categoryMap = remember(state.expenseCategories, state.incomeCategories) {
+        (state.expenseCategories + state.incomeCategories).associateBy { it.id }
+    }
 
     val filteredTransactions = remember(state.allTransactions, selectedRange, selectedTypeFilter) {
         state.allTransactions.filter { tx ->
@@ -78,6 +101,21 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     var pendingApprovalTxId by remember { mutableStateOf<String?>(null) }
     var selectedAccountIdForApproval by remember { mutableStateOf<String?>(null) }
     
+    // Detail Sheet State
+    var showDetailSheet by remember { mutableStateOf(false) }
+    var selectedTxForDetail by remember { mutableStateOf<com.sciuro.core.ledger.db.Transaction_record?>(null) }
+    var detailData by remember { mutableStateOf<com.sciuro.feature.dashboard.viewmodel.TransactionDetailData?>(null) }
+
+    LaunchedEffect(showDetailSheet, selectedTxForDetail) {
+        if (showDetailSheet && selectedTxForDetail != null) {
+            detailData = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                viewModel.loadTransactionDetail(selectedTxForDetail!!)
+            }
+        } else {
+            detailData = null
+        }
+    }
+
     // Edit Transaction State
     var showEditTransactionDialog by remember { mutableStateOf(false) }
     var editingTxId by remember { mutableStateOf<String?>(null) }
@@ -221,54 +259,28 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                 )
                             } else {
                                 filteredTransactions.forEach { tx ->
-                                    @Composable
-                                    fun TransactionCard() {
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable {
-                                                editingTxId = tx.id
-                                                editTxAmount = tx.amount.toString()
-                                                editTxMerchant = tx.merchant ?: ""
-                                                editTxAccountId = tx.account_id
-                                                editTxDirection = tx.direction
-                                                editTxCategoryId = tx.category_id
-                                                showEditTransactionDialog = true
-                                            },
-                                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(
-                                                        imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
-                                                        contentDescription = null,
-                                                        tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
-                                                    )
-                                                    Column {
-                                                        Text(
-                                                            tx.merchant ?: "Unknown Merchant",
-                                                            style = MaterialTheme.typography.titleMedium,
-                                                            color = MaterialTheme.colorScheme.onSurface
-                                                        )
-                                                        Text(
-                                                            if (tx.is_reviewed == 1L) "Reviewed" else "Swipe right to approve, left to reject",
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            color = if (tx.is_reviewed == 1L) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
-                                                        )
-                                                    }
-                                                }
-                                                Text(
-                                                    "RM ${"%.2f".format(tx.amount)}",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
-                                                )
+                                    val cat = categoryMap[tx.category_id]
+                                    val catColor = cat?.color?.let { parseColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant
+                                    val catIcon = mapCategoryIcon(tx.category_id)
+                                    val isTransfer = tx.category_id == "cat_transfer"
+                                    val statusText = if (tx.is_reviewed == 1L) "Reviewed" else "Swipe right to approve, left to reject"
+
+                                    val cardContent = @Composable {
+                                        TransactionCard(
+                                            merchantName = tx.merchant ?: "Unknown Merchant",
+                                            amount = "RM ${"%.2f".format(tx.amount)}",
+                                            direction = tx.direction,
+                                            statusText = statusText,
+                                            categoryIcon = catIcon,
+                                            categoryColor = catColor,
+                                            isTransfer = isTransfer,
+                                            confidence = tx.confidence,
+                                            extractionMethod = tx.extraction_method,
+                                            onClick = {
+                                                selectedTxForDetail = tx
+                                                showDetailSheet = true
                                             }
-                                        }
+                                        )
                                     }
 
                                     if (tx.is_reviewed == 0L) {
@@ -316,10 +328,10 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                                 }
                                             }
                                         ) {
-                                            TransactionCard()
+                                            cardContent()
                                         }
                                     } else {
-                                        TransactionCard()
+                                        cardContent()
                                     }
                                 }
                             }
@@ -429,6 +441,67 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar("Transaction saved successfully")
                 }
+            }
+        )
+    }
+
+    if (showDetailSheet && selectedTxForDetail != null) {
+        val tx = selectedTxForDetail!!
+        val cat = categoryMap[tx.category_id]
+        val isTransfer = detailData?.transferLink != null || tx.category_id == "cat_transfer"
+        val rawEvent = detailData?.rawEvent
+        val auditLogs = detailData?.auditLogs ?: emptyList()
+        val formattedTimestamp = java.text.SimpleDateFormat("d MMM yyyy, h:mm a", java.util.Locale.getDefault())
+            .format(java.util.Date(tx.timestamp))
+        val auditEvents = auditLogs.map { log ->
+            val actionLabel = when (log.action.name) {
+                "CREATE" -> "Created"
+                "UPDATE" -> "Edited"
+                "RECLASSIFY" -> "Recategorized"
+                "DELETE" -> "Deleted"
+                else -> log.action.name
+            }
+            val sourceLabel = when (log.source.name) {
+                "SYSTEM_AUTO" -> "auto"
+                "USER_MANUAL" -> "you"
+                "LLM_INFERRED" -> "AI"
+                else -> log.source.name
+            }
+            val detail = log.afterState ?: log.beforeState ?: ""
+            AuditEventDisplay(
+                label = "$actionLabel ($sourceLabel)",
+                detail = detail,
+                isCurrent = false
+            )
+        }
+
+        TransactionDetailSheet(
+            showSheet = showDetailSheet,
+            onDismiss = { showDetailSheet = false },
+            merchantName = tx.merchant ?: "Unknown Merchant",
+            amount = "RM ${"%.2f".format(tx.amount)}",
+            direction = tx.direction,
+            timestamp = formattedTimestamp,
+            extractionMethod = tx.extraction_method,
+            confidence = tx.confidence,
+            rawEventTitle = rawEvent?.title,
+            rawEventText = rawEvent?.text,
+            hasTransferLink = isTransfer,
+            auditEvents = auditEvents,
+            onEditClick = {
+                showDetailSheet = false
+                editingTxId = tx.id
+                editTxAmount = tx.amount.toString()
+                editTxMerchant = tx.merchant ?: ""
+                editTxAccountId = tx.account_id
+                editTxDirection = tx.direction
+                editTxCategoryId = tx.category_id
+                showEditTransactionDialog = true
+            },
+            onDeleteClick = {
+                showDetailSheet = false
+                editingTxId = tx.id
+                showDeleteConfirmation = true
             }
         )
     }
@@ -572,6 +645,36 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
             },
             onDismiss = { showDeleteConfirmation = false }
         )
+    }
+}
+
+private fun parseColor(hex: String?): Color? {
+    if (hex == null) return null
+    return try {
+        Color(android.graphics.Color.parseColor(hex))
+    } catch (e: Exception) {
+        null
+    }
+}
+
+private fun mapCategoryIcon(categoryId: String?): ImageVector? {
+    return when (categoryId) {
+        "cat_dining", "cat_exp_1" -> Icons.Filled.Restaurant
+        "cat_groceries", "cat_exp_6" -> Icons.Filled.LocalGroceryStore
+        "cat_transport", "cat_exp_2" -> Icons.Filled.DirectionsCar
+        "cat_utilities", "cat_exp_3" -> Icons.Filled.Home
+        "cat_exp_4" -> Icons.Filled.ShoppingCart
+        "cat_exp_5" -> Icons.Filled.Description
+        "cat_exp_7" -> Icons.Filled.LocalHospital
+        "cat_exp_8" -> Icons.Filled.School
+        "cat_exp_9", "cat_inc_6" -> Icons.Filled.MoreHoriz
+        "cat_inc_1" -> Icons.Filled.AccountBalance
+        "cat_inc_2" -> Icons.Filled.Computer
+        "cat_inc_3" -> Icons.Filled.CardGiftcard
+        "cat_inc_4" -> Icons.Filled.TrendingUp
+        "cat_inc_5" -> Icons.Filled.Refresh
+        "cat_transfer" -> Icons.Filled.SwapHoriz
+        else -> null
     }
 }
 

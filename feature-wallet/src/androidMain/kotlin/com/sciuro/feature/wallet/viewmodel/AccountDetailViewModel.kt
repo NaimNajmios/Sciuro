@@ -3,9 +3,16 @@ package com.sciuro.feature.wallet.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sciuro.core.audit.model.AuditLog
+import com.sciuro.core.audit.model.EntityType
+import com.sciuro.core.audit.repository.AuditRepository
+import com.sciuro.core.ledger.db.Raw_event_staging
 import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.CashAdjustmentRepository
+import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
+import com.sciuro.core.transfer.model.TransferLink
+import com.sciuro.core.transfer.repository.TransferRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -22,11 +29,20 @@ data class AccountDetailState(
     val timeline: List<TimelineItem> = emptyList()
 )
 
+data class TransactionDetailData(
+    val auditLogs: List<AuditLog> = emptyList(),
+    val transferLink: TransferLink? = null,
+    val rawEvent: Raw_event_staging? = null
+)
+
 class AccountDetailViewModel(
     savedStateHandle: SavedStateHandle,
     private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
-    private val cashAdjustmentRepository: CashAdjustmentRepository
+    private val cashAdjustmentRepository: CashAdjustmentRepository,
+    private val auditRepository: AuditRepository,
+    private val transferRepository: TransferRepository,
+    private val rawEventRepository: RawEventRepository
 ) : ViewModel() {
 
     private val accountId: String = checkNotNull(savedStateHandle["accountId"]) { "accountId must be provided" }
@@ -135,5 +151,16 @@ class AccountDetailViewModel(
             )
             accountRepository.updateAccount(domainAccount)
         }
+    }
+
+    suspend fun loadTransactionDetail(tx: com.sciuro.core.ledger.db.Transaction_record): TransactionDetailData {
+        val auditLogs = auditRepository.getLogsForEntity(tx.id, EntityType.TRANSACTION)
+        val transferLink = transferRepository.getTransferForTransaction(tx.id)
+        val rawEvent = tx.raw_event_id?.let { rawEventRepository.getRawEventById(it) }
+        return TransactionDetailData(
+            auditLogs = auditLogs,
+            transferLink = transferLink,
+            rawEvent = rawEvent
+        )
     }
 }

@@ -29,5 +29,8 @@ data class Transaction(
     val merchant: String?,
     val timestamp: Long,
     val referenceId: String?,
-    val isReviewed: Boolean
+    val isReviewed: Boolean,
+    val extractionMethod: String? = null,
+    val confidence: Double? = null,
+    val rawEventId: String? = null
 )
