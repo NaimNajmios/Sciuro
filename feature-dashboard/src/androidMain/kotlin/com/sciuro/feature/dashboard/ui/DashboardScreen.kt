@@ -54,6 +54,7 @@ import com.najmi.sciuro.core.ui.components.AdjustmentCard
 import com.najmi.sciuro.core.ui.components.AuditEventDisplay
 import com.najmi.sciuro.core.ui.components.TransactionCard
 import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
+import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -453,6 +454,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
         val auditLogs = detailData?.auditLogs ?: emptyList()
         val formattedTimestamp = java.text.SimpleDateFormat("d MMM yyyy, h:mm a", java.util.Locale.getDefault())
             .format(java.util.Date(tx.timestamp))
+        val categoryNames = categoryMap.mapValues { it.value.name }
         val auditEvents = auditLogs.map { log ->
             val actionLabel = when (log.action.name) {
                 "CREATE" -> "Created"
@@ -467,7 +469,13 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 "LLM_INFERRED" -> "AI"
                 else -> log.source.name
             }
-            val detail = log.afterState ?: log.beforeState ?: ""
+            val detail = formatAuditLogDetail(
+                action = log.action.name,
+                source = log.source.name,
+                beforeState = log.beforeState,
+                afterState = log.afterState,
+                categoryNames = categoryNames
+            )
             AuditEventDisplay(
                 label = "$actionLabel ($sourceLabel)",
                 detail = detail,

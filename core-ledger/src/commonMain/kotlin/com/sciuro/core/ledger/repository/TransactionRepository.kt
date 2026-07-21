@@ -71,7 +71,7 @@ class TransactionRepository(
             entityType = EntityType.TRANSACTION,
             entityId = transactionId,
             action = AuditAction.RECLASSIFY,
-            beforeState = "is_reviewed=0, account=${oldTx.account_id}",
+            beforeState = "is_reviewed=0, category_id=${oldTx.category_id}, account=${oldTx.account_id}",
             afterState = "is_reviewed=1, category_id=$newCategoryId, account=$newAccountId",
             source = AuditSource.USER_MANUAL
         ) {

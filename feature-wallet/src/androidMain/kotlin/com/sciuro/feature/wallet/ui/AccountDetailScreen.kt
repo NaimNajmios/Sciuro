@@ -29,6 +29,7 @@ import com.najmi.sciuro.core.ui.components.AdjustmentBottomSheet
 import com.najmi.sciuro.core.ui.components.AuditEventDisplay
 import com.najmi.sciuro.core.ui.components.TransactionCard
 import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
+import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
 import com.sciuro.feature.wallet.viewmodel.AccountDetailViewModel
 import com.sciuro.feature.wallet.viewmodel.TimelineItem
 import kotlinx.coroutines.launch
@@ -275,7 +276,12 @@ fun AccountDetailScreen(
                 "LLM_INFERRED" -> "AI"
                 else -> log.source.name
             }
-            val detail = log.afterState ?: log.beforeState ?: ""
+            val detail = formatAuditLogDetail(
+                action = log.action.name,
+                source = log.source.name,
+                beforeState = log.beforeState,
+                afterState = log.afterState
+            )
             AuditEventDisplay(
                 label = "$actionLabel ($sourceLabel)",
                 detail = detail,
