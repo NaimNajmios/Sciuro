@@ -35,6 +35,16 @@ class LlmFallbackParser(
         val accountOrChannel: String? = null
     )
 
+    data class LlmFallbackDebugCapture(
+        val prompt: String,
+        val rawResponse: String?,
+        val modelUsed: String,
+        val latencyMs: Long
+    )
+
+    var lastDebugCapture: LlmFallbackDebugCapture? = null
+        private set
+
     private var consecutiveFailures = 0
     private var circuitBrokenUntil: Long = 0
 
@@ -92,6 +102,8 @@ class LlmFallbackParser(
             temperature = config.temperature
         )
 
+        val parseStartTime = System.currentTimeMillis()
+
         return try {
             val response: ChatResponse = httpClient.post(config.endpointUrl) {
                 contentType(ContentType.Application.Json)
@@ -103,16 +115,21 @@ class LlmFallbackParser(
 
             if (response.error != null) {
                 println("SCIURO_LLM: API error: ${response.error.message}")
+                lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
                 onFailure("API error: ${response.error.message}")
                 return null
             }
 
             val jsonString = response.choices?.firstOrNull()?.message?.content ?: run {
+                println("SCIURO_LLM: Empty response from LLM")
+                lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
                 onFailure("Empty response from LLM")
                 return null
             }
 
             val result = json.decodeFromString<LlmResult>(jsonString)
+
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, jsonString, config.modelName, System.currentTimeMillis() - parseStartTime)
 
             StructuredDraft(
                 amount = result.amount,
@@ -125,19 +142,23 @@ class LlmFallbackParser(
             )
         } catch (e: HttpRequestTimeoutException) {
             println("SCIURO_LLM: Request timed out")
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
             onFailure("Request timed out")
             null
         } catch (e: IOException) {
             println("SCIURO_LLM: Network error: ${e.message}")
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
             onFailure("Network error: ${e.message}")
             null
         } catch (e: kotlinx.serialization.SerializationException) {
             println("SCIURO_LLM: Malformed response: ${e.message}")
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
             onFailure("Malformed response: ${e.message}")
             null
         } catch (e: Exception) {
             println("SCIURO_LLM: Unexpected error: ${e.message}")
             e.printStackTrace()
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
             onFailure("Unexpected error: ${e.message}")
             null
         }

@@ -3,6 +3,8 @@ package com.sciuro.core.parsing.di
 import com.sciuro.core.parsing.engine.DeterministicParser
 import com.sciuro.core.parsing.engine.LlmFallbackParser
 import com.sciuro.core.parsing.engine.SciuroParserPipeline
+import com.sciuro.core.parsing.engine.SimulationEngine
+import com.sciuro.core.parsing.rule.ParserRule
 import com.sciuro.core.parsing.rule.bank.*
 import com.sciuro.core.parsing.rule.ewallet.*
 import com.sciuro.core.parsing.config.SettingsProvider
@@ -31,19 +33,25 @@ val parsingModule = module {
             }
         }
     }
+
+    single {
+        listOf<ParserRule>(
+            CimbParserRule(),
+            MaybankParserRule(),
+            BsnParserRule(),
+            TngParserRule(),
+            GrabPayParserRule(),
+            BoostParserRule(),
+            ShopeePayParserRule()
+        )
+    }
     
     single {
-        DeterministicParser(
-            rules = listOf(
-                CimbParserRule(),
-                MaybankParserRule(),
-                BsnParserRule(),
-                TngParserRule(),
-                GrabPayParserRule(),
-                BoostParserRule(),
-                ShopeePayParserRule()
-            )
-        )
+        DeterministicParser(rules = get())
+    }
+    
+    single {
+        SimulationEngine(rules = get(), llmFallbackParser = get())
     }
     
     single {
