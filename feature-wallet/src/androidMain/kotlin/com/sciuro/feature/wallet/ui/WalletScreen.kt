@@ -46,10 +46,7 @@ import com.najmi.sciuro.core.ui.components.AdjustmentBottomSheet
 import com.sciuro.feature.wallet.viewmodel.WalletViewModel
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
-import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
-import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
-import com.najmi.sciuro.core.ui.components.AdjustmentReasonPresets
 import com.najmi.sciuro.core.ui.components.PillToggle
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -98,13 +95,6 @@ fun WalletScreen(
     var newAvgBuyPrice by rememberSaveable { mutableStateOf("") }
     var newAssociatedAccountId by rememberSaveable { mutableStateOf("") }
     
-    // Recount State
-    var showRecountDialog by rememberSaveable { mutableStateOf(false) }
-    var recountAccountId by rememberSaveable { mutableStateOf<String?>(null) }
-    var recountDeclaredBalance by rememberSaveable { mutableStateOf("") }
-    var recountReason by rememberSaveable { mutableStateOf("") }
-    var recountReasonExpanded by remember { mutableStateOf(false) }
-
     // Transaction list filter
     var txFilter by rememberSaveable { mutableStateOf("All") }
 
@@ -218,7 +208,10 @@ fun WalletScreen(
                                 shape = MaterialTheme.shapes.extraLarge
                             ) {
                                 Column(
-                                    modifier = Modifier.fillMaxSize().padding(24.dp).clickable { onAccountClick(account.id) },
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(24.dp)
+                                        .clickable { onAccountClick(account.id) },
                                     verticalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Row(
@@ -256,20 +249,6 @@ fun WalletScreen(
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = contentCol.copy(alpha = 0.7f)
                                         )
-                                        IconButton(
-                                            onClick = {
-                                                recountAccountId = account.id
-                                                recountDeclaredBalance = ""
-                                                recountReason = ""
-                                                showRecountDialog = true
-                                            }
-                                        ) {
-                                            Icon(
-                                                Icons.Filled.Calculate,
-                                                contentDescription = "Recount",
-                                                tint = contentCol.copy(alpha = 0.6f)
-                                            )
-                                        }
                                     }
                                 }
                             }
@@ -1025,100 +1004,5 @@ fun WalletScreen(
         )
     }
 
-    if (showRecountDialog && recountAccountId != null) {
-        val recountAccount = accounts.find { it.id == recountAccountId }
-        val currentBalance = recountAccount?.balance ?: 0.0
-        val parsedDeclared = recountDeclaredBalance.toDoubleOrNull()
-        val variance = if (parsedDeclared != null) parsedDeclared - currentBalance else null
-
-        SciuroBottomSheet(onDismissRequest = { showRecountDialog = false }) {
-            Text("Recount Balance", style = MaterialTheme.typography.headlineSmall)
-
-            Text(
-                "Current Balance: RM ${"%.2f".format(currentBalance)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            SciuroTextField(
-                value = recountDeclaredBalance,
-                onValueChange = { recountDeclaredBalance = it },
-                label = "Actual Balance (RM)",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-            )
-
-            if (variance != null && kotlin.math.abs(variance) > 0.01) {
-                val varianceColor = if (variance >= 0) Color(0xFF4CAF50) else Color(0xFFE53935)
-                Text(
-                    "Variance: ${if (variance >= 0) "+" else ""}RM ${"%.2f".format(variance)}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = varianceColor,
-                    fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                )
-            }
-
-            ExposedDropdownMenuBox(
-                expanded = recountReasonExpanded,
-                onExpandedChange = { recountReasonExpanded = !recountReasonExpanded }
-            ) {
-                OutlinedTextField(
-                    value = recountReason.ifBlank { "Select reason..." },
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Reason") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = recountReasonExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = recountReasonExpanded,
-                    onDismissRequest = { recountReasonExpanded = false }
-                ) {
-                    AdjustmentReasonPresets.forEach { preset ->
-                        DropdownMenuItem(
-                            text = { Text(preset) },
-                            onClick = {
-                                recountReason = preset
-                                recountReasonExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { showRecountDialog = false },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Cancel")
-                }
-                Button(
-                    onClick = {
-                        if (variance != null && recountReason.isNotBlank() && kotlin.math.abs(variance) > 0.01) {
-                            viewModel.recountBalance(recountAccountId!!, parsedDeclared!!, recountReason)
-                            showRecountDialog = false
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Balance recounted")
-                            }
-                        } else if (variance != null && kotlin.math.abs(variance) <= 0.01) {
-                            showRecountDialog = false
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Balance already matches — no adjustment needed")
-                            }
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    enabled = recountDeclaredBalance.isNotBlank() && recountReason.isNotBlank()
-                ) {
-                    Text("Save Recount")
-                }
-            }
-        }
-    }
 }
 }

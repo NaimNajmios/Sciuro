@@ -36,9 +36,8 @@ fun AdjustmentBottomSheet(
     val isCustom = reason == "Other"
     val effectiveReason = if (isCustom) customReason else reason
 
-    val parsedAmount = amountStr.toDoubleOrNull()
-    val displayDelta = parsedAmount
-    val newBalance = if (parsedAmount != null) currentBalance + parsedAmount else currentBalance
+    val newBalance = amountStr.toDoubleOrNull()
+    val delta = if (newBalance != null) newBalance - currentBalance else null
 
     SciuroBottomSheet(onDismissRequest = onDismiss) {
         Text(
@@ -52,20 +51,20 @@ fun AdjustmentBottomSheet(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        if (parsedAmount != null) {
+        if (delta != null && kotlin.math.abs(delta) > 0.01) {
+            val varianceColor = if (delta >= 0) Color(0xFF4CAF50) else Color(0xFFE53935)
             Text(
-                "New Balance: RM ${"%.2f".format(newBalance)}",
+                "Variance: ${if (delta >= 0) "+" else ""}RM ${"%.2f".format(delta)}",
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = IBMPlexMono,
-                color = if (parsedAmount >= 0) Color(0xFF4CAF50) else Color(0xFFE53935)
+                color = varianceColor
             )
         }
 
         OutlinedTextField(
             value = amountStr,
             onValueChange = { amountStr = it },
-            label = { Text("Adjustment Amount (RM)") },
-            placeholder = { Text("Positive = add, Negative = subtract") },
+            label = { Text("New Balance (RM)") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
@@ -125,12 +124,12 @@ fun AdjustmentBottomSheet(
 
             Button(
                 onClick = {
-                    if (parsedAmount != null && effectiveReason.isNotBlank()) {
-                        onConfirm(parsedAmount, effectiveReason)
+                    if (delta != null && effectiveReason.isNotBlank()) {
+                        onConfirm(delta, effectiveReason)
                     }
                 },
                 modifier = Modifier.weight(1f),
-                enabled = parsedAmount != null && parsedAmount != 0.0 && effectiveReason.isNotBlank()
+                enabled = delta != null && kotlin.math.abs(delta) > 0.01 && effectiveReason.isNotBlank()
             ) {
                 Text("Save Adjustment")
             }

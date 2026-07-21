@@ -103,14 +103,6 @@ fun AccountDetailScreen(
                     onDismissRequest = { expanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Adjust Balance") },
-                        leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null) },
-                        onClick = {
-                            expanded = false
-                            showAdjustmentDialog = true
-                        }
-                    )
-                    DropdownMenuItem(
                         text = { Text("Change Color") },
                         leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
                         onClick = {
@@ -137,6 +129,23 @@ fun AccountDetailScreen(
                         )
                     }
                 }
+            }
+
+            FilledTonalButton(
+                onClick = { showAdjustmentDialog = true },
+                modifier = Modifier.align(androidx.compose.ui.Alignment.BottomEnd).padding(end = 24.dp, bottom = 28.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = Color.White.copy(alpha = 0.15f),
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(
+                    Icons.Filled.Tune,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Adjust Balance")
             }
         }
 
