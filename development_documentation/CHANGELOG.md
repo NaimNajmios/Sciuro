@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
 - "Calculator-First" Fast Transaction logging using `FastTransactionSheet` for immediate manual numerical input.
 - System-wide 3-way Appearance theme toggling (Light, Dark, System) managed by persistent `ThemeManager` in the new Settings view.
 - Kanban UI refactoring, migrating the status filter layout into a sticky `PillToggle` above the task list for rapid filtering.
+- Dedicated `DeveloperSettingsScreen` to isolate development and simulation tools from the primary user Settings menu.
+- Removed arbitrary pagination/limiting in the Wallet Account Associated App selection, ensuring all installed packages are searchable.
 ### Fixed
 - SQL database bug where `transaction_record.account_id` was not saved during transaction approval.
 
