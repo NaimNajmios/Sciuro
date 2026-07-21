@@ -213,13 +213,13 @@ fun WalletScreen(
                             val contentCol = if (account.color != null) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             
                             Card(
-                                modifier = Modifier.fillMaxWidth().height(180.dp).clickable { onAccountClick(account.id) },
+                                modifier = Modifier.fillMaxWidth().height(180.dp),
                                 colors = CardDefaults.cardColors(containerColor = containerCol, contentColor = contentCol),
                                 shape = MaterialTheme.shapes.extraLarge
                             ) {
                                 Box(modifier = Modifier.fillMaxSize()) {
                                     Column(
-                                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                                        modifier = Modifier.fillMaxSize().padding(24.dp).clickable { onAccountClick(account.id) },
                                         verticalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Row(
