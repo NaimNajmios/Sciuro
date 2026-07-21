@@ -7,6 +7,7 @@ import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
 import com.sciuro.core.ledger.repository.TransactionRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -32,7 +33,7 @@ class SettingsViewModel(
     fun clearInbox() {
         viewModelScope.launch(Dispatchers.IO) {
             // Delete all unreviewed transactions
-            val transactions = transactionRepository.observeUnreviewedTransactions().kotlinx.coroutines.flow.first()
+            val transactions = transactionRepository.observeUnreviewedTransactions().first()
             transactions.forEach {
                 transactionRepository.deleteTransaction(it.id)
             }

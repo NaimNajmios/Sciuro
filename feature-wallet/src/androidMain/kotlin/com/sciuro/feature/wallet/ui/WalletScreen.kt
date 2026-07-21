@@ -410,7 +410,7 @@ fun WalletScreen(
                     
                     val filteredApps = installedApps.filter { 
                         it.name.contains(newAccountPackage, ignoreCase = true) || it.packageName.contains(newAccountPackage, ignoreCase = true)
-                    }.take(30)
+                    }
                     
                     ExposedDropdownMenu(
                         expanded = expanded,

@@ -190,7 +190,16 @@ fun SciuroMainScreen() {
             }
             composable("budgets") { BudgetsScreen() }
             composable("kanban") { KanbanScreen() }
-            composable("settings") { com.sciuro.feature.settings.ui.SettingsScreen() }
+            composable("settings") { 
+                com.sciuro.feature.settings.ui.SettingsScreen(
+                    onNavigateToDeveloperSettings = { navController.navigate("developer_settings") }
+                ) 
+            }
+            composable("developer_settings") { 
+                com.sciuro.feature.settings.ui.DeveloperSettingsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                ) 
+            }
         }
     }
     }
