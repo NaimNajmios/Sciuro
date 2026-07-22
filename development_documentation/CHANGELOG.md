@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Full-screen swiping architecture: Dashboard, Kanban, Wallet, and Budgets screens now share a consistent root `Box` + `LazyColumn` layout. HeroPanel scrolls off-screen; SheetList fills the viewport with `fillParentMaxHeight()`. Inner content uses `Column` + `forEach` (no nested `LazyColumn`). FAB overlaid in the root `Box` with `Modifier.align(Alignment.BottomEnd)`.
+
+### Changed
+- `HeroPanel` hero figure typography reduced from `displayLarge` to `headlineLarge` to prevent number overflow on large figures.
+- WalletScreen custom hero figure typography reduced from `displayLarge` to `headlineLarge`.
+- KanbanScreen: root `Column` → `Box` + `LazyColumn`; `SheetList` modifier `.weight(1f)` → `.fillParentMaxHeight()`; inner `LazyColumn` → `Column` + `filteredTasks.forEach`.
+- WalletScreen: root `Column` → `Box` + `LazyColumn`; `SheetList` modifier `.weight(1f)` → `.fillParentMaxHeight()`; inner `LazyColumn` → `Column` + forEach for transactions/adjustments; FAB moved into root `Box` overlay.
+
+### Fixed
+- Number overflow in hero figures for Dashboard (Total Net Worth), Kanban (Active Debt), Budgets (spent/allocated), and Wallet (Total Liquidity/Investments) by switching to `headlineLarge` typography.
+
+### Added
 - `content` slot on `HeroPanel` — `@Composable ColumnScope.() -> Unit = {}`, renders after chart inside the dark hero surface. Fully backward-compatible (defaults to `{}`).
 - Dashboard: replaced mock chart data with real `balanceHistory` computed from daily-aggregated running balance of all transactions. Toggle slices the series (last 30 days for "This Month", full series for "All Time"). Secondary `content` row shows accounts count + weekly adjustment count.
 - Budgets: `heroFigure` now shows `"RM X / RM Y"` (total spent vs allocated) instead of a bare count. `content` slot lists top 3 at-risk budgets by spend progress.

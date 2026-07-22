@@ -52,6 +52,30 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 | Developer Settings | Time since last capture | — | — | Pipeline pending/dead counts |
 | Settings (×2) | "Config" / "More" | — | — | — |
 
+### Full-Screen Swiping Architecture
+
+All scrollable screens (Dashboard, Kanban, Budgets, Wallet) follow a consistent full-screen swiping pattern. The root layout uses a `Box` containing a single `LazyColumn` with two `item { }` blocks:
+
+```
+Box(fillMaxSize) {
+    LazyColumn {
+        item { HeroPanel(...) }
+        item {
+            SheetList(offset(-24.dp).fillParentMaxHeight()) {
+                Column { forEach { ... } }
+            }
+        }
+    }
+    FAB(align = BottomEnd)
+}
+```
+
+- The `HeroPanel` scrolls off-screen naturally as the user swipes up.
+- The `SheetList` uses `fillParentMaxHeight()` to fill the remaining viewport, with a `-24.dp` offset for the overlapping visual effect.
+- Content inside `SheetList` uses plain `Column` + `forEach` (never a nested `LazyColumn`) since the parent `LazyColumn` handles all vertical scrolling.
+- The FAB is overlaid in the root `Box` with `Modifier.align(Alignment.BottomEnd)`.
+- Hero figure text uses `headlineLarge` typography to prevent number overflow on large figures.
+
 ## Developer Tools
 
 Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with five tabs:
