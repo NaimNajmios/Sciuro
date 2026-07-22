@@ -56,7 +56,7 @@ fun HeroPanel(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = heroFigure,
-                    style = MaterialTheme.typography.displayLarge,
+                    style = MaterialTheme.typography.headlineLarge,
                     color = Color.White
                 )
             }

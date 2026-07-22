@@ -53,9 +53,11 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val coroutineScope = rememberCoroutineScope()
     var taskToReject by remember { mutableStateOf<KanbanTask?>(null) }
     
-    Column(modifier = Modifier.fillMaxSize()) {
-        HeroPanel(
-            title = "Active Debt & Bills",
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
+                HeroPanel(
+                    title = "Active Debt & Bills",
             heroFigure = "RM ${"%.2f".format(activeDebt)}",
             toggleOptions = emptyList(),
             selectedToggle = "",
@@ -85,37 +87,38 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 }
             }
         )
-        
-        SheetList(modifier = Modifier.offset(y = (-24).dp).weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            ) {
-                PillToggle(
-                    options = listOf("To Do", "In Progress", "Done"),
-                    selectedOption = selectedStatus,
-                    onOptionSelected = { selectedStatus = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    fillWidth = true
-                )
             }
-            
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (filteredTasks.isEmpty()) {
-                    item {
+        
+        item {
+            SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    PillToggle(
+                        options = listOf("To Do", "In Progress", "Done"),
+                        selectedOption = selectedStatus,
+                        onOptionSelected = { selectedStatus = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        fillWidth = true
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (filteredTasks.isEmpty()) {
                         com.najmi.sciuro.core.ui.components.EmptyStateView(
                             message = "No tasks in this list."
                         )
-                    }
-                } else {
-                    items(filteredTasks) { task ->
-                            var selectedAccount by remember(task.id) { 
-                                mutableStateOf(accounts.find { it.id == task.accountId }) 
+                    } else {
+                        filteredTasks.forEach { task ->
+                            var selectedAccount by remember(task.id) {
+                                mutableStateOf(accounts.find { it.id == task.accountId })
                             }
                             var selectedDirection by remember(task.id) {
                                 mutableStateOf(task.direction ?: "OUTFLOW")
@@ -125,7 +128,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (task.accountId == null) MaterialTheme.colorScheme.errorContainer 
+                                    containerColor = if (task.accountId == null) MaterialTheme.colorScheme.errorContainer
                                                      else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                 )
                             ) {
@@ -137,14 +140,14 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                     ) {
                                         Column {
                                             Text(
-                                                text = task.title, 
+                                                text = task.title,
                                                 style = MaterialTheme.typography.titleMedium,
                                                 color = if (task.accountId == null) MaterialTheme.colorScheme.onErrorContainer else Color.Unspecified
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(
-                                                text = task.description, 
-                                                style = MaterialTheme.typography.bodyMedium, 
+                                                text = task.description,
+                                                style = MaterialTheme.typography.bodyMedium,
                                                 color = if (task.accountId == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
@@ -156,10 +159,9 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                             )
                                         }
                                     }
-                                    
+
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    
-                                    // Direction Selection
+
                                     if (task.title.startsWith("Review Transaction")) {
                                         SingleChoiceSegmentedButtonRow(
                                             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
@@ -180,8 +182,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                             }
                                         }
                                     }
-                                    
-                                    // Account Selection
+
                                     ExposedDropdownMenuBox(
                                         expanded = accountDropdownExpanded,
                                         onExpandedChange = { accountDropdownExpanded = it }
@@ -209,15 +210,15 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                             }
                                         }
                                     }
-                                    
+
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    
+
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         OutlinedButton(
-                                            onClick = { 
+                                            onClick = {
                                                 taskToReject = task
                                             },
                                             modifier = Modifier.weight(1f),
@@ -227,7 +228,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                         }
                                         SciuroPrimaryButton(
                                             text = "Approve",
-                                            onClick = { 
+                                            onClick = {
                                                 viewModel.updateTaskStatus(task.id, TaskStatus.DONE, selectedAccount?.id, selectedDirection)
                                                 coroutineScope.launch {
                                                     snackbarHostState.showSnackbar("Task Approved")
@@ -239,9 +240,11 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                     }
                                 }
                             }
+                        }
                     }
                 }
             }
+        }
         }
     }
 

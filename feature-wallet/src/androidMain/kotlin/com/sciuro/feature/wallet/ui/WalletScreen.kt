@@ -133,13 +133,15 @@ fun WalletScreen(
     val accountPagerState = rememberPagerState(pageCount = { maxOf(1, accounts.size) })
     val investmentPagerState = rememberPagerState(pageCount = { maxOf(1, investments.size) })
     
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(com.najmi.sciuro.core.ui.theme.SurfaceHero)
-                .padding(top = 48.dp, bottom = 48.dp)
-        ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(com.najmi.sciuro.core.ui.theme.SurfaceHero)
+                        .padding(top = 48.dp, bottom = 48.dp)
+                ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -154,7 +156,7 @@ fun WalletScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "RM ${"%.2f".format(displayTotal)}",
-                        style = MaterialTheme.typography.displayLarge,
+                        style = MaterialTheme.typography.headlineLarge,
                         color = Color.White,
                         fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
                     )
@@ -322,8 +324,9 @@ fun WalletScreen(
             }
         }
         
-        SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
-            Spacer(modifier = Modifier.height(24.dp))
+        item {
+            SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
+                Spacer(modifier = Modifier.height(24.dp))
             
             Box(
                 modifier = Modifier
@@ -340,14 +343,12 @@ fun WalletScreen(
                 )
             }
             
-            LazyColumn(
-                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().weight(1f),
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item {
-                    Text("Recent Transactions", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 16.dp))
-                }
-                    
+                Text("Recent Transactions", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 16.dp))
+
                     if (selectedAssetType == "Liquid Cash" && accounts.isNotEmpty()) {
                         val currentAccountPage = accountPagerState.currentPage
                         val activeAccount = accounts.getOrNull(currentAccountPage)
@@ -358,10 +359,9 @@ fun WalletScreen(
                         if (activeAccount != null) {
                             if (txFilter == "Adjustments") {
                                 if (accountAdjustments.isEmpty()) {
-                                    item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No adjustments for this account.") }
+                                    com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No adjustments for this account.")
                                 } else {
-                                    items(accountAdjustments.size) { idx ->
-                                        val adj = accountAdjustments[idx]
+                                    accountAdjustments.forEach { adj ->
                                         AdjustmentCard(
                                             reason = adj.reason,
                                             amount = adj.amount,
@@ -373,10 +373,9 @@ fun WalletScreen(
                                     }
                                 }
                             } else if (accountTx.isEmpty()) {
-                                item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No transactions for this account.") }
+                                com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No transactions for this account.")
                             } else {
-                                items(accountTx.take(20).size) { idx ->
-                                    val tx = accountTx[idx]
+                                accountTx.take(20).forEach { tx ->
                                     Card(
                                         modifier = Modifier.fillMaxWidth().clickable {
                                             editingTxId = tx.id
@@ -427,15 +426,16 @@ fun WalletScreen(
                             }
                         }
                     } else if (selectedAssetType == "Investments") {
-                        item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "Investment transactions are currently tracked manually.") }
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(message = "Investment transactions are currently tracked manually.")
                     } else {
-                        item { com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No data available.") }
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No data available.")
                     }
+                }
             }
         }
-    }
-    
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+        }
+        }
+        
         FloatingActionButton(
             onClick = { 
                 if (selectedAssetType == "Liquid Cash") {
@@ -456,7 +456,9 @@ fun WalletScreen(
                     showAddInvestmentDialog = true
                 }
             },
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
