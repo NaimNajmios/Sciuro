@@ -33,12 +33,7 @@ fun EmptyStateView(
         verticalArrangement = Arrangement.Center
     ) {
         if (lottieRes != null) {
-            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(lottieRes))
-            LottieAnimation(
-                composition = composition,
-                iterations = LottieConstants.IterateForever,
-                modifier = Modifier.size(160.dp)
-            )
+            SciuroMascot(animationState = MascotState.EMPTY, modifier = Modifier.size(160.dp))
         } else {
             Icon(
                 imageVector = fallbackIcon,
@@ -65,3 +60,4 @@ fun EmptyStateView(
         }
     }
 }
+
