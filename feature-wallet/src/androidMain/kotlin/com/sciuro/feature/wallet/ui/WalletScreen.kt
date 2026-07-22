@@ -322,8 +322,8 @@ fun WalletScreen(
                     }
                 }
             }
-        }
         
+            }
         item {
             SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -434,7 +434,6 @@ fun WalletScreen(
             }
         }
         }
-        }
         
         FloatingActionButton(
             onClick = { 
@@ -444,7 +443,7 @@ fun WalletScreen(
                     newAccountType = "Bank Account"
                     newAccountPackage = ""
                     newAccountBalance = ""
-                    showAddAccountDialog = true 
+                    showAddAccountDialog = true
                 } else {
                     editingInvestmentId = null
                     newAssetType = "Stock"
@@ -1005,6 +1004,5 @@ fun WalletScreen(
             onDismiss = { showDeleteInvestmentDialog = false }
         )
     }
-
 }
 }
