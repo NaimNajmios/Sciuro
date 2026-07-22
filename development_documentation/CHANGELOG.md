@@ -14,6 +14,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Number overflow in hero figures for Dashboard (Total Net Worth), Kanban (Active Debt), Budgets (spent/allocated), and Wallet (Total Liquidity/Investments) by switching to `headlineLarge` typography.
+- Wired `BudgetEngine` and `DebtEngine` directly into the `SciuroIngestionOrchestrator` transaction booking path to ensure downstream cascade architectures fire immediately.
+- Connected `OnboardingScreen` into `MainActivity`'s `NavHost` with a dynamic `startDestination` and a `LaunchedEffect` observer to properly transition users upon completing the first-launch setup.
+- Removed dead/duplicate `TransactionInspectorSheet.kt` code to enforce `TransactionDetailSheet.kt` as the single source of truth for transaction inspection.
+- Fixed a malformed `{` brace parsing error inside `WalletScreen.kt` `SheetList`.
 
 ### Added
 - `content` slot on `HeroPanel` — `@Composable ColumnScope.() -> Unit = {}`, renders after chart inside the dark hero surface. Fully backward-compatible (defaults to `{}`).
