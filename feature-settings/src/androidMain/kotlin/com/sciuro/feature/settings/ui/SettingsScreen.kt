@@ -72,7 +72,7 @@ fun SettingsScreen(
                 }
 
                 item {
-                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Appearance", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -90,7 +90,7 @@ fun SettingsScreen(
                 }
 
                 item {
-                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("LLM Classification", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -111,13 +111,13 @@ fun SettingsScreen(
 
                             if (isLlmOptIn) {
                                 Spacer(modifier = Modifier.height(16.dp))
-                                OutlinedTextField(
+                                com.najmi.sciuro.core.ui.components.SciuroTextField(
                                     value = apiKey,
                                     onValueChange = {
                                         apiKey = it
                                         settingsProvider.setApiKey(it)
                                     },
-                                    label = { Text("Groq API Key") },
+                                    label = "Groq API Key",
                                     singleLine = true,
                                     visualTransformation = PasswordVisualTransformation(),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -172,7 +172,7 @@ fun SettingsScreen(
                 }
 
                 item {
-                    Card(
+                    com.najmi.sciuro.core.ui.components.SciuroCard(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                         onClick = onNavigateToDeveloperSettings
                     ) {

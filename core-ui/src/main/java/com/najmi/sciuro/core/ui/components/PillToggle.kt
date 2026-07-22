@@ -24,10 +24,10 @@ fun PillToggle(
     isOnDarkSurface: Boolean = false,
     fillWidth: Boolean = false
 ) {
-    val containerColor = if (isOnDarkSurface) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f)
-    val activeColor = if (isOnDarkSurface) Color.White else BrandPrimaryLight
-    val activeTextColor = if (isOnDarkSurface) Color.Black else Color.White
-    val inactiveTextColor = if (isOnDarkSurface) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
+    val containerColor = if (isOnDarkSurface) Color.White.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+    val activeColor = if (isOnDarkSurface) Color.White else MaterialTheme.colorScheme.primary
+    val activeTextColor = if (isOnDarkSurface) Color.Black else MaterialTheme.colorScheme.onPrimary
+    val inactiveTextColor = if (isOnDarkSurface) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(
         modifier = modifier

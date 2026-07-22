@@ -50,7 +50,8 @@ fun SciuroTextField(
     readOnly: Boolean = false,
     singleLine: Boolean = true,
     trailingIcon: @Composable (() -> Unit)? = null,
-    keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default
+    keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None
 ) {
     OutlinedTextField(
         value = value,
@@ -60,6 +61,7 @@ fun SciuroTextField(
         singleLine = singleLine,
         trailingIcon = trailingIcon,
         keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
@@ -83,5 +85,38 @@ fun SciuroPrimaryButton(
         shape = RoundedCornerShape(12.dp)
     ) {
         Text(text, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SciuroCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = modifier,
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(content = content)
+        }
+    } else {
+        Card(
+            modifier = modifier,
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(content = content)
+        }
     }
 }

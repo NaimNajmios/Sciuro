@@ -86,16 +86,18 @@ fun FastTransactionSheet(
         }
 
         // Category Selection
-        if (direction != "TRANSFER") {
-            Text("Category", style = MaterialTheme.typography.labelLarge)
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val cats = if (direction == "OUTFLOW") expenseCategories else incomeCategories
-                items(cats) { cat ->
-                    FilterChip(
-                        selected = categoryId == cat.id,
-                        onClick = { categoryId = cat.id },
-                        label = { Text(cat.name) }
-                    )
+        androidx.compose.animation.AnimatedVisibility(visible = direction != "TRANSFER") {
+            Column {
+                Text("Category", style = MaterialTheme.typography.labelLarge)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val cats = if (direction == "OUTFLOW") expenseCategories else incomeCategories
+                    items(cats) { cat ->
+                        FilterChip(
+                            selected = categoryId == cat.id,
+                            onClick = { categoryId = cat.id },
+                            label = { Text(cat.name) }
+                        )
+                    }
                 }
             }
         }
@@ -112,15 +114,17 @@ fun FastTransactionSheet(
             }
         }
 
-        if (direction == "TRANSFER") {
-            Text("Destination Account", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(accounts.filter { it.id != accountId }) { acc ->
-                    FilterChip(
-                        selected = destinationAccountId == acc.id,
-                        onClick = { destinationAccountId = acc.id },
-                        label = { Text(acc.name) }
-                    )
+        androidx.compose.animation.AnimatedVisibility(visible = direction == "TRANSFER") {
+            Column {
+                Text("Destination Account", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(accounts.filter { it.id != accountId }) { acc ->
+                        FilterChip(
+                            selected = destinationAccountId == acc.id,
+                            onClick = { destinationAccountId = acc.id },
+                            label = { Text(acc.name) }
+                        )
+                    }
                 }
             }
         }

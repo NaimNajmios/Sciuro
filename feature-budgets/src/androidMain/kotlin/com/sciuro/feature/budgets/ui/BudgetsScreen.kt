@@ -106,7 +106,7 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
                             )
                         } else {
                             budgets.forEach { budget ->
-                                Card(
+                                com.najmi.sciuro.core.ui.components.SciuroCard(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 16.dp)
