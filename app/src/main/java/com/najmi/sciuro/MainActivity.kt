@@ -152,9 +152,14 @@ fun SciuroMainScreen() {
         return
     }
     
-    if (!onboardingState.isOnboardingComplete) {
-        com.sciuro.feature.wallet.ui.OnboardingScreen(viewModel = onboardingViewModel)
-        return
+    val startDest = if (onboardingState.isOnboardingComplete) "dashboard" else "onboarding"
+    
+    LaunchedEffect(onboardingState.isOnboardingComplete) {
+        if (onboardingState.isOnboardingComplete && navController.currentDestination?.route == "onboarding") {
+            navController.navigate("dashboard") {
+                popUpTo("onboarding") { inclusive = true }
+            }
+        }
     }
     
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
@@ -162,9 +167,10 @@ fun SciuroMainScreen() {
             modifier = Modifier.fillMaxSize(),
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+            if (onboardingState.isOnboardingComplete) {
+                NavigationBar {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentDestination = navBackStackEntry?.destination
                 
                 items.forEach { screen ->
                     NavigationBarItem(
@@ -190,9 +196,15 @@ fun SciuroMainScreen() {
                     )
                 }
             }
+            }
         }
     ) { innerPadding ->
-        NavHost(navController, startDestination = "dashboard", Modifier.padding(innerPadding)) {
+        NavHost(navController, startDestination = startDest, Modifier.padding(innerPadding)) {
+            composable("onboarding") {
+                com.sciuro.feature.wallet.ui.OnboardingScreen(
+                    viewModel = onboardingViewModel
+                )
+            }
             composable("dashboard") { DashboardScreen() }
             composable("wallet") { 
                 WalletScreen(onAccountClick = { accountId ->

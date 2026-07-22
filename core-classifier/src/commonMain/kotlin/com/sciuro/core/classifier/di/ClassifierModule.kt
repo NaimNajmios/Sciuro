@@ -11,7 +11,9 @@ val classifierModule = module {
             transactionRepository = get(),
             accountRepository = get(),
             rawEventRepository = get(),
-            transferDetectionEngine = get()
+            transferDetectionEngine = get(),
+            budgetEngine = get(),
+            debtEngine = get()
         ) 
     }
 }

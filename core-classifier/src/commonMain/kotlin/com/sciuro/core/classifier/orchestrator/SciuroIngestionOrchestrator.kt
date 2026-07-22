@@ -22,6 +22,8 @@ class SciuroIngestionOrchestrator(
     private val accountRepository: AccountRepository,
     private val rawEventRepository: RawEventRepository,
     private val transferDetectionEngine: TransferDetectionEngine,
+    private val budgetEngine: com.sciuro.core.budget.engine.BudgetEngine,
+    private val debtEngine: com.sciuro.core.debt.engine.DebtEngine,
     private val confidenceThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD
 ) {
     private var job: Job? = null
@@ -114,6 +116,9 @@ class SciuroIngestionOrchestrator(
                 newTxTimestamp = transaction.timestamp,
                 counterpartyAccountNumber = draft.counterpartyAccountNumber
             )
+
+            budgetEngine.processBudgets()
+            debtEngine.processDebtPayments()
 
             rawEventRepository.markProcessed(rawEvent.id)
         } catch (e: Exception) {

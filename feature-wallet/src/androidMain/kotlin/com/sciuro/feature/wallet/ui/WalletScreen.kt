@@ -324,6 +324,7 @@ fun WalletScreen(
             }
         
             }
+        }
         item {
             SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
                 Spacer(modifier = Modifier.height(24.dp))
