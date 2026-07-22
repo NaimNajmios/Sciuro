@@ -9,7 +9,12 @@ data class Account(
     val associatedPackage: String? = null,
     val isSystem: Boolean = false,
     val status: String = "ACTIVE",
-    val color: String? = null
+    val color: String? = null,
+    val accountNumber: String? = null,
+    val accountHolderName: String? = null,
+    val bankInstitutionCode: String? = null,
+    val qrImagePath: String? = null,
+    val qrPayloadText: String? = null
 )
 
 data class Category(

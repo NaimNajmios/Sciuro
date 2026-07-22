@@ -1,0 +1,12 @@
+ALTER TABLE account ADD COLUMN account_number TEXT;
+ALTER TABLE account ADD COLUMN account_holder_name TEXT;
+ALTER TABLE account ADD COLUMN bank_institution_code TEXT;
+ALTER TABLE account ADD COLUMN qr_image_path TEXT;
+ALTER TABLE account ADD COLUMN qr_payload_text TEXT;
+
+CREATE TABLE account_pair_confirmation (
+    account_id_a TEXT NOT NULL,
+    account_id_b TEXT NOT NULL,
+    confirmed_at INTEGER NOT NULL,
+    PRIMARY KEY (account_id_a, account_id_b)
+);

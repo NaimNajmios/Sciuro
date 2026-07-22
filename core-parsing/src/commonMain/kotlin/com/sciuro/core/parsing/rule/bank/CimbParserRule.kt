@@ -34,10 +34,12 @@ class CimbParserRule : ParserRule {
         }
 
         val merchant = com.sciuro.core.parsing.util.extractMerchant(text)
+        val counterpartyAccount = com.sciuro.core.parsing.util.extractAccountNumber(text)
 
         val confidenceScore = (if (amount > 0) 0.3f else 0f) +
                               (if (direction != null) 0.3f else 0f) +
                               (if (merchant != null) 0.2f else 0f) +
+                              (if (counterpartyAccount != null) 0.1f else 0f) +
                               0.2f
 
         return StructuredDraft(
@@ -46,6 +48,7 @@ class CimbParserRule : ParserRule {
             merchant = merchant,
             accountOrChannel = "CIMB",
             referenceId = null,
+            counterpartyAccountNumber = counterpartyAccount,
             timestamp = event.timestamp,
             confidenceScore = confidenceScore
         )

@@ -147,7 +147,58 @@ class AccountDetailViewModel(
                 associatedPackage = account.associated_package,
                 isSystem = account.is_system == 1L,
                 status = account.status,
-                color = color
+                color = color,
+                accountNumber = account.account_number,
+                accountHolderName = account.account_holder_name,
+                bankInstitutionCode = account.bank_institution_code,
+                qrImagePath = account.qr_image_path,
+                qrPayloadText = account.qr_payload_text
+            )
+            accountRepository.updateAccount(domainAccount)
+        }
+    }
+
+    fun updateAccountDetails(accountNumber: String?, accountHolderName: String?, bankInstitutionCode: String?) {
+        viewModelScope.launch {
+            val account = state.value.account ?: return@launch
+            val domainAccount = com.sciuro.core.ledger.model.Account(
+                id = account.id,
+                name = account.name,
+                type = account.type,
+                currency = account.currency,
+                balance = account.balance,
+                associatedPackage = account.associated_package,
+                isSystem = account.is_system == 1L,
+                status = account.status,
+                color = account.color,
+                accountNumber = accountNumber,
+                accountHolderName = accountHolderName,
+                bankInstitutionCode = bankInstitutionCode,
+                qrImagePath = account.qr_image_path,
+                qrPayloadText = account.qr_payload_text
+            )
+            accountRepository.updateAccount(domainAccount)
+        }
+    }
+
+    fun updateQrImagePath(path: String?) {
+        viewModelScope.launch {
+            val account = state.value.account ?: return@launch
+            val domainAccount = com.sciuro.core.ledger.model.Account(
+                id = account.id,
+                name = account.name,
+                type = account.type,
+                currency = account.currency,
+                balance = account.balance,
+                associatedPackage = account.associated_package,
+                isSystem = account.is_system == 1L,
+                status = account.status,
+                color = account.color,
+                accountNumber = account.account_number,
+                accountHolderName = account.account_holder_name,
+                bankInstitutionCode = account.bank_institution_code,
+                qrImagePath = path,
+                qrPayloadText = account.qr_payload_text
             )
             accountRepository.updateAccount(domainAccount)
         }

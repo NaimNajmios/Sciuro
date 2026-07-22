@@ -52,6 +52,16 @@ class TransferRepository(
             transactionRepository.reviewTransaction(transferLink.outflowTransactionId, newCategoryId = "cat_transfer")
             transactionRepository.reviewTransaction(transferLink.inflowTransactionId, newCategoryId = "cat_transfer")
             
+            // Auto-confirm the account pair so future heuristic matches auto-link
+            val outflowTx = database.transactionRecordQueries.selectTransactionById(transferLink.outflowTransactionId).executeAsOneOrNull()
+            val inflowTx = database.transactionRecordQueries.selectTransactionById(transferLink.inflowTransactionId).executeAsOneOrNull()
+            if (outflowTx?.account_id != null && inflowTx?.account_id != null) {
+                val accounts = listOfNotNull(outflowTx.account_id, inflowTx.account_id).sorted()
+                if (accounts.size == 2) {
+                    database.accountQueries.insertAccountPairConfirmation(accounts[0], accounts[1], now)
+                }
+            }
+            
             transferLink
         }
     }

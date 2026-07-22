@@ -1,26 +1,35 @@
 package com.sciuro.feature.wallet.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.clip
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import android.graphics.BitmapFactory
+import android.net.Uri
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.theme.SurfaceHero
@@ -34,6 +43,7 @@ import com.sciuro.feature.wallet.viewmodel.AccountDetailViewModel
 import com.sciuro.feature.wallet.viewmodel.TimelineItem
 import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
+import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import org.koin.androidx.compose.koinViewModel
 
@@ -52,10 +62,32 @@ fun AccountDetailScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showColorDialog by remember { mutableStateOf(false) }
     var showAdjustmentDialog by remember { mutableStateOf(false) }
+    var showEditDetailsDialog by remember { mutableStateOf(false) }
     var selectedColor by remember { mutableStateOf<String?>(null) }
     var showDetailSheet by remember { mutableStateOf(false) }
     var selectedTxForDetail by remember { mutableStateOf<com.sciuro.core.ledger.db.Transaction_record?>(null) }
     var detailData by remember { mutableStateOf<com.sciuro.feature.wallet.viewmodel.TransactionDetailData?>(null) }
+    var showQrFullScreen by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val qrImagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            coroutineScope.launch {
+                val destFile = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val dir = java.io.File(context.filesDir, "qr_codes").apply { mkdirs() }
+                    val file = java.io.File(dir, "${java.util.UUID.randomUUID()}.png")
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        file.outputStream().use { output -> input.copyTo(output) }
+                    }
+                    file
+                }
+                viewModel.updateQrImagePath(destFile.absolutePath)
+                snackbarHostState.showSnackbar("QR code saved")
+            }
+        }
+    }
 
     LaunchedEffect(showDetailSheet, selectedTxForDetail) {
         if (showDetailSheet && selectedTxForDetail != null) {
@@ -151,8 +183,15 @@ fun AccountDetailScreen(
                     onDismissRequest = { expanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Change Color") },
+                        text = { Text("Edit Details") },
                         leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                        onClick = {
+                            expanded = false
+                            showEditDetailsDialog = true
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Change Color") },
                         onClick = {
                             expanded = false
                             selectedColor = state.account?.color
@@ -178,6 +217,14 @@ fun AccountDetailScreen(
                     }
                 }
             }
+        }
+
+        val qrImagePath = account.qr_image_path
+        if (qrImagePath != null) {
+            QrCodeSection(
+                filePath = qrImagePath,
+                onTap = { showQrFullScreen = true }
+            )
         }
 
         SheetList(modifier = Modifier.fillMaxWidth().weight(1f)) {
@@ -406,5 +453,235 @@ fun AccountDetailScreen(
                 }
             }
         )
+    }
+
+    if (showQrFullScreen && account.qr_image_path != null) {
+        AlertDialog(
+            onDismissRequest = { showQrFullScreen = false },
+            title = { Text("QR Code", textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+            text = {
+                Box(
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val bitmap = remember(account.qr_image_path) {
+                        try { BitmapFactory.decodeFile(account.qr_image_path) } catch (e: Exception) { null }
+                    }
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "QR Code",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Text("Unable to load QR image", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showQrFullScreen = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    if (showEditDetailsDialog) {
+        EditAccountDetailsSheet(
+            currentAccountNumber = state.account?.account_number,
+            currentAccountHolderName = state.account?.account_holder_name,
+            currentBankInstitutionCode = state.account?.bank_institution_code,
+            currentQrImagePath = state.account?.qr_image_path,
+            onDismiss = { showEditDetailsDialog = false },
+            onConfirm = { accountNumber, accountHolderName, bankInstitutionCode ->
+                viewModel.updateAccountDetails(accountNumber, accountHolderName, bankInstitutionCode)
+                showEditDetailsDialog = false
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Account details updated")
+                }
+            },
+            onPickQr = { qrImagePicker.launch("image/*") },
+            onRemoveQr = {
+                viewModel.updateQrImagePath(null)
+                coroutineScope.launch { snackbarHostState.showSnackbar("QR code removed") }
+            }
+        )
+    }
+}
+
+@Composable
+private fun QrCodeThumbnail(
+    filePath: String,
+    modifier: Modifier = Modifier
+) {
+    val bitmap = remember(filePath) {
+        try { BitmapFactory.decodeFile(filePath) } catch (e: Exception) { null }
+    }
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "QR Code",
+            modifier = modifier,
+            contentScale = ContentScale.Fit
+        )
+    }
+}
+
+@Composable
+private fun QrCodeSection(
+    filePath: String,
+    onTap: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onTap)
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White)
+                .padding(4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            QrCodeThumbnail(
+                filePath = filePath,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            "Tap to view QR",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditAccountDetailsSheet(
+    currentAccountNumber: String?,
+    currentAccountHolderName: String?,
+    currentBankInstitutionCode: String?,
+    currentQrImagePath: String?,
+    onDismiss: () -> Unit,
+    onConfirm: (accountNumber: String?, accountHolderName: String?, bankInstitutionCode: String?) -> Unit,
+    onPickQr: () -> Unit,
+    onRemoveQr: () -> Unit
+) {
+    var accountNumber by remember { mutableStateOf(currentAccountNumber ?: "") }
+    var accountHolderName by remember { mutableStateOf(currentAccountHolderName ?: "") }
+    var bankInstitutionCode by remember { mutableStateOf(currentBankInstitutionCode ?: "") }
+
+    SciuroBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            "Edit Account Details",
+            style = MaterialTheme.typography.headlineSmall
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = accountNumber,
+            onValueChange = { accountNumber = it },
+            label = { Text("Account Number") },
+            placeholder = { Text("e.g. 1234567890 or last 4 digits") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = accountHolderName,
+            onValueChange = { accountHolderName = it },
+            label = { Text("Account Holder Name") },
+            placeholder = { Text("e.g. AHMAD BIN ABDULLAH") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = bankInstitutionCode,
+            onValueChange = { bankInstitutionCode = it },
+            label = { Text("Bank Code") },
+            placeholder = { Text("e.g. CIMB, MBB, BSN") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            "QR Code",
+            style = MaterialTheme.typography.titleSmall
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (currentQrImagePath != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(4.dp)
+                ) {
+                    QrCodeThumbnail(
+                        filePath = currentQrImagePath,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                OutlinedButton(onClick = onPickQr) {
+                    Text("Change")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = onRemoveQr) {
+                    Text("Remove", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        } else {
+            OutlinedButton(
+                onClick = onPickQr,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Select QR Image")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Cancel")
+            }
+
+            Button(
+                onClick = { onConfirm(accountNumber.ifBlank { null }, accountHolderName.ifBlank { null }, bankInstitutionCode.ifBlank { null }) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Save")
+            }
+        }
     }
 }

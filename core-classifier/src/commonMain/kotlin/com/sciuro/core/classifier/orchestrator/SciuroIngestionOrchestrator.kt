@@ -9,6 +9,7 @@ import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.parsing.engine.SciuroParserPipeline
 import com.sciuro.core.parsing.model.DEFAULT_CONFIDENCE_THRESHOLD
+import com.sciuro.core.transfer.engine.TransferDetectionEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -20,6 +21,7 @@ class SciuroIngestionOrchestrator(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
     private val rawEventRepository: RawEventRepository,
+    private val transferDetectionEngine: TransferDetectionEngine,
     private val confidenceThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD
 ) {
     private var job: Job? = null
@@ -103,6 +105,15 @@ class SciuroIngestionOrchestrator(
             val auditSource = if (draft.confidenceScore >= confidenceThreshold) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
             transactionRepository.bookTransaction(transaction, source = auditSource)
             println("SCIURO_ORCHESTRATOR: Successfully booked transaction!")
+
+            transferDetectionEngine.onTransactionBooked(
+                newTxId = transaction.id,
+                newTxAccountId = transaction.accountId,
+                newTxAmount = transaction.amount,
+                newTxDirection = transaction.direction,
+                newTxTimestamp = transaction.timestamp,
+                counterpartyAccountNumber = draft.counterpartyAccountNumber
+            )
 
             rawEventRepository.markProcessed(rawEvent.id)
         } catch (e: Exception) {

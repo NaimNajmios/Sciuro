@@ -12,6 +12,7 @@ data class StructuredDraft(
     val merchant: String?,
     val accountOrChannel: String?,
     val referenceId: String?,
+    val counterpartyAccountNumber: String? = null,
     val timestamp: Long,
     val confidenceScore: Float = 1.0f
 ) {

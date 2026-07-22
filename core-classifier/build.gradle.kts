@@ -19,6 +19,7 @@ kotlin {
                 implementation(project(":core-ingestion"))
                 implementation(project(":core-parsing"))
                 implementation(project(":core-ledger"))
+                implementation(project(":core-transfer"))
                 implementation(project(":core-audit"))
                 implementation(libs.kotlinx.coroutines.core)
             }

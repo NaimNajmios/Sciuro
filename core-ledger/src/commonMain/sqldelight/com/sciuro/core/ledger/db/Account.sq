@@ -9,12 +9,24 @@ CREATE TABLE account (
     updated_at INTEGER NOT NULL,
     is_system INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'ACTIVE',
-    color TEXT
+    color TEXT,
+    account_number TEXT,
+    account_holder_name TEXT,
+    bank_institution_code TEXT,
+    qr_image_path TEXT,
+    qr_payload_text TEXT
+);
+
+CREATE TABLE account_pair_confirmation (
+    account_id_a TEXT NOT NULL,
+    account_id_b TEXT NOT NULL,
+    confirmed_at INTEGER NOT NULL,
+    PRIMARY KEY (account_id_a, account_id_b)
 );
 
 insertAccount:
-INSERT INTO account(id, name, type, currency, balance, associated_package, created_at, updated_at, is_system, status, color)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO account(id, name, type, currency, balance, associated_package, created_at, updated_at, is_system, status, color, account_number, account_holder_name, bank_institution_code, qr_image_path, qr_payload_text)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateBalance:
 UPDATE account
@@ -32,8 +44,14 @@ SELECT * FROM account WHERE associated_package = ? AND status != 'DELETED' LIMIT
 
 updateAccount:
 UPDATE account
-SET name = ?, type = ?, associated_package = ?, color = ?, updated_at = ?
+SET name = ?, type = ?, associated_package = ?, color = ?, updated_at = ?, account_number = ?, account_holder_name = ?, bank_institution_code = ?, qr_image_path = ?, qr_payload_text = ?
 WHERE id = ?;
 
 updateAccountStatus:
 UPDATE account SET status = ?, updated_at = ? WHERE id = ?;
+
+selectAccountPairConfirmation:
+SELECT * FROM account_pair_confirmation WHERE account_id_a = ? AND account_id_b = ?;
+
+insertAccountPairConfirmation:
+INSERT OR IGNORE INTO account_pair_confirmation(account_id_a, account_id_b, confirmed_at) VALUES (?, ?, ?);

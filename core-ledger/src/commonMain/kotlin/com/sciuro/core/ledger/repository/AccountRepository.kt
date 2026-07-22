@@ -40,7 +40,12 @@ class AccountRepository(
                 updated_at = now,
                 is_system = if (account.isSystem) 1L else 0L,
                 status = account.status,
-                color = account.color
+                color = account.color,
+                account_number = account.accountNumber,
+                account_holder_name = account.accountHolderName,
+                bank_institution_code = account.bankInstitutionCode,
+                qr_image_path = account.qrImagePath,
+                qr_payload_text = account.qrPayloadText
             )
             account
         }
@@ -78,7 +83,12 @@ class AccountRepository(
                 associated_package = account.associatedPackage,
                 color = account.color,
                 updated_at = currentTimeMillis(),
-                id = account.id
+                id = account.id,
+                account_number = account.accountNumber,
+                account_holder_name = account.accountHolderName,
+                bank_institution_code = account.bankInstitutionCode,
+                qr_image_path = account.qrImagePath,
+                qr_payload_text = account.qrPayloadText
             )
         }
     }
