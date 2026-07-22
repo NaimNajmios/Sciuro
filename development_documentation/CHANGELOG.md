@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- **Net Position Reporting**: Updated DashboardViewModel and DashboardScreen to calculate and display a unified Net Position: `(Total Account Balances + Total Investment Values) - Total Debts`.
+- **Motion Tokens (UX-1)**: Implemented `SciuroMotion` standard animation specs (`micro`, `transitionSpec`, `cardMove`, `celebration`, `count`) in `core-ui/theme` as the single source of truth for motion.
+- **Screen Transitions (UX-2)**: Added custom animated screen transitions (`fadeIn`, `fadeOut`, `slideIntoContainer`, `slideOutOfContainer`) via Compose Navigation across the entire `MainActivity` NavHost.
 - Full-screen swiping architecture: Dashboard, Kanban, Wallet, and Budgets screens now share a consistent root `Box` + `LazyColumn` layout. HeroPanel scrolls off-screen; SheetList fills the viewport with `fillParentMaxHeight()`. Inner content uses `Column` + `forEach` (no nested `LazyColumn`). FAB overlaid in the root `Box` with `Modifier.align(Alignment.BottomEnd)`.
 
 ### Changed

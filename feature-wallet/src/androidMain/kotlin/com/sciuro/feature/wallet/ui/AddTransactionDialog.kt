@@ -5,6 +5,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.sciuro.feature.wallet.model.WalletAccount
@@ -21,17 +24,9 @@ fun AddTransactionDialog(
     var merchant by remember { mutableStateOf("") }
     var direction by remember { mutableStateOf("OUTFLOW") }
     
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface
+    SciuroBottomSheet(
+        onDismissRequest = onDismiss
     ) {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
             Text("Add Manual Transaction", style = MaterialTheme.typography.headlineSmall)
             
             var expanded by remember { mutableStateOf(false) }
@@ -40,13 +35,13 @@ fun AddTransactionDialog(
                 onExpandedChange = { expanded = !expanded }
             ) {
                 val selectedAccount = accounts.find { it.id == selectedAccountId }
-                OutlinedTextField(
+                SciuroTextField(
                     value = selectedAccount?.name ?: "Select Account",
                     onValueChange = { },
                     readOnly = true,
-                    label = { Text("Account") },
+                    label = "Account",
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier.menuAnchor()
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
@@ -64,21 +59,17 @@ fun AddTransactionDialog(
                 }
             }
             
-            OutlinedTextField(
+            SciuroTextField(
                 value = amount,
                 onValueChange = { amount = it },
-                label = { Text("Amount (RM)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Amount (RM)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
             
-            OutlinedTextField(
+            SciuroTextField(
                 value = merchant,
                 onValueChange = { merchant = it },
-                label = { Text("Merchant / Description") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Merchant / Description"
             )
             
             Row(
@@ -101,7 +92,8 @@ fun AddTransactionDialog(
                 )
             }
             
-            Button(
+            SciuroPrimaryButton(
+                text = "Save Transaction",
                 onClick = {
                     val parsedAmount = amount.toDoubleOrNull() ?: 0.0
                     if (selectedAccountId.isNotBlank() && parsedAmount > 0) {
@@ -109,11 +101,7 @@ fun AddTransactionDialog(
                         onDismiss()
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
                 enabled = selectedAccountId.isNotBlank() && amount.isNotBlank()
-            ) {
-                Text("Save Transaction")
-            }
-        }
+            )
     }
 }
