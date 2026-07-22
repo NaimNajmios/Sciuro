@@ -23,3 +23,8 @@ The original `TransferDetectionEngine` matched inflows to outflows purely on amo
 - Manual setup required: users must enter their account numbers once per account via the Edit Details bottom sheet.
 - The old `runDetection()` batch method is removed — it had no callers.
 - First-time heuristic matches remain unlinked until the user confirms through the existing Review Inbox flow.
+
+## Subsequent Updates
+- **2026-07-22**: Counterparty account number extraction extended from CIMB-only to all 7 parser rules (Maybank, BSN, TnG, GrabPay, Boost, ShopeePay).
+- **2026-07-22**: Account number regex expanded with `endingAccountNumberRegex` supporting English "ending XXXX" and Malay "berakhir XXXX" patterns, covering the common "your account ending 1234" / "akaun anda berakhir 1234" phrasing.
+- **2026-07-22**: Test infrastructure added: `RegexExtractorsTest.kt` (16 unit tests), `TransferDetectionEngineTest.kt` (10 integration tests with in-memory SQLite via JDBC driver), and `expectedCounterpartyAccountNumber` field on `ParserTestCase` with assertions in `runParserTests()`.

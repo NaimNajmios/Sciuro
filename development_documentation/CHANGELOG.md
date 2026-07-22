@@ -53,6 +53,15 @@ All notable changes to this project will be documented in this file.
 - Removed arbitrary pagination/limiting in the Wallet Account Associated App selection, ensuring all installed packages are searchable.
 - Added manual transaction direction correction (Income/Expense segmented toggle) to the Kanban "Review Transaction" task flow, enabling precise classification before ledger commit.
 - Expanded `FastTransactionSheet` preset label options to include an "Others" pill.
+### Added
+- Counterparty account number extraction to all 6 remaining parser rules: Maybank, BSN, TnG, GrabPay, Boost, ShopeePay. Now all 7 parsers populate `counterpartyAccountNumber` on their `StructuredDraft` with matching confidence boost (+0.1f).
+- `endingAccountNumberRegex` in `RegexExtractors.kt` for English "ending XXXX" and Malay "berakhir XXXX" patterns, in addition to the existing `accountNumberRegex` for "A/C XXXX" style.
+- `expectedCounterpartyAccountNumber` field to `ParserTestCase` and assertion in `runParserTests()` — test infrastructure now validates account number extraction.
+- `RegexExtractorsTest.kt` (16 tests): dedicated test suite covering `extractAmount`, `extractMerchant`, `extractAccountNumber` (all regex variants, masked, null cases), and `matchesAccountSuffix` (suffix match, mask chars, mismatch, empty input).
+- JVM target to `core-audit`, `core-ledger`, and `core-transfer` modules with JDBC SQLite driver for in-memory database testing.
+- `TransferDetectionEngineTest.kt` (10 integration tests): Tier 1 deterministic matching (suffix, masked, cross-account, time-agnostic, amount mismatch), Tier 2 heuristic (confirmed pair, unconfirmed pair, outside 2-min window).
+### Changed
+- `accountNumberRegex` in `RegexExtractors.kt` now falls through to `endingAccountNumberRegex` for English/YMalay ending patterns — all existing CIMB/Maybank fixture texts with "ending XXXX" or "berakhir XXXX" now extract account numbers.
 ### Fixed
 - Budget empty state CTA now opens creation sheet (was a no-op).
 - Budget cards now show category names via in-memory join with `CategoryRepository`.

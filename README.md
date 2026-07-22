@@ -4,7 +4,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Key Features
 
-* **Deterministic Self-Transfer Detection:** Two-tier matching engine identifies cross-account transfers using counterparty account numbers extracted from bank notifications (Tier 1), falling back to amount+time heuristic only when no account number is present (Tier 2). Masked-number suffix matching handles partially-hidden account numbers. Human-confirmed pairs auto-link on future matches.
+* **Deterministic Self-Transfer Detection:** Two-tier matching engine identifies cross-account transfers using counterparty account numbers extracted from all 7 bank/ewallet notification parsers (Tier 1), falling back to amount+time heuristic only when no account number is present (Tier 2). Masked-number suffix matching handles partially-hidden account numbers (e.g., "...7890", "****7890"). Human-confirmed pairs auto-link on future matches.
 * **Account Data Enrichment:** Each account stores its own account number, account holder name, bank code, and QR code image. These fields are set once via the Account Detail edit sheet and enable identity-based transfer matching instead of coincidence-based guessing.
 * **QR Code Display:** Accounts can store a QR code image (captured from gallery) for quick display when receiving payments. Shown as a tappable thumbnail on the account detail screen with fullscreen expansion.
 * **Budget Tracking:** Full CRUD for category budgets with per-category spending limits, progress bars, and reactive spend recalculation. Create/edit/delete budgets via bottom sheet with category picker and period selector (weekly/monthly/yearly).
@@ -86,7 +86,17 @@ Sciuro includes a full developer settings harness at `feature-settings` > `Devel
    ./gradlew :core-parsing:testDebugUnitTest
    ```
 
-4. **Running Static Analysis (Detekt):**
+4. **Running Transfer Detection Tests:**
+   ```bash
+   ./gradlew :core-transfer:jvmTest
+   ```
+
+5. **Running All Tests:**
+   ```bash
+   ./gradlew allTests
+   ```
+
+6. **Running Static Analysis (Detekt):**
    ```bash
    ./gradlew detekt
    ```
