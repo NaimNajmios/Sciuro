@@ -2,7 +2,7 @@
 
 ## Phase Status
 | Phase | Status | Summary |
-|---|---|---|
+|---|---|---|---|
 | A0 - Engineering foundations | Completed | Module structure, Koin DI, detekt/ktlint, CI scaffold, SQLDelight + migrations, `development_documentation/` scaffold, test-tier strategy |
 | A1 - Audit Log core | Completed | AuditLog entity, SQLDelight schema, AuditRepository, and Repository-wrapper pattern |
 | A2 - Ingestion framework | Completed | `IngestionSource` abstraction, `NotificationSourceAdapter`, and staging buffer |
@@ -11,7 +11,7 @@
 | A5 - Financial taxonomy & data model | Completed | Ledger SQLDelight schemas (Account, Category, TransactionRecord) and Koin Repositories |
 | A6 - Actor-critic triage & categorization | Completed | `SciuroIngestionOrchestrator`, basic static heuristic engine, inbox routing |
 | B1 - Recurring obligation & debt auto-detection | Completed | `ObligationDetectionEngine` to scan ledger for recurring merchant patterns |
-| B2 - Transfer detection | Completed | `TransferDetectionEngine` links dual INFLOW/OUTFLOW notifications |
+| B2 - Transfer detection | Completed | Original `TransferDetectionEngine` with amount+time heuristic (superseded by Acct+Transfer phases) |
 | B3 - Balance & reconciliation engine | Completed | `ReconciliationEngine` and `CashAdjustment` schemas to fix ledger drift |
 | B4 - Manual Review Inbox | Completed | Exposed `observeUnreviewedTransactions` Flow for UI consumption |
 | B5 - Debt Ledger module | Completed | `core-debt` scaffolded, `DebtEngine` implemented for automatic payment tracking |
@@ -28,3 +28,5 @@
 | E1 - UI/UX Modernization | Completed | Standardized UI wrappers, 3-way Appearance theming, FastTransactionSheet numpad workflow, Kanban sticky filter |
 | A3.5 - Reliability Hardening | Completed | Fault isolation (per-event try/catch, restart), durable capture (RawEventStaging table), direction bug fix (nullable, inflow keywords, confidence scoring), LLM hardening (HttpTimeout, retry, circuit breaker, externalized config), OEM resilience (lifecycle hooks, WorkManager reconciliation, explicit manifest) |
 | DT1-7 - Developer Tools Enhancement | Completed | 5-tab DeveloperSettingsScreen (Simulator, Sources, Ingestion Log, Diagnostics, Data Tools), SimulationEngine with per-rule diagnostics, FixtureLibrary (31 fixtures shared between tests and UI), dynamic package+template picker, dead-letter viewer, LLM debug panel, ParserTestCase moved to commonMain |
+| **Acct-1–3 — Account Data Enrichment** | **Completed** | Extended account schema with number, holder name, bank code, QR image. Added edit bottom sheet and QR capture/display on detail screen. Created `account_pair_confirmation` table for tracking human-confirmed transfer pairs. |
+| **Transfer-1–2 — Deterministic Self-Transfer Detection** | **Completed** | Two-tier detection: identity-based matching via counterparty account number (Tier 1) with heuristic fallback (Tier 2). Per-transaction reactive engine replaces batch scan. Masked-suffix matching for partial/masked account numbers. |

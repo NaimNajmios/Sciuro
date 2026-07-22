@@ -4,12 +4,14 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Key Features
 
+* **Deterministic Self-Transfer Detection:** Two-tier matching engine identifies cross-account transfers using counterparty account numbers extracted from bank notifications (Tier 1), falling back to amount+time heuristic only when no account number is present (Tier 2). Masked-number suffix matching handles partially-hidden account numbers. Human-confirmed pairs auto-link on future matches.
+* **Account Data Enrichment:** Each account stores its own account number, account holder name, bank code, and QR code image. These fields are set once via the Account Detail edit sheet and enable identity-based transfer matching instead of coincidence-based guessing.
+* **QR Code Display:** Accounts can store a QR code image (captured from gallery) for quick display when receiving payments. Shown as a tappable thumbnail on the account detail screen with fullscreen expansion.
 * **Budget Tracking:** Full CRUD for category budgets with per-category spending limits, progress bars, and reactive spend recalculation. Create/edit/delete budgets via bottom sheet with category picker and period selector (weekly/monthly/yearly).
 * **Malaysian Payment Channels:** Deep integration and detection rules for local payment platforms, physical wallets, and e-wallets.
 * **Investment & Gold Savings:** Native support for tracking complex assets like gold and long-term investments.
 * **Audit-First Architecture:** Every data mutation passes through a unified Audit Log, ensuring complete traceability.
 * **Kanban Workflow:** A unified task management and issue tracking system deeply integrated into the development process.
-* **Transfer Detection:** Intelligent identification of cross-account transfers to prevent duplicate ledger entries.
 * **Guided Onboarding:** Initial setup flow securely initializes system ledgers with physical cash on hand.
 * **Fast Logging Workflow:** Calculator-first, numpad-driven transaction entry screens with pre-filled category pills and descriptions for near-instant offline transaction recording.
 * **UI Standardization & Theming:** Unified design system utilizing custom wrappers (`SciuroBottomSheet`, `SciuroTextField`) across all feature modules, with a robust 3-way persistent Appearance toggling (Light, Dark, System default).
@@ -26,8 +28,8 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 * **Core Modules** (`core-*`): Reusable domain layers and intelligence engines:
   - `:core-ledger`, `:core-audit`: Foundational persistence and traceability.
   - `:core-ingestion`, `:core-parsing`, `:core-llm`: Notification extraction and LLM fallback parsing.
-  - `:core-classifier`: The central Orchestrator that triages parsed data.
-  - `:core-obligations`, `:core-transfer`, `:core-debt`, `:core-investment`, `:core-budget`: Specialized intelligence engines that track assets, liabilities, recurring expenses, and budget thresholds.
+  - `:core-classifier`: The central Orchestrator that triages parsed data and triggers transfer detection.
+  - `:core-obligations`, `:core-transfer`, `:core-debt`, `:core-investment`, `:core-budget`: Specialized intelligence engines that track assets, liabilities, recurring expenses, budget thresholds, and identity-based transfer matching.
 * **Feature Modules** (`feature-*`): User-facing capabilities, such as `:feature-dashboard`, `:feature-wallet`, `:feature-budgets`, and `:feature-kanban`.
 
 **Tech Stack:**

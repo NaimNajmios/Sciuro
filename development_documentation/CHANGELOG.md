@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Extended `account` schema with `account_number`, `account_holder_name`, `bank_institution_code`, `qr_image_path`, `qr_payload_text` — schema migration `3.sqm` with matching `Account.sq` CREATE TABLE updates.
+- Created `account_pair_confirmation` table for tracking human-confirmed transfer pairs (auto-inserted on manual link).
+- Added `counterpartyAccountNumber` to `StructuredDraft` with regex extraction in `RegexExtractors.kt` targeting Malaysian bank notification patterns (A/C, Account, Acc).
+- Added `matchesAccountSuffix()` helper for masked-number suffix matching (strips non-digits, compares last N digits).
+- Updated `CimbParserRule` to extract counterparty account number from notification text and boost confidence score.
+- Restructured `TransferDetectionEngine`: replaced batch `runDetection()` with per-transaction `onTransactionBooked()`. Two-tier architecture — Tier 1 matches by identity (counterparty account number), Tier 2 falls back to amount+time heuristic for notifications without account numbers. First-time heuristic pairs auto-link only after human confirmation.
+- Wired `TransferDetectionEngine` in `SciuroIngestionOrchestrator` after transaction booking, passing the draft's counterparty account number.
+- `TransferRepository.linkTransactions()` now auto-records account pair confirmation for future heuristic auto-linking.
+- Added "Edit Details" bottom sheet to AccountDetailScreen with fields for account number, account holder name, bank code, and QR code management.
+- Added QR code image capture via system photo picker (`ActivityResultContracts.GetContent`), file copy to `filesDir/qr_codes/`, thumbnail display on account detail screen, and fullscreen dialog on tap.
 - Full budget CRUD (create/edit/delete) with bottom sheet UI, category picker, and period selector.
 - `updateBudget` and `deleteBudget` queries in `Budget.sq` with corresponding `BudgetRepository` methods and audit logging.
 - Category name resolution in `BudgetsViewModel`: budgets now display category names instead of raw IDs.
