@@ -1,7 +1,7 @@
 package com.najmi.sciuro
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
@@ -40,7 +40,7 @@ import com.najmi.sciuro.worker.IngestionReconciliationWorker
 import com.najmi.sciuro.worker.ReviewReminderWorker
 import java.util.concurrent.TimeUnit
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -60,7 +60,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             SciuroTheme {
-                SciuroMainScreen()
+                BiometricGate(activity = this@MainActivity) {
+                    SciuroMainScreen()
+                }
             }
         }
     }

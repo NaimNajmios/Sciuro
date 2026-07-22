@@ -25,6 +25,9 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation(libs.sqldelight.android.driver)
+                implementation(libs.sqlcipher)
+                implementation(libs.androidx.security.crypto)
+                implementation("androidx.sqlite:sqlite:2.4.0")
             }
         }
         val jvmMain by getting {

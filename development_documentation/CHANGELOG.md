@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 - Fixed a malformed `{` brace parsing error inside `WalletScreen.kt` `SheetList`.
 
 ### Added
+- **Database Encryption (SQLCipher)**: Integrated `net.sqlcipher.database` into `core-ledger`. The SQLDelight driver now initializes with a 256-bit passphrase managed securely via `EncryptedSharedPreferences` (Android KeyStore).
+- **Biometric App Gate**: Wrapped `SciuroMainScreen` with a `BiometricGate` requiring fingerprint/face/PIN authentication before the application UI is accessible.
 - `content` slot on `HeroPanel` — `@Composable ColumnScope.() -> Unit = {}`, renders after chart inside the dark hero surface. Fully backward-compatible (defaults to `{}`).
 - Dashboard: replaced mock chart data with real `balanceHistory` computed from daily-aggregated running balance of all transactions. Toggle slices the series (last 30 days for "This Month", full series for "All Time"). Secondary `content` row shows accounts count + weekly adjustment count.
 - Budgets: `heroFigure` now shows `"RM X / RM Y"` (total spent vs allocated) instead of a bare count. `content` slot lists top 3 at-risk budgets by spend progress.
