@@ -21,9 +21,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import com.sciuro.core.ledger.repository.CategoryRepository
+import com.sciuro.core.debt.repository.DebtRepository
+import com.sciuro.core.investment.repository.InvestmentRepository
 
 data class DashboardState(
-    val netWorth: Double = 0.0,
+    val netPosition: Double = 0.0,
     val unreviewedTransactionsCount: Int = 0,
     val activeBudgetsCount: Int = 0,
     val allTransactions: List<com.sciuro.core.ledger.db.Transaction_record> = emptyList(),
@@ -48,7 +50,9 @@ class DashboardViewModel(
     private val transferRepository: TransferRepository,
     private val cashAdjustmentRepository: CashAdjustmentRepository,
     private val auditRepository: AuditRepository,
-    private val rawEventRepository: RawEventRepository
+    private val rawEventRepository: RawEventRepository,
+    private val debtRepository: DebtRepository,
+    private val investmentRepository: InvestmentRepository
 ) : ViewModel() {
     
     init {
@@ -64,7 +68,9 @@ class DashboardViewModel(
         transactionRepository.observeAllTransactions(),
         categoryRepository.observeCategoriesByType("OUTFLOW"),
         categoryRepository.observeCategoriesByType("INFLOW"),
-        cashAdjustmentRepository.observeAllAdjustments()
+        cashAdjustmentRepository.observeAllAdjustments(),
+        debtRepository.observeDebts(),
+        investmentRepository.observeInvestments()
     ) { data ->
         val accounts = data[0] as List<com.sciuro.core.ledger.db.Account>
         val unreviewed = data[1] as List<com.sciuro.core.ledger.db.Transaction_record>
@@ -73,14 +79,21 @@ class DashboardViewModel(
         val expenseCats = data[4] as List<com.sciuro.core.ledger.model.Category>
         val incomeCats = data[5] as List<com.sciuro.core.ledger.model.Category>
         val allAdjustments = data[6] as List<com.sciuro.core.ledger.db.Cash_adjustment>
+        val debts = data[7] as List<*>
+        val investments = data[8] as List<*>
         
         val oneWeekAgo = currentTimeMillis() - 7L * 24L * 60L * 60L * 1000L
         val recentAdjustments = allAdjustments.filter { it.timestamp > oneWeekAgo }
         
         val balanceHistory = computeBalanceHistory(allTransactions)
         
+        val totalAccounts = accounts.sumOf { it.balance }
+        val totalInvestments = investments.filterIsInstance<com.sciuro.core.investment.model.Investment>().sumOf { (it.unitsHeld * it.averageBuyPrice).toDouble() }
+        val totalDebts = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().sumOf { it.remainingBalance.toDouble() }
+        val netPosition = totalAccounts + totalInvestments - totalDebts
+        
         DashboardState(
-            netWorth = accounts.sumOf { it.balance },
+            netPosition = netPosition,
             unreviewedTransactionsCount = unreviewed.size,
             activeBudgetsCount = budgets.size,
             allTransactions = allTransactions,

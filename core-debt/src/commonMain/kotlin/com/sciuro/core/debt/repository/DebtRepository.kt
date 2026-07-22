@@ -9,6 +9,11 @@ import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.debt.model.Debt
 import com.sciuro.core.debt.model.DebtType
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class DebtRepository(
     auditRepository: AuditRepository,
@@ -55,5 +60,25 @@ class DebtRepository(
         ) {
             database.debtQueries.updateDebtBalance(newBalance, currentTimeMillis(), debtId)
         }
+    }
+    
+    fun observeDebts(): Flow<List<Debt>> {
+        return database.debtQueries.selectAllDebts()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list ->
+                list.map {
+                    Debt(
+                        id = it.id,
+                        name = it.name,
+                        type = DebtType.valueOf(it.debt_type),
+                        principalAmount = it.principal_amount,
+                        remainingBalance = it.remaining_balance,
+                        interestRate = it.interest_rate,
+                        dueDate = it.due_date,
+                        associatedAccountId = it.associated_account_id
+                    )
+                }
+            }
     }
 }

@@ -145,8 +145,8 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 }
 
                 HeroPanel(
-                    title = "Total Net Worth",
-                    heroFigure = "RM ${"%.2f".format(state.netWorth)}",
+                    title = "Total Net Position",
+                    heroFigure = "RM ${"%.2f".format(state.netPosition)}",
                     toggleOptions = listOf("This Month", "All Time"),
                     selectedToggle = selectedRange,
                     onToggleSelected = { selectedRange = it },

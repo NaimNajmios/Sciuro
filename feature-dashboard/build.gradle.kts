@@ -27,7 +27,9 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-    implementation(project(":core-ui"))
+                implementation(project(":core-ui"))
+                implementation(project(":core-debt"))
+                implementation(project(":core-investment"))
                 implementation(libs.androidx.core.ktx)
                 implementation(libs.androidx.lifecycle.runtime.ktx)
                 implementation(libs.androidx.activity.compose)
