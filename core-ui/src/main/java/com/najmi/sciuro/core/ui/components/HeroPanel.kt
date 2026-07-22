@@ -26,13 +26,14 @@ fun HeroPanel(
     onToggleSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
     chartData: List<Float>? = null,
-    navigationIcon: @Composable (() -> Unit)? = null
+    navigationIcon: @Composable (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit = {}
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(SurfaceHero)
-            .padding(top = 48.dp, bottom = 32.dp) // Bottom padding allows sheet overlap
+            .padding(top = 48.dp, bottom = 32.dp)
     ) {
         Row(
             modifier = Modifier
@@ -77,6 +78,8 @@ fun HeroPanel(
                     .height(60.dp)
             )
         }
+
+        content()
     }
 }
 

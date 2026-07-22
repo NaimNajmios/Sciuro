@@ -32,7 +32,6 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
-import com.najmi.sciuro.core.ui.theme.SurfaceHero
 import com.najmi.sciuro.core.ui.components.AdjustmentCard
 import com.najmi.sciuro.core.ui.components.AdjustmentBottomSheet
 import com.najmi.sciuro.core.ui.components.AuditEventDisplay
@@ -122,52 +121,47 @@ fun AccountDetailScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(SurfaceHero)
-            ) {
-                HeroPanel(
-                    title = account.name,
-                    heroFigure = "RM ${"%.2f".format(account.balance)}",
-                    toggleOptions = emptyList(),
-                    selectedToggle = "",
-                    onToggleSelected = { },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = "Back",
-                                tint = Color.White
+            HeroPanel(
+                title = account.name,
+                heroFigure = "RM ${"%.2f".format(account.balance)}",
+                toggleOptions = emptyList(),
+                selectedToggle = "",
+                onToggleSelected = { },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                },
+                content = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        FilledTonalButton(
+                            onClick = { showAdjustmentDialog = true },
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = Color.White.copy(alpha = 0.15f),
+                                contentColor = Color.White
                             )
+                        ) {
+                            Icon(
+                                Icons.Filled.Tune,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Adjust Balance")
                         }
                     }
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = 20.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    FilledTonalButton(
-                        onClick = { showAdjustmentDialog = true },
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = Color.White.copy(alpha = 0.15f),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Icon(
-                            Icons.Filled.Tune,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Adjust Balance")
-                    }
                 }
-            }
+            )
 
             Box(modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd).padding(top = 36.dp, end = 16.dp)) {
                 var expanded by remember { mutableStateOf(false) }

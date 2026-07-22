@@ -133,13 +133,45 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
+                val displayChartData = remember(state.balanceHistory, selectedRange) {
+                    if (state.balanceHistory.isEmpty()) {
+                        emptyList()
+                    } else {
+                        when (selectedRange) {
+                            "This Month" -> state.balanceHistory.takeLast(30)
+                            else -> state.balanceHistory
+                        }
+                    }
+                }
+
                 HeroPanel(
                     title = "Total Net Worth",
                     heroFigure = "RM ${"%.2f".format(state.netWorth)}",
                     toggleOptions = listOf("This Month", "All Time"),
                     selectedToggle = selectedRange,
                     onToggleSelected = { selectedRange = it },
-                    chartData = listOf(100f, 150f, 130f, 180f, 200f) // Mock chart data for now
+                    chartData = displayChartData,
+                    content = {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "${state.accounts.size} accounts tracked",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.6f)
+                            )
+                            if (state.recentAdjustmentCount > 0) {
+                                Text(
+                                    text = "${state.recentAdjustmentCount} adjustments this week",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
+                    }
                 )
             }
             

@@ -40,6 +40,9 @@ class SettingsViewModel(
     private val _deadLetterCount = MutableStateFlow(0L)
     val deadLetterCount: StateFlow<Long> = _deadLetterCount.asStateFlow()
 
+    private val _lastCapturedAt = MutableStateFlow<Long?>(null)
+    val lastCapturedAt: StateFlow<Long?> = _lastCapturedAt.asStateFlow()
+
     init {
         refreshCounts()
     }
@@ -69,6 +72,7 @@ class SettingsViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             _pendingCount.value = rawEventRepository.countPending()
             _deadLetterCount.value = rawEventRepository.countDeadLetter()
+            _lastCapturedAt.value = rawEventRepository.getLastCapturedAt()
         }
     }
 

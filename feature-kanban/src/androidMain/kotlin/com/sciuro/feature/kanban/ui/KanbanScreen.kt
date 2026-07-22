@@ -45,6 +45,10 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     // In a real app, calculate actual totals
     val activeDebt = 5000.00
     
+    val todoCount = remember(tasks) { tasks.count { it.status == TaskStatus.TODO } }
+    val inProgressCount = remember(tasks) { tasks.count { it.status == TaskStatus.IN_PROGRESS } }
+    val doneCount = remember(tasks) { tasks.count { it.status == TaskStatus.DONE } }
+
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
     var taskToReject by remember { mutableStateOf<KanbanTask?>(null) }
@@ -55,7 +59,31 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
             heroFigure = "RM ${"%.2f".format(activeDebt)}",
             toggleOptions = emptyList(),
             selectedToggle = "",
-            onToggleSelected = {}
+            onToggleSelected = {},
+            content = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    Text(
+                        text = "Upcoming: $todoCount",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = "Due: $inProgressCount",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (inProgressCount > 0) Color(0xFFFFB74D) else Color.White.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = "Settled: $doneCount",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                }
+            }
         )
         
         SheetList(modifier = Modifier.offset(y = (-24).dp).weight(1f)) {

@@ -41,12 +41,49 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
+                val totalSpent = remember(budgets) { budgets.sumOf { it.currentSpent } }
+                val totalAllocated = remember(budgets) { budgets.sumOf { it.allocatedAmount } }
+                val atRisk = remember(budgets) {
+                    budgets
+                        .sortedByDescending { it.progress }
+                        .take(3)
+                }
+
                 HeroPanel(
                     title = "Monthly Budgets",
-                    heroFigure = "${budgets.size} Active",
+                    heroFigure = if (budgets.isEmpty()) "0 Active" else "RM ${"%.0f".format(totalSpent)} / RM ${"%.0f".format(totalAllocated)}",
                     toggleOptions = emptyList(),
                     selectedToggle = "",
-                    onToggleSelected = {}
+                    onToggleSelected = {},
+                    content = {
+                        if (atRisk.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                atRisk.forEach { budget ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = budget.categoryName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.7f)
+                                        )
+                                        Text(
+                                            text = "${(budget.progress * 100).toInt()}%",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (budget.progress > 0.8f) Color(0xFFFF5252) else Color.White.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 )
             }
 

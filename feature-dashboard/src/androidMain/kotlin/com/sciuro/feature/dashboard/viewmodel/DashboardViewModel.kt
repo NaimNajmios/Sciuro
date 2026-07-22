@@ -30,7 +30,8 @@ data class DashboardState(
     val accounts: List<com.sciuro.core.ledger.db.Account> = emptyList(),
     val expenseCategories: List<com.sciuro.core.ledger.model.Category> = emptyList(),
     val incomeCategories: List<com.sciuro.core.ledger.model.Category> = emptyList(),
-    val recentAdjustmentCount: Int = 0
+    val recentAdjustmentCount: Int = 0,
+    val balanceHistory: List<Float> = emptyList()
 )
 
 data class TransactionDetailData(
@@ -76,6 +77,8 @@ class DashboardViewModel(
         val oneWeekAgo = currentTimeMillis() - 7L * 24L * 60L * 60L * 1000L
         val recentAdjustments = allAdjustments.filter { it.timestamp > oneWeekAgo }
         
+        val balanceHistory = computeBalanceHistory(allTransactions)
+        
         DashboardState(
             netWorth = accounts.sumOf { it.balance },
             unreviewedTransactionsCount = unreviewed.size,
@@ -84,7 +87,8 @@ class DashboardViewModel(
             accounts = accounts,
             expenseCategories = expenseCats,
             incomeCategories = incomeCats,
-            recentAdjustmentCount = recentAdjustments.size
+            recentAdjustmentCount = recentAdjustments.size,
+            balanceHistory = balanceHistory
         )
     }.stateIn(
         scope = viewModelScope,
@@ -197,5 +201,26 @@ class DashboardViewModel(
             transferLink = transferLink,
             rawEvent = rawEvent
         )
+    }
+
+    private fun computeBalanceHistory(transactions: List<com.sciuro.core.ledger.db.Transaction_record>): List<Float> {
+        if (transactions.isEmpty()) return emptyList()
+
+        val dayMs = 24L * 60L * 60L * 1000L
+        val dailyChanges = transactions.groupBy { it.timestamp / dayMs }
+            .mapValues { (_, txs) ->
+                txs.sumOf { if (it.direction == "INFLOW") it.amount else -it.amount }
+            }
+            .entries
+            .sortedBy { it.key }
+
+        var balance = 0.0
+        val history = mutableListOf<Float>()
+        for ((_, change) in dailyChanges) {
+            balance += change
+            history.add(balance.toFloat())
+        }
+
+        return history
     }
 }
