@@ -1,5 +1,6 @@
 package com.najmi.sciuro.core.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -9,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,14 +31,24 @@ fun FastTransactionSheet(
     var amountStr by remember { mutableStateOf("0") }
     var direction by remember { mutableStateOf("OUTFLOW") }
     var categoryId by remember { mutableStateOf<String?>(null) }
-    var accountId by remember { mutableStateOf<String?>(null) }
-    var destinationAccountId by remember { mutableStateOf<String?>(null) }
-    var merchant by remember { mutableStateOf("") }
+    var accountId by remember { mutableStateOf<String?>(accounts.firstOrNull()?.id) }
+    var destinationAccountId by remember { mutableStateOf<String?>(accounts.firstOrNull { it.id != accountId }?.id) }
+    var merchant by remember { mutableStateOf(presetLabels.firstOrNull() ?: "") }
     
+    var showCategoryError by remember { mutableStateOf(false) }
+
+    // Auto-update destination account if accountId changes and matches
+    LaunchedEffect(accountId) {
+        if (direction == "TRANSFER" && destinationAccountId == accountId) {
+            destinationAccountId = accounts.firstOrNull { it.id != accountId }?.id
+        }
+    }
+
     SciuroBottomSheet(onDismissRequest = onDismissRequest) {
         // Amount Display
+        val displayAmount = if (amountStr.contains('.')) amountStr else amountStr
         Text(
-            text = "RM $amountStr",
+            text = "RM $displayAmount",
             style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
             color = if (direction == "OUTFLOW") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
@@ -48,34 +61,34 @@ fun FastTransactionSheet(
         ) {
             SegmentedButton(
                 selected = direction == "OUTFLOW",
-                onClick = { direction = "OUTFLOW"; categoryId = null },
+                onClick = { direction = "OUTFLOW"; categoryId = null; showCategoryError = false },
                 shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
             ) {
                 Text("Expense")
             }
             SegmentedButton(
                 selected = direction == "INFLOW",
-                onClick = { direction = "INFLOW"; categoryId = null },
+                onClick = { direction = "INFLOW"; categoryId = null; showCategoryError = false },
                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
             ) {
                 Text("Income")
             }
             SegmentedButton(
                 selected = direction == "TRANSFER",
-                onClick = { direction = "TRANSFER"; categoryId = null },
+                onClick = { direction = "TRANSFER"; categoryId = null; showCategoryError = false },
                 shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
             ) {
                 Text("Transfer")
             }
         }
 
-        // Description / Label
+        // Description / Label (Text Field Removed to prevent keyboard conflict)
         SciuroTextField(
             value = merchant,
             onValueChange = { merchant = it },
-            label = "Description / Label",
+            label = "Description / Label"
         )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
             items(presetLabels) { label ->
                 FilterChip(
                     selected = merchant == label,
@@ -86,15 +99,18 @@ fun FastTransactionSheet(
         }
 
         // Category Selection
-        androidx.compose.animation.AnimatedVisibility(visible = direction != "TRANSFER") {
+        AnimatedVisibility(visible = direction != "TRANSFER") {
             Column {
-                Text("Category", style = MaterialTheme.typography.labelLarge)
+                Text("Category (Required)", style = MaterialTheme.typography.labelLarge, color = if (showCategoryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     val cats = if (direction == "OUTFLOW") expenseCategories else incomeCategories
                     items(cats) { cat ->
                         FilterChip(
                             selected = categoryId == cat.id,
-                            onClick = { categoryId = cat.id },
+                            onClick = { 
+                                categoryId = cat.id
+                                showCategoryError = false 
+                            },
                             label = { Text(cat.name) }
                         )
                     }
@@ -103,7 +119,7 @@ fun FastTransactionSheet(
         }
 
         // Account Selection
-        Text(if (direction == "TRANSFER") "Source Account" else "Account", style = MaterialTheme.typography.labelLarge)
+        Text(if (direction == "TRANSFER") "Source Account" else "Account", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(accounts) { acc ->
                 FilterChip(
@@ -114,7 +130,7 @@ fun FastTransactionSheet(
             }
         }
 
-        androidx.compose.animation.AnimatedVisibility(visible = direction == "TRANSFER") {
+        AnimatedVisibility(visible = direction == "TRANSFER") {
             Column {
                 Text("Destination Account", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -152,12 +168,18 @@ fun FastTransactionSheet(
             },
             onSaveClick = {
                 val amt = amountStr.toDoubleOrNull() ?: 0.0
-                if (amt > 0) {
+                val isCategoryValid = direction == "TRANSFER" || categoryId != null
+                val isDestinationValid = direction != "TRANSFER" || destinationAccountId != null
+                
+                if (amt <= 0.0) {
+                    // Do nothing or show shake animation
+                } else if (!isCategoryValid) {
+                    showCategoryError = true
+                } else if (accountId != null && isDestinationValid) {
                     val finalMerchant = merchant.ifBlank { "Manual Entry" }
                     onSubmit(amt, direction, finalMerchant, categoryId, accountId, destinationAccountId)
                 }
-            },
-            isSaveEnabled = (amountStr.toDoubleOrNull() ?: 0.0) > 0 && accountId != null && (if (direction == "TRANSFER") destinationAccountId != null else categoryId != null)
+            }
         )
     }
 }
@@ -167,9 +189,10 @@ fun Numpad(
     onNumberClick: (String) -> Unit,
     onDecimalClick: () -> Unit,
     onBackspaceClick: () -> Unit,
-    onSaveClick: () -> Unit,
-    isSaveEnabled: Boolean
+    onSaveClick: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
+    
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val rows = listOf(
             listOf("1", "2", "3"),
@@ -180,21 +203,35 @@ fun Numpad(
         for (row in rows) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (num in row) {
-                    NumpadButton(text = num, onClick = { onNumberClick(num) }, modifier = Modifier.weight(1f))
+                    NumpadButton(text = num, onClick = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onNumberClick(num) 
+                    }, modifier = Modifier.weight(1f))
                 }
             }
         }
         
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            NumpadButton(text = ".", onClick = onDecimalClick, modifier = Modifier.weight(1f))
-            NumpadButton(text = "0", onClick = { onNumberClick("0") }, modifier = Modifier.weight(1f))
-            NumpadButton(text = "⌫", onClick = onBackspaceClick, modifier = Modifier.weight(1f))
+            NumpadButton(text = ".", onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onDecimalClick()
+            }, modifier = Modifier.weight(1f))
+            NumpadButton(text = "0", onClick = { 
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onNumberClick("0") 
+            }, modifier = Modifier.weight(1f))
+            NumpadButton(text = "?", onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onBackspaceClick()
+            }, modifier = Modifier.weight(1f))
         }
         
         SciuroPrimaryButton(
             text = "Save Transaction",
-            onClick = onSaveClick,
-            enabled = isSaveEnabled,
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onSaveClick()
+            },
             modifier = Modifier.padding(top = 8.dp)
         )
     }
