@@ -15,9 +15,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
+import com.najmi.sciuro.core.ui.theme.SciuroMotion
 import com.sciuro.feature.dashboard.ui.DashboardScreen
 import com.sciuro.feature.wallet.ui.WalletScreen
 import com.sciuro.feature.kanban.ui.KanbanScreen
@@ -201,7 +205,28 @@ fun SciuroMainScreen() {
             }
         }
     ) { innerPadding ->
-        NavHost(navController, startDestination = startDest, Modifier.padding(innerPadding)) {
+        val lateralEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+            fadeIn(tween(SciuroMotion.TRANSITION_DURATION_MS)) +
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
+        }
+        val lateralExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+            fadeOut(tween(SciuroMotion.TRANSITION_DURATION_MS)) +
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
+        }
+        val drillInEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
+        }
+        val drillInPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(SciuroMotion.TRANSITION_DURATION_MS))
+        }
+
+        NavHost(
+            navController, 
+            startDestination = startDest, 
+            Modifier.padding(innerPadding),
+            enterTransition = lateralEnter,
+            exitTransition = lateralExit
+        ) {
             composable("onboarding") {
                 com.sciuro.feature.wallet.ui.OnboardingScreen(
                     viewModel = onboardingViewModel
@@ -215,7 +240,9 @@ fun SciuroMainScreen() {
             }
             composable(
                 "account_detail/{accountId}",
-                arguments = listOf(androidx.navigation.navArgument("accountId") { type = androidx.navigation.NavType.StringType })
+                arguments = listOf(androidx.navigation.navArgument("accountId") { type = androidx.navigation.NavType.StringType }),
+                enterTransition = drillInEnter,
+                popExitTransition = drillInPopExit
             ) { backStackEntry ->
                 val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
                 // We'll pass the SavedStateHandle to the koinViewModel by defining it in the Koin module, 
@@ -231,7 +258,11 @@ fun SciuroMainScreen() {
                     onNavigateToDeveloperSettings = { navController.navigate("developer_settings") }
                 ) 
             }
-            composable("developer_settings") { 
+            composable(
+                "developer_settings",
+                enterTransition = drillInEnter,
+                popExitTransition = drillInPopExit
+            ) { 
                 com.sciuro.feature.settings.ui.DeveloperSettingsScreen(
                     onNavigateBack = { navController.popBackStack() }
                 ) 
