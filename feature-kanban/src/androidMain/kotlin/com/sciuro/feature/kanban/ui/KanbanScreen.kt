@@ -265,3 +265,129 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
 }
 
 
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun KanbanTaskCard(
+    task: KanbanTask,
+    accounts: List<Account>,
+    onApprove: (String?, String) -> Unit,
+    onReject: () -> Unit
+) {
+    var selectedAccount by remember(task.id) {
+        mutableStateOf(accounts.find { it.id == task.accountId })
+    }
+    var selectedDirection by remember(task.id) {
+        mutableStateOf(task.direction ?: "OUTFLOW")
+    }
+    var accountDropdownExpanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (task.accountId == null) MaterialTheme.colorScheme.errorContainer
+                             else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (task.accountId == null) MaterialTheme.colorScheme.onErrorContainer else androidx.compose.ui.graphics.Color.Unspecified
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = task.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (task.accountId == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (task.accountId == null) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Filled.Warning,
+                        contentDescription = "Unassigned Account",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (task.title.startsWith("Review Transaction")) {
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    SegmentedButton(
+                        selected = selectedDirection == "OUTFLOW",
+                        onClick = { selectedDirection = "OUTFLOW" },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                    ) {
+                        Text("Expense")
+                    }
+                    SegmentedButton(
+                        selected = selectedDirection == "INFLOW",
+                        onClick = { selectedDirection = "INFLOW" },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                    ) {
+                        Text("Income")
+                    }
+                }
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = accountDropdownExpanded,
+                onExpandedChange = { accountDropdownExpanded = it }
+            ) {
+                com.najmi.sciuro.core.ui.components.SciuroTextField(
+                    value = selectedAccount?.name ?: "Select Account",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = "Wallet Account",
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountDropdownExpanded) },
+                    modifier = Modifier.menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = accountDropdownExpanded,
+                    onDismissRequest = { accountDropdownExpanded = false }
+                ) {
+                    accounts.forEach { account ->
+                        DropdownMenuItem(
+                            text = { Text(account.name) },
+                            onClick = {
+                                selectedAccount = account
+                                accountDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onReject,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Reject")
+                }
+                com.najmi.sciuro.core.ui.components.SciuroPrimaryButton(
+                    text = "Approve",
+                    onClick = { onApprove(selectedAccount?.id, selectedDirection) },
+                    enabled = selectedAccount != null,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
