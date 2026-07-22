@@ -20,23 +20,29 @@ val platformDatabaseModule = module {
         val passphrase = DatabaseKeyManager.getOrGeneratePassphrase(context)
         val factory = SupportFactory(passphrase)
         
-        try {
-            AndroidSqliteDriver(
-                schema = SciuroDatabase.Schema,
-                context = context,
-                name = "sciuro.db",
-                factory = factory
-            )
-        } catch (e: Exception) {
-            // If it fails to open, it's likely the old unencrypted database or corrupted. 
-            // We drop it and recreate it (safe for pre-release development migration).
-            context.deleteDatabase("sciuro.db")
-            AndroidSqliteDriver(
-                schema = SciuroDatabase.Schema,
-                context = context,
-                name = "sciuro.db",
-                factory = factory
-            )
+        val dbFile = context.getDatabasePath("sciuro.db")
+        if (dbFile.exists()) {
+            try {
+                // Attempt to open it with SQLCipher. If it's an unencrypted DB, 
+                // this will throw "file is not a database".
+                val db = SQLiteDatabase.openDatabase(
+                    dbFile.absolutePath, 
+                    String(passphrase), 
+                    null, 
+                    SQLiteDatabase.OPEN_READONLY
+                )
+                db.close()
+            } catch (e: Exception) {
+                // It failed to open with the key, so drop the existing unencrypted database.
+                context.deleteDatabase("sciuro.db")
+            }
         }
+        
+        AndroidSqliteDriver(
+            schema = SciuroDatabase.Schema,
+            context = context,
+            name = "sciuro.db",
+            factory = factory
+        )
     }
 }
