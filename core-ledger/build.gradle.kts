@@ -5,6 +5,7 @@ plugins {
 }
 
 kotlin {
+    jvm()
     androidTarget {
         compilations.all {
             kotlinOptions {
@@ -24,6 +25,11 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation(libs.sqldelight.android.driver)
+            }
+        }
+        val jvmMain by getting {
+            dependencies {
+                implementation(libs.sqldelight.jdbc.driver)
             }
         }
     }

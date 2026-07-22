@@ -4,6 +4,7 @@ plugins {
 }
 
 kotlin {
+    jvm()
     androidTarget {
         compilations.all {
             kotlinOptions {
@@ -19,6 +20,17 @@ kotlin {
                 implementation(project(":core-ledger"))
                 implementation(project(":core-audit"))
                 implementation(libs.kotlinx.coroutines.core)
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.coroutines.core)
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.sqldelight.jdbc.driver)
             }
         }
     }

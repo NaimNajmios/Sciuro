@@ -13,6 +13,7 @@ data class ParserTestCase(
     val expectedDirection: TransactionDirection?,
     val expectedMerchant: String? = null,
     val expectedAccount: String? = null,
+    val expectedCounterpartyAccountNumber: String? = null,
     val expectNull: Boolean = false
 ) {
     fun toRawEvent(): RawEvent = RawEvent(

@@ -29,5 +29,8 @@ fun runParserTests(parserRule: ParserRule, testCases: List<ParserTestCase>) {
         if (testCase.expectedAccount != null) {
             assertEquals(testCase.expectedAccount, result.accountOrChannel, "Account mismatch for test case: ${testCase.description}")
         }
+        if (testCase.expectedCounterpartyAccountNumber != null) {
+            assertEquals(testCase.expectedCounterpartyAccountNumber, result.counterpartyAccountNumber, "Counterparty account number mismatch for test case: ${testCase.description}")
+        }
     }
 }

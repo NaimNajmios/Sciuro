@@ -4,6 +4,7 @@ import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.parsing.model.StructuredDraft
 import com.sciuro.core.parsing.model.TransactionDirection
 import com.sciuro.core.parsing.rule.ParserRule
+import com.sciuro.core.parsing.util.extractAccountNumber
 import com.sciuro.core.parsing.util.extractAmount
 import com.sciuro.core.parsing.util.extractMerchant
 
@@ -32,10 +33,12 @@ class MaybankParserRule : ParserRule {
             else -> null
         }
         val merchant = extractMerchant(text)
+        val counterpartyAccount = extractAccountNumber(text)
 
         val confidenceScore = (if (amount > 0) 0.3f else 0f) +
                               (if (direction != null) 0.3f else 0f) +
                               (if (merchant != null) 0.2f else 0f) +
+                              (if (counterpartyAccount != null) 0.1f else 0f) +
                               0.2f
 
         return StructuredDraft(
@@ -44,6 +47,7 @@ class MaybankParserRule : ParserRule {
             merchant = merchant,
             accountOrChannel = "Maybank",
             referenceId = null,
+            counterpartyAccountNumber = counterpartyAccount,
             timestamp = event.timestamp,
             confidenceScore = confidenceScore
         )

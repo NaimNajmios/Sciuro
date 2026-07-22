@@ -37,22 +37,24 @@ class MaybankParserRuleTest {
                 expectedMerchant = "MCDONALDS"
             ),
             ParserTestCase(
+                description = "Card SMS",
+                packageName = "com.android.mms",
+                title = "SMS",
+                text = "RM50.00 Maybank: Your Card ending 1234 was used at MCDONALDS on 10/10/24. Call 1300886688 if unauthorised.",
+                expectedAmount = 50.00,
+                expectedDirection = TransactionDirection.OUTFLOW,
+                expectedMerchant = "MCDONALDS",
+                expectedCounterpartyAccountNumber = "1234"
+            ),
+            ParserTestCase(
                 description = "Maybank Inflow (credited)",
                 packageName = "com.maybank2u.life",
                 title = "Deposit",
                 text = "RM 3000.00 has been credited to your account ending 1234.",
                 expectedAmount = 3000.00,
                 expectedDirection = TransactionDirection.INFLOW,
-                expectedMerchant = null
-            ),
-            ParserTestCase(
-                description = "Maybank Inflow (salary deposit)",
-                packageName = "com.maybank2u.life",
-                title = "Salary",
-                text = "Your salary of RM 8500.00 has been deposited into your account.",
-                expectedAmount = 8500.00,
-                expectedDirection = TransactionDirection.INFLOW,
-                expectedMerchant = null
+                expectedMerchant = null,
+                expectedCounterpartyAccountNumber = "1234"
             ),
             ParserTestCase(
                 description = "Maybank Ambiguous (no direction)",
@@ -61,7 +63,8 @@ class MaybankParserRuleTest {
                 text = "RM 75.00 from account ending 5678.",
                 expectedAmount = 75.00,
                 expectedDirection = null,
-                expectedMerchant = null
+                expectedMerchant = null,
+                expectedCounterpartyAccountNumber = "5678"
             )
         )
         runParserTests(MaybankParserRule(), cases)

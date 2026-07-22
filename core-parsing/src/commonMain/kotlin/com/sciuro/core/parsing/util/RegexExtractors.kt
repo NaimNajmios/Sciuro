@@ -7,6 +7,7 @@ private val outflowMerchantRegex = """(?:to|at|kepada|paid to)\s+([A-Za-z0-9\s&@
 private val inflowMerchantRegex = """(?:from|dari)\s+([A-Za-z0-9\s&@.'-]+?)(?:\s+for|\s+on|\.|$)""".toRegex(RegexOption.IGNORE_CASE)
 
 private val accountNumberRegex = """(?:A/C|Account|Acc)[\s.:]*(?:no\.?)?\s*([\d*Xx]{4,20})""".toRegex(RegexOption.IGNORE_CASE)
+private val endingAccountNumberRegex = """(?:ending|berakhir)\s+([\d*Xx]{4,20})""".toRegex(RegexOption.IGNORE_CASE)
 
 fun extractAmount(text: String): Double? {
     val amountStr = amountRegex.find(text)?.groupValues?.get(1)?.replace(",", "")
@@ -20,6 +21,7 @@ fun extractMerchant(text: String): String? {
 
 fun extractAccountNumber(text: String): String? {
     return accountNumberRegex.find(text)?.groupValues?.get(1)?.trim()
+        ?: endingAccountNumberRegex.find(text)?.groupValues?.get(1)?.trim()
 }
 
 fun matchesAccountSuffix(extracted: String, stored: String): Boolean {

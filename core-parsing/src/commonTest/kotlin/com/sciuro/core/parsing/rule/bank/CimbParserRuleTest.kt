@@ -18,7 +18,8 @@ class CimbParserRuleTest {
                 expectedAmount = 15.50,
                 expectedDirection = TransactionDirection.OUTFLOW,
                 expectedMerchant = "STARBUCKS",
-                expectedAccount = "CIMB"
+                expectedAccount = "CIMB",
+                expectedCounterpartyAccountNumber = "1234"
             ),
             ParserTestCase(
                 description = "CIMB BM Spend",
@@ -28,7 +29,8 @@ class CimbParserRuleTest {
                 expectedAmount = 120.00,
                 expectedDirection = TransactionDirection.OUTFLOW,
                 expectedMerchant = "TENAGA NASIONAL",
-                expectedAccount = "CIMB"
+                expectedAccount = "CIMB",
+                expectedCounterpartyAccountNumber = "1234"
             ),
             ParserTestCase(
                 description = "CIMB Inflow (credited)",
@@ -38,7 +40,8 @@ class CimbParserRuleTest {
                 expectedAmount = 5000.00,
                 expectedDirection = TransactionDirection.INFLOW,
                 expectedMerchant = null,
-                expectedAccount = "CIMB"
+                expectedAccount = "CIMB",
+                expectedCounterpartyAccountNumber = "5678"
             ),
             ParserTestCase(
                 description = "CIMB Inflow BM (masuk)",
@@ -48,7 +51,8 @@ class CimbParserRuleTest {
                 expectedAmount = 250.00,
                 expectedDirection = TransactionDirection.INFLOW,
                 expectedMerchant = null,
-                expectedAccount = "CIMB"
+                expectedAccount = "CIMB",
+                expectedCounterpartyAccountNumber = "5678"
             ),
             ParserTestCase(
                 description = "CIMB Ambiguous (no direction keywords)",
@@ -58,7 +62,8 @@ class CimbParserRuleTest {
                 expectedAmount = 100.00,
                 expectedDirection = null,
                 expectedMerchant = null,
-                expectedAccount = "CIMB"
+                expectedAccount = "CIMB",
+                expectedCounterpartyAccountNumber = "1234"
             )
         )
         
