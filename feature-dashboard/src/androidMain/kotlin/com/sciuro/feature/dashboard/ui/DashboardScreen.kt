@@ -31,6 +31,8 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import org.koin.compose.koinInject
+import com.sciuro.core.parsing.config.SettingsProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,7 +61,8 @@ import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
+fun DashboardScreen(
+    settingsProvider: SettingsProvider = koinInject(),viewModel: DashboardViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     var selectedRange by remember { mutableStateOf("All Time") }
     var selectedTypeFilter by remember { mutableStateOf("All") }
@@ -457,6 +460,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
         val incCatOptions = state.incomeCategories.map { FastTxOption(it.id, it.name) }
         
         FastTransactionSheet(
+            presetLabels = settingsProvider.getQuickLabels(),
             accounts = accountOptions,
             expenseCategories = expCatOptions,
             incomeCategories = incCatOptions,
@@ -717,5 +721,6 @@ private fun mapCategoryIcon(categoryId: String?): ImageVector? {
         else -> null
     }
 }
+
 
 

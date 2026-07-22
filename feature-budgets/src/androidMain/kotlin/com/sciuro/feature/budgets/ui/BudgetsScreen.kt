@@ -11,6 +11,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.koin.compose.koinInject
+import com.sciuro.core.parsing.config.SettingsProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.EmptyStateView
@@ -77,7 +79,7 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
                                         Text(
                                             text = "${(budget.progress * 100).toInt()}%",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = if (budget.progress > 0.8f) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.6f)
+                                            color = if (budget.progress > settingsProvider.getBudgetWarningThreshold()) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.6f)
                                         )
                                     }
                                 }
@@ -277,3 +279,5 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
         )
     }
 }
+
+

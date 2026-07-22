@@ -255,7 +255,17 @@ fun SciuroMainScreen() {
             composable("kanban") { KanbanScreen() }
             composable("settings") { 
                 com.sciuro.feature.settings.ui.SettingsScreen(
-                    onNavigateToDeveloperSettings = { navController.navigate("developer_settings") }
+                    onNavigateToDeveloperSettings = { navController.navigate("developer_settings") },
+                    onNavigateToCategorySettings = { navController.navigate("category_settings") }
+                ) 
+            }
+            composable(
+                "category_settings",
+                enterTransition = drillInEnter,
+                popExitTransition = drillInPopExit
+            ) { 
+                com.sciuro.feature.settings.ui.CategorySettingsScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 ) 
             }
             composable(
@@ -271,3 +281,4 @@ fun SciuroMainScreen() {
     }
     }
 }
+

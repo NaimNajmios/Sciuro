@@ -8,9 +8,10 @@ import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.model.Category
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -42,6 +43,24 @@ class CategoryRepository(
         }
     }
 
+        suspend fun updateCategory(category: Category) {
+        withContext(Dispatchers.IO) {
+            database.categoryQueries.updateCategory(
+                name = category.name,
+                type = category.type,
+                icon = category.icon,
+                color = category.color,
+                updated_at = currentTimeMillis(),
+                id = category.id
+            )
+        }
+    }
+
+    suspend fun deleteCategory(categoryId: String) {
+        withContext(Dispatchers.IO) {
+            database.categoryQueries.deleteCategory(id = categoryId)
+        }
+    }
     fun observeCategoriesByType(type: String): Flow<List<Category>> {
         return database.categoryQueries.selectCategoriesByType(type).asFlow().mapToList(Dispatchers.Default)
             .map { list ->
@@ -81,3 +100,8 @@ class CategoryRepository(
         }
     }
 }
+
+
+
+
+

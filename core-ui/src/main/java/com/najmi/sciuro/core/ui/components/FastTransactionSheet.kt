@@ -18,6 +18,7 @@ data class FastTxOption(val id: String, val name: String)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FastTransactionSheet(
+    presetLabels: List<String>,
     accounts: List<FastTxOption>,
     expenseCategories: List<FastTxOption>,
     incomeCategories: List<FastTxOption>,
@@ -30,8 +31,7 @@ fun FastTransactionSheet(
     var accountId by remember { mutableStateOf<String?>(null) }
     var destinationAccountId by remember { mutableStateOf<String?>(null) }
     var merchant by remember { mutableStateOf("") }
-    val presetLabels = listOf("Breakfast", "Lunch", "Dinner", "Coffee", "Groceries", "Transport", "Shopping", "Salary", "Others")
-
+    
     SciuroBottomSheet(onDismissRequest = onDismissRequest) {
         // Amount Display
         Text(
@@ -213,3 +213,4 @@ fun NumpadButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
         }
     }
 }
+

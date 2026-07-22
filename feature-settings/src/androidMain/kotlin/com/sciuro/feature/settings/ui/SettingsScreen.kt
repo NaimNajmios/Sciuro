@@ -31,6 +31,7 @@ import java.net.URL
 
 @Composable
 fun SettingsScreen(
+    onNavigateToCategorySettings: () -> Unit = {},
     onNavigateToDeveloperSettings: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
     settingsProvider: SettingsProvider = koinInject()
@@ -38,6 +39,8 @@ fun SettingsScreen(
     var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
     var apiKey by rememberSaveable { mutableStateOf(settingsProvider.getApiKey() ?: "") }
     var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
+    var llmModelName by rememberSaveable { mutableStateOf(settingsProvider.getLlmModelName()) }
+    var budgetThreshold by rememberSaveable { mutableStateOf(settingsProvider.getBudgetWarningThreshold()) }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -126,6 +129,19 @@ fun SettingsScreen(
 
                                 Spacer(modifier = Modifier.height(8.dp))
 
+                                com.najmi.sciuro.core.ui.components.SciuroTextField(
+                                    value = llmModelName,
+                                    onValueChange = {
+                                        llmModelName = it
+                                        settingsProvider.setLlmModelName(it)
+                                    },
+                                    label = "Groq LLM Model",
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Button(
                                         onClick = {
@@ -174,6 +190,47 @@ fun SettingsScreen(
                 item {
                     com.najmi.sciuro.core.ui.components.SciuroCard(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        onClick = onNavigateToCategorySettings
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Manage Categories", style = MaterialTheme.typography.titleMedium)
+                            Icon(Icons.Filled.ArrowForward, contentDescription = "Manage Categories")
+                        }
+                    }
+                }
+
+                item {
+                    com.najmi.sciuro.core.ui.components.SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Budget Warning Threshold", style = MaterialTheme.typography.titleMedium)
+                                Text("%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Slider(
+                                value = budgetThreshold,
+                                onValueChange = { budgetThreshold = it },
+                                onValueChangeFinished = { settingsProvider.setBudgetWarningThreshold(budgetThreshold) },
+                                valueRange = 0.5f..1.0f,
+                                steps = 9
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    com.najmi.sciuro.core.ui.components.SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                         onClick = onNavigateToDeveloperSettings
                     ) {
                         Row(
@@ -190,3 +247,8 @@ fun SettingsScreen(
         }
     }
 }
+
+
+
+
+

@@ -17,3 +17,10 @@ SELECT * FROM category;
 
 selectCategoriesByType:
 SELECT * FROM category WHERE type = ?;
+
+deleteCategory:
+DELETE FROM category WHERE id = ?;
+
+updateCategory:
+UPDATE category SET name = ?, type = ?, icon = ?, color = ?, updated_at = ? WHERE id = ?;
+
