@@ -23,6 +23,7 @@ kotlin {
                 implementation(project(":core-investment"))
                 implementation(project(":core-ingestion"))
                 implementation(project(":core-transfer"))
+                implementation(project(":core-parsing"))
             }
         }
         val androidMain by getting {

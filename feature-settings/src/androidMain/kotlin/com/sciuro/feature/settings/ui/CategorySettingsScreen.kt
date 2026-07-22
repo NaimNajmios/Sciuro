@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,7 +36,15 @@ fun CategorySettingsScreen(
             toggleOptions = listOf("Income", "Expense"),
             selectedToggle = selectedToggle,
             onToggleSelected = { selectedToggle = it },
-            onBackClick = onNavigateBack
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = androidx.compose.ui.graphics.Color.White
+                    )
+                }
+            }
         )
 
         SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {

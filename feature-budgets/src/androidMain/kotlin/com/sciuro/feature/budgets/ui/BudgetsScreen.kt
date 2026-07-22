@@ -29,7 +29,10 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
+fun BudgetsScreen(
+    settingsProvider: SettingsProvider = koinInject(),
+    viewModel: BudgetsViewModel = koinViewModel()
+) {
     val budgets by viewModel.budgets.collectAsState()
     val expenseCategories by viewModel.expenseCategories.collectAsState()
 
