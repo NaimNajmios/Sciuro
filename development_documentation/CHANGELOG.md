@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- `content` slot on `HeroPanel` — `@Composable ColumnScope.() -> Unit = {}`, renders after chart inside the dark hero surface. Fully backward-compatible (defaults to `{}`).
+- Dashboard: replaced mock chart data with real `balanceHistory` computed from daily-aggregated running balance of all transactions. Toggle slices the series (last 30 days for "This Month", full series for "All Time"). Secondary `content` row shows accounts count + weekly adjustment count.
+- Budgets: `heroFigure` now shows `"RM X / RM Y"` (total spent vs allocated) instead of a bare count. `content` slot lists top 3 at-risk budgets by spend progress.
+- Account Detail: absorbed the manually-wired "Adjust Balance" button into the `content` slot, removing the outer `Column(background(SurfaceHero))` wrapper.
+- Developer Settings: `heroFigure` now shows time since last notification capture (e.g. "12m ago") via `rawEventRepository.getLastCapturedAt()`. `content` slot shows pending and dead-letter counts.
+- Kanban: `content` slot shows Upcoming/Due/Settled task counts from actual task status distribution.
+- `SettingsViewModel._lastCapturedAt` StateFlow added, populated in `refreshCounts()`.
 - Extended `account` schema with `account_number`, `account_holder_name`, `bank_institution_code`, `qr_image_path`, `qr_payload_text` — schema migration `3.sqm` with matching `Account.sq` CREATE TABLE updates.
 - Created `account_pair_confirmation` table for tracking human-confirmed transfer pairs (auto-inserted on manual link).
 - Added `counterpartyAccountNumber` to `StructuredDraft` with regex extraction in `RegexExtractors.kt` targeting Malaysian bank notification patterns (A/C, Account, Acc).

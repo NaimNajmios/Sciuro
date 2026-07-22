@@ -39,6 +39,19 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 * **Background Tasks:** WorkManager (Android)
 * **UI Framework:** Jetpack Compose (Android)
 
+### HeroPanel — Shared Hero Section Component
+
+`HeroPanel` (`core-ui`) is a dark-backed hero header composable used across 7 screens. It renders a title, a large display figure, an optional right-aligned `PillToggle`, an optional `WaveChart`, and a `content` slot for screen-specific extras:
+
+| Screen | heroFigure | chartData | toggle | content slot |
+|---|---|---|---|---|
+| Dashboard | Total net worth | Real daily balance history | This Month / All Time | Accounts count + weekly adjustments |
+| Budgets | Total spent vs allocated | — | — | Top 3 at-risk budgets |
+| Account Detail | Account balance | — | — | Adjust Balance button |
+| Kanban | Hardcoded debt estimate | — | — | Task status breakdown |
+| Developer Settings | Time since last capture | — | — | Pipeline pending/dead counts |
+| Settings (×2) | "Config" / "More" | — | — | — |
+
 ## Developer Tools
 
 Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with five tabs:
