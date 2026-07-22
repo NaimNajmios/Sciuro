@@ -4,7 +4,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Key Features
 
-* **Multi-Source Ingestion:** Automated parsing of financial data using LLM-assisted pipelines and notification listeners.
+* **Budget Tracking:** Full CRUD for category budgets with per-category spending limits, progress bars, and reactive spend recalculation. Create/edit/delete budgets via bottom sheet with category picker and period selector (weekly/monthly/yearly).
 * **Malaysian Payment Channels:** Deep integration and detection rules for local payment platforms, physical wallets, and e-wallets.
 * **Investment & Gold Savings:** Native support for tracking complex assets like gold and long-term investments.
 * **Audit-First Architecture:** Every data mutation passes through a unified Audit Log, ensuring complete traceability.
@@ -18,7 +18,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase D (Personal Deployment)**. All core modules—including the multi-source ingestion engine, automated budget tracking, Kanban workflow, and UI feature modules—are fully integrated and tested.
+The project is fully functional and has completed **Phase D (Personal Deployment)**. All core modules—including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules—are fully integrated and tested.
 
 ## Architecture
 

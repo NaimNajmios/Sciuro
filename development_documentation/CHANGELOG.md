@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Full budget CRUD (create/edit/delete) with bottom sheet UI, category picker, and period selector.
+- `updateBudget` and `deleteBudget` queries in `Budget.sq` with corresponding `BudgetRepository` methods and audit logging.
+- Category name resolution in `BudgetsViewModel`: budgets now display category names instead of raw IDs.
 - Developer Tools Enhancement (DT1-7): Full 5-tab `DeveloperSettingsScreen` restructure with Simulator, Sources, Ingestion Log, Diagnostics, and Data Tools tabs.
 - `SimulationEngine` in `core-parsing`: runs the full parser pipeline, captures per-rule match/no-match results, LLM latency, and debug info into a `SimulationResult`.
 - `FixtureLibrary` in `core-parsing`: 31 fixtures from all 7 parser rules, shared between tests and simulator UI.
@@ -34,6 +37,8 @@ All notable changes to this project will be documented in this file.
 - Added manual transaction direction correction (Income/Expense segmented toggle) to the Kanban "Review Transaction" task flow, enabling precise classification before ledger commit.
 - Expanded `FastTransactionSheet` preset label options to include an "Others" pill.
 ### Fixed
+- Budget empty state CTA now opens creation sheet (was a no-op).
+- Budget cards now show category names via in-memory join with `CategoryRepository`.
 - Fixed runtime crash caused by missing `transferModule` injection in Koin configuration for `DashboardViewModel`.
 - SQL database bug where `transaction_record.account_id` was not saved during transaction approval.
 
