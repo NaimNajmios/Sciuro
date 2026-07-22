@@ -8,6 +8,7 @@ import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.budget.model.Budget
+import com.sciuro.core.budget.model.BudgetPeriod
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +39,50 @@ class BudgetRepository(
                 updated_at = now
             )
             budget
+        }
+    }
+
+    suspend fun updateBudget(id: String, allocatedAmount: Double, period: String): Budget {
+        val oldBudget = database.budgetQueries.selectBudgetById(id).executeAsOneOrNull()
+            ?: throw IllegalArgumentException("Budget not found: $id")
+
+        return withAudit(
+            entityType = EntityType.BUDGET,
+            entityId = id,
+            action = AuditAction.UPDATE,
+            beforeState = oldBudget.toString(),
+            afterState = "allocatedAmount=$allocatedAmount, period=$period",
+            source = AuditSource.USER_MANUAL
+        ) {
+            val now = currentTimeMillis()
+            database.budgetQueries.updateBudget(
+                allocated_amount = allocatedAmount,
+                period = period,
+                updated_at = now,
+                id = id
+            )
+            Budget(
+                id = id,
+                categoryId = oldBudget.category_id,
+                allocatedAmount = allocatedAmount,
+                currentSpent = oldBudget.current_spent,
+                period = BudgetPeriod.valueOf(period)
+            )
+        }
+    }
+
+    suspend fun deleteBudget(id: String) {
+        val oldBudget = database.budgetQueries.selectBudgetById(id).executeAsOneOrNull() ?: return
+
+        withAudit(
+            entityType = EntityType.BUDGET,
+            entityId = id,
+            action = AuditAction.DELETE,
+            beforeState = oldBudget.toString(),
+            afterState = null,
+            source = AuditSource.USER_MANUAL
+        ) {
+            database.budgetQueries.deleteBudget(id)
         }
     }
 

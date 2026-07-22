@@ -18,5 +18,16 @@ UPDATE budget_record
 SET current_spent = ?, updated_at = ?
 WHERE id = ?;
 
+updateBudget:
+UPDATE budget_record
+SET allocated_amount = ?, period = ?, updated_at = ?
+WHERE id = ?;
+
+deleteBudget:
+DELETE FROM budget_record WHERE id = ?;
+
 selectAllBudgets:
 SELECT * FROM budget_record;
+
+selectBudgetById:
+SELECT * FROM budget_record WHERE id = ?;

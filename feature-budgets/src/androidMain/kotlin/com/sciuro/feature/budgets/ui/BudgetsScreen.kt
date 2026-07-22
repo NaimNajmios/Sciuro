@@ -1,58 +1,100 @@
 package com.sciuro.feature.budgets.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.components.EmptyStateView
+import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
+import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SheetList
+import com.sciuro.core.budget.model.BudgetPeriod
 import com.sciuro.feature.budgets.viewmodel.BudgetsViewModel
 import org.koin.androidx.compose.koinViewModel
+import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
     val budgets by viewModel.budgets.collectAsState()
-    
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        item {
-            com.najmi.sciuro.core.ui.components.HeroPanel(
-                title = "Monthly Budgets",
-                heroFigure = "${budgets.size} Active",
-                toggleOptions = emptyList(),
-                selectedToggle = "",
-                onToggleSelected = {}
-            )
-        }
-        
-        item {
-            com.najmi.sciuro.core.ui.components.SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    if (budgets.isEmpty()) {
-                        com.najmi.sciuro.core.ui.components.EmptyStateView(
-                            message = "No budgets yet — set a monthly limit for any category to start tracking against it.",
-                            primaryCtaText = "Set your first budget",
-                            onPrimaryCtaClick = {}
-                        )
-                    } else {
-                        budgets.forEach { budget ->
-                            Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text(budget.categoryName, style = MaterialTheme.typography.titleMedium)
-                                        Text("RM ${budget.currentSpent} / RM ${budget.allocatedAmount}", style = MaterialTheme.typography.bodyMedium)
+    val expenseCategories by viewModel.expenseCategories.collectAsState()
+
+    var showSheet by remember { mutableStateOf(false) }
+    var editingBudgetId by remember { mutableStateOf<String?>(null) }
+    var selectedCategoryId by remember { mutableStateOf<String?>(null) }
+    var amountText by remember { mutableStateOf("") }
+    var selectedPeriod by remember { mutableStateOf(BudgetPeriod.MONTHLY) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
+                HeroPanel(
+                    title = "Monthly Budgets",
+                    heroFigure = "${budgets.size} Active",
+                    toggleOptions = emptyList(),
+                    selectedToggle = "",
+                    onToggleSelected = {}
+                )
+            }
+
+            item {
+                SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        if (budgets.isEmpty()) {
+                            EmptyStateView(
+                                message = "No budgets yet — set a monthly limit for any category to start tracking against it.",
+                                primaryCtaText = "Set your first budget",
+                                onPrimaryCtaClick = {
+                                    selectedCategoryId = null
+                                    amountText = ""
+                                    selectedPeriod = BudgetPeriod.MONTHLY
+                                    editingBudgetId = null
+                                    showSheet = true
+                                }
+                            )
+                        } else {
+                            budgets.forEach { budget ->
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 16.dp)
+                                        .clickable {
+                                            editingBudgetId = budget.id
+                                            selectedCategoryId = null
+                                            amountText = budget.allocatedAmount.roundToInt().toString()
+                                            selectedPeriod = BudgetPeriod.MONTHLY
+                                            showSheet = true
+                                        }
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text(budget.categoryName, style = MaterialTheme.typography.titleMedium)
+                                            Text("RM ${"%.2f".format(budget.currentSpent)} / RM ${"%.2f".format(budget.allocatedAmount)}", style = MaterialTheme.typography.bodyMedium)
+                                        }
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        val progressColor = if (budget.progress > 1f) Color.Red else MaterialTheme.colorScheme.primary
+                                        LinearProgressIndicator(
+                                            progress = { if (budget.progress > 1f) 1f else budget.progress },
+                                            modifier = Modifier.fillMaxWidth().height(8.dp),
+                                            color = progressColor,
+                                            trackColor = Color.LightGray
+                                        )
                                     }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    val progressColor = if (budget.progress > 1f) Color.Red else MaterialTheme.colorScheme.primary
-                                    LinearProgressIndicator(
-                                        progress = { if (budget.progress > 1f) 1f else budget.progress },
-                                        modifier = Modifier.fillMaxWidth().height(8.dp),
-                                        color = progressColor,
-                                        trackColor = Color.LightGray
-                                    )
                                 }
                             }
                         }
@@ -60,5 +102,141 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
                 }
             }
         }
+
+        if (budgets.isNotEmpty()) {
+            FloatingActionButton(
+                onClick = {
+                    selectedCategoryId = null
+                    amountText = ""
+                    selectedPeriod = BudgetPeriod.MONTHLY
+                    editingBudgetId = null
+                    showSheet = true
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "Add Budget")
+            }
+        }
+    }
+
+    if (showSheet) {
+        val isEditing = editingBudgetId != null
+        val title = if (isEditing) "Edit Budget" else "Create Budget"
+
+        SciuroBottomSheet(onDismissRequest = { showSheet = false }) {
+            Text(title, style = MaterialTheme.typography.headlineSmall)
+
+            if (!isEditing) {
+                Text("Category", style = MaterialTheme.typography.labelLarge)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(expenseCategories) { cat ->
+                        FilterChip(
+                            selected = selectedCategoryId == cat.id,
+                            onClick = { selectedCategoryId = cat.id },
+                            label = { Text(cat.name) }
+                        )
+                    }
+                }
+            }
+
+            SciuroTextField(
+                value = amountText,
+                onValueChange = { amountText = it },
+                label = "Monthly Limit (RM)",
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                )
+            )
+
+            Text("Period", style = MaterialTheme.typography.labelLarge)
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                BudgetPeriod.entries.forEachIndexed { index, period ->
+                    SegmentedButton(
+                        selected = selectedPeriod == period,
+                        onClick = { selectedPeriod = period },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = BudgetPeriod.entries.size
+                        )
+                    ) {
+                        Text(period.name.lowercase().replaceFirstChar { it.uppercase() })
+                    }
+                }
+            }
+
+            if (isEditing) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { showDeleteConfirmation = true },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Delete")
+                    }
+
+                    SciuroPrimaryButton(
+                        text = "Save",
+                        onClick = {
+                            val amt = amountText.toDoubleOrNull() ?: 0.0
+                            if (amt > 0) {
+                                viewModel.updateBudget(
+                                    id = editingBudgetId!!,
+                                    allocatedAmount = amt,
+                                    period = selectedPeriod
+                                )
+                                showSheet = false
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        enabled = amountText.toDoubleOrNull()?.let { it > 0 } == true
+                    )
+                }
+            } else {
+                SciuroPrimaryButton(
+                    text = "Create Budget",
+                    onClick = {
+                        val amt = amountText.toDoubleOrNull() ?: 0.0
+                        if (amt > 0 && selectedCategoryId != null) {
+                            viewModel.createBudget(
+                                categoryId = selectedCategoryId!!,
+                                allocatedAmount = amt,
+                                period = selectedPeriod
+                            )
+                            showSheet = false
+                        }
+                    },
+                    enabled = amountText.toDoubleOrNull()?.let { it > 0 } == true
+                            && selectedCategoryId != null
+                )
+            }
+        }
+    }
+
+    if (showDeleteConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Delete Budget",
+            message = "Are you sure you want to delete this budget? This action cannot be undone.",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = {
+                if (editingBudgetId != null) {
+                    viewModel.deleteBudget(editingBudgetId!!)
+                }
+                showDeleteConfirmation = false
+                showSheet = false
+            },
+            onDismiss = { showDeleteConfirmation = false }
+        )
     }
 }
