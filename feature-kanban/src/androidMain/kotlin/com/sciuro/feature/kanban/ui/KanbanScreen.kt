@@ -42,8 +42,6 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     
     val filteredTasks = tasks.filter { it.status == currentStatusFilter }
     
-    // In a real app, calculate actual totals
-    val activeDebt = 5000.00
     
     val todoCount = remember(tasks) { tasks.count { it.status == TaskStatus.TODO } }
     val inProgressCount = remember(tasks) { tasks.count { it.status == TaskStatus.IN_PROGRESS } }
@@ -57,8 +55,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 HeroPanel(
-                    title = "Active Debt & Bills",
-            heroFigure = "RM ${"%.2f".format(activeDebt)}",
+                    title = "Active Tasks",
+            heroFigure = "${todoCount + inProgressCount}",
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {},
