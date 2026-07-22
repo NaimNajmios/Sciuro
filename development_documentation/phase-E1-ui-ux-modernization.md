@@ -27,7 +27,13 @@ The primary goal of Phase E1 was to elevate the application's interface from a f
 - Redesigned the `KanbanScreen` layout hierarchy to utilize a fixed root `Column`, ensuring the `PillToggle` filter remains sticky at the top of the nested `LazyColumn` for seamless task filtering.
 - Enhanced the "Review Transaction" tasks with a manual direction corrector (Income/Expense `SingleChoiceSegmentedButtonRow`), allowing precise reclassification at the point of review before committing to the ledger.
 
+### 5. Final Design System Polish & Hardcoded Debt Cleanup
+- Standardized remaining legacy layouts (Settings and Budgets) to use `SciuroCard` and `SciuroTextField`.
+- Implemented `AnimatedVisibility` inside `FastTransactionSheet` for fluid, dynamic rendering of context-sensitive fields like 'Category' and 'Destination Account'.
+- Fixed `PillToggle` readability issues in Dark Mode by migrating off hardcoded `Color.Black` references to the semantic `MaterialTheme.colorScheme.onSurfaceVariant`.
+- Conducted a comprehensive audit of all hardcoded `Color` usages across UI components. Replaced fragmented Hex codes (e.g., Green/Red indicators) with centralized semantic tokens (`SignalIncome`, `SignalDanger`) globally.
+
 ## Next Steps
-- Expand standard components to remaining legacy layouts in the Settings and Budget screens.
-- Introduce advanced animation transitions between the Dashboard and FastTransactionSheet.
-- Finalize Dark Theme color palette overrides to improve contrast for interactive elements.
+- Integrate Lottie-based mascot animations for key state moments (e.g., Pull-to-refresh, Debt-free celebration).
+- Execute accessibility audits to ensure all animations provide static fallbacks for "Reduce Motion" settings.
+- Begin functional QA pass to verify visual continuity across extreme screen dimensions (foldables, tablets).

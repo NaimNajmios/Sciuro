@@ -338,8 +338,8 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                                             state = dismissState,
                                             backgroundContent = {
                                                 val color = when (dismissState.targetValue) {
-                                                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
-                                                    SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935)
+                                                    SwipeToDismissBoxValue.StartToEnd -> com.najmi.sciuro.core.ui.theme.SignalIncome
+                                                    SwipeToDismissBoxValue.EndToStart -> com.najmi.sciuro.core.ui.theme.SignalDanger
                                                     else -> Color.Transparent
                                                 }
                                                 val icon = when (dismissState.targetValue) {
@@ -717,4 +717,5 @@ private fun mapCategoryIcon(categoryId: String?): ImageVector? {
         else -> null
     }
 }
+
 

@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 
-private val AdjustmentAmber = Color(0xFFE8B84B)
 
 @Composable
 fun AdjustmentCard(
@@ -39,7 +38,7 @@ fun AdjustmentCard(
                 Icon(
                     imageVector = Icons.Filled.Tune,
                     contentDescription = null,
-                    tint = AdjustmentAmber
+                    tint = com.najmi.sciuro.core.ui.theme.SignalWarning
                 )
                 Column {
                     Text(
@@ -58,8 +57,9 @@ fun AdjustmentCard(
                 "${if (amount >= 0) "+" else ""}RM ${"%.2f".format(amount)}",
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = IBMPlexMono,
-                color = if (amount >= 0) Color(0xFF4CAF50) else Color(0xFFE53935)
+                color = if (amount >= 0) com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
             )
         }
     }
 }
+

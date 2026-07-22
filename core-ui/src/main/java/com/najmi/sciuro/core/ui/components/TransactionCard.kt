@@ -23,8 +23,6 @@ import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalIncome
 import com.najmi.sciuro.core.ui.theme.SignalWarning
 
-private val InflowGreen = Color(0xFF4CAF50)
-private val OutflowRed = Color(0xFFE53935)
 
 @Composable
 fun TransactionCard(
@@ -39,8 +37,8 @@ fun TransactionCard(
     extractionMethod: String? = null,
     onClick: () -> Unit = {}
 ) {
-    val directionTint = if (direction == "INFLOW") InflowGreen else OutflowRed
-    val amountColor = if (direction == "INFLOW") InflowGreen else MaterialTheme.colorScheme.onSurface
+    val directionTint = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
+    val amountColor = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else MaterialTheme.colorScheme.onSurface
 
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -152,3 +150,4 @@ fun TransactionCard(
         }
     }
 }
+

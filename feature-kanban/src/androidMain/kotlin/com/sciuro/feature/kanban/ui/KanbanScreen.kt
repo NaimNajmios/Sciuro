@@ -77,7 +77,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                     Text(
                         text = "Due: $inProgressCount",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (inProgressCount > 0) Color(0xFFFFB74D) else Color.White.copy(alpha = 0.7f)
+                        color = if (inProgressCount > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f)
                     )
                     Text(
                         text = "Settled: $doneCount",
@@ -265,4 +265,5 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         )
     }
 }
+
 

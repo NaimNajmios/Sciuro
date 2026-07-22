@@ -401,7 +401,7 @@ fun WalletScreen(
                                                 Icon(
                                                     imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
                                                     contentDescription = null,
-                                                    tint = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else Color(0xFFE53935)
+                                                    tint = if (tx.direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
                                                 )
                                                 Column {
                                                     Text(
@@ -419,7 +419,7 @@ fun WalletScreen(
                                             Text(
                                                 "RM ${"%.2f".format(tx.amount)}",
                                                 style = MaterialTheme.typography.titleMedium,
-                                                color = if (tx.direction == "INFLOW") Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
+                                                color = if (tx.direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else MaterialTheme.colorScheme.onSurface
                                             )
                                         }
                                     }

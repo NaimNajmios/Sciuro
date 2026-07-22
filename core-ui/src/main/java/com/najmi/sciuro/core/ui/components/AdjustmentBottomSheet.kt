@@ -52,7 +52,7 @@ fun AdjustmentBottomSheet(
         )
 
         if (delta != null && kotlin.math.abs(delta) > 0.01) {
-            val varianceColor = if (delta >= 0) Color(0xFF4CAF50) else Color(0xFFE53935)
+            val varianceColor = if (delta >= 0) com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
             Text(
                 "Variance: ${if (delta >= 0) "+" else ""}RM ${"%.2f".format(delta)}",
                 style = MaterialTheme.typography.titleMedium,
@@ -136,3 +136,4 @@ fun AdjustmentBottomSheet(
         }
     }
 }
+

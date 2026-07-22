@@ -77,7 +77,7 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
                                         Text(
                                             text = "${(budget.progress * 100).toInt()}%",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = if (budget.progress > 0.8f) Color(0xFFFF5252) else Color.White.copy(alpha = 0.6f)
+                                            color = if (budget.progress > 0.8f) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.6f)
                                         )
                                     }
                                 }
@@ -124,7 +124,7 @@ fun BudgetsScreen(viewModel: BudgetsViewModel = koinViewModel()) {
                                             Text("RM ${"%.2f".format(budget.currentSpent)} / RM ${"%.2f".format(budget.allocatedAmount)}", style = MaterialTheme.typography.bodyMedium)
                                         }
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        val progressColor = if (budget.progress > 1f) Color.Red else MaterialTheme.colorScheme.primary
+                                        val progressColor = if (budget.progress > 1f) com.najmi.sciuro.core.ui.theme.SignalDanger else MaterialTheme.colorScheme.primary
                                         LinearProgressIndicator(
                                             progress = { if (budget.progress > 1f) 1f else budget.progress },
                                             modifier = Modifier.fillMaxWidth().height(8.dp),

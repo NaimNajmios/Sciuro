@@ -68,7 +68,7 @@ fun DeveloperSettingsScreen(
                     Text(
                         text = "Dead: $deadLetterCount",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (deadLetterCount > 0) Color(0xFFFF5252) else Color.White.copy(alpha = 0.7f)
+                        color = if (deadLetterCount > 0) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -93,3 +93,4 @@ fun DeveloperSettingsScreen(
         }
     }
 }
+

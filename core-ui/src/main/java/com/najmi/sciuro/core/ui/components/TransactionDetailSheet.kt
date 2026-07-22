@@ -26,8 +26,6 @@ data class AuditEventDisplay(
     val isCurrent: Boolean = false
 )
 
-private val InflowGreen = Color(0xFF4CAF50)
-private val OutflowRed = Color(0xFFE53935)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +74,7 @@ fun TransactionDetailSheet(
                     style = MaterialTheme.typography.headlineSmall,
                     fontFamily = IBMPlexMono,
                     fontWeight = FontWeight.Bold,
-                    color = if (direction == "INFLOW") InflowGreen else MaterialTheme.colorScheme.onSurface
+                    color = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -85,7 +83,7 @@ fun TransactionDetailSheet(
             Text(
                 text = if (direction == "INFLOW") "Income" else "Expense",
                 style = MaterialTheme.typography.labelMedium,
-                color = if (direction == "INFLOW") InflowGreen else OutflowRed
+                color = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
             )
 
             if (hasTransferLink) {
@@ -280,3 +278,4 @@ fun TransactionDetailSheet(
         }
     }
 }
+
