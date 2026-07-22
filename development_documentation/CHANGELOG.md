@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- **Dynamic System Configurations**: Upgraded hardcoded application constants into user-configurable preferences backed by `SettingsProvider`.
+  - Added an interactive **Budget Warning Threshold** slider in Settings to let users decide when budget progress bars turn red (scales 50%-100%).
+  - Built a dynamic **Quick Labels** engine allowing custom presets in `FastTransactionSheet`.
+  - Enabled **LLM Engine Hot-swapping** by exposing the Groq Model String in the Developer Settings UI.
+  - Initialized **Category Management UI**, exposing the `deleteCategory` and `updateCategory` data layer directly to the user.
 - **Net Position Reporting**: Updated DashboardViewModel and DashboardScreen to calculate and display a unified Net Position: `(Total Account Balances + Total Investment Values) - Total Debts`.
 - **Motion Tokens (UX-1)**: Implemented `SciuroMotion` standard animation specs (`micro`, `transitionSpec`, `cardMove`, `celebration`, `count`) in `core-ui/theme` as the single source of truth for motion.
 - **Screen Transitions (UX-2)**: Added custom animated screen transitions (`fadeIn`, `fadeOut`, `slideIntoContainer`, `slideOutOfContainer`) via Compose Navigation across the entire `MainActivity` NavHost.
