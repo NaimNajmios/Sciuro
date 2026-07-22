@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import androidx.compose.ui.unit.dp
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 
@@ -36,23 +37,16 @@ fun DeveloperTabDataTools(
         }
 
         if (showClearConfirmation) {
-            AlertDialog(
-                onDismissRequest = { showClearConfirmation = false },
-                title = { Text("Clear Inbox") },
-                text = { Text("Delete all unreviewed transactions? This cannot be undone.") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        viewModel.clearInbox()
-                        showClearConfirmation = false
-                    }) {
-                        Text("Delete", color = MaterialTheme.colorScheme.error)
-                    }
+            SciuroConfirmationDialog(
+                title = "Clear Inbox",
+                message = "Delete all unreviewed transactions? This cannot be undone.",
+                confirmText = "Delete",
+                isDestructive = true,
+                onConfirm = {
+                    viewModel.clearInbox()
+                    showClearConfirmation = false
                 },
-                dismissButton = {
-                    TextButton(onClick = { showClearConfirmation = false }) {
-                        Text("Cancel")
-                    }
-                }
+                onDismiss = { showClearConfirmation = false }
             )
         }
     }

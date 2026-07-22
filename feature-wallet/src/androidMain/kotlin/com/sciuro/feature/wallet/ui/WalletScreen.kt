@@ -467,18 +467,9 @@ fun WalletScreen(
     }
 
     if (showAddAccountDialog) {
-        ModalBottomSheet(
-            onDismissRequest = { showAddAccountDialog = false },
-            containerColor = MaterialTheme.colorScheme.surface
+        com.najmi.sciuro.core.ui.components.SciuroBottomSheet(
+            onDismissRequest = { showAddAccountDialog = false }
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp)
-                    .imePadding()
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 Text(
                     if (editingAccountId == null) "Add Account" else "Edit Account",
                     style = MaterialTheme.typography.headlineSmall
@@ -645,23 +636,13 @@ fun WalletScreen(
                         Text("Save")
                     }
                 }
-            }
         }
     }
 
     if (showAddInvestmentDialog) {
-        ModalBottomSheet(
-            onDismissRequest = { showAddInvestmentDialog = false },
-            containerColor = MaterialTheme.colorScheme.surface
+        com.najmi.sciuro.core.ui.components.SciuroBottomSheet(
+            onDismissRequest = { showAddInvestmentDialog = false }
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp)
-                    .imePadding()
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 Text(
                     if (editingInvestmentId == null) "Add Investment" else "Edit Investment",
                     style = MaterialTheme.typography.headlineSmall
@@ -834,23 +815,13 @@ fun WalletScreen(
                         Text("Save")
                     }
                 }
-            }
         }
     }
 
     if (showEditTransactionDialog) {
-        ModalBottomSheet(
-            onDismissRequest = { showEditTransactionDialog = false },
-            containerColor = MaterialTheme.colorScheme.surface
+        com.najmi.sciuro.core.ui.components.SciuroBottomSheet(
+            onDismissRequest = { showEditTransactionDialog = false }
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
                 
                 OutlinedTextField(
@@ -971,7 +942,7 @@ fun WalletScreen(
                         Text("Save")
                     }
                 }
-            }
+        }
     }
 
     if (showDeleteAccountDialog) {
@@ -1005,5 +976,4 @@ fun WalletScreen(
             onDismiss = { showDeleteInvestmentDialog = false }
         )
     }
-}
 }
