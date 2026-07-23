@@ -58,33 +58,36 @@ fun SciuroTextField(
     enabled: Boolean = true,
     minLines: Int = 1
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = placeholder?.let { { Text(it) } },
-        readOnly = readOnly,
-        singleLine = singleLine,
-        trailingIcon = trailingIcon,
-        isError = isError,
-        supportingText = supportingText?.let { { Text(it) } },
-        enabled = enabled,
-        minLines = minLines,
-        keyboardOptions = keyboardOptions,
-        visualTransformation = visualTransformation,
-        modifier = modifier.fillMaxWidth(),
+    Surface(
+        color = if (enabled) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         shape = RoundedCornerShape(16.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-            unfocusedBorderColor = Color.Transparent,
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            errorBorderColor = MaterialTheme.colorScheme.error,
-            errorLabelColor = MaterialTheme.colorScheme.error,
-            cursorColor = MaterialTheme.colorScheme.primary
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            placeholder = placeholder?.let { { Text(it) } },
+            readOnly = readOnly,
+            singleLine = singleLine,
+            trailingIcon = trailingIcon,
+            isError = isError,
+            supportingText = supportingText?.let { { Text(it) } },
+            enabled = enabled,
+            minLines = minLines,
+            keyboardOptions = keyboardOptions,
+            visualTransformation = visualTransformation,
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = Color.Transparent,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                errorBorderColor = MaterialTheme.colorScheme.error,
+                errorLabelColor = MaterialTheme.colorScheme.error,
+                cursorColor = MaterialTheme.colorScheme.primary
+            )
         )
-    )
+    }
 }
 
 @Composable
