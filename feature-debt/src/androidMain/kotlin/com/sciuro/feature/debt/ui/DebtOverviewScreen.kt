@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.EmptyStateView
+import com.najmi.sciuro.core.ui.components.HeroFigurePair
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
@@ -62,8 +63,11 @@ fun DebtOverviewScreen(
 
                 HeroPanel(
                     title = "Debts",
-                    heroFigure = if (allDebts.isEmpty()) "0 Debts"
-                        else "RM ${"%.0f".format(totalIOwe)} / RM ${"%.0f".format(totalOwedToMe)}",
+                    heroFigure = if (allDebts.isEmpty()) {
+                        { Text("0 Debts", style = MaterialTheme.typography.headlineLarge, color = Color.White) }
+                    } else {
+                        { HeroFigurePair(first = totalIOwe, second = totalOwedToMe) }
+                    },
                     toggleOptions = emptyList(),
                     selectedToggle = "",
                     onToggleSelected = {},

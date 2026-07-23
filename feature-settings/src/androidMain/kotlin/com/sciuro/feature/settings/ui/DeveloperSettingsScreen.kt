@@ -40,7 +40,7 @@ fun DeveloperSettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = "Developer Options",
-            heroFigure = lastCaptureText,
+            heroFigure = { Text(lastCaptureText, style = MaterialTheme.typography.headlineLarge, color = Color.White) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {},

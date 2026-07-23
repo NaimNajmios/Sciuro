@@ -53,6 +53,14 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
         sharedPreferences.edit().putBoolean("is_llm_enabled", enabled).apply()
     }
 
+    override fun isLockEnabled(): Boolean {
+        return sharedPreferences.getBoolean("is_lock_enabled", false)
+    }
+
+    override fun setLockEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("is_lock_enabled", enabled).apply()
+    }
+
     override fun getApiKey(): String? {
         val key = sharedPreferences.getString("api_key", null)
         return if (key.isNullOrBlank()) null else key

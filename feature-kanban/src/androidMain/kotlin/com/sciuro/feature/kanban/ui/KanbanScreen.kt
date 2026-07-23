@@ -89,10 +89,16 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         "Debts" -> "Debts"
                         else -> "Active Tasks"
                     },
-                    heroFigure = when (selectedTab) {
-                        "Bills" -> "${billOverdue + billDueSoon} Due"
-                        "Debts" -> "$activeDebtCount Active"
-                        else -> "${todoCount + inProgressCount}"
+                    heroFigure = {
+                        Text(
+                            text = when (selectedTab) {
+                                "Bills" -> "${billOverdue + billDueSoon} Due"
+                                "Debts" -> "$activeDebtCount Active"
+                                else -> "${todoCount + inProgressCount}"
+                            },
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = Color.White
+                        )
                     },
                     toggleOptions = emptyList(),
                     selectedToggle = "",

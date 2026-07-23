@@ -91,7 +91,7 @@ class RegexExtractorsTest {
 
     @Test
     fun `matchesAccountSuffix matches suffix of longer number`() {
-        assertEquals(true, matchesAccountSuffix("1234", "601212345678"))
+        assertEquals(true, matchesAccountSuffix("5678", "601212345678"))
     }
 
     @Test

@@ -15,6 +15,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.text.KeyboardOptions
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
@@ -42,7 +43,7 @@ fun SettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = "Settings",
-            heroFigure = "More",
+            heroFigure = { Text("More", style = MaterialTheme.typography.headlineLarge, color = Color.White) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {}

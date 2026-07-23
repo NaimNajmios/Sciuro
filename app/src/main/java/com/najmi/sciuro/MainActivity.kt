@@ -44,6 +44,8 @@ import androidx.work.WorkManager
 import com.najmi.sciuro.worker.IngestionReconciliationWorker
 import com.najmi.sciuro.worker.ReviewReminderWorker
 import java.util.concurrent.TimeUnit
+import com.sciuro.core.ledger.config.SettingsProvider
+import org.koin.compose.koinInject
 
 class MainActivity : FragmentActivity() {
     
@@ -65,7 +67,9 @@ class MainActivity : FragmentActivity() {
 
         setContent {
             SciuroTheme {
-                BiometricGate(activity = this@MainActivity) {
+                val settingsProvider: SettingsProvider = koinInject()
+                val lockEnabled = settingsProvider.isLockEnabled()
+                BiometricGate(activity = this@MainActivity, lockEnabled = lockEnabled) {
                     SciuroMainScreen()
                 }
             }

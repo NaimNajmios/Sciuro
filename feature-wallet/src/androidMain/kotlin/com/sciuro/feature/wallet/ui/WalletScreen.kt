@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import com.najmi.sciuro.core.ui.components.HeroFigure
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.AdjustmentCard
@@ -157,12 +158,7 @@ fun WalletScreen(
                         color = Color.White.copy(alpha = 0.7f)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "RM ${"%.2f".format(displayTotal)}",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = Color.White,
-                        fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                    )
+                    HeroFigure(amount = displayTotal)
                 }
             }
             

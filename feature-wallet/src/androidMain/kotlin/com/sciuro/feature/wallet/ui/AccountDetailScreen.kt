@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import android.graphics.BitmapFactory
 import android.net.Uri
+import com.najmi.sciuro.core.ui.components.HeroFigure
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.AdjustmentCard
@@ -123,7 +124,7 @@ fun AccountDetailScreen(
         Box(modifier = Modifier.fillMaxWidth()) {
             HeroPanel(
                 title = account.name,
-                heroFigure = "RM ${"%.2f".format(account.balance)}",
+                heroFigure = { HeroFigure(account.balance) },
                 toggleOptions = emptyList(),
                 selectedToggle = "",
                 onToggleSelected = { },

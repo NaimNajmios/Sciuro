@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import com.najmi.sciuro.core.ui.components.HeroFigure
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
@@ -149,7 +150,7 @@ fun DashboardScreen(
 
                 HeroPanel(
                     title = "Total Net Position",
-                    heroFigure = "RM ${"%.2f".format(state.netPosition)}",
+                    heroFigure = { HeroFigure(state.netPosition) },
                     toggleOptions = listOf("This Month", "All Time"),
                     selectedToggle = selectedRange,
                     onToggleSelected = { selectedRange = it },

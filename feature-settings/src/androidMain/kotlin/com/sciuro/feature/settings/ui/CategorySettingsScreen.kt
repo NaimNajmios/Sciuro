@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -32,7 +33,7 @@ fun CategorySettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = "Categories",
-            heroFigure = "Config",
+            heroFigure = { Text("Config", style = MaterialTheme.typography.headlineLarge, color = Color.White) },
             toggleOptions = listOf("Income", "Expense"),
             selectedToggle = selectedToggle,
             onToggleSelected = { selectedToggle = it },
@@ -41,7 +42,7 @@ fun CategorySettingsScreen(
                     Icon(
                         imageVector = Icons.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = androidx.compose.ui.graphics.Color.White
+                        tint = Color.White
                     )
                 }
             }

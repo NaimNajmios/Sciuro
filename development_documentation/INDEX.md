@@ -30,7 +30,7 @@
 | X4 - Domain Event Bus Completion | Completed | Wired event publishers in `DebtEngine`, `ObligationCycleMatcher`, `ObligationDetectionEngine`. Added `KanbanViewModel` event subscription with animation trigger flow. KanbanScreen shows settle animation on bill/debt cards (UAT 465/525). |
 | C2 - Home dashboard & Wallet screen | Completed | Scaffolded `feature-dashboard` and `feature-wallet` UI with ViewModels |
 | C3 - Drilldown screens | Completed | Scaffolded `feature-budgets` UI and assembled app Navigation |
-| D1 - Security hardening | Completed | Disabled Android auto-backup for the database domains |
+| D1 - Security hardening | Completed | Disabled Android auto-backup for the database domains. Added optional biometric/PIN `BiometricGate` with user-facing toggle (Settings > Security). Gate observes `ProcessLifecycleOwner` to re-prompt after 30s of backgrounding. Falls back to a "Set up device security" prompt when no screen lock is enrolled. |
 | D2 - Full test pass & dogfood | Completed | Connected UI ViewModels to real SQLDelight reactive flows |
 | D3 - Personal deployment | Completed | Sideloaded APK built with multiple architecture support |
 | D4 - Initial Setup & Onboarding | Completed | Compose navigation for initial Personal Wallet setup and account soft-deletion schemas |

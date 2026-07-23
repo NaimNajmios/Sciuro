@@ -20,7 +20,7 @@ import com.najmi.sciuro.core.ui.theme.SurfaceHero
 @Composable
 fun HeroPanel(
     title: String,
-    heroFigure: String,
+    heroFigure: @Composable () -> Unit,
     toggleOptions: List<String>,
     selectedToggle: String,
     onToggleSelected: (String) -> Unit,
@@ -54,11 +54,7 @@ fun HeroPanel(
                     color = Color.White.copy(alpha = 0.7f)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = heroFigure,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = Color.White
-                )
+                heroFigure()
             }
             
             PillToggle(

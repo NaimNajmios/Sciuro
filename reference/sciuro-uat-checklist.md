@@ -42,7 +42,7 @@ Three debug-only tools get referenced repeatedly below — worth building once, 
 - [Kanban Board](#kanban-board) (5)
 - [Home Dashboard](#home-dashboard) (5)
 - [Navigation & UI Shell](#navigation-&-ui-shell) (4)
-- [Security](#security) (5)
+- [Security](#security) (8)
 - [Empty/Loading States](#emptyloading-states) (5)
 - [Settings](#settings) (4)
 - [Desktop Companion](#desktop-companion) (2)
@@ -1079,8 +1079,12 @@ Three debug-only tools get referenced repeatedly below — worth building once, 
 ## Security
 
 **User flow (UI elements named at each step):**
-1. Settings → toggle biometric/PIN lock (standard list row + switch) → close and reopen the app → system biometric prompt gates entry
-2. Settings → Backup → `SciuroButton` "Export" → system share sheet with the resulting encrypted file
+1. Settings → Security `SciuroCard` → toggle "Lock app on launch" `Switch` (off by default) → close and reopen the app → system biometric prompt gates entry
+2. App lock disabled → app opens directly to content without any authentication prompt
+3. App locked → biometric/PIN prompt appears → switch to another app for ≥30 seconds → return to Sciuro → system biometric prompt re-gates entry
+4. App locked → biometric/PIN prompt appears → switch to another app for <30 seconds → return to Sciuro → no re-prompt (grace period)
+5. App locked on device with no screen lock enrolled → "Set up device security" screen shown with "Open Settings" button → opens system Security Settings → "Exit" button closes Sciuro
+6. Settings → Backup → `SciuroButton` "Export" → system share sheet with the resulting encrypted file
 
 **How this intertwines with other modules:**
 - Security sits underneath every other module rather than beside them — it doesn't react to Domain Events, it gates access to the surface all of them render on
@@ -1100,10 +1104,28 @@ Three debug-only tools get referenced repeatedly below — worth building once, 
 
 - [ ] **SEC-02 — Biometric/PIN gate blocks unauthorized access** 🔴 `Critical · D1`
     - *Feature:* App gate
-    - *Precondition:* App lock is enabled
-    - *Steps:* Attempt to open the app without authenticating
-    - *Expected:* Access is blocked until authentication succeeds
-    - *Notes:* 
+    - *Precondition:* App lock is enabled (Settings > Security > "Lock app on launch" toggle is on)
+    - *Steps:* Open the app from cold start
+    - *Expected:* System biometric/PIN prompt appears. Access is blocked until authentication succeeds.
+    - *Notes:* On devices without a screen lock enrolled, a "Set up device security" prompt appears instead with an "Open Settings" button. Silent bypass has been removed.
+
+- [ ] **SEC-02a — Lock toggle is off by default** 🟠 `High · D1`
+    - *Feature:* App gate toggle
+    - *Precondition:* Fresh install or settings not previously set
+    - *Steps:* Open Settings > Security. Toggle should be off. Close and reopen the app.
+    - *Expected:* App opens directly to content. No biometric prompt appears.
+
+- [ ] **SEC-02b — Grace period: no re-prompt for <30s backgrounding** 🟠 `High · D1`
+    - *Feature:* App gate re-prompt
+    - *Precondition:* App lock is enabled, user is authenticated and inside the app
+    - *Steps:* Switch to another app for ~15 seconds, then return to Sciuro
+    - *Expected:* No biometric prompt. App resumes directly where the user left off.
+
+- [ ] **SEC-02c — Re-prompt after ≥30s backgrounding** 🔴 `Critical · D1`
+    - *Feature:* App gate re-prompt
+    - *Precondition:* App lock is enabled, user is authenticated and inside the app
+    - *Steps:* Switch to another app for 30+ seconds, then return to Sciuro
+    - *Expected:* System biometric/PIN prompt appears. Access requires re-authentication.
 
 - [ ] **SEC-03 — Manual backup export produces a usable, protected file** 🟠 `High · D1`
     - *Feature:* Encrypted export

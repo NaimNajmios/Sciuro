@@ -19,6 +19,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 * **UI Standardization & Theming:** Unified design system utilizing custom wrappers (`SciuroBottomSheet`, `SciuroTextField`) across all feature modules, with a robust 3-way persistent Appearance toggling (Light, Dark, System default).
 * **Interactive UI Triage:** Swipe-to-dismiss capabilities for fast transaction approvals and dynamically updated swipeable wallet interfaces to track cash and investments.
 * **Proactive Notifications:** Background WorkManager integration periodically alerts users to review newly ingested financial transactions.
+* **App Lock:** Optional biometric/PIN gate that secures the app on launch. Re-prompts after 30 seconds of backgrounding. Falls back to a "Set up device security" prompt when no screen lock is enrolled — no silent bypass. Toggled via Settings > Security.
 
 ## Project Status
 
@@ -36,7 +37,8 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 
 **Tech Stack:**
 * **Dependency Injection:** [Koin](https://insert-koin.io/)
-* **Local Persistence:** [SQLDelight](https://cashapp.github.io/sqldelight/)
+* **Local Persistence:** [SQLDelight](https://cashapp.github.io/sqldelight/) + SQLCipher (database encryption)
+* **Security:** [AndroidX Biometric](https://developer.android.com/jetpack/androidx/releases/biometric), [EncryptedSharedPreferences](https://developer.android.com/reference/androidx/security/crypto/EncryptedSharedPreferences)
 * **Static Analysis:** [Detekt](https://detekt.dev/)
 * **Background Tasks:** WorkManager (Android)
 * **UI Framework:** Jetpack Compose (Android)

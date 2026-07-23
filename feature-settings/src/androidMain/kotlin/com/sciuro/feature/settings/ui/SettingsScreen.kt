@@ -1,6 +1,7 @@
 package com.sciuro.feature.settings.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -37,6 +38,7 @@ fun SettingsScreen(
     settingsProvider: SettingsProvider = koinInject()
 ) {
     var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
+    var isLockEnabled by rememberSaveable { mutableStateOf(settingsProvider.isLockEnabled()) }
     var apiKey by rememberSaveable { mutableStateOf(settingsProvider.getApiKey() ?: "") }
     var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
     var llmModelName by rememberSaveable { mutableStateOf(settingsProvider.getLlmModelName()) }
@@ -50,7 +52,7 @@ fun SettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = "Settings",
-            heroFigure = "Config",
+            heroFigure = { Text("Config", style = MaterialTheme.typography.headlineLarge, color = Color.White) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {}
@@ -87,6 +89,37 @@ fun SettingsScreen(
                                         label = { Text(pref.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }) }
                                     )
                                 }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Security", style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Lock app on launch", style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        "Require biometric or device PIN to open Sciuro",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Switch(
+                                    checked = isLockEnabled,
+                                    onCheckedChange = {
+                                        isLockEnabled = it
+                                        settingsProvider.setLockEnabled(it)
+                                    }
+                                )
                             }
                         }
                     }

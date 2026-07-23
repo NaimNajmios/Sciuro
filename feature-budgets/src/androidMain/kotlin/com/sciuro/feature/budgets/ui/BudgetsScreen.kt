@@ -16,6 +16,7 @@ import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.EmptyStateView
+import com.najmi.sciuro.core.ui.components.HeroFigurePair
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
@@ -57,7 +58,11 @@ fun BudgetsScreen(
 
                 HeroPanel(
                     title = "Monthly Budgets",
-                    heroFigure = if (budgets.isEmpty()) "0 Active" else "RM ${"%.0f".format(totalSpent)} / RM ${"%.0f".format(totalAllocated)}",
+                    heroFigure = if (budgets.isEmpty()) {
+                        { Text("0 Active", style = MaterialTheme.typography.headlineLarge, color = Color.White) }
+                    } else {
+                        { HeroFigurePair(first = totalSpent, second = totalAllocated) }
+                    },
                     toggleOptions = emptyList(),
                     selectedToggle = "",
                     onToggleSelected = {},
