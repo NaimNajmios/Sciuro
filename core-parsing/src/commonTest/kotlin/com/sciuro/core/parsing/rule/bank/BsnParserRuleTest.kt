@@ -44,6 +44,15 @@ class BsnParserRuleTest {
                 expectedAmount = 50.00,
                 expectedDirection = null,
                 expectedMerchant = null
+            ),
+            ParserTestCase(
+                description = "BSN DuitNow outflow (screenshot text)",
+                packageName = "com.bsn.mybsn",
+                title = "myBSN",
+                text = "DuitNow to MUHAMMAD NAIM N - RM5.40 on 23/07/2026 09:00:25 AM successful. Didn't do this? Call Contact Centre.",
+                expectedAmount = 5.40,
+                expectedDirection = TransactionDirection.OUTFLOW,
+                expectedMerchant = "MUHAMMAD NAIM N"
             )
         )
         runParserTests(BsnParserRule(), cases)

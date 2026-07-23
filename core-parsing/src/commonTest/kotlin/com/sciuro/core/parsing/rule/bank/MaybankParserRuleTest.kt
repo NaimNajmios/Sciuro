@@ -65,6 +65,26 @@ class MaybankParserRuleTest {
                 expectedDirection = null,
                 expectedMerchant = null,
                 expectedCounterpartyAccountNumber = "5678"
+            ),
+            ParserTestCase(
+                description = "Maybank2u legacy app inflow (screenshot text)",
+                packageName = "com.maybank2u.m2u",
+                title = "Maybank2u: Funds Received",
+                text = "You've just received RM 5.40 in your account ending ***3943.",
+                expectedAmount = 5.40,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null,
+                expectedCounterpartyAccountNumber = "***3943"
+            ),
+            ParserTestCase(
+                description = "Maybank text fallback via title (no known package)",
+                packageName = "com.android.mms",
+                title = "Maybank2u: Funds Received",
+                text = "You've just received RM 5.40 in your account ending ***3943.",
+                expectedAmount = 5.40,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null,
+                expectedCounterpartyAccountNumber = "***3943"
             )
         )
         runParserTests(MaybankParserRule(), cases)

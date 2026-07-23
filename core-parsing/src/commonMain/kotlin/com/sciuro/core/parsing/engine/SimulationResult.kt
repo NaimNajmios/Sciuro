@@ -15,7 +15,12 @@ data class SimulationResult(
     val llmLatencyMs: Long?,
     val llmDebugInfo: LlmDebugInfo?,
     val error: String?
-)
+) {
+    val llmPackageMarker: String?
+        get() = if (usedLlmFallback && matchedRule == null) {
+            "$packageName | ${text.take(80).replace(Regex("[0-9]"), "\$0")}"
+        } else null
+}
 
 data class RuleMatchResult(
     val ruleName: String,

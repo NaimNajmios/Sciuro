@@ -2,6 +2,7 @@ package com.sciuro.core.transfer.engine
 
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.JdbcDriver
+import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
@@ -43,7 +44,7 @@ class TransferDetectionEngineTest {
         accountRepository = AccountRepository(fakeAuditRepository, database)
         transactionRepository = TransactionRepository(fakeAuditRepository, database, accountRepository)
         transferRepository = TransferRepository(fakeAuditRepository, database, transactionRepository)
-        engine = TransferDetectionEngine(database, transferRepository)
+        engine = TransferDetectionEngine(database, transferRepository, DomainEventBus())
     }
 
     @AfterTest
@@ -256,6 +257,51 @@ class TransferDetectionEngineTest {
 
         val link = transferRepository.getTransferForTransaction(inflowTxId)
         assertNull(link, "Tier 2 should not link outside the 2-minute window")
+    }
+
+    @Test
+    fun `tight match links DuitNow-style self-transfer without prior pair confirmation`() = runBlocking {
+        val accountA = "acc_a"
+        val accountB = "acc_b"
+        accountRepository.createAccount(Account(id = accountA, name = "BSN", type = "Bank", accountNumber = "111122223333"))
+        accountRepository.createAccount(Account(id = accountB, name = "Maybank", type = "Bank", accountNumber = "444455556666"))
+
+        val inflowTxId = bookInflowTransaction(accountId = accountB, amount = 5.40, timestamp = 1000L)
+
+        engine.onTransactionBooked(
+            newTxId = "outflow_1",
+            newTxAccountId = accountA,
+            newTxAmount = 5.40,
+            newTxDirection = "OUTFLOW",
+            newTxTimestamp = 2000L,
+            counterpartyAccountNumber = null
+        )
+
+        val link = transferRepository.getTransferForTransaction(inflowTxId)
+        assertNotNull(link, "Tight match should link without pair confirmation with 1-second gap")
+        assertEquals(5.40, link.amount)
+    }
+
+    @Test
+    fun `tight match does not link when gap exceeds 15 seconds`() = runBlocking {
+        val accountA = "acc_a"
+        val accountB = "acc_b"
+        accountRepository.createAccount(Account(id = accountA, name = "BSN", type = "Bank"))
+        accountRepository.createAccount(Account(id = accountB, name = "Maybank", type = "Bank"))
+
+        val inflowTxId = bookInflowTransaction(accountId = accountB, amount = 5.40, timestamp = 1000L)
+
+        engine.onTransactionBooked(
+            newTxId = "outflow_1",
+            newTxAccountId = accountA,
+            newTxAmount = 5.40,
+            newTxDirection = "OUTFLOW",
+            newTxTimestamp = 20_000L,
+            counterpartyAccountNumber = null
+        )
+
+        val link = transferRepository.getTransferForTransaction(inflowTxId)
+        assertNull(link, "Tight match should not link with 19-second gap")
     }
 
     private suspend fun bookInflowTransaction(

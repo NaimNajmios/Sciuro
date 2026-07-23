@@ -60,3 +60,10 @@ SELECT * FROM transaction_record WHERE account_id = ? ORDER BY timestamp DESC;
 
 deleteTransaction:
 DELETE FROM transaction_record WHERE id = ?;
+
+findLikelyDuplicate:
+SELECT * FROM transaction_record
+WHERE direction = ?
+AND ABS(amount - ?) < 0.01
+AND ABS(timestamp - ?) < ?
+LIMIT 1;

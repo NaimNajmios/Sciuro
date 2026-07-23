@@ -13,6 +13,10 @@ class TransferDetectionEngine(
     private val transferRepository: TransferRepository,
     private val eventBus: DomainEventBus
 ) {
+    companion object {
+        const val TIGHT_MATCH_WINDOW_MS = 15_000L
+        const val HEURISTIC_WINDOW_MS = 120_000L
+    }
 
     suspend fun onTransactionBooked(
         newTxId: String,
@@ -42,6 +46,17 @@ class TransferDetectionEngine(
                 }
                 return
             }
+            return
+        }
+
+        val tightMatch = findTightUnconfirmedMatch(
+            newTxId = newTxId,
+            amount = newTxAmount,
+            direction = newTxDirection,
+            timestamp = newTxTimestamp
+        )
+        if (tightMatch != null) {
+            linkAsTransfer(newTxId, tightMatch.id, newTxAmount)
             return
         }
 
@@ -87,6 +102,24 @@ class TransferDetectionEngine(
         return candidates.minByOrNull { kotlin.math.abs(it.timestamp - timestamp) }
     }
 
+    private suspend fun findTightUnconfirmedMatch(
+        newTxId: String,
+        amount: Double,
+        direction: String,
+        timestamp: Long
+    ): com.sciuro.core.ledger.db.Transaction_record? {
+        val oppositeDirection = if (direction == "OUTFLOW") "INFLOW" else "OUTFLOW"
+        val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
+
+        return allTransactions.firstOrNull { tx ->
+            tx.id != newTxId &&
+            tx.direction == oppositeDirection &&
+            !isTransactionLinked(tx.id) &&
+            kotlin.math.abs(tx.amount - amount) < 0.01 &&
+            kotlin.math.abs(tx.timestamp - timestamp) < TIGHT_MATCH_WINDOW_MS
+        }
+    }
+
     private suspend fun findHeuristicMatch(
         newTxId: String,
         amount: Double,
@@ -101,7 +134,7 @@ class TransferDetectionEngine(
             tx.direction == oppositeDirection &&
             !isTransactionLinked(tx.id) &&
             kotlin.math.abs(tx.amount - amount) < 0.01 &&
-            kotlin.math.abs(tx.timestamp - timestamp) < 120_000
+            kotlin.math.abs(tx.timestamp - timestamp) < HEURISTIC_WINDOW_MS
         }
     }
 

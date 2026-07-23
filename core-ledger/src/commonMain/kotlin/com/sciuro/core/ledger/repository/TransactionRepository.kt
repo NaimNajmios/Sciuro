@@ -219,4 +219,26 @@ class TransactionRepository(
             .asFlow()
             .mapToList(Dispatchers.Default)
     }
+
+    suspend fun findLikelyDuplicate(
+        amount: Double,
+        direction: String,
+        timestamp: Long,
+        windowMs: Long = 90_000
+    ): com.sciuro.core.ledger.db.Transaction_record? {
+        return database.transactionRecordQueries.findLikelyDuplicate(
+            direction = direction,
+            amount = amount,
+            timestamp = timestamp,
+            value_ = windowMs
+        ).executeAsOneOrNull()
+    }
+
+    suspend fun attachCorroboratingSource(transactionId: String, rawEventId: String) {
+        database.transactionCorroborationQueries.insertCorroboration(
+            transaction_id = transactionId,
+            raw_event_id = rawEventId,
+            captured_at = currentTimeMillis()
+        )
+    }
 }

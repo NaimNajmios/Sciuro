@@ -9,6 +9,7 @@ import com.sciuro.core.parsing.rule.ParserRule
 import com.sciuro.core.parsing.rule.bank.*
 import com.sciuro.core.parsing.rule.ewallet.*
 import com.sciuro.core.parsing.metrics.ParserHealthRepository
+import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
 import com.sciuro.core.ledger.config.SettingsProvider
 import org.koin.dsl.module
 
@@ -18,10 +19,11 @@ val parsingModule = module {
     }
 
     single {
+        val aggregatorPackages = get<MutableIngestionAllowlist>().aggregatorPackages
         listOf<ParserRule>(
-            CimbParserRule(),
-            MaybankParserRule(),
-            BsnParserRule(),
+            CimbParserRule(aggregatorPackages),
+            MaybankParserRule(aggregatorPackages),
+            BsnParserRule(aggregatorPackages),
             TngParserRule(),
             GrabPayParserRule(),
             BoostParserRule(),

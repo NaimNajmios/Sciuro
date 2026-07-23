@@ -115,6 +115,27 @@ fun DeveloperTabDiagnostics(
                 }
             }
 
+            result.llmPackageMarker?.let { marker ->
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("LLM-Fallback Candidate", style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "No deterministic rule matched this package. Consider creating a new ParserRule.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(marker, style = MaterialTheme.typography.bodySmall, maxLines = 10)
+                        }
+                    }
+                }
+            }
+
             result.error?.let { err ->
                 item {
                     Card(

@@ -91,6 +91,17 @@ class SciuroIngestionOrchestrator(
                 return
             }
 
+            val duplicate = transactionRepository.findLikelyDuplicate(
+                amount = draft.amount,
+                direction = directionName,
+                timestamp = draft.timestamp
+            )
+            if (duplicate != null) {
+                transactionRepository.attachCorroboratingSource(duplicate.id, rawEvent.id)
+                rawEventRepository.markProcessed(rawEvent.id)
+                return
+            }
+
             val categoryId = categoryResolver.resolve(draft.merchant)
 
             val matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)

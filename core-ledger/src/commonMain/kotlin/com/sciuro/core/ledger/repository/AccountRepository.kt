@@ -135,6 +135,12 @@ class AccountRepository(
             )
         }
     }
+
+    suspend fun linkAccountPair(accountIdA: String, accountIdB: String) {
+        val sorted = listOf(accountIdA, accountIdB).sorted()
+        if (sorted.size != 2) return
+        database.accountQueries.insertAccountPairConfirmation(sorted[0], sorted[1], currentTimeMillis())
+    }
     
     fun observeAccounts(): Flow<List<com.sciuro.core.ledger.db.Account>> {
         return database.accountQueries.selectAllAccounts()

@@ -4,17 +4,26 @@ import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.parsing.model.StructuredDraft
 import com.sciuro.core.parsing.model.TransactionDirection
 import com.sciuro.core.parsing.rule.ParserRule
+import com.sciuro.core.parsing.util.extractAccountNumber
+import com.sciuro.core.parsing.util.extractAmount
+import com.sciuro.core.parsing.util.extractMerchant
+import com.sciuro.core.parsing.util.matchesAggregatorForward
 
-class CimbParserRule : ParserRule {
+class CimbParserRule(
+    private val aggregatorPackages: Set<String> = emptySet()
+) : ParserRule {
     override fun matches(event: RawEvent): Boolean {
-        return event.sourcePackageOrAddress == "com.cimbmalaysia"
+        return event.sourcePackageOrAddress == "com.cimbmalaysia" ||
+               event.sourcePackageOrAddress == "my.com.cimb.octo" ||
+               event.title.contains("CIMB", ignoreCase = true) ||
+               matchesAggregatorForward(event, aggregatorPackages, listOf("cimb notification", "cimb octo"))
     }
 
     override fun extract(event: RawEvent): StructuredDraft? {
         val title = event.title
         val text = event.text
         
-        val amount = com.sciuro.core.parsing.util.extractAmount(text) ?: com.sciuro.core.parsing.util.extractAmount(title) ?: return null
+        val amount = extractAmount(text) ?: extractAmount(title) ?: return null
         
         val isOutflow = text.contains("deducted", ignoreCase = true) ||
                         text.contains("ditolak", ignoreCase = true) ||
@@ -33,8 +42,8 @@ class CimbParserRule : ParserRule {
             else -> null
         }
 
-        val merchant = com.sciuro.core.parsing.util.extractMerchant(text)
-        val counterpartyAccount = com.sciuro.core.parsing.util.extractAccountNumber(text)
+        val merchant = extractMerchant(text)
+        val counterpartyAccount = extractAccountNumber(text)
 
         val confidenceScore = (if (amount > 0) 0.3f else 0f) +
                               (if (direction != null) 0.3f else 0f) +

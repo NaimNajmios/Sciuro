@@ -28,6 +28,7 @@ import com.sciuro.feature.kanban.ui.KanbanScreen
 import com.sciuro.feature.budgets.ui.BudgetsScreen
 import com.sciuro.feature.debt.ui.DebtOverviewScreen
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
+import org.koin.androidx.compose.koinViewModel
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
@@ -262,7 +263,8 @@ fun SciuroMainScreen() {
             composable("settings") { 
                 com.sciuro.feature.settings.ui.SettingsScreen(
                     onNavigateToDeveloperSettings = { navController.navigate("developer_settings") },
-                    onNavigateToCategorySettings = { navController.navigate("category_settings") }
+                    onNavigateToCategorySettings = { navController.navigate("category_settings") },
+                    onNavigateToLinkedAccounts = { navController.navigate("linked_accounts") }
                 ) 
             }
             composable(
@@ -282,6 +284,16 @@ fun SciuroMainScreen() {
                 com.sciuro.feature.settings.ui.DeveloperSettingsScreen(
                     onNavigateBack = { navController.popBackStack() }
                 ) 
+            }
+            composable(
+                "linked_accounts",
+                enterTransition = drillInEnter,
+                popExitTransition = drillInPopExit
+            ) {
+                val linkedAccountsViewModel: com.sciuro.feature.settings.viewmodel.LinkedAccountsViewModel = koinViewModel()
+                com.sciuro.feature.settings.ui.LinkedAccountsScreen(
+                    viewModel = linkedAccountsViewModel
+                )
             }
         }
     }

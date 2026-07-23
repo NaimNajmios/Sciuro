@@ -64,6 +64,28 @@ class CimbParserRuleTest {
                 expectedMerchant = null,
                 expectedAccount = "CIMB",
                 expectedCounterpartyAccountNumber = "1234"
+            ),
+            ParserTestCase(
+                description = "CIMB OCTO app (screenshot text)",
+                packageName = "my.com.cimb.octo",
+                title = "CIMB OCTO MY",
+                text = "RM 2.00 has been credited to your account ending 1234.",
+                expectedAmount = 2.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null,
+                expectedAccount = "CIMB",
+                expectedCounterpartyAccountNumber = "1234"
+            ),
+            ParserTestCase(
+                description = "CIMB text fallback via title (no known package)",
+                packageName = "com.android.mms",
+                title = "CIMB Notification",
+                text = "RM 2.00 has been credited to your account ending 1234.",
+                expectedAmount = 2.00,
+                expectedDirection = TransactionDirection.INFLOW,
+                expectedMerchant = null,
+                expectedAccount = "CIMB",
+                expectedCounterpartyAccountNumber = "1234"
             )
         )
         

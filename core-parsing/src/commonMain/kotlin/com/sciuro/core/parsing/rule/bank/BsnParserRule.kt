@@ -7,10 +7,22 @@ import com.sciuro.core.parsing.rule.ParserRule
 import com.sciuro.core.parsing.util.extractAccountNumber
 import com.sciuro.core.parsing.util.extractAmount
 import com.sciuro.core.parsing.util.extractMerchant
+import com.sciuro.core.parsing.util.matchesAggregatorForward
 
-class BsnParserRule : ParserRule {
+class BsnParserRule(
+    private val aggregatorPackages: Set<String> = emptySet()
+) : ParserRule {
     override fun matches(event: RawEvent): Boolean {
-        return event.sourcePackageOrAddress == "com.bsn.mybsn" || event.text.contains("BSN:", ignoreCase = true)
+        return event.sourcePackageOrAddress == "com.bsn.mybsn" ||
+               event.text.contains("BSN:", ignoreCase = true) ||
+               matchesAggregatorForward(event, aggregatorPackages, listOf("mybsn", "bsn transaction"))
+    }
+
+    private val duitNowMerchantRegex =
+        """DuitNow\s+to\s+([A-Za-z0-9\s&@.'-]+?)(?:\s*-\s*RM|\s+on\s+\d|\s*$)""".toRegex(RegexOption.IGNORE_CASE)
+
+    private fun extractBsnDuitNowMerchant(text: String): String? {
+        return duitNowMerchantRegex.find(text)?.groupValues?.get(1)?.trim()
     }
 
     override fun extract(event: RawEvent): StructuredDraft? {
@@ -20,7 +32,10 @@ class BsnParserRule : ParserRule {
         
         val isOutflow = text.contains("Transaction of", ignoreCase = true) ||
                         text.contains("Transaksi sebanyak", ignoreCase = true) ||
-                        text.contains("ditolak", ignoreCase = true)
+                        text.contains("ditolak", ignoreCase = true) ||
+                        (text.contains("DuitNow to", ignoreCase = true) &&
+                            text.contains("successful", ignoreCase = true) &&
+                            !text.contains("unsuccessful", ignoreCase = true))
 
         val isInflow = text.contains("credited", ignoreCase = true) ||
                        text.contains("received", ignoreCase = true) ||
@@ -32,7 +47,7 @@ class BsnParserRule : ParserRule {
             isInflow -> TransactionDirection.INFLOW
             else -> null
         }
-        val merchant = extractMerchant(text)
+        val merchant = extractBsnDuitNowMerchant(text) ?: extractMerchant(text)
         val counterpartyAccount = extractAccountNumber(text)
 
         val confidenceScore = (if (amount > 0) 0.3f else 0f) +

@@ -35,6 +35,7 @@ import java.net.URL
 fun SettingsScreen(
     onNavigateToCategorySettings: () -> Unit = {},
     onNavigateToDeveloperSettings: () -> Unit = {},
+    onNavigateToLinkedAccounts: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
     settingsProvider: SettingsProvider = koinInject()
 ) {
@@ -275,6 +276,22 @@ fun SettingsScreen(
                                     }
                                 )
                             }
+                        }
+                    }
+                }
+
+                item {
+                    com.najmi.sciuro.core.ui.components.SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        onClick = onNavigateToLinkedAccounts
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Linked Account Pairs", style = MaterialTheme.typography.titleMedium)
+                            Icon(Icons.Filled.ArrowForward, contentDescription = "Linked Account Pairs")
                         }
                     }
                 }

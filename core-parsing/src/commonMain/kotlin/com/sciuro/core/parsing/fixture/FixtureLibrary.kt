@@ -22,6 +22,8 @@ object FixtureLibrary {
             "RM 250.00 telah masuk ke dalam akaun anda berakhir 5678."),
         Fixture("CIMB Ambiguous", "com.cimbmalaysia", "Notification",
             "RM 100.00 from account ending 1234."),
+        Fixture("CIMB OCTO Inflow", "my.com.cimb.octo", "CIMB OCTO MY",
+            "RM 2.00 has been credited to your account ending 1234."),
 
         // Maybank
         Fixture("MAE Push Payment", "com.maybank2u.life", "Payment Successful",
@@ -36,6 +38,8 @@ object FixtureLibrary {
             "Your salary of RM 8500.00 has been deposited into your account."),
         Fixture("Maybank Ambiguous", "com.maybank2u.life", "Alert",
             "RM 75.00 from account ending 5678."),
+        Fixture("Maybank2u Legacy Inflow", "com.maybank2u.m2u", "Maybank2u: Funds Received",
+            "You've just received RM 5.40 in your account ending ***3943."),
 
         // BSN
         Fixture("BSN EN SMS", "com.bsn.mybsn", "SMS",
@@ -44,6 +48,8 @@ object FixtureLibrary {
             "BSN: Transaksi sebanyak RM15.00 kepada TEALIVE pada 12/10/24 14:30 adalah berjaya. Ruj: 123."),
         Fixture("BSN Inflow", "com.bsn.mybsn", "SMS",
             "BSN: RM 2000.00 has been credited to your account. Ref: 456."),
+        Fixture("BSN DuitNow Outflow", "com.bsn.mybsn", "myBSN",
+            "DuitNow to MUHAMMAD NAIM N - RM5.40 on 23/07/2026 09:00:25 AM successful. Didn't do this? Call Contact Centre."),
         Fixture("BSN Ambiguous", "com.bsn.mybsn", "SMS",
             "BSN: RM 50.00 from account ending 789."),
 

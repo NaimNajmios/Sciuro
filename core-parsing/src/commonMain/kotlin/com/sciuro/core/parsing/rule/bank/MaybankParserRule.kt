@@ -7,10 +7,17 @@ import com.sciuro.core.parsing.rule.ParserRule
 import com.sciuro.core.parsing.util.extractAccountNumber
 import com.sciuro.core.parsing.util.extractAmount
 import com.sciuro.core.parsing.util.extractMerchant
+import com.sciuro.core.parsing.util.matchesAggregatorForward
 
-class MaybankParserRule : ParserRule {
+class MaybankParserRule(
+    private val aggregatorPackages: Set<String> = emptySet()
+) : ParserRule {
     override fun matches(event: RawEvent): Boolean {
-        return event.sourcePackageOrAddress == "com.maybank2u.life" || event.text.contains("Maybank:", ignoreCase = true)
+        return event.sourcePackageOrAddress == "com.maybank2u.life" ||
+               event.sourcePackageOrAddress == "com.maybank2u.m2u" ||
+               event.text.contains("Maybank:", ignoreCase = true) ||
+               event.title.contains("Maybank2u", ignoreCase = true) ||
+               matchesAggregatorForward(event, aggregatorPackages, listOf("m2u", "maybank2u", "maybank"))
     }
 
     override fun extract(event: RawEvent): StructuredDraft? {

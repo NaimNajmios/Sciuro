@@ -1,0 +1,10 @@
+CREATE TABLE transaction_corroboration (
+    transaction_id TEXT NOT NULL,
+    raw_event_id TEXT NOT NULL,
+    captured_at INTEGER NOT NULL,
+    PRIMARY KEY (transaction_id, raw_event_id),
+    FOREIGN KEY(transaction_id) REFERENCES transaction_record(id),
+    FOREIGN KEY(raw_event_id) REFERENCES raw_event_staging(id)
+);
+
+CREATE INDEX idx_tx_dedup ON transaction_record(account_id, amount, timestamp);
