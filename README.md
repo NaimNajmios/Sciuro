@@ -51,7 +51,7 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 | Budgets | Total spent vs allocated | — | — | Top 3 at-risk budgets |
 | Account Detail | Account balance | — | — | Adjust Balance button |
 | Debt Overview | I Owe / Owed to Me totals | — | — | Direction breakdown row |
-| Kanban | Hardcoded debt estimate | — | — | Task status breakdown |
+| Kanban | Active tasks / Bills due / Active debts (tab-aware) | — | — | Tab-aware: status breakdown / bill urgency / debt totals |
 | Developer Settings | Time since last capture | — | — | Pipeline pending/dead counts |
 | Settings (×2) | "Config" / "More" | — | — | — |
 

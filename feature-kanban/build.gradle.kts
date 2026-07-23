@@ -19,6 +19,9 @@ kotlin {
                 implementation(libs.koin.core)
                 implementation(project(":core-ledger"))
                 implementation(project(":core-audit"))
+                implementation(project(":core-obligations"))
+                implementation(project(":core-debt"))
+                implementation(project(":core-parsing"))
             }
         }
         val androidMain by getting {
