@@ -25,6 +25,11 @@ kotlin {
                 implementation(libs.koin.android)
             }
         }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 

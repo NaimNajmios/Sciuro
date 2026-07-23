@@ -24,9 +24,12 @@ import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.core.budget.model.BudgetPeriod
+import com.sciuro.core.budget.engine.BudgetLimitSuggester
 import com.sciuro.feature.budgets.model.BudgetHealth
 import com.sciuro.feature.budgets.viewmodel.BudgetsViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.androidx.compose.getKoin
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +47,8 @@ fun BudgetsScreen(
     var amountText by remember { mutableStateOf("") }
     var selectedPeriod by remember { mutableStateOf(BudgetPeriod.MONTHLY) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var suggestedAmount by remember { mutableStateOf<Double?>(null) }
+    val suggester: BudgetLimitSuggester = getKoin().get()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -184,6 +189,14 @@ fun BudgetsScreen(
         val isEditing = editingBudgetId != null
         val title = if (isEditing) "Edit Budget" else "Create Budget"
 
+        LaunchedEffect(selectedCategoryId) {
+            if (!isEditing && selectedCategoryId != null) {
+                suggestedAmount = suggester.suggestLimit(selectedCategoryId!!)
+            } else {
+                suggestedAmount = null
+            }
+        }
+
         SciuroBottomSheet(onDismissRequest = { showSheet = false }) {
             Text(title, style = MaterialTheme.typography.headlineSmall)
 
@@ -208,6 +221,26 @@ fun BudgetsScreen(
                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                 )
             )
+
+            if (!isEditing && suggestedAmount != null && suggestedAmount!! > 0.0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        "Suggested:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    SuggestionChip(
+                        onClick = { amountText = "%.0f".format(suggestedAmount!!) },
+                        label = { Text("RM ${"%.0f".format(suggestedAmount!!)}") }
+                    )
+                }
+            }
 
             Text("Period", style = MaterialTheme.typography.labelLarge)
             SingleChoiceSegmentedButtonRow(

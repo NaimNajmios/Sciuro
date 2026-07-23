@@ -42,3 +42,27 @@ SELECT * FROM raw_event_staging WHERE id = ?;
 
 countDeadLetter:
 SELECT COUNT(*) FROM raw_event_staging WHERE status = 'DEAD_LETTER';
+
+selectMatchRateByPackage:
+SELECT
+    source_package_or_address AS package_name,
+    COUNT(*) AS total,
+    SUM(CASE WHEN status = 'PROCESSED' THEN 1 ELSE 0 END) AS processed,
+    SUM(CASE WHEN status = 'DEAD_LETTER' THEN 1 ELSE 0 END) AS dead_letter,
+    MAX(captured_at) AS last_captured_at
+FROM raw_event_staging
+WHERE captured_at >= ?
+GROUP BY source_package_or_address
+ORDER BY total DESC;
+
+selectMatchRateByPackageRecent:
+SELECT
+    source_package_or_address AS package_name,
+    COUNT(*) AS total,
+    SUM(CASE WHEN status = 'PROCESSED' THEN 1 ELSE 0 END) AS processed,
+    SUM(CASE WHEN status = 'DEAD_LETTER' THEN 1 ELSE 0 END) AS dead_letter,
+    MAX(captured_at) AS last_captured_at
+FROM raw_event_staging
+WHERE captured_at >= ? AND captured_at < ?
+GROUP BY source_package_or_address
+ORDER BY total DESC;

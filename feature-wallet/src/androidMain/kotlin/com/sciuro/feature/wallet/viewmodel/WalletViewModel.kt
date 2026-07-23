@@ -37,6 +37,7 @@ class WalletViewModel(
                     name = it.name,
                     balance = it.balance,
                     isEWallet = it.type.lowercase().contains("ewallet") || it.type.lowercase().contains("e-wallet"),
+                    isCashWallet = it.type.lowercase().contains("cash") || it.type.lowercase().contains("personal"),
                     type = it.type,
                     associatedPackage = it.associated_package,
                     color = it.color

@@ -1,0 +1,89 @@
+﻿> Task :core-ingestion:preBuild UP-TO-DATE
+> Task :core-ui:preBuild UP-TO-DATE
+> Task :core-parsing:preBuild UP-TO-DATE
+> Task :feature-settings:preBuild UP-TO-DATE
+> Task :core-audit:preBuild UP-TO-DATE
+> Task :core-audit:preDebugBuild UP-TO-DATE
+> Task :core-ingestion:preDebugBuild UP-TO-DATE
+> Task :feature-settings:preDebugBuild UP-TO-DATE
+> Task :core-ui:preDebugBuild UP-TO-DATE
+> Task :core-parsing:preDebugBuild UP-TO-DATE
+> Task :core-audit:generateDebugResValues UP-TO-DATE
+> Task :core-ui:generateDebugResValues UP-TO-DATE
+> Task :core-ingestion:generateDebugResValues UP-TO-DATE
+> Task :core-parsing:generateDebugResValues UP-TO-DATE
+> Task :feature-settings:generateDebugResValues UP-TO-DATE
+> Task :feature-settings:generateDebugResources UP-TO-DATE
+> Task :core-parsing:generateDebugResources UP-TO-DATE
+> Task :core-audit:generateDebugResources UP-TO-DATE
+> Task :core-ui:generateDebugResources UP-TO-DATE
+> Task :core-ingestion:generateDebugResources UP-TO-DATE
+> Task :core-ledger:generateCommonMainSciuroDatabaseInterface UP-TO-DATE
+> Task :core-ledger:preBuild UP-TO-DATE
+> Task :core-ledger:preDebugBuild UP-TO-DATE
+> Task :core-ledger:generateDebugResValues UP-TO-DATE
+> Task :core-ledger:generateDebugResources UP-TO-DATE
+> Task :core-ledger:packageDebugResources UP-TO-DATE
+> Task :feature-settings:packageDebugResources UP-TO-DATE
+> Task :core-audit:packageDebugResources UP-TO-DATE
+> Task :core-parsing:packageDebugResources UP-TO-DATE
+> Task :core-ui:packageDebugResources UP-TO-DATE
+> Task :core-ingestion:packageDebugResources UP-TO-DATE
+> Task :core-ingestion:parseDebugLocalResources UP-TO-DATE
+> Task :feature-settings:parseDebugLocalResources UP-TO-DATE
+> Task :core-parsing:parseDebugLocalResources UP-TO-DATE
+> Task :core-ui:parseDebugLocalResources UP-TO-DATE
+> Task :core-ledger:parseDebugLocalResources UP-TO-DATE
+> Task :core-audit:parseDebugLocalResources UP-TO-DATE
+> Task :core-ingestion:generateDebugRFile UP-TO-DATE
+> Task :core-ui:generateDebugRFile UP-TO-DATE
+> Task :feature-settings:generateDebugRFile UP-TO-DATE
+> Task :core-audit:generateDebugRFile UP-TO-DATE
+> Task :core-parsing:generateDebugRFile UP-TO-DATE
+> Task :core-ledger:generateDebugRFile UP-TO-DATE
+> Task :core-parsing:javaPreCompileDebug UP-TO-DATE
+> Task :core-ingestion:javaPreCompileDebug UP-TO-DATE
+> Task :core-ledger:javaPreCompileDebug UP-TO-DATE
+> Task :core-audit:javaPreCompileDebug UP-TO-DATE
+> Task :core-ui:javaPreCompileDebug UP-TO-DATE
+> Task :core-audit:compileDebugKotlinAndroid
+> Task :core-audit:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-audit:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :core-ui:compileDebugKotlin
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ui/src/main/java/com/najmi/sciuro/core/ui/components/AdjustmentCard.kt:19:5 Parameter 'formattedTime' is never used
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ui/src/main/java/com/najmi/sciuro/core/ui/components/AdjustmentCard.kt:20:5 Parameter 'onClick' is never used
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ui/src/main/java/com/najmi/sciuro/core/ui/components/FastTransactionSheet.kt:243:66 'Backspace: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Backspace
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ui/src/main/java/com/najmi/sciuro/core/ui/components/SciuroMascot.kt:31:5 Parameter 'iterations' is never used
+
+> Task :core-ledger:compileDebugKotlinAndroid
+> Task :core-ledger:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-ledger:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core-ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core-ingestion:compileDebugKotlinAndroid
+> Task :core-ingestion:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-ingestion:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :core-parsing:compileDebugKotlinAndroid
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-parsing/src/commonMain/kotlin/com/sciuro/core/parsing/engine/LlmFallbackParser.kt:167:27 Parameter 'reason' is never used
+
+> Task :core-parsing:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-parsing:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :feature-settings:compileDebugKotlinAndroid
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-settings/src/androidMain/kotlin/com/sciuro/feature/settings/ui/CategorySettingsScreen.kt:43:52 'ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-settings/src/androidMain/kotlin/com/sciuro/feature/settings/ui/DeveloperTabHealth.kt:20:46 'getKoin(): Koin' is deprecated. use org.koin.compose.getKoin() instead
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-settings/src/androidMain/kotlin/com/sciuro/feature/settings/ui/DeveloperTabSources.kt:19:48 'getKoin(): Koin' is deprecated. use org.koin.compose.getKoin() instead
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-settings/src/androidMain/kotlin/com/sciuro/feature/settings/ui/SettingsScreen.kt:38:5 Parameter 'viewModel' is never used
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-settings/src/androidMain/kotlin/com/sciuro/feature/settings/ui/SettingsScreen.kt:247:47 'ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-settings/src/androidMain/kotlin/com/sciuro/feature/settings/ui/SettingsScreen.kt:288:47 'ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.6/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 49s
+47 actionable tasks: 6 executed, 41 up-to-date

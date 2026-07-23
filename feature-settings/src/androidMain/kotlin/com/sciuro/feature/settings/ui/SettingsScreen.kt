@@ -21,6 +21,7 @@ import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
 import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SheetList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,7 +31,6 @@ import org.koin.compose.koinInject
 import java.net.HttpURLConnection
 import java.net.URL
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateToCategorySettings: () -> Unit = {},
@@ -82,17 +82,27 @@ fun SettingsScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Appearance", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
-                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                                ThemePreference.values().forEachIndexed { index, pref ->
-                                    SegmentedButton(
-                                        selected = themePref == pref,
-                                        onClick = { themeManager.setTheme(pref) },
-                                        shape = SegmentedButtonDefaults.itemShape(index = index, count = ThemePreference.values().size)
-                                    ) {
-                                        Text(pref.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() })
-                                    }
-                                }
+                            val themeLabels = listOf("System", "Light", "Dark")
+                            val selectedLabel = when (themePref) {
+                                ThemePreference.SYSTEM_DEFAULT -> "System"
+                                ThemePreference.LIGHT -> "Light"
+                                ThemePreference.DARK -> "Dark"
                             }
+                            PillToggle(
+                                options = themeLabels,
+                                selectedOption = selectedLabel,
+                                onOptionSelected = { label ->
+                                    val pref = when (label) {
+                                        "System" -> ThemePreference.SYSTEM_DEFAULT
+                                        "Light" -> ThemePreference.LIGHT
+                                        "Dark" -> ThemePreference.DARK
+                                        else -> ThemePreference.SYSTEM_DEFAULT
+                                    }
+                                    themeManager.setTheme(pref)
+                                },
+                                fillWidth = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                 }

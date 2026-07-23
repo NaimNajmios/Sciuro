@@ -26,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import com.sciuro.core.classifier.orchestrator.SciuroIngestionOrchestrator
+import com.sciuro.core.classifier.rule.RuleLearner
 
 import com.sciuro.feature.debt.di.debtFeatureModule
 import com.sciuro.core.obligations.di.obligationsModule
@@ -39,6 +40,7 @@ class SciuroApp : Application(), KoinComponent {
     
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val orchestrator: SciuroIngestionOrchestrator by inject()
+    private val ruleLearner: RuleLearner by inject()
     
     override fun onCreate() {
         super.onCreate()
@@ -69,5 +71,6 @@ class SciuroApp : Application(), KoinComponent {
         
         // Start the ingestion orchestrator to process raw events
         orchestrator.startListening(appScope)
+        ruleLearner.start(appScope)
     }
 }

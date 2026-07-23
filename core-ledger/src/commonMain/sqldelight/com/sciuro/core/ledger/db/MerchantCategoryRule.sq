@@ -1,0 +1,43 @@
+CREATE TABLE merchant_category_rule (
+    merchant_key TEXT NOT NULL PRIMARY KEY,
+    category_id TEXT NOT NULL,
+    confirmation_count INTEGER NOT NULL DEFAULT 1,
+    first_seen_at INTEGER NOT NULL,
+    last_confirmed_at INTEGER NOT NULL
+);
+
+CREATE TABLE recipient_rule (
+    account_ref TEXT NOT NULL PRIMARY KEY,
+    classification TEXT NOT NULL,
+    confirmation_count INTEGER NOT NULL DEFAULT 1,
+    last_confirmed_at INTEGER NOT NULL
+);
+
+upsertMerchantRule:
+INSERT OR REPLACE INTO merchant_category_rule(merchant_key, category_id, confirmation_count, first_seen_at, last_confirmed_at)
+VALUES (?, ?, ?, ?, ?);
+
+selectMerchantRuleByKey:
+SELECT * FROM merchant_category_rule WHERE merchant_key = ?;
+
+selectMerchantRuleByCategory:
+SELECT * FROM merchant_category_rule WHERE category_id = ?;
+
+selectAllMerchantRules:
+SELECT * FROM merchant_category_rule;
+
+deleteMerchantRule:
+DELETE FROM merchant_category_rule WHERE merchant_key = ?;
+
+upsertRecipientRule:
+INSERT OR REPLACE INTO recipient_rule(account_ref, classification, confirmation_count, last_confirmed_at)
+VALUES (?, ?, ?, ?);
+
+selectRecipientRuleByRef:
+SELECT * FROM recipient_rule WHERE account_ref = ?;
+
+selectAllRecipientRules:
+SELECT * FROM recipient_rule;
+
+deleteRecipientRule:
+DELETE FROM recipient_rule WHERE account_ref = ?;

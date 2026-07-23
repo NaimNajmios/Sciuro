@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -239,7 +240,11 @@ fun WalletScreen(
                                             )
                                         } else {
                                             Icon(
-                                                imageVector = if (account.isEWallet) Icons.Filled.AccountBalanceWallet else Icons.Filled.AccountBalance,
+                                                imageVector = when {
+                                                    account.isCashWallet -> Icons.Filled.Wallet
+                                                    account.isEWallet -> Icons.Filled.AccountBalanceWallet
+                                                    else -> Icons.Filled.AccountBalance
+                                                },
                                                 contentDescription = null
                                             )
                                         }
@@ -255,7 +260,11 @@ fun WalletScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            if (account.isEWallet) "E-Wallet" else "Bank Account",
+                                            when {
+                                                account.isCashWallet -> "Cash Wallet"
+                                                account.isEWallet -> "E-Wallet"
+                                                else -> "Bank Account"
+                                            },
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = contentCol.copy(alpha = 0.7f)
                                         )

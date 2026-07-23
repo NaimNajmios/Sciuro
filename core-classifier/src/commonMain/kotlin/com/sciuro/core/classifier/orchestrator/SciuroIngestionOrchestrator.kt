@@ -16,6 +16,7 @@ import com.sciuro.core.debt.engine.DebtEngine
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.investment.engine.InvestmentEngine
 import com.sciuro.core.obligations.engine.ObligationDetectionEngine
+import com.sciuro.core.classifier.rule.CategoryResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -33,6 +34,7 @@ class SciuroIngestionOrchestrator(
     private val debtEngine: DebtEngine,
     private val investmentEngine: InvestmentEngine,
     private val obligationDetectionEngine: ObligationDetectionEngine,
+    private val categoryResolver: CategoryResolver,
     private val confidenceThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD
 ) {
     private var job: Job? = null
@@ -89,7 +91,7 @@ class SciuroIngestionOrchestrator(
                 return
             }
 
-            val categoryId = guessCategoryId(draft.merchant)
+            val categoryId = categoryResolver.resolve(draft.merchant)
 
             val matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
             val accountId = matchedAccount?.id
@@ -152,21 +154,5 @@ class SciuroIngestionOrchestrator(
     fun stopListening() {
         job?.cancel()
         job = null
-    }
-
-    private fun guessCategoryId(merchant: String?): String? {
-        if (merchant == null) return null
-        val lower = merchant.lowercase()
-        return when {
-            lower.contains("starbucks") || lower.contains("mcdonalds") || lower.contains("kfc") || lower.contains("burger king") || lower.contains("tealive") || lower.contains("warung") -> "cat_dining"
-            lower.contains("jaya grocer") || lower.contains("speedmart") || lower.contains("mydin") -> "cat_groceries"
-            lower.contains("grab") -> "cat_transport"
-            lower.contains("tenaga nasional") -> "cat_utilities"
-            else -> null
-        }
-    }
-
-    private fun guessAccountId(channel: String?): String {
-        return "acc_${channel?.lowercase()?.replace(" ", "_") ?: "unknown"}"
     }
 }

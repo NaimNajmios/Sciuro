@@ -1,0 +1,98 @@
+﻿> Task :core-investment:preBuild UP-TO-DATE
+> Task :core-transfer:preBuild UP-TO-DATE
+> Task :core-ui:preBuild UP-TO-DATE
+> Task :core-audit:preBuild UP-TO-DATE
+> Task :feature-wallet:preBuild UP-TO-DATE
+> Task :core-audit:preDebugBuild UP-TO-DATE
+> Task :feature-wallet:preDebugBuild UP-TO-DATE
+> Task :core-ui:preDebugBuild UP-TO-DATE
+> Task :core-investment:preDebugBuild UP-TO-DATE
+> Task :core-transfer:preDebugBuild UP-TO-DATE
+> Task :core-ui:generateDebugResValues UP-TO-DATE
+> Task :core-investment:generateDebugResValues UP-TO-DATE
+> Task :core-audit:generateDebugResValues UP-TO-DATE
+> Task :feature-wallet:generateDebugResValues UP-TO-DATE
+> Task :core-transfer:generateDebugResValues UP-TO-DATE
+> Task :core-investment:generateDebugResources UP-TO-DATE
+> Task :core-transfer:generateDebugResources UP-TO-DATE
+> Task :core-audit:generateDebugResources UP-TO-DATE
+> Task :feature-wallet:generateDebugResources UP-TO-DATE
+> Task :core-ui:generateDebugResources UP-TO-DATE
+> Task :core-ledger:generateCommonMainSciuroDatabaseInterface UP-TO-DATE
+> Task :core-ledger:preBuild UP-TO-DATE
+> Task :core-ledger:preDebugBuild UP-TO-DATE
+> Task :core-ledger:generateDebugResValues UP-TO-DATE
+> Task :core-ledger:generateDebugResources UP-TO-DATE
+> Task :core-ui:packageDebugResources UP-TO-DATE
+> Task :core-transfer:packageDebugResources UP-TO-DATE
+> Task :feature-wallet:packageDebugResources UP-TO-DATE
+> Task :core-ledger:packageDebugResources UP-TO-DATE
+> Task :core-audit:packageDebugResources UP-TO-DATE
+> Task :core-investment:packageDebugResources UP-TO-DATE
+> Task :feature-wallet:parseDebugLocalResources UP-TO-DATE
+> Task :core-audit:parseDebugLocalResources UP-TO-DATE
+> Task :core-ledger:parseDebugLocalResources UP-TO-DATE
+> Task :core-investment:parseDebugLocalResources UP-TO-DATE
+> Task :core-transfer:parseDebugLocalResources UP-TO-DATE
+> Task :core-ui:parseDebugLocalResources UP-TO-DATE
+> Task :core-ledger:generateDebugRFile UP-TO-DATE
+> Task :feature-wallet:generateDebugRFile UP-TO-DATE
+> Task :core-ui:generateDebugRFile UP-TO-DATE
+> Task :core-audit:generateDebugRFile UP-TO-DATE
+> Task :core-transfer:generateDebugRFile UP-TO-DATE
+> Task :core-investment:generateDebugRFile UP-TO-DATE
+> Task :core-ledger:javaPreCompileDebug UP-TO-DATE
+> Task :feature-wallet:javaPreCompileDebug UP-TO-DATE
+> Task :feature-wallet:preDebugUnitTestBuild UP-TO-DATE
+> Task :core-transfer:javaPreCompileDebug UP-TO-DATE
+> Task :core-investment:javaPreCompileDebug UP-TO-DATE
+> Task :core-audit:compileDebugKotlinAndroid UP-TO-DATE
+> Task :core-audit:javaPreCompileDebug UP-TO-DATE
+> Task :core-audit:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-audit:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core-audit:processDebugJavaRes UP-TO-DATE
+> Task :core-audit:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core-ledger:compileDebugKotlinAndroid UP-TO-DATE
+> Task :core-ledger:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-ledger:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core-ledger:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :core-ledger:processDebugJavaRes UP-TO-DATE
+> Task :core-ui:compileDebugKotlin UP-TO-DATE
+> Task :core-ui:javaPreCompileDebug UP-TO-DATE
+> Task :core-ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-ui:processDebugJavaRes UP-TO-DATE
+> Task :core-ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :feature-wallet:javaPreCompileDebugUnitTest
+> Task :core-ui:bundleLibRuntimeToJarDebug
+> Task :feature-wallet:generateDebugUnitTestStubRFile
+> Task :core-transfer:compileDebugKotlinAndroid
+> Task :core-investment:compileDebugKotlinAndroid
+> Task :core-transfer:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-investment:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-investment:processDebugJavaRes UP-TO-DATE
+> Task :core-transfer:processDebugJavaRes UP-TO-DATE
+> Task :core-transfer:bundleLibRuntimeToJarDebug
+> Task :core-investment:bundleLibRuntimeToJarDebug
+> Task :core-transfer:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core-investment:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :feature-wallet:compileDebugKotlinAndroid
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-wallet/src/androidMain/kotlin/com/sciuro/feature/wallet/ui/WalletScreen.kt:78:5 Parameter 'settingsProvider' is never used
+
+> Task :feature-wallet:compileDebugJavaWithJavac NO-SOURCE
+> Task :feature-wallet:processDebugJavaRes UP-TO-DATE
+> Task :feature-wallet:bundleLibRuntimeToJarDebug
+> Task :feature-wallet:bundleLibCompileToJarDebug
+> Task :feature-wallet:compileDebugUnitTestKotlinAndroid NO-SOURCE
+> Task :feature-wallet:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :feature-wallet:processDebugUnitTestJavaRes NO-SOURCE
+> Task :feature-wallet:testDebugUnitTest NO-SOURCE
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.6/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 30s
+63 actionable tasks: 10 executed, 53 up-to-date

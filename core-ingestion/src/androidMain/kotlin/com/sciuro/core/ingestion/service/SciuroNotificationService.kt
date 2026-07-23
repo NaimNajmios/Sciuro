@@ -3,7 +3,7 @@ package com.sciuro.core.ingestion.service
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import com.sciuro.core.ingestion.config.IngestionConfig
+import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
@@ -19,6 +19,7 @@ class SciuroNotificationService : NotificationListenerService() {
 
     private val notificationSourceAdapter: NotificationSourceAdapter by inject()
     private val rawEventRepository: RawEventRepository by inject()
+    private val allowlist: MutableIngestionAllowlist by inject()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onListenerConnected() {
@@ -51,7 +52,7 @@ class SciuroNotificationService : NotificationListenerService() {
     private suspend fun processAndPersistNotification(sbn: StatusBarNotification) {
         val packageName = sbn.packageName
 
-        if (packageName !in IngestionConfig.allowedPackages) return
+        if (!allowlist.allows(packageName)) return
 
         val notification = sbn.notification
         val title = notification.extras.getString(Notification.EXTRA_TITLE) ?: ""
@@ -59,7 +60,7 @@ class SciuroNotificationService : NotificationListenerService() {
 
         if (title.isBlank() && text.isBlank()) return
 
-        if (packageName in IngestionConfig.aggregatorPackages) {
+        if (allowlist.isDefaultAggregatorPackage(packageName)) {
             if (!isFinancialAggregatorNotification(title, text)) {
                 return
             }

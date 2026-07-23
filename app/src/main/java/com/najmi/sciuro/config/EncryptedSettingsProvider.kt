@@ -69,4 +69,24 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setApiKey(apiKey: String) {
         sharedPreferences.edit().putString("api_key", apiKey).apply()
     }
+
+    override fun getIngestionAllowlistAdditions(): Set<String> {
+        val raw = sharedPreferences.getString("ingestion_allowlist_additions", "") ?: ""
+        if (raw.isBlank()) return emptySet()
+        return raw.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet()
+    }
+
+    override fun setIngestionAllowlistAdditions(packages: Set<String>) {
+        sharedPreferences.edit().putString("ingestion_allowlist_additions", packages.joinToString(",")).apply()
+    }
+
+    override fun getIngestionAllowlistRemovals(): Set<String> {
+        val raw = sharedPreferences.getString("ingestion_allowlist_removals", "") ?: ""
+        if (raw.isBlank()) return emptySet()
+        return raw.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet()
+    }
+
+    override fun setIngestionAllowlistRemovals(packages: Set<String>) {
+        sharedPreferences.edit().putString("ingestion_allowlist_removals", packages.joinToString(",")).apply()
+    }
 }

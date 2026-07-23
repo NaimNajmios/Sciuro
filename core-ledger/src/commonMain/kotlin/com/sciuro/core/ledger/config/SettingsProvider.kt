@@ -14,4 +14,8 @@ interface SettingsProvider {
     fun isLockEnabled(): Boolean
     fun setLockEnabled(enabled: Boolean)
     fun getLlmConfig(): LlmParsingConfig = LlmParsingConfig()
+    fun getIngestionAllowlistAdditions(): Set<String>
+    fun setIngestionAllowlistAdditions(packages: Set<String>)
+    fun getIngestionAllowlistRemovals(): Set<String>
+    fun setIngestionAllowlistRemovals(packages: Set<String>)
 }

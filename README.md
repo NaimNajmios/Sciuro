@@ -6,7 +6,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 * **Deterministic Self-Transfer Detection:** Two-tier matching engine identifies cross-account transfers using counterparty account numbers extracted from all 7 bank/ewallet notification parsers (Tier 1), falling back to amount+time heuristic only when no account number is present (Tier 2). Masked-number suffix matching handles partially-hidden account numbers (e.g., "...7890", "****7890"). Human-confirmed pairs auto-link on future matches.
 * **Account Data Enrichment:** Each account stores its own account number, account holder name, bank code, and QR code image. These fields are set once via the Account Detail edit sheet and enable identity-based transfer matching instead of coincidence-based guessing.
-* **QR Code Display:** Accounts can store a QR code image (captured from gallery) for quick display when receiving payments. Shown as a tappable thumbnail on the account detail screen with fullscreen expansion.
+* **QR Code Display:** Bank accounts and e-wallets can store a QR code image (captured from gallery) for quick display when receiving payments. A QR icon button in the account detail hero section opens a large full-screen dialog for scannable display. Cash wallets (Personal Wallet) do not expose QR code features.
 * **Obligation / Recurring Bill Tracking:** Pattern-based auto-detection of subscriptions and recurring outflows. Per-transaction cycle matching that automatically advances due dates when a matching payment is booked. Bills can be created, edited, deleted, or deactivated manually.
 * **Debt Tracking:** Full CRUD for debts with direction support (I Owe / Owed to Me), progress tracking, counterparty identification, and lifecycle management (Active / Paid Off / Archived). Supports all debt types: loans, credit cards, and informal money owed between people. Automatic payment matching via `DebtEngine` respects direction — repayments owed to you are correctly recognized from incoming transactions.
 * **Budget Tracking:** Full CRUD for category budgets with per-category spending limits, progress bars, and reactive spend recalculation. Three-state visual (Healthy / Approaching / Over) with per-budget alert thresholds. Calendar-month boundaries for MONTHLY budgets. Transfer-linked transactions are excluded from spend calculations. Optional rollover carries unused budget to the next period. Create/edit/delete budgets via bottom sheet with category picker and period selector (weekly/monthly/yearly).
@@ -51,7 +51,7 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 |---|---|---|---|---|
 | Dashboard | Total net worth | Real daily balance history | This Month / All Time | Accounts count + weekly adjustments |
 | Budgets | Total spent vs allocated | — | — | Top 3 at-risk budgets |
-| Account Detail | Account balance | — | — | Adjust Balance button |
+| Account Detail | Account balance | — | — | Adjust Balance + QR icon |
 | Debt Overview | I Owe / Owed to Me totals | — | — | Direction breakdown row |
 | Kanban | Active tasks / Bills due / Active debts (tab-aware) | — | — | Tab-aware: status breakdown / bill urgency / debt totals |
 | Developer Settings | Time since last capture | — | — | Pipeline pending/dead counts |

@@ -120,6 +120,7 @@ fun AccountDetailScreen(
     }
 
     val account = state.account!!
+    val isCashWallet = account.type.lowercase().contains("cash") || account.type.lowercase().contains("personal")
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -144,8 +145,25 @@ fun AccountDetailScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 24.dp)
                             .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        if (account.qr_image_path != null && !isCashWallet) {
+                            FilledTonalButton(
+                                onClick = { showQrFullScreen = true },
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = Color.White.copy(alpha = 0.15f),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Icon(
+                                    Icons.Filled.QrCodeScanner,
+                                    contentDescription = "View QR Code",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
                         FilledTonalButton(
                             onClick = { showAdjustmentDialog = true },
                             colors = ButtonDefaults.filledTonalButtonColors(
@@ -213,14 +231,6 @@ fun AccountDetailScreen(
                     }
                 }
             }
-        }
-
-        val qrImagePath = account.qr_image_path
-        if (qrImagePath != null) {
-            QrCodeSection(
-                filePath = qrImagePath,
-                onTap = { showQrFullScreen = true }
-            )
         }
 
         SheetList(modifier = Modifier.fillMaxWidth().weight(1f)) {
@@ -489,6 +499,7 @@ fun AccountDetailScreen(
             currentAccountHolderName = state.account?.account_holder_name,
             currentBankInstitutionCode = state.account?.bank_institution_code,
             currentQrImagePath = state.account?.qr_image_path,
+            isCashWallet = isCashWallet,
             onDismiss = { showEditDetailsDialog = false },
             onConfirm = { accountNumber, accountHolderName, bankInstitutionCode ->
                 viewModel.updateAccountDetails(accountNumber, accountHolderName, bankInstitutionCode)
@@ -524,40 +535,6 @@ private fun QrCodeThumbnail(
     }
 }
 
-@Composable
-private fun QrCodeSection(
-    filePath: String,
-    onTap: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onTap)
-            .padding(horizontal = 24.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.White)
-                .padding(4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            QrCodeThumbnail(
-                filePath = filePath,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            "Tap to view QR",
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.7f)
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditAccountDetailsSheet(
@@ -565,6 +542,7 @@ private fun EditAccountDetailsSheet(
     currentAccountHolderName: String?,
     currentBankInstitutionCode: String?,
     currentQrImagePath: String?,
+    isCashWallet: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (accountNumber: String?, accountHolderName: String?, bankInstitutionCode: String?) -> Unit,
     onPickQr: () -> Unit,
@@ -609,47 +587,49 @@ private fun EditAccountDetailsSheet(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            "QR Code",
-            style = MaterialTheme.typography.titleSmall
-        )
+        if (!isCashWallet) {
+            Text(
+                "QR Code",
+                style = MaterialTheme.typography.titleSmall
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        if (currentQrImagePath != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(4.dp)
+            if (currentQrImagePath != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    QrCodeThumbnail(
-                        filePath = currentQrImagePath,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(4.dp)
+                    ) {
+                        QrCodeThumbnail(
+                            filePath = currentQrImagePath,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    OutlinedButton(onClick = onPickQr) {
+                        Text("Change")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(onClick = onRemoveQr) {
+                        Text("Remove", color = MaterialTheme.colorScheme.error)
+                    }
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-                OutlinedButton(onClick = onPickQr) {
-                    Text("Change")
+            } else {
+                OutlinedButton(
+                    onClick = onPickQr,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Select QR Image")
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onRemoveQr) {
-                    Text("Remove", color = MaterialTheme.colorScheme.error)
-                }
-            }
-        } else {
-            OutlinedButton(
-                onClick = onPickQr,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Select QR Image")
             }
         }
 

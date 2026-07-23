@@ -1,0 +1,14 @@
+CREATE TABLE merchant_category_rule (
+    merchant_key TEXT NOT NULL PRIMARY KEY,
+    category_id TEXT NOT NULL,
+    confirmation_count INTEGER NOT NULL DEFAULT 1,
+    first_seen_at INTEGER NOT NULL,
+    last_confirmed_at INTEGER NOT NULL
+);
+
+CREATE TABLE recipient_rule (
+    account_ref TEXT NOT NULL PRIMARY KEY,
+    classification TEXT NOT NULL,
+    confirmation_count INTEGER NOT NULL DEFAULT 1,
+    last_confirmed_at INTEGER NOT NULL
+);
