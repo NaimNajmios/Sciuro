@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.parsing.engine.SimulationResult
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
+import com.najmi.sciuro.core.ui.components.SciuroTextField
 
 @Composable
 fun DeveloperTabDiagnostics(
@@ -24,25 +25,22 @@ fun DeveloperTabDiagnostics(
             Spacer(modifier = Modifier.height(16.dp))
             Text("Parser Diagnostics", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
+            SciuroTextField(
                 value = diagPackage,
                 onValueChange = { diagPackage = it },
-                label = { Text("Package Name") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Package Name"
             )
             Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
+            SciuroTextField(
                 value = diagTitle,
                 onValueChange = { diagTitle = it },
-                label = { Text("Title") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Title"
             )
             Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
+            SciuroTextField(
                 value = diagText,
                 onValueChange = { diagText = it },
-                label = { Text("Text") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Text",
                 minLines = 3
             )
             Spacer(modifier = Modifier.height(8.dp))

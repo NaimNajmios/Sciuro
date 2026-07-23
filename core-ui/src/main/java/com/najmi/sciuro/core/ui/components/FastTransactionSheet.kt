@@ -1,6 +1,8 @@
 package com.najmi.sciuro.core.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -8,13 +10,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
 
 data class FastTxOption(val id: String, val name: String)
 
@@ -37,6 +45,18 @@ fun FastTransactionSheet(
     
     var showCategoryError by remember { mutableStateOf(false) }
 
+    val shakeOffset = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+
+    suspend fun triggerShake() {
+        val amplitude = 12f
+        repeat(3) {
+            shakeOffset.animateTo(amplitude, tween(45))
+            shakeOffset.animateTo(-amplitude, tween(45))
+        }
+        shakeOffset.animateTo(0f, tween(45))
+    }
+
     // Auto-update destination account if accountId changes and matches
     LaunchedEffect(accountId) {
         if (direction == "TRANSFER" && destinationAccountId == accountId) {
@@ -51,7 +71,7 @@ fun FastTransactionSheet(
             text = "RM $displayAmount",
             style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
             color = if (direction == "OUTFLOW") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp).graphicsLayer { translationX = shakeOffset.value },
             textAlign = TextAlign.Center
         )
 
@@ -172,7 +192,7 @@ fun FastTransactionSheet(
                 val isDestinationValid = direction != "TRANSFER" || destinationAccountId != null
                 
                 if (amt <= 0.0) {
-                    // Do nothing or show shake animation
+                    scope.launch { triggerShake() }
                 } else if (!isCategoryValid) {
                     showCategoryError = true
                 } else if (accountId != null && isDestinationValid) {
@@ -220,7 +240,7 @@ fun Numpad(
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onNumberClick("0") 
             }, modifier = Modifier.weight(1f))
-            NumpadButton(text = "?", onClick = {
+            NumpadButton(text = "Backspace", icon = Icons.Filled.Backspace, onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onBackspaceClick()
             }, modifier = Modifier.weight(1f))
@@ -238,7 +258,7 @@ fun Numpad(
 }
 
 @Composable
-fun NumpadButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun NumpadButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
     Surface(
         modifier = modifier.height(64.dp),
         shape = RoundedCornerShape(16.dp),
@@ -246,7 +266,11 @@ fun NumpadButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
         onClick = onClick
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(text, style = MaterialTheme.typography.headlineMedium)
+            if (icon != null) {
+                Icon(icon, contentDescription = text, modifier = Modifier.size(28.dp))
+            } else {
+                Text(text, style = MaterialTheme.typography.headlineMedium)
+            }
         }
     }
 }

@@ -61,26 +61,24 @@ fun AdjustmentBottomSheet(
             )
         }
 
-        OutlinedTextField(
+        SciuroTextField(
             value = amountStr,
             onValueChange = { amountStr = it },
-            label = { Text("New Balance (RM)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            label = "New Balance (RM)",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
 
         ExposedDropdownMenuBox(
             expanded = reasonExpanded,
             onExpandedChange = { reasonExpanded = !reasonExpanded }
         ) {
-            OutlinedTextField(
+            SciuroTextField(
                 value = if (isCustom && customReason.isNotBlank()) customReason else reason.ifBlank { "Select reason..." },
                 onValueChange = {},
                 readOnly = !isCustom,
-                label = { Text("Reason") },
+                label = "Reason",
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = reasonExpanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
+                modifier = Modifier.menuAnchor()
             )
             ExposedDropdownMenu(
                 expanded = reasonExpanded,
@@ -100,12 +98,10 @@ fun AdjustmentBottomSheet(
         }
 
         if (isCustom) {
-            OutlinedTextField(
+            SciuroTextField(
                 value = customReason,
                 onValueChange = { customReason = it },
-                label = { Text("Custom Reason") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Custom Reason"
             )
         }
 

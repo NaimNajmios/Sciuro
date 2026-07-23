@@ -163,7 +163,7 @@ fun DebtOverviewScreen(
                                             progress = { if (debt.progress > 1f) 1f else debt.progress },
                                             modifier = Modifier.fillMaxWidth().height(8.dp),
                                             color = progressColor,
-                                            trackColor = Color.LightGray
+                                            trackColor = MaterialTheme.colorScheme.surfaceVariant
                                         )
 
                                         Spacer(modifier = Modifier.height(4.dp))

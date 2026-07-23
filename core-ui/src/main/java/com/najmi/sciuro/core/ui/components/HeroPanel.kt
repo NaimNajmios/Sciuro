@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.najmi.sciuro.core.ui.theme.SurfaceHero
 
 @Composable
@@ -33,6 +35,7 @@ fun HeroPanel(
         modifier = modifier
             .fillMaxWidth()
             .background(SurfaceHero)
+            .semantics(mergeDescendants = true) { contentDescription = title }
             .padding(top = 48.dp, bottom = 32.dp)
     ) {
         Row(
@@ -67,12 +70,10 @@ fun HeroPanel(
         
         if (!chartData.isNullOrEmpty()) {
             Spacer(modifier = Modifier.height(32.dp))
-            WaveChart(
-                data = chartData, 
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-            )
+                WaveChart(
+                    data = chartData, 
+                    modifier = Modifier.fillMaxWidth()
+                )
         }
 
         content()
@@ -82,57 +83,69 @@ fun HeroPanel(
 @Composable
 fun WaveChart(
     data: List<Float>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    labelColor: Color = Color.White
 ) {
-    Canvas(modifier = modifier) {
-        if (data.size < 2) return@Canvas
-        
-        val maxVal = data.maxOrNull() ?: 1f
-        val minVal = data.minOrNull() ?: 0f
-        val range = if (maxVal == minVal) 1f else (maxVal - minVal)
-        
-        val stepX = size.width / (data.size - 1)
-        val path = Path()
-        
-        data.forEachIndexed { index, value ->
-            val x = index * stepX
-            val normalizedY = 1f - ((value - minVal) / range)
-            val y = normalizedY * (size.height - 12.dp.toPx()) + 6.dp.toPx() // padding for dot
-            
-            if (index == 0) {
-                path.moveTo(x, y)
-            } else {
-                val prevX = (index - 1) * stepX
-                val prevNormY = 1f - ((data[index - 1] - minVal) / range)
-                val prevY = prevNormY * (size.height - 12.dp.toPx()) + 6.dp.toPx()
-                
-                val cpX = (prevX + x) / 2
-                path.cubicTo(cpX, prevY, cpX, y, x, y)
+    Column(modifier = modifier) {
+        Canvas(modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+        ) {
+            if (data.size < 2) return@Canvas
+            val maxVal = data.maxOrNull() ?: 1f
+            val minVal = data.minOrNull() ?: 0f
+            val range = if (maxVal == minVal) 1f else (maxVal - minVal)
+
+            val stepX = size.width / (data.size - 1)
+            val path = Path()
+
+            data.forEachIndexed { index, value ->
+                val x = index * stepX
+                val normalizedY = 1f - ((value - minVal) / range)
+                val y = normalizedY * (size.height - 12.dp.toPx()) + 6.dp.toPx()
+
+                if (index == 0) {
+                    path.moveTo(x, y)
+                } else {
+                    val prevX = (index - 1) * stepX
+                    val prevNormY = 1f - ((data[index - 1] - minVal) / range)
+                    val prevY = prevNormY * (size.height - 12.dp.toPx()) + 6.dp.toPx()
+
+                    val cpX = (prevX + x) / 2
+                    path.cubicTo(cpX, prevY, cpX, y, x, y)
+                }
             }
+
+            drawPath(
+                path = path,
+                color = Color.White,
+                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+
+            val lastX = (data.size - 1) * stepX
+            val lastNormY = 1f - ((data.last() - minVal) / range)
+            val lastY = lastNormY * (size.height - 12.dp.toPx()) + 6.dp.toPx()
+
+            drawCircle(
+                color = Color.White,
+                radius = 5.dp.toPx(),
+                center = Offset(lastX, lastY)
+            )
+            drawCircle(
+                color = SurfaceHero,
+                radius = 5.dp.toPx(),
+                center = Offset(lastX, lastY),
+                style = Stroke(width = 1.5f.dp.toPx())
+            )
         }
-        
-        drawPath(
-            path = path,
-            color = Color.White,
-            style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-        
-        // Highlight last point
-        val lastX = (data.size - 1) * stepX
-        val lastNormY = 1f - ((data.last() - minVal) / range)
-        val lastY = lastNormY * (size.height - 12.dp.toPx()) + 6.dp.toPx()
-        
-        drawCircle(
-            color = Color.White,
-            radius = 5.dp.toPx(),
-            center = Offset(lastX, lastY)
-        )
-        drawCircle(
-            color = SurfaceHero,
-            radius = 5.dp.toPx(),
-            center = Offset(lastX, lastY),
-            style = Stroke(width = 1.5f.dp.toPx())
-        )
+        if (data.isNotEmpty()) {
+            Text(
+                text = "RM ${"%,.2f".format(data.last())}",
+                style = MaterialTheme.typography.labelSmall,
+                color = labelColor.copy(alpha = 0.7f),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
     }
 }
 

@@ -30,6 +30,7 @@ import org.koin.compose.koinInject
 import java.net.HttpURLConnection
 import java.net.URL
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateToCategorySettings: () -> Unit = {},
@@ -52,7 +53,7 @@ fun SettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = "Settings",
-            heroFigure = { Text("Config", style = MaterialTheme.typography.headlineLarge, color = Color.White) },
+            heroFigure = { Text("Settings", style = MaterialTheme.typography.headlineLarge, color = Color.White) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {}
@@ -81,13 +82,15 @@ fun SettingsScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Appearance", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                ThemePreference.values().forEach { pref ->
-                                    FilterChip(
+                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                ThemePreference.values().forEachIndexed { index, pref ->
+                                    SegmentedButton(
                                         selected = themePref == pref,
                                         onClick = { themeManager.setTheme(pref) },
-                                        label = { Text(pref.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }) }
-                                    )
+                                        shape = SegmentedButtonDefaults.itemShape(index = index, count = ThemePreference.values().size)
+                                    ) {
+                                        Text(pref.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() })
+                                    }
                                 }
                             }
                         }

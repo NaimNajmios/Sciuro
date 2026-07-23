@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import com.najmi.sciuro.core.ui.components.SciuroTextField
 import org.koin.androidx.compose.koinViewModel
 
 private val filterOptions = listOf("All", "Transactions", "Adjustments", "Income", "Expense")
@@ -581,35 +582,29 @@ private fun EditAccountDetailsSheet(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
+        SciuroTextField(
             value = accountNumber,
             onValueChange = { accountNumber = it },
-            label = { Text("Account Number") },
-            placeholder = { Text("e.g. 1234567890 or last 4 digits") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            label = "Account Number",
+            placeholder = "e.g. 1234567890 or last 4 digits"
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
+        SciuroTextField(
             value = accountHolderName,
             onValueChange = { accountHolderName = it },
-            label = { Text("Account Holder Name") },
-            placeholder = { Text("e.g. AHMAD BIN ABDULLAH") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            label = "Account Holder Name",
+            placeholder = "e.g. AHMAD BIN ABDULLAH"
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
+        SciuroTextField(
             value = bankInstitutionCode,
             onValueChange = { bankInstitutionCode = it },
-            label = { Text("Bank Code") },
-            placeholder = { Text("e.g. CIMB, MBB, BSN") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            label = "Bank Code",
+            placeholder = "e.g. CIMB, MBB, BSN"
         )
 
         Spacer(modifier = Modifier.height(16.dp))

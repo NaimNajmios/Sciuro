@@ -22,3 +22,13 @@ val SignalIncome = Color(0xFF3DAE5C)
 val SignalTransfer = Color(0xFF7C9CBF)
 val SignalWarning = Color(0xFFE8B84B)
 val SignalDanger = Color(0xFFE3543D)
+
+// Account color presets
+val AccountColorGreen = Color(0xFF4CAF50)
+val AccountColorBlue = Color(0xFF2196F3)
+val AccountColorRed = Color(0xFFF44336)
+val AccountColorPurple = Color(0xFF9C27B0)
+val AccountColorOrange = Color(0xFFFF9800)
+val AccountColorGrey = Color(0xFF607D8B)
+val AccountColorBlack = Color(0xFF1A1A1A)
+val AccountColorBrown = Color(0xFF795548)

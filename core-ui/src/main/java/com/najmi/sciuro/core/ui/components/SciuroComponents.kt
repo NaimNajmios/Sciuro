@@ -51,15 +51,25 @@ fun SciuroTextField(
     singleLine: Boolean = true,
     trailingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
-    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
+    placeholder: String? = null,
+    isError: Boolean = false,
+    supportingText: String? = null,
+    enabled: Boolean = true,
+    minLines: Int = 1
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
         readOnly = readOnly,
         singleLine = singleLine,
         trailingIcon = trailingIcon,
+        isError = isError,
+        supportingText = supportingText?.let { { Text(it) } },
+        enabled = enabled,
+        minLines = minLines,
         keyboardOptions = keyboardOptions,
         visualTransformation = visualTransformation,
         modifier = modifier.fillMaxWidth(),
@@ -67,6 +77,8 @@ fun SciuroTextField(
         colors = OutlinedTextFieldDefaults.colors(
             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
             focusedBorderColor = MaterialTheme.colorScheme.primary,
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            errorLabelColor = MaterialTheme.colorScheme.error,
         )
     )
 }

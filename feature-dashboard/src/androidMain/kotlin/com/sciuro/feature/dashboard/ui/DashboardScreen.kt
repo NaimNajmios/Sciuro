@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.HeroFigure
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
@@ -230,14 +231,14 @@ fun DashboardScreen(
                                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Card(modifier = Modifier.weight(1f)) {
+                                SciuroCard(modifier = Modifier.weight(1f)) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Text("Active Budgets", style = MaterialTheme.typography.titleSmall)
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text("${state.activeBudgetsCount}", style = MaterialTheme.typography.headlineSmall)
                                     }
                                 }
-                                Card(modifier = Modifier.weight(1f)) {
+                                SciuroCard(modifier = Modifier.weight(1f)) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Text(
                                             "Runway",
@@ -383,7 +384,7 @@ fun DashboardScreen(
                                                     contentAlignment = if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
                                                 ) {
                                                     if (icon != null) {
-                                                        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.padding(horizontal = 20.dp))
+                                            Icon(icon, contentDescription = if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) "Approve" else "Reject", tint = Color.White, modifier = Modifier.padding(horizontal = 20.dp))
                                                     }
                                                 }
                                             }
@@ -433,13 +434,13 @@ fun DashboardScreen(
                         onExpandedChange = { accountExpanded = it }
                     ) {
                         val selAcc = state.accounts.find { it.id == selectedAccountIdForApproval }
-                        OutlinedTextField(
+                        SciuroTextField(
                             value = selAcc?.name ?: "Select Account",
                             onValueChange = {},
                             readOnly = true,
+                            label = "Wallet Account",
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
-                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                            modifier = Modifier.menuAnchor()
                         )
                         ExposedDropdownMenu(
                             expanded = accountExpanded,

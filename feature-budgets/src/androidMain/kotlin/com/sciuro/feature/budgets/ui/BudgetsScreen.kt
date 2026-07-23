@@ -149,7 +149,7 @@ fun BudgetsScreen(
                                             progress = { if (budget.progress > 1f) 1f else budget.progress },
                                             modifier = Modifier.fillMaxWidth().height(8.dp),
                                             color = progressColor,
-                                            trackColor = Color.LightGray
+                                            trackColor = MaterialTheme.colorScheme.surfaceVariant
                                         )
                                     }
                                 }

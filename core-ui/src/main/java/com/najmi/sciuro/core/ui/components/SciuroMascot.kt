@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.theme.reducedMotion
 
 /**
  * Placeholder component for the upcoming Lottie Mascot Animations.
@@ -57,6 +58,7 @@ private fun MascotPlaceholder(icon: ImageVector, description: String, color: Col
 
 @Composable
 private fun ThinkingPlaceholder() {
+    val noMotion = reducedMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "thinking")
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -70,10 +72,11 @@ private fun ThinkingPlaceholder() {
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         repeat(3) { index ->
+            val dotAlpha = if (noMotion) 0.7f else (if (index == 1) alpha else 1f - alpha)
             Box(
                 modifier = Modifier
                     .size(16.dp)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = if (index == 1) alpha else 1f - alpha), CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = dotAlpha), CircleShape)
             )
         }
     }
@@ -81,6 +84,7 @@ private fun ThinkingPlaceholder() {
 
 @Composable
 private fun CelebratePlaceholder() {
+    val noMotion = reducedMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "celebrate")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -95,13 +99,14 @@ private fun CelebratePlaceholder() {
     Icon(
         imageVector = Icons.Filled.Star,
         contentDescription = "Celebrate",
-        modifier = Modifier.size(64.dp).scale(scale),
-        tint = com.najmi.sciuro.core.ui.theme.SignalWarning // Using warning/amber for celebration star
+        modifier = Modifier.size(64.dp).scale(if (noMotion) 1f else scale),
+        tint = com.najmi.sciuro.core.ui.theme.SignalWarning
     )
 }
 
 @Composable
 private fun RefreshPlaceholder(isPlaying: Boolean) {
+    val noMotion = reducedMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "refresh")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -116,7 +121,7 @@ private fun RefreshPlaceholder(isPlaying: Boolean) {
     Icon(
         imageVector = Icons.Filled.Refresh,
         contentDescription = "Refresh",
-        modifier = Modifier.size(64.dp).rotate(if (isPlaying) rotation else 0f),
+        modifier = Modifier.size(64.dp).rotate(if (noMotion || !isPlaying) 0f else rotation),
         tint = MaterialTheme.colorScheme.primary
     )
 }

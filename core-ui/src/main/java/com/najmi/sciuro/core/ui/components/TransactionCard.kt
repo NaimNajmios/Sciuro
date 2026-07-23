@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalIncome
@@ -132,11 +134,13 @@ fun TransactionCard(
                     confidence >= 0.50f -> SignalWarning
                     else -> SignalDanger
                 }
+                val confidenceLabel = if (extractionMethod == "MANUAL") "Manual entry" else "Confidence ${(confidence * 100).toInt()} percent"
                 Box(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
                         .background(dotColor)
+                        .semantics { contentDescription = confidenceLabel }
                         .padding(end = 6.dp)
                 )
             }

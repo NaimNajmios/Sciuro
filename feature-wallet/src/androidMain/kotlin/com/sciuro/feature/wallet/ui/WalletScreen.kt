@@ -50,6 +50,15 @@ import com.sciuro.feature.wallet.viewmodel.WalletViewModel
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
+import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.theme.AccountColorGreen
+import com.najmi.sciuro.core.ui.theme.AccountColorBlue
+import com.najmi.sciuro.core.ui.theme.AccountColorRed
+import com.najmi.sciuro.core.ui.theme.AccountColorPurple
+import com.najmi.sciuro.core.ui.theme.AccountColorOrange
+import com.najmi.sciuro.core.ui.theme.AccountColorGrey
+import com.najmi.sciuro.core.ui.theme.AccountColorBlack
+import com.najmi.sciuro.core.ui.theme.AccountColorBrown
 import com.najmi.sciuro.core.ui.components.PillToggle
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -474,14 +483,12 @@ fun WalletScreen(
                     style = MaterialTheme.typography.headlineSmall
                 )
                 
-                OutlinedTextField(
+                SciuroTextField(
                     value = newAccountName,
                     onValueChange = { newAccountName = it },
-                    label = { Text("Account Name (e.g. Maybank)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Account Name (e.g. Maybank)"
                 )
-                
+
                 var expanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
                     expanded = expanded,
@@ -489,15 +496,14 @@ fun WalletScreen(
                 ) {
                     val selectedApp = installedApps.find { it.packageName == newAccountPackage }
                     val displayValue = selectedApp?.name ?: newAccountPackage
-                    
-                    OutlinedTextField(
+
+                    SciuroTextField(
                         value = displayValue,
                         onValueChange = { newAccountPackage = it },
-                        label = { Text("Associated App (Optional)") },
-                        placeholder = { Text("Search apps...") },
+                        label = "Associated App (Optional)",
+                        placeholder = "Search apps...",
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
-                        singleLine = true
+                        modifier = Modifier.menuAnchor()
                     )
                     
                     val filteredApps = installedApps.filter { 
@@ -527,13 +533,11 @@ fun WalletScreen(
                     }
                 }
                 
-                OutlinedTextField(
+                SciuroTextField(
                     value = newAccountBalance,
                     onValueChange = { newAccountBalance = it },
-                    label = { Text("Initial Balance (RM)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Initial Balance (RM)",
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 
                 Row(
@@ -566,14 +570,23 @@ fun WalletScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val presetColors = listOf("#4CAF50", "#2196F3", "#F44336", "#9C27B0", "#FF9800", "#607D8B", "#1A1A1A", "#795548")
+                    val presetColors = listOf(
+                        "#4CAF50" to AccountColorGreen,
+                        "#2196F3" to AccountColorBlue,
+                        "#F44336" to AccountColorRed,
+                        "#9C27B0" to AccountColorPurple,
+                        "#FF9800" to AccountColorOrange,
+                        "#607D8B" to AccountColorGrey,
+                        "#1A1A1A" to AccountColorBlack,
+                        "#795548" to AccountColorBrown
+                    )
                     items(presetColors.size) { i ->
-                        val hex = presetColors[i]
+                        val (hex, color) = presetColors[i]
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(Color(android.graphics.Color.parseColor(hex)))
+                                .background(color)
                                 .clickable { newAccountColor = hex }
                                 .padding(2.dp)
                         ) {
@@ -673,48 +686,43 @@ fun WalletScreen(
                 
                 if (newAssetType == "Stock") {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedTextField(
+                        SciuroTextField(
                             value = newAssetSymbol,
                             onValueChange = { newAssetSymbol = it.uppercase() },
-                            label = { Text("Symbol") },
-                            placeholder = { Text("e.g. AAPL") },
-                            singleLine = true,
+                            label = "Symbol",
+                            placeholder = "e.g. AAPL",
                             modifier = Modifier.weight(1f)
                         )
-                        OutlinedTextField(
+                        SciuroTextField(
                             value = newAssetName,
                             onValueChange = { newAssetName = it },
-                            label = { Text("Name") },
-                            placeholder = { Text("e.g. Apple Inc.") },
-                            singleLine = true,
+                            label = "Name",
+                            placeholder = "e.g. Apple Inc.",
                             modifier = Modifier.weight(1f)
                         )
                     }
                 } else {
-                    OutlinedTextField(
+                    SciuroTextField(
                         value = newAssetName,
                         onValueChange = { newAssetName = it },
-                        label = { Text("Account Name") },
-                        placeholder = { Text("e.g. Maybank Gold Account") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Account Name",
+                        placeholder = "e.g. Maybank Gold Account"
                     )
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
+                    val unitsLabel = if (newAssetType == "Gold") "Grams Held" else "Units Held"
+                    SciuroTextField(
                         value = newUnitsHeld,
                         onValueChange = { newUnitsHeld = it },
-                        label = { Text(if (newAssetType == "Gold") "Grams Held" else "Units Held") },
-                        singleLine = true,
+                        label = unitsLabel,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
-                    OutlinedTextField(
+                    SciuroTextField(
                         value = newAvgBuyPrice,
                         onValueChange = { newAvgBuyPrice = it },
-                        label = { Text("Avg Price (RM)") },
-                        singleLine = true,
+                        label = "Avg Price (RM)",
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -726,14 +734,13 @@ fun WalletScreen(
                     onExpandedChange = { accountExpanded = !accountExpanded }
                 ) {
                     val selectedAccount = accounts.find { it.id == newAssociatedAccountId }
-                    OutlinedTextField(
+                    SciuroTextField(
                         value = selectedAccount?.name ?: "None",
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Funding Account (Optional)") },
+                        label = "Funding Account (Optional)",
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
-                        singleLine = true
+                        modifier = Modifier.menuAnchor()
                     )
                     
                     ExposedDropdownMenu(
@@ -823,19 +830,17 @@ fun WalletScreen(
         ) {
                 Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
                 
-                OutlinedTextField(
+                SciuroTextField(
                     value = editTxAmount,
                     onValueChange = { editTxAmount = it },
-                    label = { Text("Amount (RM)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Amount (RM)",
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
-                
-                OutlinedTextField(
+
+                SciuroTextField(
                     value = editTxMerchant,
                     onValueChange = { editTxMerchant = it },
-                    label = { Text("Merchant / Note") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Merchant / Note"
                 )
                 
                 SingleChoiceSegmentedButtonRow(
@@ -863,13 +868,13 @@ fun WalletScreen(
                     onExpandedChange = { accountExpanded = it }
                 ) {
                     val selAcc = accounts.find { it.id == editTxAccountId }
-                    OutlinedTextField(
+                    SciuroTextField(
                         value = selAcc?.name ?: "Select Account",
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Wallet Account") },
+                        label = "Wallet Account",
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor()
                     )
                     ExposedDropdownMenu(
                         expanded = accountExpanded,

@@ -33,7 +33,7 @@ fun CategorySettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = "Categories",
-            heroFigure = { Text("Config", style = MaterialTheme.typography.headlineLarge, color = Color.White) },
+            heroFigure = { Text("Categories", style = MaterialTheme.typography.headlineLarge, color = Color.White) },
             toggleOptions = listOf("Income", "Expense"),
             selectedToggle = selectedToggle,
             onToggleSelected = { selectedToggle = it },

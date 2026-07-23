@@ -44,6 +44,7 @@ fun PillToggle(
                 Box(
                     modifier = Modifier
                         .then(if (fillWidth) Modifier.weight(1f) else Modifier)
+                        .defaultMinSize(minHeight = 44.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(if (isSelected) activeColor else Color.Transparent)
                         .clickable { onOptionSelected(option) }

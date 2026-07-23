@@ -3,13 +3,18 @@ package com.sciuro.feature.kanban.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sciuro.core.debt.model.Debt
+import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.model.DebtStatus
+import com.sciuro.core.debt.model.DebtType
 import com.sciuro.core.debt.repository.DebtRepository
+import com.sciuro.core.ledger.model.Account
+import com.sciuro.core.ledger.model.Category
 import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.ledger.repository.AccountRepository
+import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
-import com.sciuro.core.ledger.model.Account
 import com.sciuro.core.obligations.model.Obligation
+import com.sciuro.core.obligations.model.ObligationFrequency
 import com.sciuro.core.obligations.repository.ObligationRepository
 import com.sciuro.feature.kanban.model.BillTask
 import com.sciuro.feature.kanban.model.DebtTask
@@ -31,6 +36,7 @@ import java.util.UUID
 class KanbanViewModel(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
+    private val categoryRepository: CategoryRepository,
     private val obligationRepository: ObligationRepository,
     private val debtRepository: DebtRepository,
     eventBus: DomainEventBus
@@ -99,6 +105,10 @@ class KanbanViewModel(
             initialValue = emptyList()
         )
 
+    val expenseCategories: StateFlow<List<Category>> = categoryRepository
+        .observeCategoriesByType("OUTFLOW")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun updateTaskStatus(taskId: String, newStatus: TaskStatus, newAccountId: String? = null, newDirection: String? = null) {
         if (newStatus == TaskStatus.DONE) {
             viewModelScope.launch {
@@ -134,6 +144,55 @@ class KanbanViewModel(
     fun recordDebtPayment(debtId: String, amount: Double) {
         viewModelScope.launch(Dispatchers.IO) {
             debtRepository.applyPayment(debtId, amount)
+        }
+    }
+
+    fun createObligation(
+        name: String,
+        amount: Double,
+        frequency: ObligationFrequency,
+        nextDueDate: Long,
+        categoryId: String?,
+        accountId: String?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            obligationRepository.createObligation(
+                Obligation(
+                    id = UUID.randomUUID().toString(),
+                    name = name,
+                    amount = amount,
+                    frequency = frequency,
+                    nextDueDate = nextDueDate,
+                    categoryId = categoryId,
+                    accountId = accountId,
+                    isActive = true
+                )
+            )
+        }
+    }
+
+    fun createDebt(
+        name: String,
+        type: DebtType,
+        direction: DebtDirection,
+        principalAmount: Double,
+        counterpartyName: String?,
+        notes: String?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            debtRepository.createDebt(
+                Debt(
+                    id = UUID.randomUUID().toString(),
+                    name = name,
+                    type = type,
+                    direction = direction,
+                    counterpartyName = counterpartyName,
+                    status = DebtStatus.ACTIVE,
+                    principalAmount = principalAmount,
+                    remainingBalance = principalAmount,
+                    notes = notes
+                )
+            )
         }
     }
 }

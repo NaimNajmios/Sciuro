@@ -9,6 +9,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import com.sciuro.feature.wallet.viewmodel.OnboardingViewModel
+import com.najmi.sciuro.core.ui.components.SciuroTextField
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,13 +53,11 @@ fun OnboardingScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
             
-            OutlinedTextField(
+            SciuroTextField(
                 value = initialBalanceStr,
                 onValueChange = { initialBalanceStr = it },
-                label = { Text("Initial Balance (MYR)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Initial Balance (MYR)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             
             Spacer(modifier = Modifier.height(32.dp))

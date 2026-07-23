@@ -2,16 +2,23 @@ package com.sciuro.feature.kanban.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.najmi.sciuro.core.ui.theme.reducedMotion
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroCard
@@ -26,9 +33,18 @@ import com.sciuro.feature.kanban.model.DebtTask
 import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import com.sciuro.feature.kanban.viewmodel.KanbanViewModel
+import com.sciuro.core.debt.model.DebtDirection
+import com.sciuro.core.debt.model.DebtType
+import com.sciuro.core.obligations.model.ObligationFrequency
+import com.sciuro.core.ledger.model.Category
 import org.koin.androidx.compose.koinViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.ui.graphics.graphicsLayer
@@ -40,6 +56,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val accounts by viewModel.accounts.collectAsState()
     val bills by viewModel.bills.collectAsState()
     val debtTasks by viewModel.debtTasks.collectAsState()
+    val expenseCategories by viewModel.expenseCategories.collectAsState()
 
     var selectedTab by remember { mutableStateOf("Review") }
     val tabs = listOf("Review", "Bills", "Debts")
@@ -62,6 +79,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     var paymentDebt by remember { mutableStateOf<DebtTask?>(null) }
     var paymentAmountText by remember { mutableStateOf("") }
 
+    var showAddSheet by remember { mutableStateOf(false) }
+
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
     val recentlySettledIds = remember { mutableStateListOf<String>() }
@@ -70,7 +89,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         viewModel.animationTriggers.collect { cardId ->
             recentlySettledIds.add(cardId)
             coroutineScope.launch {
-                delay(2000)
+                delay(1500)
                 recentlySettledIds.remove(cardId)
             }
         }
@@ -175,6 +194,19 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 }
             }
         }
+
+        if (selectedTab != "Review") {
+            FloatingActionButton(
+                onClick = { showAddSheet = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "Add ${selectedTab}")
+            }
+        }
     }
 
     taskToReject?.let { task ->
@@ -234,6 +266,29 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 },
                 enabled = (paymentAmountText.toDoubleOrNull() ?: 0.0) > 0,
                 modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+
+    if (showAddSheet) {
+        when (selectedTab) {
+            "Bills" -> AddBillSheet(
+                accounts = accounts,
+                expenseCategories = expenseCategories,
+                onDismiss = { showAddSheet = false },
+                onCreate = { name, amount, frequency, nextDueDate, categoryId, accountId ->
+                    viewModel.createObligation(name, amount, frequency, nextDueDate, categoryId, accountId)
+                    showAddSheet = false
+                    coroutineScope.launch { snackbarHostState.showSnackbar("Bill created") }
+                }
+            )
+            "Debts" -> AddDebtSheet(
+                onDismiss = { showAddSheet = false },
+                onCreate = { name, type, direction, principalAmount, counterpartyName, notes ->
+                    viewModel.createDebt(name, type, direction, principalAmount, counterpartyName, notes)
+                    showAddSheet = false
+                    coroutineScope.launch { snackbarHostState.showSnackbar("Debt created") }
+                }
             )
         }
     }
@@ -310,8 +365,9 @@ private fun BillCard(
     onMarkPaid: (BillTask) -> Unit,
     isRecentlySettled: Boolean = false
 ) {
+    val noMotion = reducedMotion()
     val scale by animateFloatAsState(
-        targetValue = if (isRecentlySettled) 1.02f else 1f,
+        targetValue = if (isRecentlySettled && !noMotion) 1.02f else 1f,
         animationSpec = spring(),
         label = "billSettle"
     )
@@ -350,9 +406,10 @@ private fun DebtsColumn(
         if (activeDebts.isEmpty()) {
             EmptyStateView(message = "No active debts.")
         } else {
+            val noMotion = reducedMotion()
             activeDebts.forEach { debt ->
                 val scale by animateFloatAsState(
-                    targetValue = if (debt.id in recentlySettledIds) 1.02f else 1f,
+                    targetValue = if (debt.id in recentlySettledIds && !noMotion) 1.02f else 1f,
                     animationSpec = spring(),
                     label = "debtSettle"
                 )
@@ -380,7 +437,7 @@ private fun DebtsColumn(
                             progress = { if (debt.progress > 1f) 1f else debt.progress },
                             modifier = Modifier.fillMaxWidth().height(6.dp),
                             color = progressColor,
-                            trackColor = Color.LightGray
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -522,6 +579,240 @@ fun KanbanTaskCard(
                     modifier = Modifier.weight(1f)
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddBillSheet(
+    accounts: List<Account>,
+    expenseCategories: List<Category>,
+    onDismiss: () -> Unit,
+    onCreate: (name: String, amount: Double, frequency: ObligationFrequency, nextDueDate: Long, categoryId: String?, accountId: String?) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var amountText by remember { mutableStateOf("") }
+    var frequency by remember { mutableStateOf(ObligationFrequency.MONTHLY) }
+    var dueDate by remember { mutableStateOf<Long?>(null) }
+    var categoryId by remember { mutableStateOf<String?>(null) }
+    var selectedAccount by remember { mutableStateOf<Account?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var accountDropdownExpanded by remember { mutableStateOf(false) }
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+
+    SciuroBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text("Add Bill / Subscription", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SciuroTextField(value = name, onValueChange = { name = it }, label = "Name")
+
+            Spacer(modifier = Modifier.height(8.dp))
+            SciuroTextField(
+                value = amountText,
+                onValueChange = { amountText = it },
+                label = "Amount (RM)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Frequency", style = MaterialTheme.typography.labelLarge)
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                ObligationFrequency.entries.forEachIndexed { index, freq ->
+                    SegmentedButton(
+                        selected = frequency == freq,
+                        onClick = { frequency = freq },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = ObligationFrequency.entries.size
+                        )
+                    ) {
+                        Text(freq.name.lowercase().replaceFirstChar { it.uppercase() })
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Next Due Date", style = MaterialTheme.typography.labelLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = dueDate?.let { dateFormatter.format(Date(it)) } ?: "Select Date",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                OutlinedButton(onClick = { showDatePicker = true }) {
+                    Text("Pick Date")
+                }
+            }
+
+            if (showDatePicker) {
+                val datePickerState = rememberDatePickerState(initialSelectedDateMillis = dueDate)
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            dueDate = datePickerState.selectedDateMillis
+                            showDatePicker = false
+                        }) { Text("OK") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Account", style = MaterialTheme.typography.labelLarge)
+            ExposedDropdownMenuBox(
+                expanded = accountDropdownExpanded,
+                onExpandedChange = { accountDropdownExpanded = it }
+            ) {
+                SciuroTextField(
+                    value = selectedAccount?.name ?: "Select Account",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = "Wallet Account",
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountDropdownExpanded) },
+                    modifier = Modifier.menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = accountDropdownExpanded,
+                    onDismissRequest = { accountDropdownExpanded = false }
+                ) {
+                    accounts.forEach { account ->
+                        DropdownMenuItem(
+                            text = { Text(account.name) },
+                            onClick = {
+                                selectedAccount = account
+                                accountDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Category", style = MaterialTheme.typography.labelLarge)
+            if (expenseCategories.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(expenseCategories) { cat ->
+                        FilterChip(
+                            selected = categoryId == cat.id,
+                            onClick = { categoryId = if (categoryId == cat.id) null else cat.id },
+                            label = { Text(cat.name) }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val isFormValid = name.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0 && dueDate != null
+            SciuroPrimaryButton(
+                text = "Create Bill",
+                onClick = {
+                    onCreate(
+                        name,
+                        amountText.toDouble(),
+                        frequency,
+                        dueDate!!,
+                        categoryId,
+                        selectedAccount?.id
+                    )
+                },
+                enabled = isFormValid,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddDebtSheet(
+    onDismiss: () -> Unit,
+    onCreate: (name: String, type: DebtType, direction: DebtDirection, principalAmount: Double, counterpartyName: String?, notes: String?) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var direction by remember { mutableStateOf(DebtDirection.I_OWE) }
+    var amountText by remember { mutableStateOf("") }
+    var counterparty by remember { mutableStateOf("") }
+
+    SciuroBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text("Add Debt", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Direction", style = MaterialTheme.typography.labelLarge)
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                DebtDirection.entries.forEachIndexed { index, dir ->
+                    SegmentedButton(
+                        selected = direction == dir,
+                        onClick = { direction = dir },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = DebtDirection.entries.size
+                        )
+                    ) {
+                        Text(
+                            when (dir) {
+                                DebtDirection.I_OWE -> "I Owe"
+                                DebtDirection.OWED_TO_ME -> "Owed to Me"
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            SciuroTextField(value = name, onValueChange = { name = it }, label = "Debt Name")
+
+            Spacer(modifier = Modifier.height(8.dp))
+            SciuroTextField(
+                value = counterparty,
+                onValueChange = { counterparty = it },
+                label = "Counterparty (who owes / is owed)"
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            SciuroTextField(
+                value = amountText,
+                onValueChange = { amountText = it },
+                label = "Amount (RM)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SciuroPrimaryButton(
+                text = "Create Debt",
+                onClick = {
+                    onCreate(
+                        name,
+                        DebtType.MONEY_OWED,
+                        direction,
+                        amountText.toDouble(),
+                        counterparty.ifBlank { null },
+                        null
+                    )
+                },
+                enabled = name.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

@@ -3,7 +3,10 @@ package com.najmi.sciuro.core.ui.components
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
+import com.najmi.sciuro.core.ui.theme.SciuroMotion
+import com.najmi.sciuro.core.ui.theme.reducedMotion
 import java.util.Locale
 
 @Composable
@@ -25,7 +30,13 @@ fun HeroFigure(
     color: Color = Color.White,
     modifier: Modifier = Modifier
 ) {
-    val formatted = String.format(Locale.US, "%,.${decimals}f", amount)
+    val noMotion = reducedMotion()
+    val displayAmount by animateFloatAsState(
+        targetValue = amount.toFloat(),
+        animationSpec = if (noMotion) tween(0) else SciuroMotion.count,
+        label = "heroFigure"
+    )
+    val formatted = String.format(Locale.US, "%,.${decimals}f", displayAmount)
     val prefixSize = (style.fontSize.value * 0.55f).sp
 
     Text(

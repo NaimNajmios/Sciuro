@@ -259,4 +259,88 @@ These are the patterns I see most often. If you catch yourself doing any of thes
 
 ---
 
-These guidelines work when they produce fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+## 19. Sciuro-Specific Conventions
+
+The rules above are universal. What follows is specific to Sciuro. These are not optional. The project is a Kotlin Multiplatform Android app with strict modular boundaries, Compose UI, SQLDelight + SQLCipher persistence, and Koin DI. If you write code that ignores these conventions, you are building debt, not features.
+
+### 19.1 Module layering
+
+The project has three rigid layers defined in `settings.gradle.kts:23-41`. The dependency rule is one-way:
+
+```
+app → feature-* → core-*
+```
+
+`feature-*` modules are Android-only (UI). `core-*` modules are KMP (`commonMain` + `androidMain` + `jvmMain` in some cases). `core-ui` is a `core-*` module holding shared Compose primitives and theming.
+
+Rules:
+
+- A `core-*` module **never** depends on a `feature-*` module. If you find yourself adding `implementation(project(":feature-X"))` to a `core` module, stop. You are inverting the dependency graph.
+- A `feature-*` module **never** imports from another `feature-*` module. Cross-feature communication goes through the Domain Event Bus — a central event stream that decouples feature modules. Do not bypass it with direct ViewModel references.
+- `app` is the thinnest possible shell: it wires Koin modules, hosts the `NavHost`, and provides the `Application` subclass. Do not add business logic, persistence calls, or parsing code here.
+- New modules follow the same layer: `core-<noun>` for domain engines and persistence, `feature-<noun>` for UI. If you're not sure which layer a new capability belongs to, say so before creating the module.
+- Koin modules are defined in `<Name>Module.kt` inside each module's `di/` package (e.g. `core-budget/.../di/BudgetModule.kt`). Follow that exact pattern for new modules.
+
+### 19.2 Version catalog and dependencies
+
+All dependency versions live in `gradle/libs.versions.toml`. This is the single source of truth for the project's dependency graph.
+
+Rules:
+
+- **Never** hardcode a version string in any `build.gradle.kts`. Use `libs.<name>` for libraries, `libs.plugins.<name>` for plugins.
+- Adding a dependency means: (a) an entry in `gradle/libs.versions.toml`, (b) a justification in your change description per rule 16, (c) the `implementation(libs.xxx)` line in the relevant module's `build.gradle.kts`. Do not skip step (b).
+- The project already has Koin for DI, Ktor for networking, SQLDelight for persistence, and kotlinx.serialization for JSON. Do not introduce an alternative for any of these without explicit approval.
+- Platform-specific drivers (e.g. Android SQLDelight driver, Ktor Android engine) go in the platform source set (`androidMain`), not in `commonMain`.
+
+### 19.3 Kotlin and Compose conventions
+
+This is a Compose project. There is no XML-based UI, no Fragments, no legacy View system in feature modules.
+
+Rules:
+
+- ViewModel exposes a single `StateFlow<UiState>` where `UiState` is a `sealed interface`. Variants: `Loading`, `Empty`, `Success(data)`, `Error(message)`. Domain-specific variants exist (e.g. `DebtListState`). Follow the pattern in `feature-wallet/.../WalletViewModel.kt`. Never expose `MutableStateFlow` from a ViewModel.
+- Composables are stateless. State lives in the ViewModel. Pass data and callbacks down. Do not call Koin from a Composable outside of a `@Preview` — and `@Preview` composables must not call Koin at all.
+- `@Preview` functions must be annotated, static (top-level or class member), and must not have parameters that require DI. Wrap previews in `SciuroTheme { ... }`.
+- UI primitives in `core-ui` (`SciuroBottomSheet`, `SciuroTextField`, `SciuroDialog`, `HeroPanel`, `SheetList`) are the only approved building blocks for screens. Do not create a new bottom sheet or text field in a feature module. If a primitive is missing, extend `core-ui`, not the feature.
+- Full-screen swiping screens follow the pattern documented in `README.md:60-83`: `Box(fillMaxSize) { LazyColumn { item { HeroPanel(...) } ; item { SheetList(offset(-24.dp).fillParentMaxHeight()) { Column { ... } } } } ; FAB(BottomEnd) }`. Content inside `SheetList` uses `Column` + `forEach` — never a nested `LazyColumn`.
+- Hero figure text uses `headlineLarge` typography to prevent number overflow.
+- `SCI`-prefixed color tokens from `SciuroTheme` are the only colors used in Compose. Never use `Color(0xFF...)` inline. No hardcoded colors, period.
+- Strings go in `app/src/main/res/values/strings.xml`. Not hardcoded in Composables. Not in a Kotlin `object`.
+
+### 19.4 Build, test, and static analysis
+
+Rules:
+
+- Gradle invocations always use `--console=plain`. Add `--build-cache` and `--parallel` unless you have a specific reason not to.
+- Never pipe Gradle output through `tail`, `Select-Object`, or any buffering command. Redirect to a file first, then read the tail. `./gradlew assembleDebug > build_log.txt 2>&1` followed by `Get-Content build_log.txt -Tail 20`.
+- Module-specific test targets:
+  - Android-side unit tests: `./gradlew :<module>:testDebugUnitTest`
+  - KMP shared tests: `./gradlew :<module>:jvmTest` (e.g. `core-transfer:jvmTest`)
+  - Full suite: `./gradlew allTests`
+- Detekt is the only static analysis tool. Config: `config/detekt/detekt.yml`. Run: `./gradlew detekt`. A PR must have a clean detekt run. Do not suppress detekt warnings with `@Suppress` unless you can explain why the rule does not apply to that specific case.
+- Do not add ktlint, Spotless, or any additional formatter/linter without explicit approval. The project uses detekt as the single lint gate.
+
+### 19.5 Phase workflow, docs, and git
+
+The project tracks work in phases under `development_documentation/phase-<id>-<slug>/`.
+
+Rules:
+
+- Every phase folder must contain at minimum `TEST_NOTES.md`. For phases that encounter unexpected behavior, add `PROBLEMS.md`. These are the project's institutional memory — they are not optional.
+- `TEST_NOTES.md` entries document what was tested, how it was tested, and whether it passed. Write them as you test, not retrospectively. A bullet list with test name + result is sufficient: `- [PASS] TransferEngine detects self-transfer from same-account-number pair`.
+- Architectural decisions use the ADR format from `supporting_skills/ADR_PROMPT.md`. Place them in the relevant phase folder. Do not invent a new format.
+- `reference/` contains planning documents (`sciuro-implementation-plan.md`, `sciuro-uiux-implementation-plan.md`, etc.). These are reference materials — link to them from phase docs, do not copy-paste their content.
+- `supporting_skills/` contains reusable agent prompts. When a task matches a skill (e.g. `COMPOSE_SCREEN_ARCHITECTURE_PROMPT.md`, `CODE_REVIEW_REFACTOR_PROMPT.md`, `UI_DESIGN_ENHANCEMENT_PROMPT.md`), load and follow the prompt. Do not re-derive its guidance from memory.
+- Commits: one logical change per commit. Subject line ≤ 72 chars, imperative mood. Prefix with the module when the change is scoped: `core-transfer: fix self-transfer false positive on partial account match`. Use `build:` for Gradle/config changes, `docs:` for documentation-only changes.
+- Commit messages must be specific. "Fix bug" is unacceptable. "Fix SelfTransferDetector crash when extracted account number is empty string" is what you write.
+
+### 19.6 Pre-merge checklist
+
+Before declaring any change complete, verify:
+
+- `./gradlew detekt` returns zero issues.
+- `./gradlew allTests` passes (or, if only a subset was relevant, name the subset and state the results).
+- `TEST_NOTES.md` for the current phase has been updated with the change.
+- For schema changes: the migration is documented and `PROBLEMS.md` records any data migration edge cases.
+- For UI changes: a before/after description is included in the commit body or phase doc.
+- No hardcoded colors, no inline version strings, no `printStackTrace()` or raw `Log.e` calls in production code paths. Use the audit log or structured logging channels the project already has.

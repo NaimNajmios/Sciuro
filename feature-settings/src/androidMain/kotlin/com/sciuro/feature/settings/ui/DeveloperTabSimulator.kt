@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.sciuro.core.parsing.engine.SimulationResult
 import com.sciuro.core.parsing.fixture.FixtureLibrary
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
+import com.najmi.sciuro.core.ui.components.SciuroTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,25 +40,22 @@ fun DeveloperTabSimulator(
                     Text("Dynamic Pipeline Simulator", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    OutlinedTextField(
+                    SciuroTextField(
                         value = customPackage,
                         onValueChange = { customPackage = it; selectedPackage = "" },
-                        label = { Text("Package Name") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Package Name"
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
+                    SciuroTextField(
                         value = customTitle,
                         onValueChange = { customTitle = it },
-                        label = { Text("Notification Title") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Notification Title"
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
+                    SciuroTextField(
                         value = customText,
                         onValueChange = { customText = it },
-                        label = { Text("Notification Text") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Notification Text"
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
@@ -78,13 +76,13 @@ fun DeveloperTabSimulator(
                         expanded = expandedPackage,
                         onExpandedChange = { expandedPackage = !expandedPackage }
                     ) {
-                        OutlinedTextField(
+                        SciuroTextField(
                             value = selectedPackage.ifBlank { "Select package..." },
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Package") },
+                            label = "Package",
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPackage) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor()
+                            modifier = Modifier.menuAnchor()
                         )
                         ExposedDropdownMenu(
                             expanded = expandedPackage,
@@ -117,13 +115,13 @@ fun DeveloperTabSimulator(
                             expanded = expandedTemplate,
                             onExpandedChange = { expandedTemplate = !expandedTemplate }
                         ) {
-                            OutlinedTextField(
+                            SciuroTextField(
                                 value = selectedTemplate?.description ?: "Select template...",
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Template") },
+                                label = "Template",
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTemplate) },
-                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                                modifier = Modifier.menuAnchor()
                             )
                             ExposedDropdownMenu(
                                 expanded = expandedTemplate,

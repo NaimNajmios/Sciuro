@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.ingestion.config.IngestionConfig
+import com.najmi.sciuro.core.ui.components.SciuroTextField
 
 @Composable
 fun DeveloperTabSources(modifier: Modifier = Modifier) {
@@ -50,11 +51,10 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
 
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(
+            SciuroTextField(
                 value = customPackage,
                 onValueChange = { customPackage = it },
-                label = { Text("Add Custom Package") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Add Custom Package",
                 enabled = false
             )
             Spacer(modifier = Modifier.height(4.dp))
