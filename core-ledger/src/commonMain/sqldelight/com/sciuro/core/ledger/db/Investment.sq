@@ -4,6 +4,7 @@ CREATE TABLE investment_record (
     asset_name TEXT NOT NULL,
     asset_type TEXT NOT NULL,
     units_held REAL NOT NULL,
+    unit_type TEXT NOT NULL DEFAULT 'UNITS',
     average_buy_price REAL NOT NULL,
     associated_account_id TEXT,
     created_at INTEGER NOT NULL,
@@ -13,12 +14,12 @@ CREATE TABLE investment_record (
 );
 
 insertInvestment:
-INSERT INTO investment_record(id, asset_symbol, asset_name, asset_type, units_held, average_buy_price, associated_account_id, created_at, updated_at, status)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO investment_record(id, asset_symbol, asset_name, asset_type, units_held, unit_type, average_buy_price, associated_account_id, created_at, updated_at, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateInvestment:
 UPDATE investment_record
-SET asset_symbol = ?, asset_name = ?, asset_type = ?, units_held = ?, average_buy_price = ?, associated_account_id = ?, updated_at = ?
+SET asset_symbol = ?, asset_name = ?, asset_type = ?, units_held = ?, unit_type = ?, average_buy_price = ?, associated_account_id = ?, updated_at = ?
 WHERE id = ?;
 
 updateInvestmentStatus:

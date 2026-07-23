@@ -105,4 +105,13 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setAutoConfirmThreshold(threshold: Int) {
         sharedPreferences.edit().putInt("auto_confirm_threshold", threshold).apply()
     }
+
+    override fun getManualPrice(key: String): Double? {
+        val raw = sharedPreferences.getString("manual_price_$key", null) ?: return null
+        return raw.toDoubleOrNull()
+    }
+
+    override fun setManualPrice(key: String, price: Double) {
+        sharedPreferences.edit().putString("manual_price_$key", price.toString()).apply()
+    }
 }

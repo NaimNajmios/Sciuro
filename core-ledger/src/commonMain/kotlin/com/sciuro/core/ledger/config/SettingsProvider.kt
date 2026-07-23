@@ -22,4 +22,6 @@ interface SettingsProvider {
     fun setAutoConfirmEnabled(enabled: Boolean)
     fun getAutoConfirmThreshold(): Int
     fun setAutoConfirmThreshold(threshold: Int)
+    fun getManualPrice(key: String): Double?
+    fun setManualPrice(key: String, price: Double)
 }

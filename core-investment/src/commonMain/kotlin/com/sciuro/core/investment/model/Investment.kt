@@ -5,6 +5,7 @@ data class Investment(
     val assetSymbol: String,
     val assetName: String,
     val assetType: String,
+    val unitType: String = "UNITS",
     val unitsHeld: Double,
     val averageBuyPrice: Double,
     val associatedAccountId: String?,
