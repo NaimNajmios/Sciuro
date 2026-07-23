@@ -64,6 +64,14 @@
 - [PASS] `@OptIn(ExperimentalMaterial3Api::class)` removed from `SettingsScreen` (no remaining M3 experimental API usage).
 - [PASS] `detekt` zero issues; `:feature-settings:compileDebugKotlinAndroid` builds successfully with no new warnings.
 
+### Dashboard Hero Layout Fix — 23 July 2026
+
+- [PASS] **Root cause**: `PillToggle` ("This Month"/"All Time") was rendered in the same `Row` as the `heroFigure` Column. On typical phone widths (360–412dp), the toggle consumed ~200dp, leaving only 76–128dp for the large-number hero figure. At `headlineLarge` (32sp) with monospace font, 7+ digit numbers (~170dp) got clipped to invisibility — only the smaller "RM" prefix survived.
+- [PASS] **Fix**: Moved `PillToggle` rendering from the hero `Row` to its own conditional `Row` below the hero figure, giving the number full screen width (minus 48dp horizontal padding). `toggleOptions.isNotEmpty()` guard ensures the row only appears when toggle options exist (Dashboard only — all other 7 screens pass `emptyList()`).
+- [PASS] **Safety net**: Added `softWrap = false` + `overflow = TextOverflow.Ellipsis` to `HeroFigure` Text composable. Even with full-width layout, extremely long numbers gracefully show "RM 1,234,…" instead of disappearing.
+- [PASS] **Artifact cleanup**: Removed the `WaveChart` end-of-series label ("RM x,xxx.xx") that appeared confusingly between the chart and the "accounts tracked" row. The chart now renders as a pure visual sparkline. Removed now-unused `labelColor` parameter.
+- [PASS] `detekt` zero issues; `:core-ui:compileDebugKotlin` + `:feature-dashboard:compileDebugKotlinAndroid` both build successfully with zero warnings.
+
 ## Known gaps
 
 - `ParserHealthRepository` has no direct unit test — requires a JVM SQLDelight driver setup in `core-parsing` (adding `jvm()` target). The SQL queries are structurally identical to existing queries in `raw_event_staging`; correctness is verified by compile-time SQLDelight validation and the successful build of `:core-parsing:compileDebugKotlinAndroid`.

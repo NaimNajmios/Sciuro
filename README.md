@@ -45,11 +45,11 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 
 ### HeroPanel — Shared Hero Section Component
 
-`HeroPanel` (`core-ui`) is a dark-backed hero header composable used across 8 screens. It renders a title, a large display figure, an optional right-aligned `PillToggle`, an optional `WaveChart`, and a `content` slot for screen-specific extras:
+`HeroPanel` (`core-ui`) is a dark-backed hero header composable used across 8 screens. It renders a title, a large display figure in a full-width row, an optional `PillToggle` in its own row below, an optional `WaveChart`, and a `content` slot for screen-specific extras:
 
 | Screen | heroFigure | chartData | toggle | content slot |
 |---|---|---|---|---|
-| Dashboard | Total net worth | Real daily balance history | This Month / All Time | Accounts count + weekly adjustments |
+| Dashboard | Total net position | Real daily balance history | This Month / All Time | Accounts count + weekly adjustments |
 | Budgets | Total spent vs allocated | — | — | Top 3 at-risk budgets |
 | Account Detail | Account balance | — | — | Adjust Balance + QR icon |
 | Debt Overview | I Owe / Owed to Me totals | — | — | Direction breakdown row |
