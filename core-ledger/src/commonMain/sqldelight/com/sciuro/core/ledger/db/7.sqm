@@ -1,0 +1,8 @@
+CREATE TABLE debt_payment_link (
+    id TEXT NOT NULL PRIMARY KEY,
+    debt_id TEXT NOT NULL,
+    transaction_id TEXT NOT NULL,
+    amount_applied REAL NOT NULL,
+    applied_at INTEGER NOT NULL,
+    UNIQUE(debt_id, transaction_id)
+);

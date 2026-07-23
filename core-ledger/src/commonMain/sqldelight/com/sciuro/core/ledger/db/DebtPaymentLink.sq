@@ -1,0 +1,24 @@
+CREATE TABLE debt_payment_link (
+    id TEXT NOT NULL PRIMARY KEY,
+    debt_id TEXT NOT NULL,
+    transaction_id TEXT NOT NULL,
+    amount_applied REAL NOT NULL,
+    applied_at INTEGER NOT NULL,
+    UNIQUE(debt_id, transaction_id)
+);
+
+insertPaymentLink:
+INSERT OR IGNORE INTO debt_payment_link(id, debt_id, transaction_id, amount_applied, applied_at)
+VALUES (?, ?, ?, ?, ?);
+
+selectPaymentLinksByDebt:
+SELECT * FROM debt_payment_link WHERE debt_id = ?;
+
+selectPaymentLinkByTransaction:
+SELECT * FROM debt_payment_link WHERE transaction_id = ?;
+
+deletePaymentLinkByTransaction:
+DELETE FROM debt_payment_link WHERE transaction_id = ?;
+
+sumPaymentsByDebt:
+SELECT SUM(amount_applied) AS applied_total FROM debt_payment_link WHERE debt_id = ?;
