@@ -8,7 +8,7 @@ import com.sciuro.core.parsing.engine.createHttpClient
 import com.sciuro.core.parsing.rule.ParserRule
 import com.sciuro.core.parsing.rule.bank.*
 import com.sciuro.core.parsing.rule.ewallet.*
-import com.sciuro.core.parsing.config.SettingsProvider
+import com.sciuro.core.ledger.config.SettingsProvider
 import org.koin.dsl.module
 
 val parsingModule = module {

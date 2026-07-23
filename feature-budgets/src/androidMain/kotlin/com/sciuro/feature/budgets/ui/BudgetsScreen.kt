@@ -12,7 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.koin.compose.koinInject
-import com.sciuro.core.parsing.config.SettingsProvider
+import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.EmptyStateView

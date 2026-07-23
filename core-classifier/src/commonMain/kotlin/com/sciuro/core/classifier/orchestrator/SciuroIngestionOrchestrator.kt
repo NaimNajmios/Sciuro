@@ -11,6 +11,11 @@ import com.sciuro.core.parsing.engine.SciuroParserPipeline
 import com.sciuro.core.parsing.model.DEFAULT_CONFIDENCE_THRESHOLD
 import com.sciuro.core.obligations.engine.ObligationCycleMatcher
 import com.sciuro.core.transfer.engine.TransferDetectionEngine
+import com.sciuro.core.budget.engine.BudgetEngine
+import com.sciuro.core.debt.engine.DebtEngine
+import com.sciuro.core.ingestion.model.RawEvent
+import com.sciuro.core.investment.engine.InvestmentEngine
+import com.sciuro.core.obligations.engine.ObligationDetectionEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -24,8 +29,10 @@ class SciuroIngestionOrchestrator(
     private val rawEventRepository: RawEventRepository,
     private val transferDetectionEngine: TransferDetectionEngine,
     private val obligationCycleMatcher: ObligationCycleMatcher,
-    private val budgetEngine: com.sciuro.core.budget.engine.BudgetEngine,
-    private val debtEngine: com.sciuro.core.debt.engine.DebtEngine,
+    private val budgetEngine: BudgetEngine,
+    private val debtEngine: DebtEngine,
+    private val investmentEngine: InvestmentEngine,
+    private val obligationDetectionEngine: ObligationDetectionEngine,
     private val confidenceThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD
 ) {
     private var job: Job? = null
@@ -61,7 +68,7 @@ class SciuroIngestionOrchestrator(
         }
     }
 
-    private suspend fun processOneEvent(rawEvent: com.sciuro.core.ingestion.model.RawEvent) {
+    private suspend fun processOneEvent(rawEvent: RawEvent) {
         try {
             rawEventRepository.markProcessing(rawEvent.id)
 
@@ -130,6 +137,9 @@ class SciuroIngestionOrchestrator(
 
             budgetEngine.processBudgets()
             debtEngine.processDebtPayments()
+
+            investmentEngine.processInvestments()
+            obligationDetectionEngine.runDetection()
 
             rawEventRepository.markProcessed(rawEvent.id)
         } catch (e: Exception) {

@@ -18,7 +18,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
-import com.sciuro.core.parsing.config.SettingsProvider
+import com.sciuro.core.ledger.config.SettingsProvider
 import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType

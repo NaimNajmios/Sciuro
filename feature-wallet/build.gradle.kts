@@ -21,7 +21,6 @@ kotlin {
                 implementation(project(":core-audit"))
                 implementation(project(":core-transfer"))
                 implementation(project(":core-investment"))
-                implementation(project(":core-parsing"))
             }
         }
         val androidMain by getting {

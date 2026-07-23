@@ -17,19 +17,40 @@ import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.sciuro.core.audit.events.DomainEventBus
+import com.sciuro.core.audit.events.DomainEvent
 import java.util.UUID
 
 class KanbanViewModel(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
     private val obligationRepository: ObligationRepository,
-    private val debtRepository: DebtRepository
+    private val debtRepository: DebtRepository,
+    eventBus: DomainEventBus
 ) : ViewModel() {
+
+    private val _animationTriggers = MutableSharedFlow<String>(extraBufferCapacity = 16)
+    val animationTriggers: SharedFlow<String> = _animationTriggers
+
+    init {
+        viewModelScope.launch(Dispatchers.Default) {
+            eventBus.events.collect { event ->
+                when (event) {
+                    is DomainEvent.ObligationCycleSettled -> _animationTriggers.emit(event.obligationId)
+                    is DomainEvent.DebtBalanceUpdated -> _animationTriggers.emit(event.debtId)
+                    is DomainEvent.DebtFullyPaidOff -> _animationTriggers.emit(event.debtId)
+                    else -> {}
+                }
+            }
+        }
+    }
 
     val tasks: StateFlow<List<KanbanTask>> = transactionRepository.observeUnreviewedTransactions()
         .map { unreviewedTxs ->

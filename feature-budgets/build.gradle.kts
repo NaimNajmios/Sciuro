@@ -19,7 +19,6 @@ kotlin {
                 implementation(libs.koin.core)
                 implementation(project(":core-ledger"))
                 implementation(project(":core-budget"))
-                implementation(project(":core-parsing"))
             }
         }
         val androidMain by getting {

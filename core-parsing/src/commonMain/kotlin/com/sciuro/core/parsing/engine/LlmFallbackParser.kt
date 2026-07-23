@@ -1,7 +1,7 @@
 package com.sciuro.core.parsing.engine
 
 import com.sciuro.core.ingestion.model.RawEvent
-import com.sciuro.core.parsing.config.LlmParsingConfig
+import com.sciuro.core.ledger.config.LlmParsingConfig
 import com.sciuro.core.parsing.llm.ChatMessage
 import com.sciuro.core.parsing.llm.ChatRequest
 import com.sciuro.core.parsing.llm.ChatResponse

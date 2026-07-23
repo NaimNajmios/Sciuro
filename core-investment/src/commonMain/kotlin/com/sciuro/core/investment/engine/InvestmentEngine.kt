@@ -13,11 +13,15 @@ class InvestmentEngine(
     suspend fun processInvestments() {
         val allInvestments = database.investmentQueries.selectAllInvestments().executeAsList()
         val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
+        val transferTxIds = database.transferLinkQueries.selectAllTransferLinks().executeAsList()
+            .flatMap { listOf(it.outflow_transaction_id, it.inflow_transaction_id) }
+            .toSet()
         
         for (investment in allInvestments) {
             val purchases = allTransactions.filter {
                 it.direction == "OUTFLOW" && 
-                (it.category_id == "cat_investment" || it.merchant?.contains(investment.asset_name, ignoreCase = true) == true)
+                (it.category_id == "cat_investment" || it.merchant?.contains(investment.asset_name, ignoreCase = true) == true) &&
+                it.id !in transferTxIds
             }
             
             // For B6 heuristic, we track total fiat invested as units (1 RM = 1 Unit) 

@@ -21,7 +21,6 @@ kotlin {
                 implementation(project(":core-audit"))
                 implementation(project(":core-obligations"))
                 implementation(project(":core-debt"))
-                implementation(project(":core-parsing"))
             }
         }
         val androidMain by getting {

@@ -3,7 +3,7 @@ package com.najmi.sciuro.config
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.sciuro.core.parsing.config.SettingsProvider
+import com.sciuro.core.ledger.config.SettingsProvider
 
 class EncryptedSettingsProvider(context: Context) : SettingsProvider {
 

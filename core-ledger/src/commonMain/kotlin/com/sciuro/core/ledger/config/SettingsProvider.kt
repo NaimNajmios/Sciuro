@@ -1,4 +1,4 @@
-package com.sciuro.core.parsing.config
+package com.sciuro.core.ledger.config
 
 interface SettingsProvider {
     fun getLlmModelName(): String
@@ -13,5 +13,3 @@ interface SettingsProvider {
     fun setApiKey(apiKey: String)
     fun getLlmConfig(): LlmParsingConfig = LlmParsingConfig()
 }
-
-

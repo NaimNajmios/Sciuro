@@ -5,10 +5,13 @@ import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.obligations.model.Obligation
 import com.sciuro.core.obligations.model.ObligationFrequency
 import com.sciuro.core.obligations.repository.ObligationRepository
+import com.sciuro.core.audit.events.DomainEventBus
+import com.sciuro.core.audit.events.DomainEvent
 
 class ObligationDetectionEngine(
     private val database: SciuroDatabase,
-    private val obligationRepository: ObligationRepository
+    private val obligationRepository: ObligationRepository,
+    private val eventBus: DomainEventBus
 ) {
     /**
      * Scans recent transactions to detect recurring patterns.
@@ -52,6 +55,7 @@ class ObligationDetectionEngine(
                             )
                             
                             obligationRepository.createObligation(newObligation)
+                            eventBus.publish(DomainEvent.ObligationCreated(newObligation.id))
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-package com.sciuro.core.parsing.config
+package com.sciuro.core.ledger.config
 
 data class LlmParsingConfig(
     val modelName: String = "llama-3.1-8b-instant",

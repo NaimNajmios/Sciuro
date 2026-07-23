@@ -15,7 +15,7 @@ import com.sciuro.core.transfer.di.transferModule
 import com.sciuro.core.parsing.di.parsingModule
 import com.sciuro.core.classifier.di.classifierModule
 import com.sciuro.core.ingestion.di.ingestionModule
-import com.sciuro.core.parsing.config.SettingsProvider
+import com.sciuro.core.ledger.config.SettingsProvider
 import com.najmi.sciuro.config.EncryptedSettingsProvider
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin

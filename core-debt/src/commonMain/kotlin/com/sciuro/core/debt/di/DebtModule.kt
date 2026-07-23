@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 val debtModule = module {
     single { DebtRepository(get(), get()) }
-    single { DebtEngine(get(), get()) }
+    single { DebtEngine(get(), get(), get()) }
 }

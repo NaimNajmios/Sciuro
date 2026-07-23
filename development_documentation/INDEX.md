@@ -24,6 +24,10 @@
 | C1 - Kanban board | Completed | `feature-kanban` UI scaffolded with Jetpack Compose and ViewModels |
 | C1.5 - Kanban Unification | Completed | Added Review/Bills/Debts tabs to KanbanScreen. Bills column with status derivation (Overdue/Due Soon/Upcoming). Debts column with progress bars and payment recording. KanbanTaskCard refactored from dead code into active use. Hero panel tab-aware. |
 | C4 - Runway / Cash Flow Forecast | Completed | IncomeRecurrencePatternDetector, Runway metric on Dashboard (liquid balances + income - upcoming obligations/debts), "based on bills only" caveat |
+| X1 - Engine Activation | Completed | Activated `InvestmentEngine` and `ObligationDetectionEngine` in orchestrator fan-out. Cleaned up inline FQ types in orchestrator. Added `:core-investment` dep to classifier. |
+| X2 - Transfer Exclusion (Debt/Investment) | Completed | Applied `transferTxIds` exclusion to `DebtEngine` and `InvestmentEngine` (matching `BudgetEngine`'s existing pattern). Prevents self-transfer false matches. |
+| X3 - SettingsProvider Relocation | Completed | Moved `SettingsProvider` + `LlmParsingConfig` from `core-parsing` to `core-ledger`. Dropped extraneous `:core-parsing` edges from dashboard, wallet, budgets, and kanban. |
+| X4 - Domain Event Bus Completion | Completed | Wired event publishers in `DebtEngine`, `ObligationCycleMatcher`, `ObligationDetectionEngine`. Added `KanbanViewModel` event subscription with animation trigger flow. KanbanScreen shows settle animation on bill/debt cards (UAT 465/525). |
 | C2 - Home dashboard & Wallet screen | Completed | Scaffolded `feature-dashboard` and `feature-wallet` UI with ViewModels |
 | C3 - Drilldown screens | Completed | Scaffolded `feature-budgets` UI and assembled app Navigation |
 | D1 - Security hardening | Completed | Disabled Android auto-backup for the database domains |

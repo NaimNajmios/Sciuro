@@ -27,7 +27,11 @@ import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import com.sciuro.feature.kanban.viewmodel.KanbanViewModel
 import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.graphics.graphicsLayer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +64,17 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
 
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
+    val recentlySettledIds = remember { mutableStateListOf<String>() }
+
+    LaunchedEffect(Unit) {
+        viewModel.animationTriggers.collect { cardId ->
+            recentlySettledIds.add(cardId)
+            coroutineScope.launch {
+                delay(2000)
+                recentlySettledIds.remove(cardId)
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -131,10 +146,12 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                     when (selectedTab) {
                         "Bills" -> BillsColumn(
                             bills = bills,
+                            recentlySettledIds = recentlySettledIds,
                             onMarkPaid = { paymentBill = it }
                         )
                         "Debts" -> DebtsColumn(
                             debtTasks = debtTasks,
+                            recentlySettledIds = recentlySettledIds,
                             onRecordPayment = { paymentDebt = it }
                         )
                         else -> ReviewColumn(
@@ -254,6 +271,7 @@ private fun ReviewColumn(
 @Composable
 private fun BillsColumn(
     bills: List<BillTask>,
+    recentlySettledIds: List<String>,
     onMarkPaid: (BillTask) -> Unit
 ) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -266,15 +284,15 @@ private fun BillsColumn(
         } else {
             if (overdueBills.isNotEmpty()) {
                 Text("Overdue", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
-                overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid) }
+                overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
             if (dueSoonBills.isNotEmpty()) {
                 Text("Due Soon", style = MaterialTheme.typography.labelLarge, color = com.najmi.sciuro.core.ui.theme.SignalWarning)
-                dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid) }
+                dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
             if (upcomingBills.isNotEmpty()) {
                 Text("Upcoming", style = MaterialTheme.typography.labelLarge)
-                upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid) }
+                upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
         }
     }
@@ -283,9 +301,15 @@ private fun BillsColumn(
 @Composable
 private fun BillCard(
     bill: BillTask,
-    onMarkPaid: (BillTask) -> Unit
+    onMarkPaid: (BillTask) -> Unit,
+    isRecentlySettled: Boolean = false
 ) {
-    SciuroCard(modifier = Modifier.fillMaxWidth()) {
+    val scale by animateFloatAsState(
+        targetValue = if (isRecentlySettled) 1.02f else 1f,
+        animationSpec = spring(),
+        label = "billSettle"
+    )
+    SciuroCard(modifier = Modifier.fillMaxWidth().graphicsLayer(scaleX = scale, scaleY = scale)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -311,6 +335,7 @@ private fun BillCard(
 @Composable
 private fun DebtsColumn(
     debtTasks: List<DebtTask>,
+    recentlySettledIds: List<String>,
     onRecordPayment: (DebtTask) -> Unit
 ) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -320,7 +345,12 @@ private fun DebtsColumn(
             EmptyStateView(message = "No active debts.")
         } else {
             activeDebts.forEach { debt ->
-                SciuroCard(modifier = Modifier.fillMaxWidth()) {
+                val scale by animateFloatAsState(
+                    targetValue = if (debt.id in recentlySettledIds) 1.02f else 1f,
+                    animationSpec = spring(),
+                    label = "debtSettle"
+                )
+                SciuroCard(modifier = Modifier.fillMaxWidth().graphicsLayer(scaleX = scale, scaleY = scale)) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

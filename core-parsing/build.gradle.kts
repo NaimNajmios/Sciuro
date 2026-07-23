@@ -18,6 +18,7 @@ kotlin {
             dependencies {
                 implementation(libs.koin.core)
                 implementation(project(":core-ingestion"))
+                implementation(project(":core-ledger"))
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)

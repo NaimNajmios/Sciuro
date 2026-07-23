@@ -14,7 +14,9 @@ val classifierModule = module {
             transferDetectionEngine = get(),
             obligationCycleMatcher = get(),
             budgetEngine = get(),
-            debtEngine = get()
+            debtEngine = get(),
+            investmentEngine = get(),
+            obligationDetectionEngine = get()
         ) 
     }
 }

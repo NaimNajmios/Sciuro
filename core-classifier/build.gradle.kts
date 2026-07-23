@@ -24,6 +24,7 @@ kotlin {
                 implementation(project(":core-obligations"))
                 implementation(project(":core-budget"))
                 implementation(project(":core-debt"))
+                implementation(project(":core-investment"))
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
