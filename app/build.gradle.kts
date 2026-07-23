@@ -76,6 +76,7 @@ dependencies {
     implementation(project(":feature-dashboard"))
     implementation(project(":feature-wallet"))
     implementation(project(":feature-kanban"))
+    implementation(project(":feature-debt"))
     implementation(project(":feature-budgets"))
     implementation(project(":feature-settings"))
     

@@ -35,7 +35,8 @@ class BudgetsViewModel(
                 id = it.id,
                 categoryName = categoryMap[it.category_id]?.name ?: it.category_id,
                 allocatedAmount = it.allocated_amount,
-                currentSpent = it.current_spent
+                currentSpent = it.current_spent,
+                alertThresholdPercent = it.alert_threshold_percent
             )
         }
     }.stateIn(

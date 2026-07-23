@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 val budgetModule = module {
     single { BudgetRepository(get(), get()) }
-    single { BudgetEngine(get()) }
+    single { BudgetEngine(get(), get()) }
 }

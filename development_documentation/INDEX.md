@@ -20,10 +20,13 @@
 | B6 - Investment/Gold Savings module | Completed | `core-investment` scaffolded, tracks asset accumulation independently |
 | B7 - Budgeting logic | Completed | `core-budget` scaffolded, `BudgetEngine` implemented for rolling 30-day tracking |
 | B7.5 - Budget Feature Completion | Completed | Full budget CRUD (create/edit/delete), category name resolution via `CategoryRepository`, creation bottom sheet with category picker/period selector, edit/delete flows with destructive confirmation |
+| B7.6 - Budget Enhancement Round 2 | Completed | Calendar-month alignment (MONTHLY budgets), transfer-link exclusion from spend, per-budget alert threshold with three-state visual (HEALTHY/APPROACHING/OVER), rollover carry-over, BudgetThresholdCrossed event on DomainEventBus |
+| C4 - Runway / Cash Flow Forecast | Completed | IncomeRecurrencePatternDetector, Runway metric on Dashboard (liquid balances + income - upcoming obligations/debts), "based on bills only" caveat |
 | C1 - Kanban board | Completed | `feature-kanban` UI scaffolded with Jetpack Compose and ViewModels |
 | C1.5 - Kanban Unification | Completed | Added Review/Bills/Debts tabs to KanbanScreen. Bills column with status derivation (Overdue/Due Soon/Upcoming). Debts column with progress bars and payment recording. KanbanTaskCard refactored from dead code into active use. Hero panel tab-aware. |
 | C2 - Home dashboard & Wallet screen | Completed | Scaffolded `feature-dashboard` and `feature-wallet` UI with ViewModels |
 | C3 - Drilldown screens | Completed | Scaffolded `feature-budgets` UI and assembled app Navigation |
+| C4 - Runway / Cash Flow Forecast | Completed | IncomeRecurrencePatternDetector, Runway metric on Dashboard (liquid balances + income - upcoming obligations/debts), "based on bills only" caveat |
 | D1 - Security hardening | Completed | Disabled Android auto-backup for the database domains |
 | D2 - Full test pass & dogfood | Completed | Connected UI ViewModels to real SQLDelight reactive flows |
 | D3 - Personal deployment | Completed | Sideloaded APK built with multiple architecture support |

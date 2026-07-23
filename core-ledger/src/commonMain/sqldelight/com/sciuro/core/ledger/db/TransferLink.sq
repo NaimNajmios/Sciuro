@@ -12,6 +12,9 @@ insertTransferLink:
 INSERT INTO transfer_link(id, outflow_transaction_id, inflow_transaction_id, amount, created_at)
 VALUES (?, ?, ?, ?, ?);
 
+selectAllTransferLinks:
+SELECT * FROM transfer_link;
+
 selectTransferLinkByTransactionId:
 SELECT * FROM transfer_link
 WHERE outflow_transaction_id = :transactionId OR inflow_transaction_id = :transactionId;

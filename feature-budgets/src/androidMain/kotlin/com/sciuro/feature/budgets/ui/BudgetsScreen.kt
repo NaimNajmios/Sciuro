@@ -23,6 +23,7 @@ import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.core.budget.model.BudgetPeriod
+import com.sciuro.feature.budgets.model.BudgetHealth
 import com.sciuro.feature.budgets.viewmodel.BudgetsViewModel
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
@@ -82,7 +83,11 @@ fun BudgetsScreen(
                                         Text(
                                             text = "${(budget.progress * 100).toInt()}%",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = if (budget.progress > settingsProvider.getBudgetWarningThreshold()) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.6f)
+                                            color = when (budget.health(settingsProvider.getBudgetWarningThreshold())) {
+                                                BudgetHealth.OVER -> com.najmi.sciuro.core.ui.theme.SignalDanger
+                                                BudgetHealth.APPROACHING -> com.najmi.sciuro.core.ui.theme.SignalWarning
+                                                BudgetHealth.HEALTHY -> Color.White.copy(alpha = 0.6f)
+                                            }
                                         )
                                     }
                                 }
@@ -129,7 +134,12 @@ fun BudgetsScreen(
                                             Text("RM ${"%.2f".format(budget.currentSpent)} / RM ${"%.2f".format(budget.allocatedAmount)}", style = MaterialTheme.typography.bodyMedium)
                                         }
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        val progressColor = if (budget.progress > 1f) com.najmi.sciuro.core.ui.theme.SignalDanger else MaterialTheme.colorScheme.primary
+                                        val health = budget.health(settingsProvider.getBudgetWarningThreshold())
+                                        val progressColor = when (health) {
+                                            BudgetHealth.OVER -> com.najmi.sciuro.core.ui.theme.SignalDanger
+                                            BudgetHealth.APPROACHING -> com.najmi.sciuro.core.ui.theme.SignalWarning
+                                            BudgetHealth.HEALTHY -> MaterialTheme.colorScheme.primary
+                                        }
                                         LinearProgressIndicator(
                                             progress = { if (budget.progress > 1f) 1f else budget.progress },
                                             modifier = Modifier.fillMaxWidth().height(8.dp),

@@ -20,6 +20,7 @@ kotlin {
                 implementation(project(":core-ledger"))
                 implementation(project(":core-budget"))
                 implementation(project(":core-debt"))
+                implementation(project(":core-obligations"))
                 implementation(project(":core-investment"))
                 implementation(project(":core-ingestion"))
                 implementation(project(":core-transfer"))
@@ -30,6 +31,7 @@ kotlin {
             dependencies {
                 implementation(project(":core-ui"))
                 implementation(project(":core-debt"))
+                implementation(project(":core-obligations"))
                 implementation(project(":core-investment"))
                 implementation(libs.androidx.core.ktx)
                 implementation(libs.androidx.lifecycle.runtime.ktx)

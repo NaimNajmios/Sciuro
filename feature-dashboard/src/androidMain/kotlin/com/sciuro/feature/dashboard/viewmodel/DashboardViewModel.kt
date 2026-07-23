@@ -21,8 +21,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import com.sciuro.core.ledger.repository.CategoryRepository
+import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.repository.DebtRepository
 import com.sciuro.core.investment.repository.InvestmentRepository
+import com.sciuro.core.obligations.engine.IncomeRecurrencePatternDetector
+import com.sciuro.core.obligations.repository.ObligationRepository
 
 data class DashboardState(
     val netPosition: Double = 0.0,
@@ -33,7 +36,9 @@ data class DashboardState(
     val expenseCategories: List<com.sciuro.core.ledger.model.Category> = emptyList(),
     val incomeCategories: List<com.sciuro.core.ledger.model.Category> = emptyList(),
     val recentAdjustmentCount: Int = 0,
-    val balanceHistory: List<Float> = emptyList()
+    val balanceHistory: List<Float> = emptyList(),
+    val runway: Double = 0.0,
+    val hasIncomePattern: Boolean = false
 )
 
 data class TransactionDetailData(
@@ -52,7 +57,9 @@ class DashboardViewModel(
     private val auditRepository: AuditRepository,
     private val rawEventRepository: RawEventRepository,
     private val debtRepository: DebtRepository,
-    private val investmentRepository: InvestmentRepository
+    private val investmentRepository: InvestmentRepository,
+    private val obligationRepository: ObligationRepository,
+    private val incomeDetector: IncomeRecurrencePatternDetector
 ) : ViewModel() {
     
     init {
@@ -70,7 +77,8 @@ class DashboardViewModel(
         categoryRepository.observeCategoriesByType("INFLOW"),
         cashAdjustmentRepository.observeAllAdjustments(),
         debtRepository.observeDebts(),
-        investmentRepository.observeInvestments()
+        investmentRepository.observeInvestments(),
+        obligationRepository.observeActiveObligations()
     ) { data ->
         val accounts = data[0] as List<com.sciuro.core.ledger.db.Account>
         val unreviewed = data[1] as List<com.sciuro.core.ledger.db.Transaction_record>
@@ -81,6 +89,7 @@ class DashboardViewModel(
         val allAdjustments = data[6] as List<com.sciuro.core.ledger.db.Cash_adjustment>
         val debts = data[7] as List<*>
         val investments = data[8] as List<*>
+        val obligations = data[9] as List<com.sciuro.core.obligations.model.Obligation>
         
         val oneWeekAgo = currentTimeMillis() - 7L * 24L * 60L * 60L * 1000L
         val recentAdjustments = allAdjustments.filter { it.timestamp > oneWeekAgo }
@@ -90,10 +99,25 @@ class DashboardViewModel(
         val totalAccounts = accounts.sumOf { it.balance }
         val totalInvestments = investments.filterIsInstance<com.sciuro.core.investment.model.Investment>().sumOf { (it.unitsHeld * it.averageBuyPrice).toDouble() }
         val totalDebts = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().sumOf {
-            if (it.direction == com.sciuro.core.debt.model.DebtDirection.OWED_TO_ME) it.remainingBalance.toDouble()
+            if (it.direction == DebtDirection.OWED_TO_ME) it.remainingBalance.toDouble()
             else -it.remainingBalance.toDouble()
         }
         val netPosition = totalAccounts + totalInvestments + totalDebts
+
+        val incomePattern = incomeDetector.detectNextIncome()
+        val thirtyDaysFromNow = currentTimeMillis() + 30L * 24L * 60L * 60L * 1000L
+        val nextIncome = incomePattern?.nextExpectedDate ?: thirtyDaysFromNow
+        val expectedIncome = incomePattern?.amount ?: 0.0
+
+        val obligationsDue = obligations.filter {
+            it.nextDueDate <= nextIncome
+        }.sumOf { it.amount }
+
+        val debtsDue = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().filter { debt ->
+            debt.direction == DebtDirection.I_OWE && debt.dueDate != null && debt.dueDate!! <= nextIncome
+        }.sumOf { it.remainingBalance.toDouble() }
+
+        val runway = totalAccounts + expectedIncome - obligationsDue - debtsDue
         
         DashboardState(
             netPosition = netPosition,
@@ -104,7 +128,9 @@ class DashboardViewModel(
             expenseCategories = expenseCats,
             incomeCategories = incomeCats,
             recentAdjustmentCount = recentAdjustments.size,
-            balanceHistory = balanceHistory
+            balanceHistory = balanceHistory,
+            runway = runway,
+            hasIncomePattern = incomePattern != null
         )
     }.stateIn(
         scope = viewModelScope,

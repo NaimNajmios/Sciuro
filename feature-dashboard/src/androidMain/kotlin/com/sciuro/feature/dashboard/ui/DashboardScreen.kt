@@ -225,14 +225,37 @@ fun DashboardScreen(
                                 }
                             }
 
-                            Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text("Active Budgets", style = MaterialTheme.typography.titleSmall)
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        "${state.activeBudgetsCount} active this month",
-                                        style = MaterialTheme.typography.headlineSmall
-                                    )
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Card(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text("Active Budgets", style = MaterialTheme.typography.titleSmall)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("${state.activeBudgetsCount}", style = MaterialTheme.typography.headlineSmall)
+                                    }
+                                }
+                                Card(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text(
+                                            "Runway",
+                                            style = MaterialTheme.typography.titleSmall
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            "RM ${"%.0f".format(state.runway)}",
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            color = if (state.runway < 0) com.najmi.sciuro.core.ui.theme.SignalDanger else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (!state.hasIncomePattern) {
+                                            Text(
+                                                "based on bills only",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
                                 }
                             }
 

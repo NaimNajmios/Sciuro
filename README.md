@@ -9,7 +9,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 * **QR Code Display:** Accounts can store a QR code image (captured from gallery) for quick display when receiving payments. Shown as a tappable thumbnail on the account detail screen with fullscreen expansion.
 * **Obligation / Recurring Bill Tracking:** Pattern-based auto-detection of subscriptions and recurring outflows. Per-transaction cycle matching that automatically advances due dates when a matching payment is booked. Bills can be created, edited, deleted, or deactivated manually.
 * **Debt Tracking:** Full CRUD for debts with direction support (I Owe / Owed to Me), progress tracking, counterparty identification, and lifecycle management (Active / Paid Off / Archived). Supports all debt types: loans, credit cards, and informal money owed between people. Automatic payment matching via `DebtEngine` respects direction — repayments owed to you are correctly recognized from incoming transactions.
-* **Budget Tracking:** Full CRUD for category budgets with per-category spending limits, progress bars, and reactive spend recalculation. Create/edit/delete budgets via bottom sheet with category picker and period selector (weekly/monthly/yearly).
+* **Budget Tracking:** Full CRUD for category budgets with per-category spending limits, progress bars, and reactive spend recalculation. Three-state visual (Healthy / Approaching / Over) with per-budget alert thresholds. Calendar-month boundaries for MONTHLY budgets. Transfer-linked transactions are excluded from spend calculations. Optional rollover carries unused budget to the next period. Create/edit/delete budgets via bottom sheet with category picker and period selector (weekly/monthly/yearly).
 * **Malaysian Payment Channels:** Deep integration and detection rules for local payment platforms, physical wallets, and e-wallets.
 * **Investment & Gold Savings:** Native support for tracking complex assets like gold and long-term investments.
 * **Audit-First Architecture:** Every data mutation passes through a unified Audit Log, ensuring complete traceability.
@@ -22,7 +22,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase D (Personal Deployment)**. Core domain modules (Debt, Obligations, Budget, Transfers, Investments) are all wired into the ingestion orchestrator and reactive UI. All core modules—including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules—are fully integrated and tested.
+The project is fully functional and has completed **Phase D (Personal Deployment)**. Core domain modules (Debt, Obligations, Budget, Transfers, Investments) are all wired into the ingestion orchestrator and reactive UI. A Domain Event Bus provides cross-module event-driven communication. The Kanban screen unifies transaction review, bill tracking, and debt overview. A Runway forecast on the Dashboard shows safe-to-spend before next income. All core modules—including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules—are fully integrated and tested.
 
 ## Architecture
 

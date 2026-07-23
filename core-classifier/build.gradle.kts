@@ -21,6 +21,7 @@ kotlin {
                 implementation(project(":core-ledger"))
                 implementation(project(":core-transfer"))
                 implementation(project(":core-audit"))
+                implementation(project(":core-obligations"))
                 implementation(project(":core-budget"))
                 implementation(project(":core-debt"))
                 implementation(libs.kotlinx.coroutines.core)
