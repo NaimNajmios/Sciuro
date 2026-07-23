@@ -62,6 +62,7 @@ class ReconciliationEngine(
                     account_id = accountId,
                     amount = diff,
                     reason = reason,
+                    remark = null,
                     timestamp = now,
                     created_at = now
                 )

@@ -2,7 +2,7 @@ package com.sciuro.core.classifier.orchestrator
 
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.util.generateUuid
-import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
+import com.sciuro.core.ingestion.source.MultiplexIngestionSource
 import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.ledger.repository.AccountRepository
@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class SciuroIngestionOrchestrator(
-    private val notificationSource: NotificationSourceAdapter,
+    private val ingestionSource: MultiplexIngestionSource,
     private val parserPipeline: SciuroParserPipeline,
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
@@ -44,7 +44,7 @@ class SciuroIngestionOrchestrator(
 
         job = scope.launch {
             try {
-                notificationSource.observeEvents().collect { rawEvent ->
+                ingestionSource.observeEvents().collect { rawEvent ->
                     processOneEvent(rawEvent)
                 }
             } catch (e: Exception) {
@@ -58,7 +58,7 @@ class SciuroIngestionOrchestrator(
                 println("SCIURO_ORCHESTRATOR: Collector job terminated with error, restarting...")
                 job = scope.launch {
                     try {
-                        notificationSource.observeEvents().collect { rawEvent ->
+                        ingestionSource.observeEvents().collect { rawEvent ->
                             processOneEvent(rawEvent)
                         }
                     } catch (e: Exception) {

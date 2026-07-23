@@ -18,12 +18,18 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 * **Fast Logging Workflow:** Calculator-first, numpad-driven transaction entry screens with pre-filled category pills and descriptions for near-instant offline transaction recording.
 * **UI Standardization & Theming:** Unified design system utilizing custom wrappers (`SciuroBottomSheet`, `SciuroTextField` with inline validation + placeholder + error state, `SciuroCard`, `SciuroPrimaryButton`) across all feature modules. Centralized semantic color tokens (`SignalIncome`, `SignalDanger`, `AccountColor*` presets). Robust 3-way persistent Appearance toggling (Light, Dark, System default). Full accessibility pass: reduced-motion awareness, 44dp touch targets, TalkBack semantics on HeroPanel + confidence indicators + swipe actions. Animated hero figure count-up and chart sparkline with value label.
 * **Interactive UI Triage:** Swipe-to-dismiss capabilities for fast transaction approvals and dynamically updated swipeable wallet interfaces to track cash and investments.
-* **Proactive Notifications:** Background WorkManager integration periodically alerts users to review newly ingested financial transactions.
+* **Proactive Notifications:** Background WorkManager integration periodically alerts users to review newly ingested financial transactions. Three notification channels: review reminders, budget alerts (threshold-based with quiet hours + runway-aware suppression), and bill due-date reminders.
 * **App Lock:** Optional biometric/PIN gate that secures the app on launch. Re-prompts after 30 seconds of backgrounding. Falls back to a "Set up device security" prompt when no screen lock is enrolled — no silent bypass. Toggled via Settings > Security.
+* **SMS Ingestion:** `SmsSourceAdapter` + `SmsReceiver` capture financial SMS messages and route them through the same ingestion pipeline as notifications. Financial signal detection filters out non-relevant messages.
+* **New Finance App Detection:** `FinanceAppInstallReceiver` triggers on new package installs, cross-references a catalog of 52 Malaysian finance apps, and surfaces a one-tap "Track it?" notification to add the app to the allowlist.
+* **Background Reliability:** Onboarding battery optimisation exemption step with OEM-specific autostart guides (Xiaomi, Oppo/Realme, Vivo, Huawei/Honor). Settings card shows live exemption status with fix actions.
+* **Anomaly-Aware Cash Adjustments:** When a balance correction exceeds RM 50 in variance, the bottom sheet prompts for an optional remark to document the discrepancy. Remarks are stored alongside adjustments for future reconciliation reference.
+* **Quiet Hours & Runway-Aware Notifications:** Configurable quiet hours window suppresses non-critical budget alerts during off-hours. Negative runway (bills exceeding available funds) bypasses suppression to ensure critical alerts always surface.
+* **Configurable Allowlist:** Runtime-editable notification allowlist via Settings > Developer Options > Sources. Add/remove packages dynamically without code changes.
 
 ## Project Status
 
-The project is fully functional and has completed **Phase E1 (UI/UX Modernization)**. Core domain modules (Debt, Obligations, Budget, Transfers, Investments) are all wired into the ingestion orchestrator and reactive UI. A Domain Event Bus provides cross-module event-driven communication. The Kanban screen unifies transaction review, bill tracking, and debt overview. A Runway forecast on the Dashboard shows safe-to-spend before next income. The design system is fully standardized — `SciuroTextField` is the single text-input surface across all 8 modules (35 call sites migrated), with built-in inline validation, placeholder, and error state support. Accessibility is hardened: reduced-motion gates on all infinite animations, 44dp min touch targets, and semantic labels on hero panels, confidence indicators, and swipe actions. All core modules—including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules—are fully integrated and tested.
+The project is fully functional and has completed **Phase G1 (Polish & Reliability Gap Closure)**. Core domain modules (Debt, Obligations, Budget, Transfers, Investments) are all wired into the ingestion orchestrator and reactive UI. A Domain Event Bus provides cross-module event-driven communication. The Kanban screen unifies transaction review, bill tracking, and debt overview. A Runway forecast on the Dashboard shows safe-to-spend before next income. SMS ingestion has been added alongside notification-based capture. Battery optimisation exemption, quiet hours, and anomaly-aware cash adjustment remarks are now implemented. The design system is fully standardized — `SciuroTextField` is the single text-input surface across all 8 modules (35 call sites migrated), with built-in inline validation, placeholder, and error state support. Accessibility is hardened: reduced-motion gates on all infinite animations, 44dp min touch targets, and semantic labels on hero panels, confidence indicators, and swipe actions. All core modules—including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules—are fully integrated and tested.
 
 ## Architecture
 
@@ -83,15 +89,24 @@ Box(fillMaxSize) {
 
 ## Developer Tools
 
-Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with five tabs:
+Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with six tabs:
 
 | Tab | Description |
 |---|---|
 | **Simulator** | Manual pipeline: enter package/title/text and run through all parser rules. Includes a dynamic package+template picker sourced from `FixtureLibrary` (31 fixtures across 7 rules). |
-| **Sources** | Read-only view of all 35 allowed notification packages grouped by Bank / E-Wallet / Aggregator. |
+| **Sources** | Editable allowlist view of notification packages grouped by Bank / E-Wallet / Aggregator / Custom. Add/remove packages dynamically — changes take effect immediately for the notification listener. |
 | **Ingestion Log** | Dead-letter event viewer with pending/dead-letter counts, per-event error display, and resend capability. |
 | **Diagnostics** | Per-rule match/no-match analysis with extracted fields. Shows LLM debug info (prompt, response, latency) when LLM fallback is triggered. |
 | **Data Tools** | Clear Inbox (unreviewed transactions) with confirmation dialog. |
+| **Health** | Per-package parser match-rate monitoring. Track which financial apps provide reliable extraction. |
+
+### SMS Ingestion
+
+SMS-based financial notifications can be captured via the `SmsReceiver` (registered for `SMS_RECEIVED`). The receiver:
+- Filters by allowlist (sender phone number)
+- Detects financial signals in message body (RM amounts, transaction keywords)
+- Persists to the `RawEventStaging` table and routes through the same ingestion pipeline as notifications
+- Requires `RECEIVE_SMS` permission (declared in manifest)
 
 **Key classes:**
 - `SimulationEngine` (`core-parsing`) — runs the full parser pipeline and captures per-rule results, LLM latency, and debug info in a `SimulationResult`.

@@ -28,8 +28,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings as SystemSettings
 import java.net.HttpURLConnection
 import java.net.URL
+import com.najmi.sciuro.core.ui.util.OemAutostartHelper
 
 @Composable
 fun SettingsScreen(
@@ -105,6 +109,61 @@ fun SettingsScreen(
                                 fillWidth = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
+                        }
+                    }
+                }
+
+                item {
+                    val isBatteryExempt = remember {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
+                            pm.isIgnoringBatteryOptimizations(context.packageName)
+                        } else {
+                            true
+                        }
+                    }
+                    com.najmi.sciuro.core.ui.components.SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Background Reliability", style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                if (isBatteryExempt) "Battery optimization is disabled. Sciuro can run reliably in the background."
+                                else "Battery optimization is active and may interrupt background notification capture.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isBatteryExempt) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                            )
+                            if (!isBatteryExempt) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                            val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                                data = android.net.Uri.parse("package:${context.packageName}")
+                                            }
+                                            context.startActivity(intent)
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Disable Battery Optimization")
+                                }
+                            }
+                            val autostartIntent = remember { OemAutostartHelper.getAutostartIntent() }
+                            if (autostartIntent != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        try {
+                                            context.startActivity(autostartIntent)
+                                        } catch (e: Exception) {}
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Open Autostart Settings")
+                                }
+                            }
                         }
                     }
                 }
@@ -275,6 +334,75 @@ fun SettingsScreen(
                                         settingsProvider.setAutoConfirmEnabled(it)
                                     }
                                 )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    var isQuietHoursEnabled by rememberSaveable { mutableStateOf(settingsProvider.isQuietHoursEnabled()) }
+                    var quietStart by rememberSaveable { mutableStateOf(settingsProvider.getQuietHoursStart()) }
+                    var quietEnd by rememberSaveable { mutableStateOf(settingsProvider.getQuietHoursEnd()) }
+                    com.najmi.sciuro.core.ui.components.SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Quiet Hours", style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        if (isQuietHoursEnabled) "Suppressed: ${quietStart}:00\u2013${quietEnd}:00"
+                                        else "Suppress non-critical notifications during your off-hours",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Switch(
+                                    checked = isQuietHoursEnabled,
+                                    onCheckedChange = {
+                                        isQuietHoursEnabled = it
+                                        settingsProvider.setQuietHoursEnabled(it)
+                                    }
+                                )
+                            }
+                            if (isQuietHoursEnabled) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text("Start", style = MaterialTheme.typography.labelSmall)
+                                        Text("${quietStart}:00", style = MaterialTheme.typography.titleMedium)
+                                        Row {
+                                            IconButton(onClick = {
+                                                if (quietStart > 0) { quietStart -= 1; settingsProvider.setQuietHoursStart(quietStart) }
+                                            }) { Text("\u2212") }
+                                            IconButton(onClick = {
+                                                if (quietStart < 23) { quietStart += 1; settingsProvider.setQuietHoursStart(quietStart) }
+                                            }) { Text("+") }
+                                        }
+                                    }
+                                    Text("to", style = MaterialTheme.typography.bodyMedium)
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text("End", style = MaterialTheme.typography.labelSmall)
+                                        Text("${quietEnd}:00", style = MaterialTheme.typography.titleMedium)
+                                        Row {
+                                            IconButton(onClick = {
+                                                if (quietEnd > 0) { quietEnd -= 1; settingsProvider.setQuietHoursEnd(quietEnd) }
+                                            }) { Text("\u2212") }
+                                            IconButton(onClick = {
+                                                if (quietEnd < 23) { quietEnd += 1; settingsProvider.setQuietHoursEnd(quietEnd) }
+                                            }) { Text("+") }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

@@ -27,17 +27,19 @@ val AdjustmentReasonPresets = listOf(
 fun AdjustmentBottomSheet(
     currentBalance: Double,
     onDismiss: () -> Unit,
-    onConfirm: (amount: Double, reason: String) -> Unit
+    onConfirm: (amount: Double, reason: String, remark: String?) -> Unit
 ) {
     var amountStr by remember { mutableStateOf("") }
     var reason by remember { mutableStateOf("") }
     var reasonExpanded by remember { mutableStateOf(false) }
     var customReason by remember { mutableStateOf("") }
+    var remark by remember { mutableStateOf("") }
     val isCustom = reason == "Other"
     val effectiveReason = if (isCustom) customReason else reason
 
     val newBalance = amountStr.toDoubleOrNull()
     val delta = if (newBalance != null) newBalance - currentBalance else null
+    val isLargeVariance = delta != null && kotlin.math.abs(delta) >= 50.0
 
     SciuroBottomSheet(onDismissRequest = onDismiss) {
         Text(
@@ -105,6 +107,21 @@ fun AdjustmentBottomSheet(
             )
         }
 
+        if (isLargeVariance) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                "Large variance detected. Add a note to help future reconciliation:",
+                style = MaterialTheme.typography.bodySmall,
+                color = com.najmi.sciuro.core.ui.theme.SignalWarning
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            SciuroTextField(
+                value = remark,
+                onValueChange = { remark = it },
+                label = "Remark (optional)"
+            )
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(
@@ -121,7 +138,7 @@ fun AdjustmentBottomSheet(
             Button(
                 onClick = {
                     if (delta != null && effectiveReason.isNotBlank()) {
-                        onConfirm(delta, effectiveReason)
+                        onConfirm(delta, effectiveReason, remark.takeIf { it.isNotBlank() })
                     }
                 },
                 modifier = Modifier.weight(1f),

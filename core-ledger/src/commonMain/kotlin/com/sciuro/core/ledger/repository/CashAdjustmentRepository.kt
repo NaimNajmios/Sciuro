@@ -42,6 +42,7 @@ class CashAdjustmentRepository(
         accountId: String,
         amount: Double,
         reason: String,
+        remark: String? = null,
         source: AuditSource = AuditSource.USER_MANUAL
     ): com.sciuro.core.ledger.db.Cash_adjustment {
         val adjustmentId = generateUuid()
@@ -52,7 +53,7 @@ class CashAdjustmentRepository(
             entityId = adjustmentId,
             action = AuditAction.CREATE,
             beforeState = null,
-            afterState = "account=$accountId, amount=$amount, reason=$reason",
+            afterState = "account=$accountId, amount=$amount, reason=$reason${remark?.let { ", remark=$it" } ?: ""}",
             source = source
         ) {
             database.cashAdjustmentQueries.insertAdjustment(
@@ -60,6 +61,7 @@ class CashAdjustmentRepository(
                 account_id = accountId,
                 amount = amount,
                 reason = reason,
+                remark = remark,
                 timestamp = now,
                 created_at = now
             )

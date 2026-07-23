@@ -24,4 +24,10 @@ interface SettingsProvider {
     fun setAutoConfirmThreshold(threshold: Int)
     fun getManualPrice(key: String): Double?
     fun setManualPrice(key: String, price: Double)
+    fun isQuietHoursEnabled(): Boolean
+    fun setQuietHoursEnabled(enabled: Boolean)
+    fun getQuietHoursStart(): Int
+    fun setQuietHoursStart(hour: Int)
+    fun getQuietHoursEnd(): Int
+    fun setQuietHoursEnd(hour: Int)
 }

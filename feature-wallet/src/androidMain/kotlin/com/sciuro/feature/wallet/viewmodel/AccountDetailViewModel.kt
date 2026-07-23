@@ -107,12 +107,13 @@ class AccountDetailViewModel(
         _selectedFilter.value = filter
     }
 
-    fun recordCorrection(amount: Double, reason: String) {
+    fun recordCorrection(amount: Double, reason: String, remark: String? = null) {
         viewModelScope.launch {
             cashAdjustmentRepository.createAdjustment(
                 accountId = accountId,
                 amount = amount,
-                reason = reason
+                reason = reason,
+                remark = remark
             )
         }
     }

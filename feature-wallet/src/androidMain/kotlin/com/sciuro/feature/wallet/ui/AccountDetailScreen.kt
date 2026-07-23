@@ -368,8 +368,8 @@ fun AccountDetailScreen(
         AdjustmentBottomSheet(
             currentBalance = state.account!!.balance,
             onDismiss = { showAdjustmentDialog = false },
-            onConfirm = { amount, reason ->
-                viewModel.recordCorrection(amount, reason)
+            onConfirm = { amount, reason, remark ->
+                viewModel.recordCorrection(amount, reason, remark)
                 showAdjustmentDialog = false
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar("Balance adjustment recorded")

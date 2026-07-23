@@ -36,6 +36,8 @@ import androidx.compose.material.icons.filled.Settings
 
 import android.os.Build
 import android.Manifest
+import android.os.PowerManager
+import android.provider.Settings as SystemSettings
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -153,6 +155,32 @@ fun SciuroMainScreen() {
                 }
             }
         }
+        return
+    }
+
+    // Battery optimization step: shown after notification permission, before wallet setup
+    var isBatteryStepComplete by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
+                pm.isIgnoringBatteryOptimizations(context.packageName)
+            } else {
+                true
+            }
+        )
+    }
+
+    if (!isBatteryStepComplete) {
+        val guideSteps = com.najmi.sciuro.core.ui.util.OemAutostartHelper.getGuideSteps()
+        val isAggressiveOem = com.najmi.sciuro.core.ui.util.OemAutostartHelper.isKnownAggressiveOem()
+        val autostartIntent = com.najmi.sciuro.core.ui.util.OemAutostartHelper.getAutostartIntent()
+        com.sciuro.feature.wallet.ui.OnboardingBatteryScreen(
+            guideSteps = guideSteps,
+            isAggressiveOem = isAggressiveOem,
+            autostartIntent = autostartIntent,
+            onComplete = { isBatteryStepComplete = true },
+            onSkip = { isBatteryStepComplete = true }
+        )
         return
     }
     

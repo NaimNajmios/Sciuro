@@ -114,4 +114,28 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setManualPrice(key: String, price: Double) {
         sharedPreferences.edit().putString("manual_price_$key", price.toString()).apply()
     }
+
+    override fun isQuietHoursEnabled(): Boolean {
+        return sharedPreferences.getBoolean("quiet_hours_enabled", false)
+    }
+
+    override fun setQuietHoursEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("quiet_hours_enabled", enabled).apply()
+    }
+
+    override fun getQuietHoursStart(): Int {
+        return sharedPreferences.getInt("quiet_hours_start", 22)
+    }
+
+    override fun setQuietHoursStart(hour: Int) {
+        sharedPreferences.edit().putInt("quiet_hours_start", hour).apply()
+    }
+
+    override fun getQuietHoursEnd(): Int {
+        return sharedPreferences.getInt("quiet_hours_end", 7)
+    }
+
+    override fun setQuietHoursEnd(hour: Int) {
+        sharedPreferences.edit().putInt("quiet_hours_end", hour).apply()
+    }
 }

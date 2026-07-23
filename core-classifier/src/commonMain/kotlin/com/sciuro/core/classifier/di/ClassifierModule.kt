@@ -10,7 +10,7 @@ val classifierModule = module {
     single { CategoryResolver(get()) }
     single { 
         SciuroIngestionOrchestrator(
-            notificationSource = get(),
+            ingestionSource = get(),
             parserPipeline = get(),
             transactionRepository = get(),
             accountRepository = get(),

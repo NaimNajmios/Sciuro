@@ -40,6 +40,8 @@ import com.sciuro.feature.settings.di.settingsModule
 
 val appModule = module {
     single<SettingsProvider> { EncryptedSettingsProvider(get()) }
+    single { com.najmi.sciuro.subscriber.FinanceAppSuggestionSubscriber(get(), get()) }
+    single { com.najmi.sciuro.engine.NotificationSuppressionEngine(get(), get(), get(), get(), get(), get(), get()) }
 }
 
 class SciuroApp : Application(), KoinComponent {
@@ -48,6 +50,8 @@ class SciuroApp : Application(), KoinComponent {
     private val orchestrator: SciuroIngestionOrchestrator by inject()
     private val ruleLearner: RuleLearner by inject()
     private val netPositionSubscriber: NetPositionSubscriber by inject()
+    private val financeAppSuggestionSubscriber: com.najmi.sciuro.subscriber.FinanceAppSuggestionSubscriber by inject()
+    private val notificationSuppressionEngine: com.najmi.sciuro.engine.NotificationSuppressionEngine by inject()
     
     override fun onCreate() {
         super.onCreate()
@@ -80,6 +84,8 @@ class SciuroApp : Application(), KoinComponent {
         orchestrator.startListening(appScope)
         ruleLearner.start(appScope)
         netPositionSubscriber.start(appScope)
+        financeAppSuggestionSubscriber.start()
+        notificationSuppressionEngine.start()
 
         val reconciliationRequest = PeriodicWorkRequestBuilder<IngestionReconciliationWorker>(
             IngestionReconciliationWorker.REPEAT_INTERVAL_HOURS, TimeUnit.HOURS

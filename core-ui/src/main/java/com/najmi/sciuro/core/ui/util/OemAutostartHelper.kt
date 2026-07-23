@@ -1,4 +1,4 @@
-package com.najmi.sciuro.util
+package com.najmi.sciuro.core.ui.util
 
 import android.content.ComponentName
 import android.content.Intent
@@ -16,7 +16,7 @@ object OemAutostartHelper {
             "oppo", "realme" -> Intent().apply {
                 component = ComponentName(
                     "com.coloros.safecenter",
-                    "com.coloros.safecenter.permission.floatwindow.FloatWindowListActivity"
+                    "com.coloros.safecenter.startupapp.StartupAppListActivity"
                 )
             }
             "vivo" -> Intent().apply {

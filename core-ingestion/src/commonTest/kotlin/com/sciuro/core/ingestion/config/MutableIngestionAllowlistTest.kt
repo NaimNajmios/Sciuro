@@ -28,6 +28,18 @@ private class FakeSettingsProvider : SettingsProvider {
     override fun setApiKey(apiKey: String) {}
     override fun isLockEnabled(): Boolean = false
     override fun setLockEnabled(enabled: Boolean) {}
+    override fun isAutoConfirmEnabled(): Boolean = false
+    override fun setAutoConfirmEnabled(enabled: Boolean) {}
+    override fun getAutoConfirmThreshold(): Int = 3
+    override fun setAutoConfirmThreshold(threshold: Int) {}
+    override fun getManualPrice(key: String): Double? = null
+    override fun setManualPrice(key: String, price: Double) {}
+    override fun isQuietHoursEnabled(): Boolean = false
+    override fun setQuietHoursEnabled(enabled: Boolean) {}
+    override fun getQuietHoursStart(): Int = 22
+    override fun setQuietHoursStart(hour: Int) {}
+    override fun getQuietHoursEnd(): Int = 7
+    override fun setQuietHoursEnd(hour: Int) {}
 }
 
 class MutableIngestionAllowlistTest {

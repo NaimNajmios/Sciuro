@@ -3,14 +3,15 @@ CREATE TABLE cash_adjustment (
     account_id TEXT NOT NULL,
     amount REAL NOT NULL,
     reason TEXT NOT NULL,
+    remark TEXT,
     timestamp INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
     FOREIGN KEY(account_id) REFERENCES account(id)
 );
 
 insertAdjustment:
-INSERT INTO cash_adjustment(id, account_id, amount, reason, timestamp, created_at)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO cash_adjustment(id, account_id, amount, reason, remark, timestamp, created_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 selectAdjustmentsByAccount:
 SELECT * FROM cash_adjustment WHERE account_id = ?;

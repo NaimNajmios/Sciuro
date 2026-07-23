@@ -85,12 +85,13 @@ class WalletViewModel(
             initialValue = emptyList()
         )
 
-    fun recordCorrection(accountId: String, amount: Double, reason: String) {
+    fun recordCorrection(accountId: String, amount: Double, reason: String, remark: String? = null) {
         viewModelScope.launch {
             cashAdjustmentRepository.createAdjustment(
                 accountId = accountId,
                 amount = amount,
-                reason = reason
+                reason = reason,
+                remark = remark
             )
         }
     }
