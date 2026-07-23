@@ -135,7 +135,8 @@ fun AdjustmentBottomSheet(
                 Text("Cancel")
             }
 
-            Button(
+            SciuroPrimaryButton(
+                text = "Save Adjustment",
                 onClick = {
                     if (delta != null && effectiveReason.isNotBlank()) {
                         onConfirm(delta, effectiveReason, remark.takeIf { it.isNotBlank() })
@@ -143,9 +144,7 @@ fun AdjustmentBottomSheet(
                 },
                 modifier = Modifier.weight(1f),
                 enabled = delta != null && kotlin.math.abs(delta) > 0.01 && effectiveReason.isNotBlank()
-            ) {
-                Text("Save Adjustment")
-            }
+            )
         }
     }
 }

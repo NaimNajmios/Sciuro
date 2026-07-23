@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -43,6 +44,12 @@ fun PillToggle(
                 val isSelected = option == selectedOption
                 Box(
                     modifier = Modifier
+                        .then(if (isSelected) Modifier.shadow(
+                            elevation = 3.dp,
+                            shape = RoundedCornerShape(20.dp),
+                            ambientColor = activeColor,
+                            spotColor = activeColor
+                        ) else Modifier)
                         .then(if (fillWidth) Modifier.weight(1f) else Modifier)
                         .defaultMinSize(minHeight = 44.dp)
                         .clip(RoundedCornerShape(20.dp))

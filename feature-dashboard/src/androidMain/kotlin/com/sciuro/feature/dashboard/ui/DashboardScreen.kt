@@ -51,6 +51,7 @@ import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.FastTransactionSheet
 import com.najmi.sciuro.core.ui.components.FastTxOption
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
+import com.najmi.sciuro.core.ui.components.PillToggle
 import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -594,24 +595,16 @@ fun DashboardScreen(
                 label = "Merchant / Note"
             )
             
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            ) {
-                SegmentedButton(
-                    selected = editTxDirection == "OUTFLOW",
-                    onClick = { editTxDirection = "OUTFLOW"; editTxCategoryId = null },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                ) {
-                    Text("Expense")
-                }
-                SegmentedButton(
-                    selected = editTxDirection == "INFLOW",
-                    onClick = { editTxDirection = "INFLOW"; editTxCategoryId = null },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                ) {
-                    Text("Income")
-                }
-            }
+            PillToggle(
+                options = listOf("Expense", "Income"),
+                selectedOption = if (editTxDirection == "OUTFLOW") "Expense" else "Income",
+                onOptionSelected = { label ->
+                    editTxDirection = if (label == "Expense") "OUTFLOW" else "INFLOW"
+                    editTxCategoryId = null
+                },
+                fillWidth = true,
+                modifier = Modifier.fillMaxWidth()
+            )
                 
                 var accountExpanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(

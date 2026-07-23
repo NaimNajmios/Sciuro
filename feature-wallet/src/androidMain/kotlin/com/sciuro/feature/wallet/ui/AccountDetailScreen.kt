@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import org.koin.androidx.compose.koinViewModel
 
@@ -646,12 +647,11 @@ private fun EditAccountDetailsSheet(
                 Text("Cancel")
             }
 
-            Button(
+            SciuroPrimaryButton(
+                text = "Save",
                 onClick = { onConfirm(accountNumber.ifBlank { null }, accountHolderName.ifBlank { null }, bankInstitutionCode.ifBlank { null }) },
                 modifier = Modifier.weight(1f)
-            ) {
-                Text("Save")
-            }
+            )
         }
     }
 }

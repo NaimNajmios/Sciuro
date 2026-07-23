@@ -9,6 +9,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import com.sciuro.feature.wallet.viewmodel.OnboardingViewModel
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import org.koin.androidx.compose.koinViewModel
 
@@ -61,16 +62,14 @@ fun OnboardingScreen(
             )
             
             Spacer(modifier = Modifier.height(32.dp))
-            Button(
+            SciuroPrimaryButton(
+                text = "Complete Setup",
                 onClick = {
                     val amount = initialBalanceStr.toDoubleOrNull() ?: 0.0
                     viewModel.setupPersonalWallet(amount)
                 },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Text("Complete Setup")
-            }
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

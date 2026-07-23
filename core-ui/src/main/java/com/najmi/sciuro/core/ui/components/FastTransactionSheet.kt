@@ -76,31 +76,26 @@ fun FastTransactionSheet(
         )
 
         // Direction Toggle
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            SegmentedButton(
-                selected = direction == "OUTFLOW",
-                onClick = { direction = "OUTFLOW"; categoryId = null; showCategoryError = false },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
-            ) {
-                Text("Expense")
-            }
-            SegmentedButton(
-                selected = direction == "INFLOW",
-                onClick = { direction = "INFLOW"; categoryId = null; showCategoryError = false },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
-            ) {
-                Text("Income")
-            }
-            SegmentedButton(
-                selected = direction == "TRANSFER",
-                onClick = { direction = "TRANSFER"; categoryId = null; showCategoryError = false },
-                shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
-            ) {
-                Text("Transfer")
-            }
-        }
+        val directionLabels = listOf("Expense", "Income", "Transfer")
+        PillToggle(
+            options = directionLabels,
+            selectedOption = when (direction) {
+                "OUTFLOW" -> "Expense"
+                "INFLOW" -> "Income"
+                else -> "Transfer"
+            },
+            onOptionSelected = { label ->
+                direction = when (label) {
+                    "Expense" -> "OUTFLOW"
+                    "Income" -> "INFLOW"
+                    else -> "TRANSFER"
+                }
+                categoryId = null
+                showCategoryError = false
+            },
+            fillWidth = true,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        )
 
         // Description / Label (Text Field Removed to prevent keyboard conflict)
         SciuroTextField(

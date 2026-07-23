@@ -553,24 +553,13 @@ fun WalletScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    SingleChoiceSegmentedButtonRow(
+                    PillToggle(
+                        options = listOf("Bank Account", "E-Wallet"),
+                        selectedOption = newAccountType,
+                        onOptionSelected = { newAccountType = it },
+                        fillWidth = true,
                         modifier = Modifier.fillMaxWidth()
-                    ) {
-                        SegmentedButton(
-                            selected = newAccountType == "Bank Account",
-                            onClick = { newAccountType = "Bank Account" },
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                        ) {
-                            Text("Bank Account")
-                        }
-                        SegmentedButton(
-                            selected = newAccountType == "E-Wallet",
-                            onClick = { newAccountType = "E-Wallet" },
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                        ) {
-                            Text("E-Wallet")
-                        }
-                    }
+                    )
                 }
                 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -625,7 +614,8 @@ fun WalletScreen(
                         }
                     }
                     
-                    Button(
+                    SciuroPrimaryButton(
+                        text = "Save",
                         onClick = {
                             val balance = newAccountBalance.toDoubleOrNull() ?: 0.0
                             if (editingAccountId == null) {
@@ -653,9 +643,7 @@ fun WalletScreen(
                         },
                         modifier = Modifier.weight(if (editingAccountId != null) 1f else 2f),
                         enabled = newAccountName.isNotBlank()
-                    ) {
-                        Text("Save")
-                    }
+                    )
                 }
         }
     }
@@ -673,24 +661,13 @@ fun WalletScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    SingleChoiceSegmentedButtonRow(
+                    PillToggle(
+                        options = listOf("Stock", "Gold"),
+                        selectedOption = newAssetType,
+                        onOptionSelected = { newAssetType = it },
+                        fillWidth = true,
                         modifier = Modifier.fillMaxWidth()
-                    ) {
-                        SegmentedButton(
-                            selected = newAssetType == "Stock",
-                            onClick = { newAssetType = "Stock" },
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                        ) {
-                            Text("Stock")
-                        }
-                        SegmentedButton(
-                            selected = newAssetType == "Gold",
-                            onClick = { newAssetType = "Gold" },
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                        ) {
-                            Text("Gold")
-                        }
-                    }
+                    )
                 }
                 
                 if (newAssetType == "Stock") {
@@ -793,7 +770,8 @@ fun WalletScreen(
                         }
                     }
                     
-                    Button(
+                    SciuroPrimaryButton(
+                        text = "Save",
                         onClick = {
                             val units = newUnitsHeld.toDoubleOrNull() ?: 0.0
                             val price = newAvgBuyPrice.toDoubleOrNull() ?: 0.0
@@ -826,9 +804,7 @@ fun WalletScreen(
                         },
                         modifier = Modifier.weight(if (editingInvestmentId != null) 1f else 2f),
                         enabled = (newAssetType == "Gold" || newAssetSymbol.isNotBlank()) && newAssetName.isNotBlank() && newUnitsHeld.isNotBlank() && newAvgBuyPrice.isNotBlank()
-                    ) {
-                        Text("Save")
-                    }
+                    )
                 }
         }
     }
@@ -852,24 +828,16 @@ fun WalletScreen(
                     label = "Merchant / Note"
                 )
                 
-                SingleChoiceSegmentedButtonRow(
+                PillToggle(
+                    options = listOf("Expense", "Income"),
+                    selectedOption = if (editTxDirection == "OUTFLOW") "Expense" else "Income",
+                    onOptionSelected = { label ->
+                        editTxDirection = if (label == "Expense") "OUTFLOW" else "INFLOW"
+                        editTxCategoryId = null
+                    },
+                    fillWidth = true,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    SegmentedButton(
-                        selected = editTxDirection == "OUTFLOW",
-                        onClick = { editTxDirection = "OUTFLOW"; editTxCategoryId = null },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                    ) {
-                        Text("Expense")
-                    }
-                    SegmentedButton(
-                        selected = editTxDirection == "INFLOW",
-                        onClick = { editTxDirection = "INFLOW"; editTxCategoryId = null },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                    ) {
-                        Text("Income")
-                    }
-                }
+                )
                 
                 var accountExpanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
@@ -936,7 +904,8 @@ fun WalletScreen(
                         Text("Delete")
                     }
                     
-                    Button(
+                    SciuroPrimaryButton(
+                        text = "Save",
                         onClick = {
                             val amt = editTxAmount.toDoubleOrNull() ?: 0.0
                             viewModel.editTransaction(
@@ -951,9 +920,7 @@ fun WalletScreen(
                         },
                         modifier = Modifier.weight(1f),
                         enabled = editTxAmount.isNotBlank() && editTxAccountId != null
-                    ) {
-                        Text("Save")
-                    }
+                    )
                 }
         }
     }

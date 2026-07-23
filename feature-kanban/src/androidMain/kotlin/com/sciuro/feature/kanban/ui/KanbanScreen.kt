@@ -511,24 +511,15 @@ fun KanbanTaskCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             if (task.title.startsWith("Review Transaction")) {
-                SingleChoiceSegmentedButtonRow(
+                PillToggle(
+                    options = listOf("Expense", "Income"),
+                    selectedOption = if (selectedDirection == "OUTFLOW") "Expense" else "Income",
+                    onOptionSelected = { label ->
+                        selectedDirection = if (label == "Expense") "OUTFLOW" else "INFLOW"
+                    },
+                    fillWidth = true,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                ) {
-                    SegmentedButton(
-                        selected = selectedDirection == "OUTFLOW",
-                        onClick = { selectedDirection = "OUTFLOW" },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                    ) {
-                        Text("Expense")
-                    }
-                    SegmentedButton(
-                        selected = selectedDirection == "INFLOW",
-                        onClick = { selectedDirection = "INFLOW" },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                    ) {
-                        Text("Income")
-                    }
-                }
+                )
             }
 
             ExposedDropdownMenuBox(
@@ -622,20 +613,18 @@ private fun AddBillSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
             Text("Frequency", style = MaterialTheme.typography.labelLarge)
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                ObligationFrequency.entries.forEachIndexed { index, freq ->
-                    SegmentedButton(
-                        selected = frequency == freq,
-                        onClick = { frequency = freq },
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = ObligationFrequency.entries.size
-                        )
-                    ) {
-                        Text(freq.name.lowercase().replaceFirstChar { it.uppercase() })
+            val freqLabels = ObligationFrequency.entries.map { it.name.lowercase().replaceFirstChar { it.uppercaseChar() } }
+            PillToggle(
+                options = freqLabels,
+                selectedOption = frequency.name.lowercase().replaceFirstChar { it.uppercaseChar() },
+                onOptionSelected = { label ->
+                    frequency = ObligationFrequency.entries.first {
+                        it.name.lowercase().replaceFirstChar { it.uppercaseChar() } == label
                     }
-                }
-            }
+                },
+                fillWidth = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
             Text("Next Due Date", style = MaterialTheme.typography.labelLarge)
@@ -758,25 +747,22 @@ private fun AddDebtSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text("Direction", style = MaterialTheme.typography.labelLarge)
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                DebtDirection.entries.forEachIndexed { index, dir ->
-                    SegmentedButton(
-                        selected = direction == dir,
-                        onClick = { direction = dir },
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = DebtDirection.entries.size
-                        )
-                    ) {
-                        Text(
-                            when (dir) {
-                                DebtDirection.I_OWE -> "I Owe"
-                                DebtDirection.OWED_TO_ME -> "Owed to Me"
-                            }
-                        )
+            val dirLabels = listOf("I Owe", "Owed to Me")
+            PillToggle(
+                options = dirLabels,
+                selectedOption = when (direction) {
+                    DebtDirection.I_OWE -> "I Owe"
+                    DebtDirection.OWED_TO_ME -> "Owed to Me"
+                },
+                onOptionSelected = { label ->
+                    direction = when (label) {
+                        "I Owe" -> DebtDirection.I_OWE
+                        else -> DebtDirection.OWED_TO_ME
                     }
-                }
-            }
+                },
+                fillWidth = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
             SciuroTextField(value = name, onValueChange = { name = it }, label = "Debt Name")

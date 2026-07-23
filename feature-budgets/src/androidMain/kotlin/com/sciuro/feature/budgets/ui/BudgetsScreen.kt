@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
 import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
@@ -243,22 +244,18 @@ fun BudgetsScreen(
             }
 
             Text("Period", style = MaterialTheme.typography.labelLarge)
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                BudgetPeriod.entries.forEachIndexed { index, period ->
-                    SegmentedButton(
-                        selected = selectedPeriod == period,
-                        onClick = { selectedPeriod = period },
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = BudgetPeriod.entries.size
-                        )
-                    ) {
-                        Text(period.name.lowercase().replaceFirstChar { it.uppercase() })
+            val periodLabels = BudgetPeriod.entries.map { it.name.lowercase().replaceFirstChar { it.uppercaseChar() } }
+            PillToggle(
+                options = periodLabels,
+                selectedOption = selectedPeriod.name.lowercase().replaceFirstChar { it.uppercaseChar() },
+                onOptionSelected = { label ->
+                    selectedPeriod = BudgetPeriod.entries.first {
+                        it.name.lowercase().replaceFirstChar { it.uppercaseChar() } == label
                     }
-                }
-            }
+                },
+                fillWidth = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             if (isEditing) {
                 Row(

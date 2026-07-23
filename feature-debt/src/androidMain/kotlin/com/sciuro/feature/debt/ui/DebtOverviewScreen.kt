@@ -16,6 +16,7 @@ import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
@@ -257,23 +258,22 @@ fun DebtOverviewScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text("Direction", style = MaterialTheme.typography.labelLarge)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    DebtDirection.entries.forEachIndexed { index, dir ->
-                        SegmentedButton(
-                            selected = formDirection == dir,
-                            onClick = { formDirection = dir },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = DebtDirection.entries.size
-                            )
-                        ) {
-                            Text(when (dir) {
-                                DebtDirection.I_OWE -> "I Owe"
-                                DebtDirection.OWED_TO_ME -> "Owed to Me"
-                            })
+                val directionLabels = listOf("I Owe", "Owed to Me")
+                PillToggle(
+                    options = directionLabels,
+                    selectedOption = when (formDirection) {
+                        DebtDirection.I_OWE -> "I Owe"
+                        DebtDirection.OWED_TO_ME -> "Owed to Me"
+                    },
+                    onOptionSelected = { label ->
+                        formDirection = when (label) {
+                            "I Owe" -> DebtDirection.I_OWE
+                            else -> DebtDirection.OWED_TO_ME
                         }
-                    }
-                }
+                    },
+                    fillWidth = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
