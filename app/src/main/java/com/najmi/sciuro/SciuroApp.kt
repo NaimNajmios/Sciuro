@@ -27,6 +27,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import com.sciuro.core.classifier.orchestrator.SciuroIngestionOrchestrator
 import com.sciuro.core.classifier.rule.RuleLearner
+import com.sciuro.core.ledger.subscriber.NetPositionSubscriber
+import com.najmi.sciuro.worker.IngestionReconciliationWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 import com.sciuro.feature.debt.di.debtFeatureModule
 import com.sciuro.core.obligations.di.obligationsModule
@@ -41,6 +47,7 @@ class SciuroApp : Application(), KoinComponent {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val orchestrator: SciuroIngestionOrchestrator by inject()
     private val ruleLearner: RuleLearner by inject()
+    private val netPositionSubscriber: NetPositionSubscriber by inject()
     
     override fun onCreate() {
         super.onCreate()
@@ -72,5 +79,15 @@ class SciuroApp : Application(), KoinComponent {
         // Start the ingestion orchestrator to process raw events
         orchestrator.startListening(appScope)
         ruleLearner.start(appScope)
+        netPositionSubscriber.start(appScope)
+
+        val reconciliationRequest = PeriodicWorkRequestBuilder<IngestionReconciliationWorker>(
+            IngestionReconciliationWorker.REPEAT_INTERVAL_HOURS, TimeUnit.HOURS
+        ).build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "ingestion_reconciliation",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            reconciliationRequest
+        )
     }
 }
