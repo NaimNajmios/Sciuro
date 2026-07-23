@@ -89,4 +89,20 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setIngestionAllowlistRemovals(packages: Set<String>) {
         sharedPreferences.edit().putString("ingestion_allowlist_removals", packages.joinToString(",")).apply()
     }
+
+    override fun isAutoConfirmEnabled(): Boolean {
+        return sharedPreferences.getBoolean("auto_confirm_enabled", false)
+    }
+
+    override fun setAutoConfirmEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("auto_confirm_enabled", enabled).apply()
+    }
+
+    override fun getAutoConfirmThreshold(): Int {
+        return sharedPreferences.getInt("auto_confirm_threshold", 3)
+    }
+
+    override fun setAutoConfirmThreshold(threshold: Int) {
+        sharedPreferences.edit().putInt("auto_confirm_threshold", threshold).apply()
+    }
 }

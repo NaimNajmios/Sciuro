@@ -18,4 +18,8 @@ interface SettingsProvider {
     fun setIngestionAllowlistAdditions(packages: Set<String>)
     fun getIngestionAllowlistRemovals(): Set<String>
     fun setIngestionAllowlistRemovals(packages: Set<String>)
+    fun isAutoConfirmEnabled(): Boolean
+    fun setAutoConfirmEnabled(enabled: Boolean)
+    fun getAutoConfirmThreshold(): Int
+    fun setAutoConfirmThreshold(threshold: Int)
 }

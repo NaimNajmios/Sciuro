@@ -40,6 +40,7 @@ fun SettingsScreen(
 ) {
     var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
     var isLockEnabled by rememberSaveable { mutableStateOf(settingsProvider.isLockEnabled()) }
+    var isAutoConfirmEnabled by rememberSaveable { mutableStateOf(settingsProvider.isAutoConfirmEnabled()) }
     var apiKey by rememberSaveable { mutableStateOf(settingsProvider.getApiKey() ?: "") }
     var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
     var llmModelName by rememberSaveable { mutableStateOf(settingsProvider.getLlmModelName()) }
@@ -228,6 +229,37 @@ fun SettingsScreen(
                                         )
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Automation", style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Auto-confirm recurring bills", style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        "Auto-create obligations from trusted merchants you've confirmed 3+ times",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Switch(
+                                    checked = isAutoConfirmEnabled,
+                                    onCheckedChange = {
+                                        isAutoConfirmEnabled = it
+                                        settingsProvider.setAutoConfirmEnabled(it)
+                                    }
+                                )
                             }
                         }
                     }

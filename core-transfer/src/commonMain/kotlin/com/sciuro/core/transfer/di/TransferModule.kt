@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 val transferModule = module {
     single { TransferRepository(get(), get(), get()) }
-    single { TransferDetectionEngine(get(), get()) }
+    single { TransferDetectionEngine(get(), get(), get()) }
 }

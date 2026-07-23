@@ -8,7 +8,7 @@ import org.koin.dsl.module
 
 val obligationsModule = module {
     single { ObligationRepository(get(), get()) }
-    single { ObligationDetectionEngine(get(), get(), get()) }
+    single { ObligationDetectionEngine(get(), get(), get(), get()) }
     single { ObligationCycleMatcher(get(), get(), get()) }
-    single { IncomeRecurrencePatternDetector(get()) }
+    single { IncomeRecurrencePatternDetector(get(), get()) }
 }

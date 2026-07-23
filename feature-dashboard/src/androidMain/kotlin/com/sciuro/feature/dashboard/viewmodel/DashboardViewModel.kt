@@ -104,7 +104,7 @@ class DashboardViewModel(
         }
         val netPosition = totalAccounts + totalInvestments + totalDebts
 
-        val incomePattern = incomeDetector.detectNextIncome()
+        val incomePattern = incomeDetector.detectAndPublish()
         val thirtyDaysFromNow = currentTimeMillis() + 30L * 24L * 60L * 60L * 1000L
         val nextIncome = incomePattern?.nextExpectedDate ?: thirtyDaysFromNow
         val expectedIncome = incomePattern?.amount ?: 0.0

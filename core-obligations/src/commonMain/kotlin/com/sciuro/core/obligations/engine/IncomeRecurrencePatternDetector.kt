@@ -1,6 +1,7 @@
 package com.sciuro.core.obligations.engine
 
-import com.sciuro.core.audit.util.currentTimeMillis
+import com.sciuro.core.audit.events.DomainEvent
+import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
 
 data class IncomePattern(
@@ -11,8 +12,21 @@ data class IncomePattern(
 )
 
 class IncomeRecurrencePatternDetector(
-    private val database: SciuroDatabase
+    private val database: SciuroDatabase,
+    private val eventBus: DomainEventBus
 ) {
+    suspend fun detectAndPublish(): IncomePattern? {
+        val pattern = detectNextIncome() ?: return null
+        eventBus.publish(
+            DomainEvent.IncomeRecurrencePatternDetected(
+                incomeStreamId = pattern.merchant,
+                expectedNextDate = pattern.nextExpectedDate,
+                amount = pattern.amount
+            )
+        )
+        return pattern
+    }
+
     fun detectNextIncome(): IncomePattern? {
         val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
         val inflows = allTransactions.filter { it.direction == "INFLOW" && it.merchant != null }

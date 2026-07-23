@@ -1,5 +1,7 @@
 package com.sciuro.core.transfer.engine
 
+import com.sciuro.core.audit.events.DomainEvent
+import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.audit.util.generateUuid
 import com.sciuro.core.ledger.db.SciuroDatabase
@@ -8,7 +10,8 @@ import com.sciuro.core.transfer.repository.TransferRepository
 
 class TransferDetectionEngine(
     private val database: SciuroDatabase,
-    private val transferRepository: TransferRepository
+    private val transferRepository: TransferRepository,
+    private val eventBus: DomainEventBus
 ) {
 
     suspend fun onTransactionBooked(
@@ -54,6 +57,13 @@ class TransferDetectionEngine(
                 isPairConfirmed(newTxAccountId, matchAccountId)
             if (pairConfirmed) {
                 linkAsTransfer(newTxId, match.id, newTxAmount)
+            } else {
+                eventBus.publish(
+                    DomainEvent.TransferUnmatchedFlagged(
+                        transactionId = newTxId,
+                        candidateRecipient = match.merchant ?: match.id
+                    )
+                )
             }
         }
     }
@@ -134,6 +144,14 @@ class TransferDetectionEngine(
         )
 
         transferRepository.linkTransactions(link)
+        eventBus.publish(
+            DomainEvent.TransferMatched(
+                transferLinkId = link.id,
+                sourceTxId = outflowTxId,
+                destTxId = inflowTxId,
+                matchMethod = "IDENTITY"
+            )
+        )
     }
 
     private fun matchesAccountSuffix(extracted: String, stored: String): Boolean {
