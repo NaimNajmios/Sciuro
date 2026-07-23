@@ -9,5 +9,7 @@ data class Budget(
     val categoryId: String,
     val allocatedAmount: Double,
     val currentSpent: Double,
-    val period: BudgetPeriod
+    val period: BudgetPeriod,
+    val rollover: Boolean = false,
+    val alertThresholdPercent: Double? = null
 )

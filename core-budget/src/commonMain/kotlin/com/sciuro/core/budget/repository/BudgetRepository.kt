@@ -35,6 +35,8 @@ class BudgetRepository(
                 allocated_amount = budget.allocatedAmount,
                 current_spent = budget.currentSpent,
                 period = budget.period.name,
+                rollover = if (budget.rollover) 1L else 0L,
+                alert_threshold_percent = budget.alertThresholdPercent,
                 created_at = now,
                 updated_at = now
             )
@@ -66,7 +68,9 @@ class BudgetRepository(
                 categoryId = oldBudget.category_id,
                 allocatedAmount = allocatedAmount,
                 currentSpent = oldBudget.current_spent,
-                period = BudgetPeriod.valueOf(period)
+                period = BudgetPeriod.valueOf(period),
+                rollover = oldBudget.rollover == 1L,
+                alertThresholdPercent = oldBudget.alert_threshold_percent
             )
         }
     }

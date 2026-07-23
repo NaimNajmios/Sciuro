@@ -26,6 +26,7 @@ import com.sciuro.feature.dashboard.ui.DashboardScreen
 import com.sciuro.feature.wallet.ui.WalletScreen
 import com.sciuro.feature.kanban.ui.KanbanScreen
 import com.sciuro.feature.budgets.ui.BudgetsScreen
+import com.sciuro.feature.debt.ui.DebtOverviewScreen
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import android.content.Intent
 import android.provider.Settings
@@ -252,6 +253,7 @@ fun SciuroMainScreen() {
                 )
             }
             composable("budgets") { BudgetsScreen() }
+            composable("debt_overview") { DebtOverviewScreen(onNavigateBack = { navController.popBackStack() }) }
             composable("kanban") { KanbanScreen() }
             composable("settings") { 
                 com.sciuro.feature.settings.ui.SettingsScreen(

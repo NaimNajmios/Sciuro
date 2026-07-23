@@ -27,6 +27,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import com.sciuro.core.classifier.orchestrator.SciuroIngestionOrchestrator
 
+import com.sciuro.feature.debt.di.debtFeatureModule
+import com.sciuro.core.obligations.di.obligationsModule
 import com.sciuro.feature.settings.di.settingsModule
 
 val appModule = module {
@@ -54,6 +56,8 @@ class SciuroApp : Application(), KoinComponent {
                 walletModule,
                 kanbanModule,
                 budgetsModule,
+                debtFeatureModule,
+                obligationsModule,
                 settingsModule,
                 appModule,
                 parsingModule,

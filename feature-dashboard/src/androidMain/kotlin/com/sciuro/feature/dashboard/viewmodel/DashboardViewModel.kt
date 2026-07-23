@@ -89,8 +89,11 @@ class DashboardViewModel(
         
         val totalAccounts = accounts.sumOf { it.balance }
         val totalInvestments = investments.filterIsInstance<com.sciuro.core.investment.model.Investment>().sumOf { (it.unitsHeld * it.averageBuyPrice).toDouble() }
-        val totalDebts = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().sumOf { it.remainingBalance.toDouble() }
-        val netPosition = totalAccounts + totalInvestments - totalDebts
+        val totalDebts = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().sumOf {
+            if (it.direction == com.sciuro.core.debt.model.DebtDirection.OWED_TO_ME) it.remainingBalance.toDouble()
+            else -it.remainingBalance.toDouble()
+        }
+        val netPosition = totalAccounts + totalInvestments + totalDebts
         
         DashboardState(
             netPosition = netPosition,

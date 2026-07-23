@@ -17,8 +17,24 @@ insertObligation:
 INSERT INTO obligation(id, name, amount, frequency, next_due_date, category_id, account_id, is_active, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+selectAllObligations:
+SELECT * FROM obligation;
+
 selectAllActiveObligations:
 SELECT * FROM obligation WHERE is_active = 1;
+
+updateObligation:
+UPDATE obligation
+SET name = ?, amount = ?, frequency = ?, next_due_date = ?, category_id = ?, account_id = ?, updated_at = ?
+WHERE id = ?;
+
+deleteObligation:
+DELETE FROM obligation WHERE id = ?;
+
+deactivateObligation:
+UPDATE obligation
+SET is_active = 0, updated_at = ?
+WHERE id = ?;
 
 updateNextDueDate:
 UPDATE obligation

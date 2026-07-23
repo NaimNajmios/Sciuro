@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- **Phase B5.5 — Debt Module Completion**: Added `direction` (I_OWE / OWED_TO_ME), `counterparty_name`, `status` (ACTIVE / PAID_OFF / ARCHIVED), and `notes` fields to `debt_record` via migration `4.sqm`. Created `feature-debt` module with full CRUD UI: debt list split by direction, progress bars, create/edit bottom sheet, payment recording for informal debts, and delete with confirmation. Fixed `DebtEngine` direction matching — OWED_TO_ME debts now match INFLOW transactions instead of being silently ignored. Fixed `DashboardViewModel` Net Position sign: OWED_TO_ME debts are now treated as receivables (added) rather than liabilities (subtracted).
+- **Phase B1.5 — Obligation Module Activation**: Wired `obligationsModule` into Koin DI (previously missing from `SciuroApp.kt`). Added `observeActiveObligations`, `observeAllObligations`, `updateObligation`, `deleteObligation`, `deactivateObligation`, and `advanceNextDueDate` to `ObligationRepository`. Created `ObligationCycleMatcher` for per-transaction settlement matching (merchant or category+amount heuristics). Wired `ObligationCycleMatcher` into `SciuroIngestionOrchestrator` after transfer detection, so recurring bill cycles advance automatically when matching payments are booked.
+
+### Added
 - **Dynamic System Configurations**: Upgraded hardcoded application constants into user-configurable preferences backed by `SettingsProvider`.
   - Added an interactive **Budget Warning Threshold** slider in Settings to let users decide when budget progress bars turn red (scales 50%-100%).
   - Built a dynamic **Quick Labels** engine allowing custom presets in `FastTransactionSheet`.

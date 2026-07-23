@@ -9,6 +9,7 @@ import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.parsing.engine.SciuroParserPipeline
 import com.sciuro.core.parsing.model.DEFAULT_CONFIDENCE_THRESHOLD
+import com.sciuro.core.obligations.engine.ObligationCycleMatcher
 import com.sciuro.core.transfer.engine.TransferDetectionEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -22,6 +23,7 @@ class SciuroIngestionOrchestrator(
     private val accountRepository: AccountRepository,
     private val rawEventRepository: RawEventRepository,
     private val transferDetectionEngine: TransferDetectionEngine,
+    private val obligationCycleMatcher: ObligationCycleMatcher,
     private val budgetEngine: com.sciuro.core.budget.engine.BudgetEngine,
     private val debtEngine: com.sciuro.core.debt.engine.DebtEngine,
     private val confidenceThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD
@@ -115,6 +117,15 @@ class SciuroIngestionOrchestrator(
                 newTxDirection = transaction.direction,
                 newTxTimestamp = transaction.timestamp,
                 counterpartyAccountNumber = draft.counterpartyAccountNumber
+            )
+
+            obligationCycleMatcher.onTransactionBooked(
+                transactionId = transaction.id,
+                amount = transaction.amount,
+                direction = transaction.direction,
+                categoryId = transaction.categoryId,
+                merchant = transaction.merchant,
+                timestamp = transaction.timestamp
             )
 
             budgetEngine.processBudgets()

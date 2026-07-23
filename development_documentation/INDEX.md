@@ -11,10 +11,12 @@
 | A5 - Financial taxonomy & data model | Completed | Ledger SQLDelight schemas (Account, Category, TransactionRecord) and Koin Repositories |
 | A6 - Actor-critic triage & categorization | Completed | `SciuroIngestionOrchestrator`, basic static heuristic engine, inbox routing |
 | B1 - Recurring obligation & debt auto-detection | Completed | `ObligationDetectionEngine` to scan ledger for recurring merchant patterns |
+| B1.5 - Obligation Module Activation | Completed | Wired `obligationsModule` in Koin DI. Added repository CRUD and reactive observe. Created `ObligationCycleMatcher` for per-transaction cycle settlement. Wired into ingestion orchestrator. |
 | B2 - Transfer detection | Completed | Original `TransferDetectionEngine` with amount+time heuristic (superseded by Acct+Transfer phases) |
 | B3 - Balance & reconciliation engine | Completed | `ReconciliationEngine` and `CashAdjustment` schemas to fix ledger drift |
 | B4 - Manual Review Inbox | Completed | Exposed `observeUnreviewedTransactions` Flow for UI consumption |
 | B5 - Debt Ledger module | Completed | `core-debt` scaffolded, `DebtEngine` implemented for automatic payment tracking |
+| B5.5 - Debt Module Completion | Completed | Added direction/status/counterparty to debt model. Created `feature-debt` module with full CRUD UI (view, add, edit, delete, record payment). Fixed DebtEngine direction matching for OWED_TO_ME debts. Fixed DashboardViewModel Net Position sign for receivable debts. |
 | B6 - Investment/Gold Savings module | Completed | `core-investment` scaffolded, tracks asset accumulation independently |
 | B7 - Budgeting logic | Completed | `core-budget` scaffolded, `BudgetEngine` implemented for rolling 30-day tracking |
 | B7.5 - Budget Feature Completion | Completed | Full budget CRUD (create/edit/delete), category name resolution via `CategoryRepository`, creation bottom sheet with category picker/period selector, edit/delete flows with destructive confirmation |

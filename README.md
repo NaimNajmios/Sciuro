@@ -7,6 +7,8 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 * **Deterministic Self-Transfer Detection:** Two-tier matching engine identifies cross-account transfers using counterparty account numbers extracted from all 7 bank/ewallet notification parsers (Tier 1), falling back to amount+time heuristic only when no account number is present (Tier 2). Masked-number suffix matching handles partially-hidden account numbers (e.g., "...7890", "****7890"). Human-confirmed pairs auto-link on future matches.
 * **Account Data Enrichment:** Each account stores its own account number, account holder name, bank code, and QR code image. These fields are set once via the Account Detail edit sheet and enable identity-based transfer matching instead of coincidence-based guessing.
 * **QR Code Display:** Accounts can store a QR code image (captured from gallery) for quick display when receiving payments. Shown as a tappable thumbnail on the account detail screen with fullscreen expansion.
+* **Obligation / Recurring Bill Tracking:** Pattern-based auto-detection of subscriptions and recurring outflows. Per-transaction cycle matching that automatically advances due dates when a matching payment is booked. Bills can be created, edited, deleted, or deactivated manually.
+* **Debt Tracking:** Full CRUD for debts with direction support (I Owe / Owed to Me), progress tracking, counterparty identification, and lifecycle management (Active / Paid Off / Archived). Supports all debt types: loans, credit cards, and informal money owed between people. Automatic payment matching via `DebtEngine` respects direction — repayments owed to you are correctly recognized from incoming transactions.
 * **Budget Tracking:** Full CRUD for category budgets with per-category spending limits, progress bars, and reactive spend recalculation. Create/edit/delete budgets via bottom sheet with category picker and period selector (weekly/monthly/yearly).
 * **Malaysian Payment Channels:** Deep integration and detection rules for local payment platforms, physical wallets, and e-wallets.
 * **Investment & Gold Savings:** Native support for tracking complex assets like gold and long-term investments.
@@ -20,7 +22,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase D (Personal Deployment)**. All core modules—including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules—are fully integrated and tested.
+The project is fully functional and has completed **Phase D (Personal Deployment)**. Core domain modules (Debt, Obligations, Budget, Transfers, Investments) are all wired into the ingestion orchestrator and reactive UI. All core modules—including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules—are fully integrated and tested.
 
 ## Architecture
 
@@ -30,7 +32,7 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
   - `:core-ingestion`, `:core-parsing`, `:core-llm`: Notification extraction and LLM fallback parsing.
   - `:core-classifier`: The central Orchestrator that triages parsed data and triggers transfer detection.
   - `:core-obligations`, `:core-transfer`, `:core-debt`, `:core-investment`, `:core-budget`: Specialized intelligence engines that track assets, liabilities, recurring expenses, budget thresholds, and identity-based transfer matching.
-* **Feature Modules** (`feature-*`): User-facing capabilities, such as `:feature-dashboard`, `:feature-wallet`, `:feature-budgets`, and `:feature-kanban`.
+* **Feature Modules** (`feature-*`): User-facing capabilities: `:feature-dashboard`, `:feature-wallet`, `:feature-budgets`, `:feature-debt`, `:feature-kanban`, `:feature-settings`.
 
 **Tech Stack:**
 * **Dependency Injection:** [Koin](https://insert-koin.io/)
@@ -41,13 +43,14 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 
 ### HeroPanel — Shared Hero Section Component
 
-`HeroPanel` (`core-ui`) is a dark-backed hero header composable used across 7 screens. It renders a title, a large display figure, an optional right-aligned `PillToggle`, an optional `WaveChart`, and a `content` slot for screen-specific extras:
+`HeroPanel` (`core-ui`) is a dark-backed hero header composable used across 8 screens. It renders a title, a large display figure, an optional right-aligned `PillToggle`, an optional `WaveChart`, and a `content` slot for screen-specific extras:
 
 | Screen | heroFigure | chartData | toggle | content slot |
 |---|---|---|---|---|
 | Dashboard | Total net worth | Real daily balance history | This Month / All Time | Accounts count + weekly adjustments |
 | Budgets | Total spent vs allocated | — | — | Top 3 at-risk budgets |
 | Account Detail | Account balance | — | — | Adjust Balance button |
+| Debt Overview | I Owe / Owed to Me totals | — | — | Direction breakdown row |
 | Kanban | Hardcoded debt estimate | — | — | Task status breakdown |
 | Developer Settings | Time since last capture | — | — | Pipeline pending/dead counts |
 | Settings (×2) | "Config" / "More" | — | — | — |

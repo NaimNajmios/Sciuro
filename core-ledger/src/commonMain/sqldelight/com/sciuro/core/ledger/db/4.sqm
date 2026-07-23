@@ -1,0 +1,7 @@
+ALTER TABLE debt_record ADD COLUMN direction TEXT NOT NULL DEFAULT 'I_OWE';
+ALTER TABLE debt_record ADD COLUMN counterparty_name TEXT;
+ALTER TABLE debt_record ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE';
+ALTER TABLE debt_record ADD COLUMN notes TEXT;
+
+ALTER TABLE budget_record ADD COLUMN rollover INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE budget_record ADD COLUMN alert_threshold_percent REAL;

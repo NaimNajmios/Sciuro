@@ -2,24 +2,44 @@ CREATE TABLE debt_record (
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     debt_type TEXT NOT NULL,
+    direction TEXT NOT NULL DEFAULT 'I_OWE',
+    counterparty_name TEXT,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
     principal_amount REAL NOT NULL,
     remaining_balance REAL NOT NULL,
     interest_rate REAL,
     due_date INTEGER,
     associated_account_id TEXT,
+    notes TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
     FOREIGN KEY(associated_account_id) REFERENCES account(id)
 );
 
 insertDebt:
-INSERT INTO debt_record(id, name, debt_type, principal_amount, remaining_balance, interest_rate, due_date, associated_account_id, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO debt_record(id, name, debt_type, direction, counterparty_name, status, principal_amount, remaining_balance, interest_rate, due_date, associated_account_id, notes, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateDebtBalance:
 UPDATE debt_record
 SET remaining_balance = ?, updated_at = ?
 WHERE id = ?;
 
+updateDebt:
+UPDATE debt_record
+SET name = ?, principal_amount = ?, remaining_balance = ?, interest_rate = ?, due_date = ?, counterparty_name = ?, notes = ?, updated_at = ?
+WHERE id = ?;
+
+deleteDebt:
+DELETE FROM debt_record WHERE id = ?;
+
+markDebtAsPaidOff:
+UPDATE debt_record
+SET remaining_balance = 0, status = 'PAID_OFF', updated_at = ?
+WHERE id = ?;
+
 selectAllDebts:
 SELECT * FROM debt_record;
+
+selectDebtsByDirection:
+SELECT * FROM debt_record WHERE direction = ?;
