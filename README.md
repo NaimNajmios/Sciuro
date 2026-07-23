@@ -45,7 +45,7 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 
 ### HeroPanel — Shared Hero Section Component
 
-`HeroPanel` (`core-ui`) is a dark-backed hero header composable used across 8 screens. It renders a title, a large display figure in a full-width row, an optional `PillToggle` in its own row below, an optional `WaveChart`, and a `content` slot for screen-specific extras:
+`HeroPanel` (`core-ui`) is a dark-backed hero header composable used across 8 screens. The top row uses `SpaceBetween` to place the title on the left and an optional `PillToggle` on the right. A second row renders the large hero figure at full width below. An optional `WaveChart` sparkline and a `content` slot complete the section:
 
 | Screen | heroFigure | chartData | toggle | content slot |
 |---|---|---|---|---|

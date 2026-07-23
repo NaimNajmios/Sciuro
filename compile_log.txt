@@ -1,12 +1,148 @@
-﻿Starting a Gradle Daemon, 15 busy and 1 incompatible and 12 stopped Daemons could not be reused, use --status for details
+﻿Starting a Gradle Daemon, 16 busy and 1 incompatible and 14 stopped Daemons could not be reused, use --status for details
+> Task :core-ingestion:preBuild UP-TO-DATE
+> Task :core-obligations:preBuild UP-TO-DATE
+> Task :core-transfer:preBuild UP-TO-DATE
+> Task :core-budget:preBuild UP-TO-DATE
 > Task :core-ui:preBuild UP-TO-DATE
+> Task :core-audit:preBuild UP-TO-DATE
+> Task :core-investment:preBuild UP-TO-DATE
+> Task :feature-dashboard:preBuild UP-TO-DATE
+> Task :core-debt:preBuild UP-TO-DATE
+> Task :core-investment:preDebugBuild UP-TO-DATE
 > Task :core-ui:preDebugBuild UP-TO-DATE
+> Task :core-ingestion:preDebugBuild UP-TO-DATE
+> Task :core-obligations:preDebugBuild UP-TO-DATE
+> Task :core-budget:preDebugBuild UP-TO-DATE
+> Task :feature-dashboard:preDebugBuild UP-TO-DATE
+> Task :core-debt:preDebugBuild UP-TO-DATE
+> Task :core-audit:preDebugBuild UP-TO-DATE
+> Task :core-transfer:preDebugBuild UP-TO-DATE
+> Task :core-debt:generateDebugResValues UP-TO-DATE
+> Task :core-audit:generateDebugResValues UP-TO-DATE
+> Task :core-investment:generateDebugResValues UP-TO-DATE
+> Task :core-transfer:generateDebugResValues UP-TO-DATE
+> Task :core-obligations:generateDebugResValues UP-TO-DATE
 > Task :core-ui:generateDebugResValues UP-TO-DATE
+> Task :core-ingestion:generateDebugResValues UP-TO-DATE
+> Task :feature-dashboard:generateDebugResValues UP-TO-DATE
+> Task :core-budget:generateDebugResValues UP-TO-DATE
+> Task :core-budget:generateDebugResources UP-TO-DATE
+> Task :core-audit:generateDebugResources UP-TO-DATE
+> Task :core-ingestion:generateDebugResources UP-TO-DATE
+> Task :core-investment:generateDebugResources UP-TO-DATE
 > Task :core-ui:generateDebugResources UP-TO-DATE
+> Task :core-obligations:generateDebugResources UP-TO-DATE
+> Task :core-transfer:generateDebugResources UP-TO-DATE
+> Task :core-debt:generateDebugResources UP-TO-DATE
+> Task :feature-dashboard:generateDebugResources UP-TO-DATE
+> Task :core-ledger:generateCommonMainSciuroDatabaseInterface UP-TO-DATE
+> Task :core-ledger:preBuild UP-TO-DATE
+> Task :core-ledger:preDebugBuild UP-TO-DATE
+> Task :core-ledger:generateDebugResValues UP-TO-DATE
+> Task :core-ledger:generateDebugResources UP-TO-DATE
+> Task :core-ingestion:packageDebugResources UP-TO-DATE
 > Task :core-ui:packageDebugResources UP-TO-DATE
+> Task :core-audit:packageDebugResources UP-TO-DATE
+> Task :core-debt:packageDebugResources UP-TO-DATE
+> Task :feature-dashboard:packageDebugResources UP-TO-DATE
+> Task :core-budget:packageDebugResources UP-TO-DATE
+> Task :core-ledger:packageDebugResources UP-TO-DATE
+> Task :core-investment:packageDebugResources UP-TO-DATE
+> Task :core-obligations:packageDebugResources UP-TO-DATE
+> Task :core-transfer:packageDebugResources UP-TO-DATE
 > Task :core-ui:parseDebugLocalResources UP-TO-DATE
+> Task :core-obligations:parseDebugLocalResources UP-TO-DATE
+> Task :core-debt:parseDebugLocalResources UP-TO-DATE
+> Task :feature-dashboard:parseDebugLocalResources UP-TO-DATE
+> Task :core-ingestion:parseDebugLocalResources UP-TO-DATE
+> Task :core-investment:parseDebugLocalResources UP-TO-DATE
+> Task :core-budget:parseDebugLocalResources UP-TO-DATE
+> Task :core-audit:parseDebugLocalResources UP-TO-DATE
+> Task :core-transfer:parseDebugLocalResources UP-TO-DATE
+> Task :core-ledger:parseDebugLocalResources UP-TO-DATE
+> Task :core-audit:generateDebugRFile UP-TO-DATE
+> Task :core-transfer:generateDebugRFile UP-TO-DATE
+> Task :core-investment:generateDebugRFile UP-TO-DATE
+> Task :feature-dashboard:generateDebugRFile UP-TO-DATE
+> Task :core-ingestion:generateDebugRFile UP-TO-DATE
+> Task :core-budget:generateDebugRFile UP-TO-DATE
 > Task :core-ui:generateDebugRFile UP-TO-DATE
+> Task :core-ledger:generateDebugRFile UP-TO-DATE
+> Task :core-debt:generateDebugRFile UP-TO-DATE
+> Task :core-obligations:generateDebugRFile UP-TO-DATE
+> Task :core-investment:javaPreCompileDebug UP-TO-DATE
+> Task :core-budget:javaPreCompileDebug UP-TO-DATE
+> Task :core-transfer:javaPreCompileDebug UP-TO-DATE
+> Task :core-ledger:javaPreCompileDebug UP-TO-DATE
+> Task :core-debt:javaPreCompileDebug UP-TO-DATE
+> Task :core-ingestion:javaPreCompileDebug UP-TO-DATE
+> Task :core-obligations:javaPreCompileDebug UP-TO-DATE
+> Task :core-audit:javaPreCompileDebug UP-TO-DATE
+> Task :core-ui:javaPreCompileDebug UP-TO-DATE
+> Task :core-audit:compileDebugKotlinAndroid
+> Task :core-audit:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-audit:bundleLibCompileToJarDebug UP-TO-DATE
+
 > Task :core-ui:compileDebugKotlin
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ui/src/main/java/com/najmi/sciuro/core/ui/components/AdjustmentCard.kt:19:5 Parameter 'formattedTime' is never used
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ui/src/main/java/com/najmi/sciuro/core/ui/components/AdjustmentCard.kt:20:5 Parameter 'onClick' is never used
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ui/src/main/java/com/najmi/sciuro/core/ui/components/FastTransactionSheet.kt:243:66 'Backspace: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Backspace
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ui/src/main/java/com/najmi/sciuro/core/ui/components/SciuroMascot.kt:31:5 Parameter 'iterations' is never used
+
+> Task :core-ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-ui:bundleLibCompileToJarDebug
+
+> Task :core-ledger:compileDebugKotlinAndroid
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-ledger/src/commonMain/kotlin/com/sciuro/core/ledger/subscriber/NetPositionSubscriber.kt:51:67 Condition 'it.direction == null' is always 'false'
+
+> Task :core-ledger:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-ledger:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :core-debt:compileDebugKotlinAndroid
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-debt/src/commonMain/kotlin/com/sciuro/core/debt/engine/DebtEngine.kt:26:47 Unnecessary safe call on a non-null receiver of type String
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-debt/src/commonMain/kotlin/com/sciuro/core/debt/engine/DebtEngine.kt:28:15 Elvis operator (?:) always returns the left operand of non-nullable type DebtDirection
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-debt/src/commonMain/kotlin/com/sciuro/core/debt/repository/DebtRepository.kt:30:37 Unnecessary safe call on a non-null receiver of type String
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-debt/src/commonMain/kotlin/com/sciuro/core/debt/repository/DebtRepository.kt:30:134 Elvis operator (?:) always returns the left operand of non-nullable type DebtDirection
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-debt/src/commonMain/kotlin/com/sciuro/core/debt/repository/DebtRepository.kt:32:31 Unnecessary safe call on a non-null receiver of type String
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-debt/src/commonMain/kotlin/com/sciuro/core/debt/repository/DebtRepository.kt:32:119 Elvis operator (?:) always returns the left operand of non-nullable type DebtStatus
+
+> Task :core-investment:compileDebugKotlinAndroid
+> Task :core-investment:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-investment:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core-debt:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-debt:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :core-budget:compileDebugKotlinAndroid
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-budget/src/commonMain/kotlin/com/sciuro/core/budget/engine/BudgetEngine.kt:29:13 Variable 'monthEndMs' is never used
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-budget/src/commonMain/kotlin/com/sciuro/core/budget/engine/BudgetEngine.kt:31:13 Variable 'thirtyDaysMs' is never used
+
+> Task :core-budget:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-budget:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core-transfer:compileDebugKotlinAndroid
+> Task :core-transfer:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-transfer:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :core-ingestion:compileDebugKotlinAndroid
+> Task :core-ingestion:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-ingestion:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :core-obligations:compileDebugKotlinAndroid
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/core-obligations/src/commonMain/kotlin/com/sciuro/core/obligations/engine/ObligationCycleMatcher.kt:13:135 Parameter 'timestamp' is never used
+
+> Task :core-obligations:compileDebugJavaWithJavac NO-SOURCE
+> Task :core-obligations:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :feature-dashboard:compileDebugKotlinAndroid
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/ui/DashboardScreen.kt:105:9 Variable 'newCategoryId' is never used
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/ui/DashboardScreen.kt:512:13 Variable 'cat' is never used
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/ui/DashboardScreen.kt:743:37 'TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/viewmodel/DashboardViewModel.kt:83:32 Unchecked cast: List<Any> to List<Account>
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/viewmodel/DashboardViewModel.kt:84:34 Unchecked cast: List<Any> to List<Transaction_record>
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/viewmodel/DashboardViewModel.kt:85:31 Unchecked cast: List<Any> to List<Budget>
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/viewmodel/DashboardViewModel.kt:86:39 Unchecked cast: List<Any> to List<Transaction_record>
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/viewmodel/DashboardViewModel.kt:87:35 Unchecked cast: List<Any> to List<Category>
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/viewmodel/DashboardViewModel.kt:88:34 Unchecked cast: List<Any> to List<Category>
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/viewmodel/DashboardViewModel.kt:89:38 Unchecked cast: List<Any> to List<Cash_adjustment>
+w: file:///C:/Users/NAIM/AndroidStudioProjects/Sciuro/feature-dashboard/src/androidMain/kotlin/com/sciuro/feature/dashboard/viewmodel/DashboardViewModel.kt:92:35 Unchecked cast: List<Any> to List<Obligation>
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
@@ -14,5 +150,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.6/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 26s
-6 actionable tasks: 1 executed, 5 up-to-date
+BUILD SUCCESSFUL in 1m 3s
+79 actionable tasks: 11 executed, 68 up-to-date

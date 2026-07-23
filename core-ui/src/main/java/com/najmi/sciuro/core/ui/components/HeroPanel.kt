@@ -43,7 +43,7 @@ fun HeroPanel(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
             if (navigationIcon != null) {
                 Box(modifier = Modifier.padding(end = 8.dp)) {
@@ -56,19 +56,9 @@ fun HeroPanel(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.7f)
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                heroFigure()
             }
-        }
 
-        if (toggleOptions.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
+            if (toggleOptions.isNotEmpty()) {
                 PillToggle(
                     options = toggleOptions,
                     selectedOption = selectedToggle,
@@ -76,6 +66,15 @@ fun HeroPanel(
                     isOnDarkSurface = true
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        ) {
+            heroFigure()
         }
 
         if (!chartData.isNullOrEmpty()) {
