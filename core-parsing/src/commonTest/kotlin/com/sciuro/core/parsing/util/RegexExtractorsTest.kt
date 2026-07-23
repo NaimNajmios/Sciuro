@@ -40,7 +40,7 @@ class RegexExtractorsTest {
     }
 
     @Test
-    fun `extractAccountNumber parses English A/C pattern`() {
+    fun `extractAccountNumber parses English AC pattern`() {
         assertEquals("1234567890", extractAccountNumber("transferred to A/C 1234567890"))
         assertEquals("9876543210", extractAccountNumber("to A/C: 9876543210"))
     }
