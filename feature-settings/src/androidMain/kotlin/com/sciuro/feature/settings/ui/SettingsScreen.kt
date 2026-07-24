@@ -32,6 +32,9 @@ import android.provider.Settings as SystemSettings
 import java.net.HttpURLConnection
 import java.net.URL
 import com.najmi.sciuro.core.ui.util.OemAutostartHelper
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @Composable
 fun SettingsScreen(
@@ -39,7 +42,7 @@ fun SettingsScreen(
     onNavigateToDeveloperSettings: () -> Unit = {},
     onNavigateToLinkedAccounts: () -> Unit = {},
     onExportBackup: (String) -> Unit = {},
-    onImportBackup: (String) -> Unit = {},
+    onImportBackup: (Uri, String) -> Unit = { _, _ -> },
     settingsProvider: SettingsProvider = koinInject()
 ) {
     var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
@@ -199,13 +202,20 @@ fun SettingsScreen(
 
                 item {
                     var showExportDialog by rememberSaveable { mutableStateOf(false) }
-                    var showImportDialog by rememberSaveable { mutableStateOf(false) }
+                    var importFileUri by remember { mutableStateOf<Uri?>(null) }
+
+                    val importFilePickerLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.OpenDocument()
+                    ) { uri ->
+                        importFileUri = uri
+                    }
+
                     com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Data Backup", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Encrypted export (AES-256-GCM) and import with pre-import backup. Exports are saved to app storage.",
+                                "Encrypted export (AES-256-GCM) and import with pre-import backup.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -221,7 +231,7 @@ fun SettingsScreen(
                                     Text("Export")
                                 }
                                 OutlinedButton(
-                                    onClick = { showImportDialog = true },
+                                    onClick = { importFilePickerLauncher.launch(arrayOf("*/*")) },
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text("Import")
@@ -236,11 +246,14 @@ fun SettingsScreen(
                             onDismiss = { showExportDialog = false }
                         )
                     }
-                    if (showImportDialog) {
+                    importFileUri?.let { uri ->
                         BackupPasswordDialog(
                             title = "Import Encrypted Backup", 
-                            onConfirm = { showImportDialog = false; onImportBackup(it) },
-                            onDismiss = { showImportDialog = false }
+                            onConfirm = { password ->
+                                importFileUri = null
+                                onImportBackup(uri, password)
+                            },
+                            onDismiss = { importFileUri = null }
                         )
                     }
                 }

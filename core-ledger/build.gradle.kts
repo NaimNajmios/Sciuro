@@ -5,7 +5,13 @@ plugins {
 }
 
 kotlin {
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
+        }
+    }
     androidTarget {
         compilations.all {
             kotlinOptions {

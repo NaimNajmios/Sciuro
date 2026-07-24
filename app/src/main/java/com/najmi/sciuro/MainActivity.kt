@@ -48,6 +48,9 @@ import com.sciuro.core.ledger.config.SettingsProvider
 import org.koin.compose.koinInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import android.widget.Toast
+import androidx.core.content.FileProvider
+import kotlinx.coroutines.withContext
 
 class MainActivity : FragmentActivity() {
     
@@ -290,27 +293,66 @@ fun SciuroMainScreen() {
                     onExportBackup = { password ->
                         scope.launch(Dispatchers.IO) {
                             try {
-                                val exportDir = context.getExternalFilesDir(null)
-                                val exportFile = java.io.File(exportDir, "sciuro_backup_${System.currentTimeMillis()}.scib")
-                                val outputStream = java.io.FileOutputStream(exportFile)
-                                com.najmi.sciuro.export.EncryptedExporter.export(context, password, outputStream)
+                                val tempFile = java.io.File(context.cacheDir, "sciuro_backup_${System.currentTimeMillis()}.scib")
+                                val outputStream = java.io.FileOutputStream(tempFile)
+                                val result = com.najmi.sciuro.export.EncryptedExporter.export(context, password, outputStream)
                                 outputStream.close()
-                            } catch (_: Exception) {}
+                                if (result.isSuccess) {
+                                    val uri = FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.fileprovider",
+                                        tempFile
+                                    )
+                                    withContext(Dispatchers.Main) {
+                                        try {
+                                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                                type = "application/octet-stream"
+                                                putExtra(Intent.EXTRA_STREAM, uri)
+                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            }
+                                            context.startActivity(Intent.createChooser(shareIntent, "Share Backup"))
+                                        } catch (_: Exception) {
+                                            Toast.makeText(context, "No app available to share the backup", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                } else {
+                                    val errorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(context, "Export failed: $errorMsg", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                            }
                         }
                     },
-                    onImportBackup = { password ->
+                    onImportBackup = { uri, password ->
                         scope.launch(Dispatchers.IO) {
                             try {
-                                val importDir = context.getExternalFilesDir(null)
-                                val importFiles = importDir?.listFiles()?.filter { it.extension == "scib" }
-                                    ?.sortedByDescending { it.lastModified() }
-                                val importFile = importFiles?.firstOrNull()
-                                if (importFile != null) {
-                                    val inputStream = java.io.FileInputStream(importFile)
-                                    com.najmi.sciuro.export.EncryptedImporter.import(context, password, inputStream)
+                                val inputStream = context.contentResolver.openInputStream(uri)
+                                if (inputStream != null) {
+                                    val result = com.najmi.sciuro.export.EncryptedImporter.import(context, password, inputStream)
                                     inputStream.close()
+                                    withContext(Dispatchers.Main) {
+                                        if (result.isSuccess) {
+                                            Toast.makeText(context, "Backup restored successfully", Toast.LENGTH_LONG).show()
+                                        } else {
+                                            val errorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                                            Toast.makeText(context, "Import failed: $errorMsg", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(context, "Import failed: Could not read file", Toast.LENGTH_LONG).show()
+                                    }
                                 }
-                            } catch (_: Exception) {}
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Import failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                            }
                         }
                     }
                 ) 
