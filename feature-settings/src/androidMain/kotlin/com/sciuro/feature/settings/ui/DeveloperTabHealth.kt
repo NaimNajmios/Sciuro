@@ -14,7 +14,7 @@ import com.sciuro.core.parsing.metrics.ParserHealthRepository
 import com.sciuro.core.parsing.metrics.ParserHealthRow
 import com.sciuro.core.ledger.db.SciuroDatabase
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.getKoin
+import org.koin.compose.getKoin
 
 @Composable
 fun DeveloperTabHealth(modifier: Modifier = Modifier) {

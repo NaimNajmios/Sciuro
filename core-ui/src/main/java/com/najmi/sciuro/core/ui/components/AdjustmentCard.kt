@@ -16,8 +16,7 @@ import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 fun AdjustmentCard(
     reason: String,
     amount: Double,
-    formattedTime: String,
-    onClick: () -> Unit = {},
+
     modifier: Modifier = Modifier
 ) {
     Card(

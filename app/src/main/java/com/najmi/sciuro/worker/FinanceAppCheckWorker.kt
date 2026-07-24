@@ -2,6 +2,7 @@ package com.najmi.sciuro.worker
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.sciuro.core.audit.events.DomainEvent
@@ -28,6 +29,7 @@ class FinanceAppCheckWorker(
             pm.getPackageInfo(packageName, 0)
             true
         } catch (e: PackageManager.NameNotFoundException) {
+            Log.d(TAG, "Package $packageName not installed", e)
             false
         }
 
@@ -35,5 +37,9 @@ class FinanceAppCheckWorker(
 
         eventBus.publish(DomainEvent.NewFinanceAppDetected(packageName))
         return Result.success()
+    }
+
+    companion object {
+        private const val TAG = "FinanceAppCheckWorker"
     }
 }

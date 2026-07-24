@@ -2,6 +2,7 @@ package com.najmi.sciuro.worker
 
 import android.content.Context
 import android.provider.Settings
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.sciuro.core.ledger.repository.RawEventRepository
@@ -43,11 +44,13 @@ class IngestionReconciliationWorker(
 
             Result.success()
         } catch (e: Exception) {
+            Log.e(TAG, "Reconciliation failed, will retry", e)
             Result.retry()
         }
     }
 
     companion object {
+        private const val TAG = "IngestionReconciliationWorker"
         const val STALE_PROCESSING_MS = 60_000L
         const val TRACE_RETENTION_MS = 30L * 24L * 60L * 60L * 1000L
     }

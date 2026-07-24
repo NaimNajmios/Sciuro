@@ -276,11 +276,9 @@ fun SciuroMainScreen() {
                 enterTransition = drillInEnter,
                 popExitTransition = drillInPopExit
             ) {
-                com.sciuro.feature.budgets.ui.CategoryDrilldownScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
+                com.sciuro.feature.budgets.ui.CategoryDrilldownScreen()
             }
-            composable("debt_overview") { DebtOverviewScreen(onNavigateBack = { navController.popBackStack() }) }
+            composable("debt_overview") { DebtOverviewScreen() }
             composable("kanban") { KanbanScreen() }
             composable("settings") { 
                 val context = LocalContext.current

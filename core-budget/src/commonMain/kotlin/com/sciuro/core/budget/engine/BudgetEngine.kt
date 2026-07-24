@@ -26,9 +26,7 @@ class BudgetEngine(
         val monthStartMs = calendar.timeInMillis
 
         calendar.add(java.util.Calendar.MONTH, 1)
-        val monthEndMs = calendar.timeInMillis - 1
-
-        val thirtyDaysMs = 30L * 24 * 60 * 60 * 1000
+        calendar.timeInMillis
 
         for (budget in allBudgets) {
             val periodStartMs = when (budget.period) {

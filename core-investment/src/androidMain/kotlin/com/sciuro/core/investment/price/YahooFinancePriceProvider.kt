@@ -43,7 +43,7 @@ class YahooFinancePriceProvider(
     private suspend fun fetchPrice(assetType: String, assetSymbol: String): Double? {
         return withContext(Dispatchers.IO) {
             when {
-                assetType.uppercase() == "GOLD" -> fetchGoldPrice(assetSymbol)
+                assetType.uppercase() == "GOLD" -> fetchGoldPrice()
                 assetSymbol.endsWith(".KL") -> fetchYahooFinance("${assetSymbol.removeSuffix(".KL")}.KL")
                 assetSymbol.contains(".") -> fetchYahooFinance(assetSymbol)
                 else -> fetchYahooFinance("$assetSymbol.KL")
@@ -51,7 +51,7 @@ class YahooFinancePriceProvider(
         }
     }
 
-    private fun fetchGoldPrice(symbol: String): Double? {
+    private fun fetchGoldPrice(): Double? {
         return try {
             val url = URL("https://api.metals.live/v1/spot/gold")
             val connection = url.openConnection() as HttpURLConnection

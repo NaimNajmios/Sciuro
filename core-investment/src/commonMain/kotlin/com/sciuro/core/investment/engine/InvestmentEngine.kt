@@ -3,11 +3,9 @@ package com.sciuro.core.investment.engine
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
-import com.sciuro.core.investment.repository.InvestmentRepository
 
 class InvestmentEngine(
     private val database: SciuroDatabase,
-    private val investmentRepository: InvestmentRepository,
     private val eventBus: DomainEventBus
 ) {
     suspend fun processInvestments() {

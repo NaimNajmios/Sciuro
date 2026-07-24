@@ -216,8 +216,7 @@ class SciuroIngestionOrchestrator(
                 amount = transaction.amount,
                 direction = transaction.direction,
                 categoryId = transaction.categoryId,
-                merchant = transaction.merchant,
-                timestamp = transaction.timestamp
+                merchant = transaction.merchant
             )
             tracer.trace(rawEvent.id, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
                 detail = mapOf("engine" to "obligation_cycle"))

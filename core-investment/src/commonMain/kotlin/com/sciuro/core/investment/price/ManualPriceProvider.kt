@@ -10,7 +10,7 @@ class ManualPriceProvider(
         return settingsProvider.getManualPrice(key)
     }
 
-    override suspend fun refresh() {}
+    override suspend fun refresh() { /* no-op: prices set manually */}
 
     fun setManualPrice(assetType: String, assetSymbol: String, price: Double) {
         settingsProvider.setManualPrice("investment_price_${assetType}_${assetSymbol}", price)

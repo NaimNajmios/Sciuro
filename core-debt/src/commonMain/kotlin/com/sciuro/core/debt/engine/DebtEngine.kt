@@ -3,13 +3,11 @@ package com.sciuro.core.debt.engine
 import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.debt.repository.DebtPaymentLinkRepository
-import com.sciuro.core.debt.repository.DebtRepository
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.events.DomainEvent
 
 class DebtEngine(
     private val database: SciuroDatabase,
-    private val debtRepository: DebtRepository,
     private val linkRepository: DebtPaymentLinkRepository,
     private val eventBus: DomainEventBus
 ) {

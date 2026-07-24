@@ -32,8 +32,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.koin.compose.koinInject
-import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -78,7 +76,6 @@ data class AppInfo(
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun WalletScreen(
-    settingsProvider: SettingsProvider = koinInject(),
     onAccountClick: (String) -> Unit,
     viewModel: WalletViewModel = koinViewModel()
 ) {
@@ -398,11 +395,7 @@ fun WalletScreen(
                                     accountAdjustments.forEach { adj ->
                                         AdjustmentCard(
                                             reason = adj.reason,
-                                            amount = adj.amount,
-                                            formattedTime = "",
-                                            onClick = {
-                                                viewModel.recordCorrection(activeAccount.id, 0.0, adj.reason)
-                                            }
+                                            amount = adj.amount
                                         )
                                     }
                                 }

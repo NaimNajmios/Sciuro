@@ -110,7 +110,6 @@ class UniversalEventSubscriber(
 
     private suspend fun handleCashRecounted(event: DomainEvent.CashRecounted) {
         if (suppressionEngine.shouldSuppress(event)) return
-        val varianceStr = "RM %.2f".format(event.variance)
         NotificationHelper.showBudgetAlert(
             context, event.adjustmentId,
             event.variance / 1000.0

@@ -30,7 +30,6 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DebtOverviewScreen(
-    onNavigateBack: () -> Unit,
     viewModel: DebtViewModel = koinViewModel()
 ) {
     val allDebts by viewModel.debts.collectAsState()

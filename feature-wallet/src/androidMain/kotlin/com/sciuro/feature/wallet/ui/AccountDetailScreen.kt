@@ -292,14 +292,7 @@ fun AccountDetailScreen(
                                 val adj = item.adjustment
                                 AdjustmentCard(
                                     reason = adj.reason,
-                                    amount = adj.amount,
-                                    formattedTime = "",
-                                    onClick = {
-                                        viewModel.deleteCorrection(adj.id)
-                                        coroutineScope.launch {
-                                            snackbarHostState.showSnackbar("Adjustment removed")
-                                        }
-                                    }
+                                    amount = adj.amount
                                 )
                             }
                         }

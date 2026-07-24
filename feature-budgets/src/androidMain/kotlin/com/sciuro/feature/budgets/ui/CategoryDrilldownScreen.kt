@@ -18,7 +18,6 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun CategoryDrilldownScreen(
-    onNavigateBack: () -> Unit,
     viewModel: CategoryDrilldownViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()

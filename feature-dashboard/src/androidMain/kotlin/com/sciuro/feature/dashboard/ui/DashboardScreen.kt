@@ -30,7 +30,7 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -109,7 +109,6 @@ fun DashboardScreen(
     var newDirection by remember { mutableStateOf("OUTFLOW") }
     var newMerchant by remember { mutableStateOf("") }
     var newAccountId by remember { mutableStateOf<String?>(null) }
-    var newCategoryId by remember { mutableStateOf<String?>(null) }
     
     var pendingApprovalTxId by remember { mutableStateOf<String?>(null) }
     var selectedAccountIdForApproval by remember { mutableStateOf<String?>(null) }
@@ -600,7 +599,6 @@ fun DashboardScreen(
 
     if (showDetailSheet && selectedTxForDetail != null) {
         val tx = selectedTxForDetail!!
-        val cat = categoryMap[tx.category_id]
         val isTransfer = detailData?.transferLink != null || tx.category_id == "cat_transfer"
         val rawEvent = detailData?.rawEvent
         val auditLogs = detailData?.auditLogs ?: emptyList()
@@ -823,7 +821,7 @@ private fun mapCategoryIcon(categoryId: String?): ImageVector? {
         "cat_inc_1" -> Icons.Filled.AccountBalance
         "cat_inc_2" -> Icons.Filled.Computer
         "cat_inc_3" -> Icons.Filled.CardGiftcard
-        "cat_inc_4" -> Icons.Filled.TrendingUp
+        "cat_inc_4" -> Icons.AutoMirrored.Filled.TrendingUp
         "cat_inc_5" -> Icons.Filled.Refresh
         "cat_transfer" -> Icons.Filled.SwapHoriz
         else -> null

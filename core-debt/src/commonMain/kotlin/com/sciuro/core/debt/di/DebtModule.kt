@@ -10,7 +10,7 @@ import org.koin.dsl.module
 val debtModule = module {
     single { DebtPaymentLinkRepository(get()) }
     single { DebtRepository(get(), get()) }
-    single { DebtEngine(get(), get(), get(), get()) }
+    single { DebtEngine(get(), get(), get()) }
     single { BnplRiskDetector(get(), get()) }
     single { CreditCardStatementEngine(get()) }
 }

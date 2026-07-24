@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
 import com.najmi.sciuro.core.ui.components.SciuroTextField
-import org.koin.androidx.compose.getKoin
+import org.koin.compose.getKoin
 
 @Composable
 fun DeveloperTabSources(modifier: Modifier = Modifier) {

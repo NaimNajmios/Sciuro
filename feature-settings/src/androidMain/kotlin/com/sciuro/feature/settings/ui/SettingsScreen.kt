@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -17,7 +17,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.ledger.config.SettingsProvider
-import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -26,7 +25,6 @@ import com.najmi.sciuro.core.ui.components.SheetList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import android.os.Build
 import android.os.PowerManager
@@ -42,7 +40,6 @@ fun SettingsScreen(
     onNavigateToLinkedAccounts: () -> Unit = {},
     onExportBackup: (String) -> Unit = {},
     onImportBackup: (String) -> Unit = {},
-    viewModel: SettingsViewModel = koinViewModel(),
     settingsProvider: SettingsProvider = koinInject()
 ) {
     var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
@@ -52,8 +49,6 @@ fun SettingsScreen(
     var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
     var llmModelName by rememberSaveable { mutableStateOf(settingsProvider.getLlmModelName()) }
     var budgetThreshold by rememberSaveable { mutableStateOf(settingsProvider.getBudgetWarningThreshold()) }
-    var isTransactionAutoConfirm by rememberSaveable { mutableStateOf(settingsProvider.isTransactionAutoConfirmEnabled()) }
-    var isTrustValidatedLlm by rememberSaveable { mutableStateOf(settingsProvider.isTrustValidatedLlmEnabled()) }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -160,7 +155,7 @@ fun SettingsScreen(
                                     onClick = {
                                         try {
                                             context.startActivity(autostartIntent)
-                                        } catch (e: Exception) {}
+                                        } catch (_: Exception) { /* ActivityNotFoundException or SecurityException - ignore */ }
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -456,7 +451,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("Linked Account Pairs", style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.Filled.ArrowForward, contentDescription = "Linked Account Pairs")
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Linked Account Pairs")
                         }
                     }
                 }
@@ -472,7 +467,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("Manage Categories", style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.Filled.ArrowForward, contentDescription = "Manage Categories")
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Manage Categories")
                         }
                     }
                 }
@@ -513,7 +508,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("Developer Options", style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.Filled.ArrowForward, contentDescription = "Developer Options")
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Developer Options")
                         }
                     }
                 }

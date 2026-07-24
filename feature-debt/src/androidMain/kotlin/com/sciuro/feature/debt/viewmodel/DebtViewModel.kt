@@ -67,7 +67,8 @@ class DebtViewModel(
                     counterpartyName = counterpartyName,
                     status = DebtStatus.ACTIVE,
                     principalAmount = principalAmount,
-                    remainingBalance = principalAmount
+                    remainingBalance = principalAmount,
+                    notes = notes
                 )
             )
         }

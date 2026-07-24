@@ -1,6 +1,7 @@
 package com.najmi.sciuro.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.sciuro.core.ledger.repository.TransactionRepository
@@ -23,8 +24,12 @@ class ReviewReminderWorker(
             }
             Result.success()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to show review reminder", e)
             Result.retry()
         }
+    }
+
+    companion object {
+        private const val TAG = "ReviewReminderWorker"
     }
 }

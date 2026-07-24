@@ -10,7 +10,7 @@ class ObligationCycleMatcher(
     private val obligationRepository: ObligationRepository,
     private val eventBus: DomainEventBus
 ) {
-    suspend fun onTransactionBooked(transactionId: String, amount: Double, direction: String, categoryId: String?, merchant: String?, timestamp: Long) {
+    suspend fun onTransactionBooked(transactionId: String, amount: Double, direction: String, categoryId: String?, merchant: String?) {
         if (direction != "OUTFLOW") return
 
         val active = database.obligationQueries.selectAllActiveObligations().executeAsList()

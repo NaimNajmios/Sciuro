@@ -90,7 +90,7 @@ fun DeveloperTabPipelineTrace(
                                 Text("conf: ${"%.2f".format(trace.confidence)}", style = MaterialTheme.typography.labelSmall)
                             }
                             if (!trace.detail.isNullOrBlank()) {
-                                Text(trace.detail!!.take(200), style = MaterialTheme.typography.labelSmall,
+                                Text(trace.detail.take(200), style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }

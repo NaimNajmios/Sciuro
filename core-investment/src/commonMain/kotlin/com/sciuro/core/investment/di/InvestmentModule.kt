@@ -9,6 +9,6 @@ import org.koin.dsl.module
 val investmentModule = module {
     single { InvestmentRepository(get(), get()) }
     single { ManualPriceProvider(get()) }
-    single { InvestmentEngine(get(), get(), get()) }
+    single { InvestmentEngine(get(), get()) }
     single { InvestmentValuationEngine(get(), get(), get()) }
 }

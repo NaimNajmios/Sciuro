@@ -28,7 +28,7 @@ import com.najmi.sciuro.core.ui.theme.reducedMotion
 fun SciuroMascot(
     animationState: MascotState,
     modifier: Modifier = Modifier,
-    iterations: Int = 1, // LottieConstants.IterateForever equivalent logic can be added later
+
     isPlaying: Boolean = true
 ) {
     Box(
