@@ -4,7 +4,7 @@ enum class TransactionDirection {
     INFLOW, OUTFLOW
 }
 
-const val DEFAULT_CONFIDENCE_THRESHOLD = 0.7f
+const val DEFAULT_CONFIDENCE_THRESHOLD = 1.0f
 
 data class StructuredDraft(
     val amount: Double,

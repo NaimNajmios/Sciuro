@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.parsing.engine.SimulationResult
 import com.sciuro.core.parsing.fixture.FixtureLibrary
@@ -24,6 +25,9 @@ fun DeveloperTabSimulator(
     var selectedPackage by remember { mutableStateOf("") }
     var expandedPackage by remember { mutableStateOf(false) }
     var expandedTemplate by remember { mutableStateOf(false) }
+
+    val batchRunning by viewModel.batchRunning.collectAsState()
+    val batchProgress by viewModel.batchProgress.collectAsState()
 
     val templates = remember(selectedPackage) {
         if (selectedPackage.isNotBlank()) FixtureLibrary.fixturesForPackage(selectedPackage)
@@ -157,6 +161,52 @@ fun DeveloperTabSimulator(
 
             simulationResult?.let { result ->
                 SimulationResultCard(result)
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Batch Test Runner", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Runs all ${FixtureLibrary.count} fixtures through the real pipeline with a 500ms stagger. Watch logcat (SciuroTrace) or Pipeline Trace tab.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    var forceLlm by remember { mutableStateOf(false) }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = forceLlm, onCheckedChange = { forceLlm = it })
+                            Text("Force LLM on all fixtures", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    Button(
+                        onClick = { viewModel.runAllFixtures(forceLlm = forceLlm) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !batchRunning
+                    ) {
+                        Text(if (batchRunning) "Running..." else "Run All ${FixtureLibrary.count} Fixtures")
+                    }
+                    if (batchProgress.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            batchProgress,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }

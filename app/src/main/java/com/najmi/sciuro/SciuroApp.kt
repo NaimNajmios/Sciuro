@@ -43,8 +43,12 @@ import com.sciuro.feature.debt.di.debtFeatureModule
 import com.sciuro.core.obligations.di.obligationsModule
 import com.sciuro.feature.settings.di.settingsModule
 
+import com.najmi.sciuro.trace.LogcatPipelineTracer
+import com.sciuro.core.audit.trace.PipelineTracer
+
 val appModule = module {
     single<SettingsProvider> { EncryptedSettingsProvider(get()) }
+    single<PipelineTracer> { LogcatPipelineTracer(get()) }
     single { com.najmi.sciuro.subscriber.FinanceAppSuggestionSubscriber(get(), get()) }
     single { com.najmi.sciuro.engine.NotificationSuppressionEngine(get(), get(), get(), get(), get(), get(), get()) }
     single { com.najmi.sciuro.engine.UniversalEventSubscriber(get(), get(), get(), get()) }

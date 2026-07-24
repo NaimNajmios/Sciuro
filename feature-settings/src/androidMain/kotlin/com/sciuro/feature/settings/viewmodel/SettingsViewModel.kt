@@ -10,7 +10,9 @@ import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.parsing.engine.SimulationEngine
 import com.sciuro.core.parsing.engine.SimulationResult
+import com.sciuro.core.parsing.fixture.FixtureLibrary
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +44,12 @@ class SettingsViewModel(
 
     private val _lastCapturedAt = MutableStateFlow<Long?>(null)
     val lastCapturedAt: StateFlow<Long?> = _lastCapturedAt.asStateFlow()
+
+    private val _batchRunning = MutableStateFlow(false)
+    val batchRunning: StateFlow<Boolean> = _batchRunning.asStateFlow()
+
+    private val _batchProgress = MutableStateFlow("")
+    val batchProgress: StateFlow<String> = _batchProgress.asStateFlow()
 
     init {
         refreshCounts()
@@ -88,6 +96,32 @@ class SettingsViewModel(
     fun resendDeadLetter(rawEventId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             rawEventRepository.requeueRawEvent(rawEventId)
+            refreshCounts()
+        }
+    }
+
+    fun runAllFixtures(delayMs: Long = 500L, forceLlm: Boolean = false) {
+        if (_batchRunning.value) return
+        viewModelScope.launch(Dispatchers.IO) {
+            _batchRunning.value = true
+            _batchProgress.value = "Starting..."
+            val fixtures = FixtureLibrary.fixtures
+            fixtures.forEachIndexed { index, fixture ->
+                _batchProgress.value = "${index + 1}/${fixtures.size}: ${fixture.description}"
+                val rawEvent = RawEvent(
+                    id = UUID.randomUUID().toString(),
+                    sourceType = SourceType.NOTIFICATION,
+                    sourcePackageOrAddress = if (forceLlm) "com.llm.test" else fixture.packageName,
+                    title = fixture.title,
+                    text = fixture.text,
+                    timestamp = System.currentTimeMillis()
+                )
+                _simulationResult.value = simulationEngine.simulate(rawEvent)
+                notificationSourceAdapter.emitNotification(rawEvent)
+                delay(delayMs)
+            }
+            _batchProgress.value = "Done — ${fixtures.size} fixtures sent"
+            _batchRunning.value = false
             refreshCounts()
         }
     }

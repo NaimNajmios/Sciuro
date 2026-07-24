@@ -29,7 +29,7 @@ class SciuroParserPipelineTest {
     private val confidentDraft = StructuredDraft(
         amount = 100.0, direction = TransactionDirection.OUTFLOW,
         merchant = "Test Merchant", accountOrChannel = "Test Bank",
-        referenceId = null, timestamp = 1000L, confidenceScore = 0.9f
+        referenceId = null, timestamp = 1000L, confidenceScore = 1.0f
     )
 
     private val lowConfidenceDraft = StructuredDraft(
