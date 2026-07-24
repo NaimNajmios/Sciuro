@@ -27,7 +27,7 @@ kotlin {
                 implementation(libs.sqldelight.android.driver)
                 implementation(libs.sqlcipher)
                 implementation(libs.androidx.security.crypto)
-                implementation("androidx.sqlite:sqlite:2.4.0")
+                implementation(libs.androidx.sqlite)
             }
         }
         val jvmMain by getting {

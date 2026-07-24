@@ -3,6 +3,8 @@ package com.sciuro.feature.settings.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -68,6 +70,19 @@ fun DeveloperTabIngestionLog(
                     Text(event.title, style = MaterialTheme.typography.titleSmall)
                     Text(event.text, maxLines = 2, style = MaterialTheme.typography.bodySmall)
                     event.last_error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(
+                        onClick = { viewModel.resendDeadLetter(event.id) },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = "Resend",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Resend")
+                    }
                 }
             }
         }

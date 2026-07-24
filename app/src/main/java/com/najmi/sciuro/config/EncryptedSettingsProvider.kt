@@ -3,6 +3,7 @@ package com.najmi.sciuro.config
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.sciuro.core.ledger.config.LlmParsingConfig
 import com.sciuro.core.ledger.config.SettingsProvider
 
 class EncryptedSettingsProvider(context: Context) : SettingsProvider {
@@ -25,6 +26,14 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
 
     override fun setLlmModelName(name: String) {
         sharedPreferences.edit().putString("llm_model_name", name).apply()
+    }
+
+    override fun getLlmConfig(): LlmParsingConfig {
+        val base = LlmParsingConfig()
+        return base.copy(
+            modelName = getLlmModelName(),
+            trustValidatedLlm = isTrustValidatedLlmEnabled()
+        )
     }
 
     override fun getQuickLabels(): List<String> {
@@ -137,5 +146,13 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
 
     override fun setQuietHoursEnd(hour: Int) {
         sharedPreferences.edit().putInt("quiet_hours_end", hour).apply()
+    }
+
+    override fun isTrustValidatedLlmEnabled(): Boolean {
+        return sharedPreferences.getBoolean("trust_validated_llm", false)
+    }
+
+    override fun setTrustValidatedLlmEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("trust_validated_llm", enabled).apply()
     }
 }

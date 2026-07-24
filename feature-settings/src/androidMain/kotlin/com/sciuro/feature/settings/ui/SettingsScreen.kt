@@ -40,6 +40,8 @@ fun SettingsScreen(
     onNavigateToCategorySettings: () -> Unit = {},
     onNavigateToDeveloperSettings: () -> Unit = {},
     onNavigateToLinkedAccounts: () -> Unit = {},
+    onExportBackup: (String) -> Unit = {},
+    onImportBackup: (String) -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
     settingsProvider: SettingsProvider = koinInject()
 ) {
@@ -200,16 +202,50 @@ fun SettingsScreen(
                 }
 
                 item {
+                    var showExportDialog by rememberSaveable { mutableStateOf(false) }
+                    var showImportDialog by rememberSaveable { mutableStateOf(false) }
                     com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Data Backup", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Your financial data is encrypted at rest and excluded from cloud backup. Encrypted manual export and import will be available in a future update.",
+                                "Encrypted export (AES-256-GCM) and import with pre-import backup. Exports are saved to app storage.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { showExportDialog = true },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Export")
+                                }
+                                OutlinedButton(
+                                    onClick = { showImportDialog = true },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Import")
+                                }
+                            }
                         }
+                    }
+                    if (showExportDialog) {
+                        BackupPasswordDialog(
+                            title = "Export Encrypted Backup",
+                            onConfirm = { showExportDialog = false; onExportBackup(it) },
+                            onDismiss = { showExportDialog = false }
+                        )
+                    }
+                    if (showImportDialog) {
+                        BackupPasswordDialog(
+                            title = "Import Encrypted Backup", 
+                            onConfirm = { showImportDialog = false; onImportBackup(it) },
+                            onDismiss = { showImportDialog = false }
+                        )
                     }
                 }
 
@@ -483,6 +519,44 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun BackupPasswordDialog(
+    title: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var password by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                Text("Enter a passphrase to encrypt/decrypt your backup.")
+                Spacer(modifier = Modifier.height(12.dp))
+                com.najmi.sciuro.core.ui.components.SciuroTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = "Passphrase",
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (password.isNotBlank()) onConfirm(password) },
+                enabled = password.isNotBlank()
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 

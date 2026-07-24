@@ -21,7 +21,9 @@ val classifierModule = module {
             debtEngine = get(),
             investmentEngine = get(),
             obligationDetectionEngine = get(),
-            categoryResolver = get()
+            categoryResolver = get(),
+            bnplRiskDetector = get(),
+            tracer = get()
         ) 
     }
 }

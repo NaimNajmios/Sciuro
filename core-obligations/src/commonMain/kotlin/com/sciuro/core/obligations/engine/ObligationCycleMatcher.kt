@@ -20,6 +20,15 @@ class ObligationCycleMatcher(
              kotlin.math.abs(it.amount - amount) < 2.0)
         } ?: return
 
+        val amountDelta = kotlin.math.abs(match.amount - amount)
+        if (amountDelta > 5.0 && match.amount > 0 && amountDelta / match.amount > 0.20) {
+            eventBus.publish(DomainEvent.ObligationAmountDrifted(
+                obligationId = match.id,
+                oldAmount = match.amount,
+                newAmount = amount
+            ))
+        }
+
         val newDueDate = computeNextDueDate(match.next_due_date, match.frequency)
         obligationRepository.advanceNextDueDate(match.id, newDueDate)
         eventBus.publish(DomainEvent.ObligationCycleSettled(match.id, transactionId))

@@ -15,7 +15,8 @@ import org.koin.dsl.module
 
 val parsingModule = module {
     single {
-        createHttpClient()
+        val settings = get<SettingsProvider>()
+        createHttpClient(settings.getLlmConfig())
     }
 
     single {
@@ -46,7 +47,8 @@ val parsingModule = module {
             apiKeyProvider = {
                 if (settings.isLlmEnabled()) settings.getApiKey() else null
             },
-            config = settings.getLlmConfig()
+            config = settings.getLlmConfig(),
+            tracer = get()
         )
     }
     

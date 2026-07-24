@@ -69,4 +69,20 @@ class RawEventRepository(
     suspend fun countDeadLetter(): Long {
         return database.rawEventStagingQueries.countDeadLetter().executeAsOne()
     }
+
+    suspend fun getStrandedEvents(staleProcessedBeforeMs: Long): List<Raw_event_staging> {
+        return database.rawEventStagingQueries.selectStrandedEvents(staleProcessedBeforeMs).executeAsList()
+    }
+
+    suspend fun countStrandedEvents(staleProcessedBeforeMs: Long): Long {
+        return database.rawEventStagingQueries.selectStrandedEventsCount(staleProcessedBeforeMs).executeAsOne()
+    }
+
+    suspend fun requeueRawEvent(id: String) {
+        database.rawEventStagingQueries.requeueRawEvent(id)
+    }
+
+    suspend fun purgeOldTraces(beforeMs: Long) {
+        database.pipelineTraceQueries.deleteTraceOlderThan(beforeMs)
+    }
 }

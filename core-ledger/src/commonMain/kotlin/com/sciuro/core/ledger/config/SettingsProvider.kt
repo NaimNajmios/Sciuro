@@ -30,4 +30,6 @@ interface SettingsProvider {
     fun setQuietHoursStart(hour: Int)
     fun getQuietHoursEnd(): Int
     fun setQuietHoursEnd(hour: Int)
+    fun isTrustValidatedLlmEnabled(): Boolean
+    fun setTrustValidatedLlmEnabled(enabled: Boolean)
 }

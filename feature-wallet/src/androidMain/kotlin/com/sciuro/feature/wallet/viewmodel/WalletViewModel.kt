@@ -6,9 +6,13 @@ import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.feature.wallet.model.WalletAccount
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 
 import com.sciuro.core.ledger.engine.ReconciliationEngine
 import com.sciuro.core.ledger.repository.TransactionRepository
@@ -17,6 +21,7 @@ import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.investment.repository.InvestmentRepository
 import com.sciuro.core.investment.model.Investment
+import com.sciuro.core.investment.engine.InvestmentValuationEngine
 
 import com.sciuro.core.ledger.repository.CategoryRepository
 
@@ -26,7 +31,8 @@ class WalletViewModel(
     private val transactionRepository: TransactionRepository,
     private val investmentRepository: InvestmentRepository,
     private val categoryRepository: CategoryRepository,
-    private val cashAdjustmentRepository: CashAdjustmentRepository
+    private val cashAdjustmentRepository: CashAdjustmentRepository,
+    private val investmentValuationEngine: InvestmentValuationEngine
 ) : ViewModel() {
     
     val accounts: StateFlow<List<WalletAccount>> = accountRepository.observeAccounts()
@@ -84,6 +90,36 @@ class WalletViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    private val _currentInvestmentTotal = MutableStateFlow(0.0)
+    val currentInvestmentTotal: StateFlow<Double> = _currentInvestmentTotal.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            delay(600)
+            _isRefreshing.value = false
+        }
+    }
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _currentInvestmentTotal.value = investmentValuationEngine.getTotalCurrentValue()
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun refreshInvestments() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _currentInvestmentTotal.value = investmentValuationEngine.getTotalCurrentValue()
+            } catch (_: Exception) {}
+        }
+    }
 
     fun recordCorrection(accountId: String, amount: Double, reason: String, remark: String? = null) {
         viewModelScope.launch {

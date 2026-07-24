@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -38,6 +40,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
@@ -135,8 +138,20 @@ fun DashboardScreen(
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-    
-    Box(modifier = Modifier.fillMaxSize()) {
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refresh()
+            pullToRefreshState.endRefresh()
+        }
+    }
+
+    Box(modifier = Modifier
+        .nestedScroll(pullToRefreshState.nestedScrollConnection)
+        .fillMaxSize()
+    ) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 val displayChartData = remember(state.balanceHistory, selectedRange) {
@@ -400,8 +415,13 @@ fun DashboardScreen(
                         }
                     }
                 }
-            }
         }
+    }
+
+        PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
         
         FloatingActionButton(
             onClick = {

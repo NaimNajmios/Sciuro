@@ -8,7 +8,12 @@ class DeterministicParser(
     private val rules: List<ParserRule>
 ) {
     fun parse(event: RawEvent): StructuredDraft? {
-        val applicableRule = rules.firstOrNull { it.matches(event) }
-        return applicableRule?.extract(event)
+        for (rule in rules) {
+            if (rule.matches(event)) {
+                val draft = rule.extract(event)
+                if (draft != null) return draft
+            }
+        }
+        return null
     }
 }

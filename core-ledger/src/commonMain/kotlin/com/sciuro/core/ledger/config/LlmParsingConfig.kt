@@ -7,5 +7,6 @@ data class LlmParsingConfig(
     val requestTimeoutMs: Long = 30_000,
     val maxRetries: Int = 3,
     val circuitBreakerThreshold: Int = 5,
-    val cooldownMs: Long = 300_000
+    val cooldownMs: Long = 300_000,
+    val trustValidatedLlm: Boolean = false
 )

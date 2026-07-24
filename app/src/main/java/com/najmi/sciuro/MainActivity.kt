@@ -39,16 +39,15 @@ import android.Manifest
 import android.os.PowerManager
 import android.provider.Settings as SystemSettings
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.najmi.sciuro.worker.IngestionReconciliationWorker
 import com.najmi.sciuro.worker.ReviewReminderWorker
 import java.util.concurrent.TimeUnit
 import com.sciuro.core.ledger.config.SettingsProvider
 import org.koin.compose.koinInject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
     
@@ -87,18 +86,6 @@ class MainActivity : FragmentActivity() {
             "ReviewReminder",
             ExistingPeriodicWorkPolicy.KEEP,
             reminderWork
-        )
-
-        val reconciliationWork = PeriodicWorkRequestBuilder<IngestionReconciliationWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build())
-            .build()
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "IngestionReconciliation",
-            ExistingPeriodicWorkPolicy.KEEP,
-            reconciliationWork
         )
     }
 }
@@ -279,20 +266,55 @@ fun SciuroMainScreen() {
                 popExitTransition = drillInPopExit
             ) { backStackEntry ->
                 val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
-                // We'll pass the SavedStateHandle to the koinViewModel by defining it in the Koin module, 
-                // but for now we just load the screen. Koin handles SavedStateHandle injection automatically.
                 com.sciuro.feature.wallet.ui.AccountDetailScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
             composable("budgets") { BudgetsScreen() }
+            composable(
+                "category_drilldown",
+                enterTransition = drillInEnter,
+                popExitTransition = drillInPopExit
+            ) {
+                com.sciuro.feature.budgets.ui.CategoryDrilldownScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
             composable("debt_overview") { DebtOverviewScreen(onNavigateBack = { navController.popBackStack() }) }
             composable("kanban") { KanbanScreen() }
             composable("settings") { 
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
                 com.sciuro.feature.settings.ui.SettingsScreen(
                     onNavigateToDeveloperSettings = { navController.navigate("developer_settings") },
                     onNavigateToCategorySettings = { navController.navigate("category_settings") },
-                    onNavigateToLinkedAccounts = { navController.navigate("linked_accounts") }
+                    onNavigateToLinkedAccounts = { navController.navigate("linked_accounts") },
+                    onExportBackup = { password ->
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                val exportDir = context.getExternalFilesDir(null)
+                                val exportFile = java.io.File(exportDir, "sciuro_backup_${System.currentTimeMillis()}.scib")
+                                val outputStream = java.io.FileOutputStream(exportFile)
+                                com.najmi.sciuro.export.EncryptedExporter.export(context, password, outputStream)
+                                outputStream.close()
+                            } catch (_: Exception) {}
+                        }
+                    },
+                    onImportBackup = { password ->
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                val importDir = context.getExternalFilesDir(null)
+                                val importFiles = importDir?.listFiles()?.filter { it.extension == "scib" }
+                                    ?.sortedByDescending { it.lastModified() }
+                                val importFile = importFiles?.firstOrNull()
+                                if (importFile != null) {
+                                    val inputStream = java.io.FileInputStream(importFile)
+                                    com.najmi.sciuro.export.EncryptedImporter.import(context, password, inputStream)
+                                    inputStream.close()
+                                }
+                            } catch (_: Exception) {}
+                        }
+                    }
                 ) 
             }
             composable(
@@ -322,8 +344,8 @@ fun SciuroMainScreen() {
                 com.sciuro.feature.settings.ui.LinkedAccountsScreen(
                     viewModel = linkedAccountsViewModel
                 )
-            }
         }
+    }
     }
     }
 }

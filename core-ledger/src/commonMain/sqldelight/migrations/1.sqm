@@ -1,3 +1,0 @@
-ALTER TABLE transaction_record ADD COLUMN extraction_method TEXT;
-ALTER TABLE transaction_record ADD COLUMN confidence REAL;
-ALTER TABLE transaction_record ADD COLUMN raw_event_id TEXT;

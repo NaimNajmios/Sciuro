@@ -3,6 +3,9 @@ package com.sciuro.core.ingestion.service
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.sciuro.core.audit.trace.PipelineTracer
+import com.sciuro.core.audit.trace.TraceOutcome
+import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
@@ -20,6 +23,7 @@ class SciuroNotificationService : NotificationListenerService() {
     private val notificationSourceAdapter: NotificationSourceAdapter by inject()
     private val rawEventRepository: RawEventRepository by inject()
     private val allowlist: MutableIngestionAllowlist by inject()
+    private val tracer: PipelineTracer by inject()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onListenerConnected() {
@@ -52,16 +56,26 @@ class SciuroNotificationService : NotificationListenerService() {
     private suspend fun processAndPersistNotification(sbn: StatusBarNotification) {
         val packageName = sbn.packageName
 
-        if (!allowlist.allows(packageName)) return
+        if (!allowlist.allows(packageName)) {
+            tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                detail = mapOf("reason" to "allowlist_reject", "package" to packageName))
+            return
+        }
 
         val notification = sbn.notification
         val title = notification.extras.getString(Notification.EXTRA_TITLE) ?: ""
         val text = notification.extras.getString(Notification.EXTRA_TEXT) ?: ""
 
-        if (title.isBlank() && text.isBlank()) return
+        if (title.isBlank() && text.isBlank()) {
+            tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                detail = mapOf("reason" to "blank_content", "package" to packageName))
+            return
+        }
 
         if (allowlist.isDefaultAggregatorPackage(packageName)) {
             if (!isFinancialAggregatorNotification(title, text)) {
+                tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                    detail = mapOf("reason" to "non_financial_aggregator", "package" to packageName))
                 return
             }
         }
@@ -76,7 +90,6 @@ class SciuroNotificationService : NotificationListenerService() {
             timestamp = sbn.postTime
         )
 
-        // Persist to staging table first — durable capture before any processing
         rawEventRepository.persistRawEvent(
             id = rawEvent.id,
             sourceType = rawEvent.sourceType.name,
@@ -87,7 +100,9 @@ class SciuroNotificationService : NotificationListenerService() {
             capturedAt = capturedAt
         )
 
-        // Then emit to pipeline for immediate processing
+        tracer.trace(rawEvent.id, null, TraceStage.CAPTURE, TraceOutcome.SUCCESS,
+            detail = mapOf("source_type" to "NOTIFICATION", "package" to packageName))
+
         notificationSourceAdapter.emitNotification(rawEvent)
     }
 

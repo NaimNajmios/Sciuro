@@ -23,7 +23,6 @@ rootProject.name = "Sciuro"
 include(":app")
 include(":core-ingestion")
 include(":core-parsing")
-include(":core-llm")
 include(":core-classifier")
 include(":core-ledger")
 include(":core-audit")

@@ -20,13 +20,18 @@ class CategoryResolver(
     }
 
     companion object {
+        private const val CAT_DINING = "cat_exp_1"
+        private const val CAT_TRANSPORT = "cat_exp_2"
+        private const val CAT_UTILITIES = "cat_exp_3"
+        private const val CAT_GROCERIES = "cat_exp_6"
+
         fun guessFromStaticHeuristic(merchant: String): String? {
             val lower = merchant.lowercase()
             return when {
-                lower.contains("starbucks") || lower.contains("mcdonalds") || lower.contains("kfc") || lower.contains("burger king") || lower.contains("tealive") || lower.contains("warung") -> "cat_dining"
-                lower.contains("jaya grocer") || lower.contains("speedmart") || lower.contains("mydin") -> "cat_groceries"
-                lower.contains("grab") -> "cat_transport"
-                lower.contains("tenaga nasional") -> "cat_utilities"
+                lower.contains("starbucks") || lower.contains("mcdonalds") || lower.contains("kfc") || lower.contains("burger king") || lower.contains("tealive") || lower.contains("warung") -> CAT_DINING
+                lower.contains("jaya grocer") || lower.contains("speedmart") || lower.contains("mydin") -> CAT_GROCERIES
+                lower.contains("grab") -> CAT_TRANSPORT
+                lower.contains("tenaga nasional") -> CAT_UTILITIES
                 else -> null
             }
         }

@@ -4,6 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
+import com.sciuro.core.audit.trace.PipelineTracer
+import com.sciuro.core.audit.trace.TraceOutcome
+import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
@@ -22,6 +25,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val smsSourceAdapter: SmsSourceAdapter by inject()
     private val rawEventRepository: RawEventRepository by inject()
     private val allowlist: MutableIngestionAllowlist by inject()
+    private val tracer: PipelineTracer by inject()
     private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -33,7 +37,13 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
             val body = message.messageBody ?: continue
 
             if (body.isBlank()) continue
-            if (!allowlist.allows(sender)) continue
+            if (!allowlist.allows(sender)) {
+                receiverScope.launch {
+                    tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                        detail = mapOf("reason" to "allowlist_reject", "sender" to sender))
+                }
+                continue
+            }
 
             val hasFinancialSignal = body.lowercase().let { lower ->
                 lower.contains("rm") ||
@@ -44,7 +54,13 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                 lower.contains("payment") ||
                 lower.contains("receipt")
             }
-            if (!hasFinancialSignal) continue
+            if (!hasFinancialSignal) {
+                receiverScope.launch {
+                    tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                        detail = mapOf("reason" to "non_financial_sms", "sender" to sender))
+                }
+                continue
+            }
 
             receiverScope.launch {
                 val rawEvent = RawEvent(
@@ -65,6 +81,9 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     timestamp = rawEvent.timestamp,
                     capturedAt = System.currentTimeMillis()
                 )
+
+                tracer.trace(rawEvent.id, null, TraceStage.CAPTURE, TraceOutcome.SUCCESS,
+                    detail = mapOf("source_type" to "SMS", "sender" to sender))
 
                 smsSourceAdapter.emitSms(rawEvent)
             }

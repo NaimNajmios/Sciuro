@@ -8,12 +8,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.koin.compose.koinInject
 import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
@@ -51,7 +54,19 @@ fun BudgetsScreen(
     var suggestedAmount by remember { mutableStateOf<Double?>(null) }
     val suggester: BudgetLimitSuggester = getKoin().get()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refresh()
+            pullToRefreshState.endRefresh()
+        }
+    }
+
+    Box(modifier = Modifier
+        .nestedScroll(pullToRefreshState.nestedScrollConnection)
+        .fillMaxSize()
+    ) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 val totalSpent = remember(budgets) { budgets.sumOf { it.currentSpent } }
@@ -165,6 +180,11 @@ fun BudgetsScreen(
                 }
             }
         }
+
+        PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
 
         if (budgets.isNotEmpty()) {
             FloatingActionButton(

@@ -9,8 +9,11 @@ import com.sciuro.core.ledger.model.Category
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.feature.budgets.model.BudgetUiModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -20,6 +23,17 @@ class BudgetsViewModel(
     private val budgetRepository: BudgetRepository,
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            delay(600)
+            _isRefreshing.value = false
+        }
+    }
 
     val expenseCategories: StateFlow<List<Category>> = categoryRepository
         .observeCategoriesByType("OUTFLOW")

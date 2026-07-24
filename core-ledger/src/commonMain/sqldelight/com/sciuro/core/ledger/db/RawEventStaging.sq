@@ -55,6 +55,22 @@ WHERE captured_at >= ?
 GROUP BY source_package_or_address
 ORDER BY total DESC;
 
+selectStrandedEvents:
+SELECT * FROM raw_event_staging
+WHERE status = 'PENDING'
+   OR (status = 'PROCESSING' AND captured_at < ?)
+ORDER BY captured_at ASC;
+
+selectStrandedEventsCount:
+SELECT COUNT(*) FROM raw_event_staging
+WHERE status = 'PENDING'
+   OR (status = 'PROCESSING' AND captured_at < ?);
+
+requeueRawEvent:
+UPDATE raw_event_staging
+SET status = 'PENDING', attempt_count = 0, last_error = NULL
+WHERE id = ?;
+
 selectMatchRateByPackageRecent:
 SELECT
     source_package_or_address AS package_name,

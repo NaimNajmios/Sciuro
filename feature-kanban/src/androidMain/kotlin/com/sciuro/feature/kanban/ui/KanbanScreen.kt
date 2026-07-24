@@ -4,9 +4,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ import java.util.Locale
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +97,19 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refresh()
+            pullToRefreshState.endRefresh()
+        }
+    }
+
+    Box(modifier = Modifier
+        .nestedScroll(pullToRefreshState.nestedScrollConnection)
+        .fillMaxSize()
+    ) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 val billOverdue = remember(bills) { bills.count { it.status == BillStatus.OVERDUE } }
@@ -194,6 +208,11 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 }
             }
         }
+
+        PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
 
         if (selectedTab != "Review") {
             FloatingActionButton(
@@ -596,7 +615,6 @@ private fun AddBillSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
         ) {
             Text("Add Bill / Subscription", style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(12.dp))
@@ -741,7 +759,6 @@ private fun AddDebtSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
         ) {
             Text("Add Debt", style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(12.dp))

@@ -1,5 +1,7 @@
 package com.sciuro.core.ledger.repository
 
+import com.sciuro.core.audit.events.DomainEvent
+import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.model.AuditAction
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
@@ -17,7 +19,8 @@ import kotlinx.coroutines.flow.Flow
 class TransactionRepository(
     auditRepository: AuditRepository,
     private val database: SciuroDatabase,
-    private val accountRepository: AccountRepository // for atomic balance updates
+    private val accountRepository: AccountRepository, // for atomic balance updates
+    private val eventBus: DomainEventBus
 ) : AuditableRepository(auditRepository) {
 
     suspend fun bookTransaction(
@@ -103,10 +106,24 @@ class TransactionRepository(
             )
             
             database.transactionRecordQueries.markAsReviewed(now, transactionId)
+
+            val learnedCategoryId = newCategoryId ?: oldTx.category_id
+            if (learnedCategoryId != null && oldTx.category_id != learnedCategoryId) {
+                eventBus.publish(
+                    DomainEvent.TransactionRecategorized(
+                        transactionId = transactionId,
+                        oldCategoryId = oldTx.category_id ?: "",
+                        newCategoryId = learnedCategoryId,
+                        merchant = oldTx.merchant
+                    )
+                )
+            }
         }
     }
 
     suspend fun approveTransaction(transactionId: String) {
+        val tx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+
         withAudit(
             entityType = EntityType.TRANSACTION,
             entityId = transactionId,
@@ -116,6 +133,18 @@ class TransactionRepository(
             source = AuditSource.USER_MANUAL
         ) {
             database.transactionRecordQueries.markAsReviewed(currentTimeMillis(), transactionId)
+        }
+
+        if (tx.category_id != null) {
+            eventBus.publish(
+                DomainEvent.TransactionCategorized(
+                    transactionId = transactionId,
+                    categoryId = tx.category_id,
+                    confidence = tx.confidence ?: 0.0,
+                    source = "review",
+                    merchant = tx.merchant
+                )
+            )
         }
     }
 
@@ -198,6 +227,17 @@ class TransactionRepository(
                 updated_at = now,
                 id = transactionId
             )
+
+            if (newCategoryId != null && oldTx.category_id != newCategoryId) {
+                eventBus.publish(
+                    DomainEvent.TransactionRecategorized(
+                        transactionId = transactionId,
+                        oldCategoryId = oldTx.category_id ?: "",
+                        newCategoryId = newCategoryId,
+                        merchant = newMerchant.ifEmpty { oldTx.merchant }
+                    )
+                )
+            }
         }
     }
 

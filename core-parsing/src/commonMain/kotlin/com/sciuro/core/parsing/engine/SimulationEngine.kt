@@ -22,7 +22,7 @@ class SimulationEngine(
             )
         }
 
-        val deterministicResult = allRuleResults.firstOrNull { it.extractedDraft != null }
+        val deterministicResult = allRuleResults.firstOrNull { it.matches && it.extractedDraft != null }
         val deterministicDraft = deterministicResult?.extractedDraft
 
         var llmDraft: StructuredDraft? = null

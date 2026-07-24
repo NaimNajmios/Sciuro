@@ -84,4 +84,11 @@ class SettingsViewModel(
             }
         }
     }
+
+    fun resendDeadLetter(rawEventId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            rawEventRepository.requeueRawEvent(rawEventId)
+            refreshCounts()
+        }
+    }
 }

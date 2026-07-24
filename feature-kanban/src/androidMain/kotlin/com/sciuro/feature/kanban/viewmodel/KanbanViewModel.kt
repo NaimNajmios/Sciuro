@@ -21,10 +21,13 @@ import com.sciuro.feature.kanban.model.DebtTask
 import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -44,6 +47,17 @@ class KanbanViewModel(
 
     private val _animationTriggers = MutableSharedFlow<String>(extraBufferCapacity = 16)
     val animationTriggers: SharedFlow<String> = _animationTriggers
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            delay(600)
+            _isRefreshing.value = false
+        }
+    }
 
     init {
         viewModelScope.launch(Dispatchers.Default) {

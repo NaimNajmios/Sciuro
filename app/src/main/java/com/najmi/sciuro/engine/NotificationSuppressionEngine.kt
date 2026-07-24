@@ -33,7 +33,7 @@ class NotificationSuppressionEngine(
             eventBus.events.collect { event ->
                 when (event) {
                     is DomainEvent.BudgetThresholdCrossed -> {
-                        if (!shouldSuppressBudget(event)) {
+                        if (!shouldSuppress(event)) {
                             NotificationHelper.showBudgetAlert(
                                 context,
                                 event.categoryId,
@@ -47,10 +47,17 @@ class NotificationSuppressionEngine(
         }
     }
 
-    private suspend fun shouldSuppressBudget(@Suppress("UNUSED_PARAMETER") event: DomainEvent.BudgetThresholdCrossed): Boolean {
-        if (isInQuietHours()) return true
-        if (isRunwayCritical()) return false
+    suspend fun shouldSuppress(event: DomainEvent): Boolean {
+        if (isAlwaysNotify(event)) return false
+        if (isInQuietHours() && !isRunwayCritical()) return true
         return false
+    }
+
+    private fun isAlwaysNotify(event: DomainEvent): Boolean {
+        return event is DomainEvent.BnplRiskThresholdCrossed ||
+               event is DomainEvent.ObligationAmountDrifted ||
+               event is DomainEvent.RecurringObligationConfirmed ||
+               event is DomainEvent.BudgetLimitSuggested
     }
 
     private fun isInQuietHours(): Boolean {

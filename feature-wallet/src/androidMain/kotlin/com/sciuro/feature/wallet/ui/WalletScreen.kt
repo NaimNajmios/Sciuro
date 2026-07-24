@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.Toll
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.*
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.lerp
 import kotlin.math.absoluteValue
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -138,7 +141,8 @@ fun WalletScreen(
     }
     
     val totalLiquidity = accounts.sumOf { it.balance }
-    val totalInvestments = investments.sumOf { it.unitsHeld * it.averageBuyPrice }
+    val currentInvestmentTotal by viewModel.currentInvestmentTotal.collectAsState()
+    val totalInvestments = if (currentInvestmentTotal > 0.0) currentInvestmentTotal else investments.sumOf { it.unitsHeld * it.averageBuyPrice }
     val displayTotal = if (selectedAssetType == "Liquid Cash") totalLiquidity else totalInvestments
     
     val allTransactions by viewModel.allTransactions.collectAsState()
@@ -146,8 +150,20 @@ fun WalletScreen(
     
     val accountPagerState = rememberPagerState(pageCount = { maxOf(1, accounts.size) })
     val investmentPagerState = rememberPagerState(pageCount = { maxOf(1, investments.size) })
-    
-    Box(modifier = Modifier.fillMaxSize()) {
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refresh()
+            pullToRefreshState.endRefresh()
+        }
+    }
+
+    Box(modifier = Modifier
+        .nestedScroll(pullToRefreshState.nestedScrollConnection)
+        .fillMaxSize()
+    ) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 Column(
@@ -452,6 +468,11 @@ fun WalletScreen(
             }
         }
         }
+
+        PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
         
         FloatingActionButton(
             onClick = { 

@@ -35,6 +35,7 @@ kotlin {
                 implementation(libs.androidx.ui.tooling.preview)
                 implementation(libs.androidx.material3)
                 implementation(libs.androidx.material.icons.extended)
+                implementation(libs.androidx.compose.animation)
                 implementation(libs.koin.androidx.compose)
             }
         }

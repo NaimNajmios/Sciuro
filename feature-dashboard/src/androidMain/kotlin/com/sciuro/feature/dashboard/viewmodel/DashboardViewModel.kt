@@ -17,7 +17,10 @@ import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.transfer.model.TransferLink
 import com.sciuro.core.transfer.repository.TransferRepository
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import com.sciuro.core.ledger.repository.CategoryRepository
@@ -65,6 +68,17 @@ class DashboardViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             categoryRepository.seedCategories()
+        }
+    }
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            delay(600)
+            _isRefreshing.value = false
         }
     }
 

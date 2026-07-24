@@ -7,7 +7,6 @@ import androidx.work.WorkerParameters
 import com.sciuro.core.ledger.repository.RawEventRepository
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.util.concurrent.TimeUnit
 
 class IngestionReconciliationWorker(
     appContext: Context,
@@ -18,7 +17,20 @@ class IngestionReconciliationWorker(
 
     override suspend fun doWork(): Result {
         return try {
-            rawEventRepository.countPending()
+            val staleThresholdMs = System.currentTimeMillis() - STALE_PROCESSING_MS
+            val strandedCount = rawEventRepository.countStrandedEvents(staleThresholdMs)
+
+            if (strandedCount > 0) {
+                val strandedEvents = rawEventRepository.getStrandedEvents(staleThresholdMs)
+                for (event in strandedEvents) {
+                    if (event.status == "PROCESSING") {
+                        rawEventRepository.requeueRawEvent(event.id)
+                    }
+                }
+            }
+
+            val tracePurgeBefore = System.currentTimeMillis() - TRACE_RETENTION_MS
+            rawEventRepository.purgeOldTraces(tracePurgeBefore)
 
             val notificationListeners = Settings.Secure.getString(
                 applicationContext.contentResolver,
@@ -36,8 +48,7 @@ class IngestionReconciliationWorker(
     }
 
     companion object {
-        val REPEAT_INTERVAL_HOURS = 6L
-
-        fun repeatIntervalMillis(): Long = TimeUnit.HOURS.toMillis(REPEAT_INTERVAL_HOURS)
+        const val STALE_PROCESSING_MS = 60_000L
+        const val TRACE_RETENTION_MS = 30L * 24L * 60L * 60L * 1000L
     }
 }

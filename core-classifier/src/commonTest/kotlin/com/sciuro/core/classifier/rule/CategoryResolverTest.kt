@@ -7,39 +7,39 @@ import kotlin.test.assertNull
 class CategoryResolverTest {
 
     @Test
-    fun `guessFromStaticHeuristic returns cat_dining for restaurant merchants`() {
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("Starbucks"))
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("McDonalds"))
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("KFC"))
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("Burger King"))
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("Tealive"))
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("Warung Pak Ali"))
+    fun `guessFromStaticHeuristic returns cat_exp_1 for restaurant merchants`() {
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("Starbucks"))
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("McDonalds"))
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("KFC"))
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("Burger King"))
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("Tealive"))
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("Warung Pak Ali"))
     }
 
     @Test
-    fun `guessFromStaticHeuristic returns cat_groceries for grocery merchants`() {
-        assertEquals("cat_groceries", CategoryResolver.guessFromStaticHeuristic("Jaya Grocer"))
-        assertEquals("cat_groceries", CategoryResolver.guessFromStaticHeuristic("Speedmart"))
-        assertEquals("cat_groceries", CategoryResolver.guessFromStaticHeuristic("Mydin"))
+    fun `guessFromStaticHeuristic returns cat_exp_6 for grocery merchants`() {
+        assertEquals("cat_exp_6", CategoryResolver.guessFromStaticHeuristic("Jaya Grocer"))
+        assertEquals("cat_exp_6", CategoryResolver.guessFromStaticHeuristic("Speedmart"))
+        assertEquals("cat_exp_6", CategoryResolver.guessFromStaticHeuristic("Mydin"))
     }
 
     @Test
-    fun `guessFromStaticHeuristic returns cat_transport for Grab`() {
-        assertEquals("cat_transport", CategoryResolver.guessFromStaticHeuristic("Grab"))
-        assertEquals("cat_transport", CategoryResolver.guessFromStaticHeuristic("GrabPay"))
-        assertEquals("cat_transport", CategoryResolver.guessFromStaticHeuristic("GRAB FOOD"))
+    fun `guessFromStaticHeuristic returns cat_exp_2 for Grab`() {
+        assertEquals("cat_exp_2", CategoryResolver.guessFromStaticHeuristic("Grab"))
+        assertEquals("cat_exp_2", CategoryResolver.guessFromStaticHeuristic("GrabPay"))
+        assertEquals("cat_exp_2", CategoryResolver.guessFromStaticHeuristic("GRAB FOOD"))
     }
 
     @Test
-    fun `guessFromStaticHeuristic returns cat_utilities for TNB`() {
-        assertEquals("cat_utilities", CategoryResolver.guessFromStaticHeuristic("Tenaga Nasional"))
+    fun `guessFromStaticHeuristic returns cat_exp_3 for TNB`() {
+        assertEquals("cat_exp_3", CategoryResolver.guessFromStaticHeuristic("Tenaga Nasional"))
     }
 
     @Test
     fun `guessFromStaticHeuristic is case insensitive`() {
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("starbucks"))
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("STARBUCKS"))
-        assertEquals("cat_dining", CategoryResolver.guessFromStaticHeuristic("StArBuCkS"))
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("starbucks"))
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("STARBUCKS"))
+        assertEquals("cat_exp_1", CategoryResolver.guessFromStaticHeuristic("StArBuCkS"))
     }
 
     @Test

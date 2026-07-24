@@ -5,6 +5,8 @@ import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.audit.repository.AuditableRepository
+import com.sciuro.core.audit.events.DomainEvent
+import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.audit.util.generateUuid
 import com.sciuro.core.ledger.db.SciuroDatabase
@@ -17,7 +19,8 @@ import kotlinx.coroutines.flow.Flow
 class CashAdjustmentRepository(
     auditRepository: AuditRepository,
     private val database: SciuroDatabase,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val eventBus: DomainEventBus
 ) : AuditableRepository(auditRepository) {
 
     fun observeAdjustmentsForAccount(accountId: String): Flow<List<com.sciuro.core.ledger.db.Cash_adjustment>> {
@@ -68,8 +71,16 @@ class CashAdjustmentRepository(
 
             accountRepository.updateBalance(accountId, amount)
 
-            database.cashAdjustmentQueries.selectAdjustmentsByAccountOrdered(accountId).executeAsList().firstOrNull()
+            val created = database.cashAdjustmentQueries.selectAdjustmentsByAccountOrdered(accountId).executeAsList().firstOrNull()
                 ?: throw IllegalStateException("Adjustment not found after insert")
+
+            eventBus.publish(DomainEvent.CashRecounted(
+                adjustmentId = adjustmentId,
+                variance = amount,
+                adjustmentType = reason
+            ))
+
+            created
         }
     }
 

@@ -1,5 +1,8 @@
 package com.sciuro.core.parsing.engine
 
+import com.sciuro.core.audit.trace.PipelineTracer
+import com.sciuro.core.audit.trace.TraceOutcome
+import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ledger.config.LlmParsingConfig
 import com.sciuro.core.parsing.llm.ChatMessage
@@ -8,6 +11,7 @@ import com.sciuro.core.parsing.llm.ChatResponse
 import com.sciuro.core.parsing.llm.ResponseFormat
 import com.sciuro.core.parsing.model.StructuredDraft
 import com.sciuro.core.parsing.model.TransactionDirection
+import com.sciuro.core.parsing.util.extractAmount
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -19,11 +23,13 @@ import io.ktor.http.contentType
 import java.io.IOException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
 
 class LlmFallbackParser(
     private val httpClient: HttpClient,
     private val apiKeyProvider: () -> String?,
-    private val config: LlmParsingConfig = LlmParsingConfig()
+    private val config: LlmParsingConfig = LlmParsingConfig(),
+    private val tracer: PipelineTracer? = null
 ) {
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -48,9 +54,19 @@ class LlmFallbackParser(
     private var consecutiveFailures = 0
     private var circuitBrokenUntil: Long = 0
 
+    private data class CacheEntry(val draft: StructuredDraft, val timestamp: Long)
+    private val cache = mutableMapOf<String, CacheEntry>()
+
+    companion object {
+        private const val CACHE_TTL_MS = 24L * 60L * 60L * 1000L
+        const val VALIDATED_CONFIDENCE = 0.75f
+    }
+
     fun isCircuitBroken(): Boolean {
+        if (circuitBrokenUntil == 0L) return false
         if (System.currentTimeMillis() >= circuitBrokenUntil) {
             consecutiveFailures = 0
+            circuitBrokenUntil = 0
             return false
         }
         return true
@@ -62,12 +78,27 @@ class LlmFallbackParser(
     }
 
     suspend fun parse(event: RawEvent): StructuredDraft? {
+        val cacheKey = "${event.title}|${event.text}"
+        cache[cacheKey]?.let { entry ->
+            val age = System.currentTimeMillis() - entry.timestamp
+            if (age <= CACHE_TTL_MS) {
+                tracer?.trace(event.id, null, TraceStage.PARSE_LLM, TraceOutcome.SUCCESS,
+                    durationMs = 0, confidence = entry.draft.confidenceScore,
+                    detail = mapOf("verdict" to "cache_hit", "cache_age_ms" to "$age"))
+                return entry.draft
+            }
+            cache.remove(cacheKey)
+        }
+
         if (isCircuitBroken()) {
-            println("SCIURO_LLM: Circuit breaker open. Skipping LLM call.")
+            traceParse(event, "circuit_breaker_open", 0, mapOf("breaker_open" to "true"))
             return null
         }
 
-        val apiKey = apiKeyProvider() ?: return null
+        val apiKey = apiKeyProvider() ?: run {
+            traceParse(event, "llm_disabled_or_no_key", 0)
+            return null
+        }
 
         val prompt = """
             Extract the financial transaction details from the following notification text.
@@ -111,64 +142,116 @@ class LlmFallbackParser(
                 setBody(request)
             }.body()
 
-            consecutiveFailures = 0
+            val elapsed = System.currentTimeMillis() - parseStartTime
 
             if (response.error != null) {
-                println("SCIURO_LLM: API error: ${response.error.message}")
-                lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
-                onFailure("API error: ${response.error.message}")
+                val errMsg = response.error.message
+                lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, elapsed)
+                traceParse(event, "api_error", elapsed, mapOf("error" to errMsg))
+                onFailure()
                 return null
             }
 
             val jsonString = response.choices?.firstOrNull()?.message?.content ?: run {
-                println("SCIURO_LLM: Empty response from LLM")
-                lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
-                onFailure("Empty response from LLM")
+                lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, elapsed)
+                traceParse(event, "empty_response", elapsed)
+                onFailure()
                 return null
             }
 
             val result = json.decodeFromString<LlmResult>(jsonString)
 
-            lastDebugCapture = LlmFallbackDebugCapture(prompt, jsonString, config.modelName, System.currentTimeMillis() - parseStartTime)
+            consecutiveFailures = 0
 
-            StructuredDraft(
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, jsonString, config.modelName, elapsed)
+
+            val validationPassed = validateAmount(result.amount, event.text, event.title) &&
+                !result.merchant.isNullOrBlank()
+
+            val confidence = if (validationPassed && config.trustValidatedLlm) VALIDATED_CONFIDENCE else 0.0f
+
+            val verdict = when {
+                validationPassed && config.trustValidatedLlm -> "validated_confident"
+                validationPassed -> "validated_untrusted"
+                else -> "validation_failed"
+            }
+
+            traceParse(event, verdict, elapsed,
+                mapOf("model" to config.modelName, "merchant" to result.merchant,
+                    "direction" to result.direction.name, "validated" to "$validationPassed"))
+
+            val draft = StructuredDraft(
                 amount = result.amount,
                 direction = result.direction,
                 merchant = result.merchant,
                 accountOrChannel = result.accountOrChannel ?: event.sourcePackageOrAddress,
                 referenceId = null,
                 timestamp = event.timestamp,
-                confidenceScore = 0.0f
+                confidenceScore = confidence
             )
+
+            cache[cacheKey] = CacheEntry(draft, System.currentTimeMillis())
+
+            return draft
         } catch (e: HttpRequestTimeoutException) {
-            println("SCIURO_LLM: Request timed out")
-            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
-            onFailure("Request timed out")
+            val elapsed = System.currentTimeMillis() - parseStartTime
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, elapsed)
+            traceParse(event, "timeout", elapsed, mapOf("error" to "Request timed out"))
+            onFailure()
             null
         } catch (e: IOException) {
-            println("SCIURO_LLM: Network error: ${e.message}")
-            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
-            onFailure("Network error: ${e.message}")
+            val elapsed = System.currentTimeMillis() - parseStartTime
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, elapsed)
+            traceParse(event, "network_error", elapsed, mapOf("error" to (e.message ?: "")))
+            onFailure()
             null
         } catch (e: kotlinx.serialization.SerializationException) {
-            println("SCIURO_LLM: Malformed response: ${e.message}")
-            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
-            onFailure("Malformed response: ${e.message}")
+            val elapsed = System.currentTimeMillis() - parseStartTime
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, elapsed)
+            traceParse(event, "malformed_response", elapsed, mapOf("error" to (e.message ?: "")))
+            onFailure()
             null
         } catch (e: Exception) {
-            println("SCIURO_LLM: Unexpected error: ${e.message}")
-            e.printStackTrace()
-            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, System.currentTimeMillis() - parseStartTime)
-            onFailure("Unexpected error: ${e.message}")
+            val elapsed = System.currentTimeMillis() - parseStartTime
+            lastDebugCapture = LlmFallbackDebugCapture(prompt, null, config.modelName, elapsed)
+            traceParse(event, "unexpected_error", elapsed, mapOf("error" to (e.message ?: "")))
+            onFailure()
             null
         }
     }
 
-    private fun onFailure(reason: String) {
+    private fun validateAmount(llmAmount: Double, rawText: String, rawTitle: String): Boolean {
+        val visibleAmount = extractAmount(rawText) ?: extractAmount(rawTitle) ?: return true
+        val tolerance = maxOf(1.0, visibleAmount * 0.1)
+        return abs(llmAmount - visibleAmount) <= tolerance
+    }
+
+    private fun onFailure() {
         consecutiveFailures++
         if (consecutiveFailures >= config.circuitBreakerThreshold) {
             circuitBrokenUntil = System.currentTimeMillis() + config.cooldownMs
-            println("SCIURO_LLM: Circuit breaker opened after $consecutiveFailures failures until $circuitBrokenUntil")
         }
+    }
+
+    private suspend fun traceParse(
+        event: RawEvent,
+        verdict: String,
+        latencyMs: Long,
+        extra: Map<String, String?> = emptyMap()
+    ) {
+        tracer?.trace(
+            rawEventId = event.id,
+            transactionId = null,
+            stage = TraceStage.PARSE_LLM,
+            outcome = if (verdict == "success" || verdict == "validated_confident" || verdict == "validated_untrusted")
+                TraceOutcome.SUCCESS else TraceOutcome.FAILURE,
+            durationMs = latencyMs,
+            detail = extra + mapOf(
+                "verdict" to verdict,
+                "model" to (extra["model"] ?: ""),
+                "consecutive_failures" to "$consecutiveFailures",
+                "breaker_open" to "${isCircuitBroken()}"
+            )
+        )
     }
 }

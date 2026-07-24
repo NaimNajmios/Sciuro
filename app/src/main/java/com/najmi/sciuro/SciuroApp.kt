@@ -1,12 +1,17 @@
 package com.najmi.sciuro
 
 import android.app.Application
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
+import android.content.Context
 import com.sciuro.core.ledger.di.ledgerModule
 import com.sciuro.core.ledger.di.databaseModule
 import com.sciuro.core.ledger.di.platformDatabaseModule
 import com.sciuro.core.budget.di.budgetModule
 import com.sciuro.core.debt.di.debtModule
 import com.sciuro.core.investment.di.investmentModule
+import com.sciuro.core.investment.di.platformInvestmentModule
 import com.sciuro.feature.dashboard.di.dashboardModule
 import com.sciuro.feature.wallet.di.walletModule
 import com.sciuro.feature.kanban.di.kanbanModule
@@ -42,6 +47,7 @@ val appModule = module {
     single<SettingsProvider> { EncryptedSettingsProvider(get()) }
     single { com.najmi.sciuro.subscriber.FinanceAppSuggestionSubscriber(get(), get()) }
     single { com.najmi.sciuro.engine.NotificationSuppressionEngine(get(), get(), get(), get(), get(), get(), get()) }
+    single { com.najmi.sciuro.engine.UniversalEventSubscriber(get(), get(), get(), get()) }
 }
 
 class SciuroApp : Application(), KoinComponent {
@@ -52,6 +58,7 @@ class SciuroApp : Application(), KoinComponent {
     private val netPositionSubscriber: NetPositionSubscriber by inject()
     private val financeAppSuggestionSubscriber: com.najmi.sciuro.subscriber.FinanceAppSuggestionSubscriber by inject()
     private val notificationSuppressionEngine: com.najmi.sciuro.engine.NotificationSuppressionEngine by inject()
+    private val universalEventSubscriber: com.najmi.sciuro.engine.UniversalEventSubscriber by inject()
     
     override fun onCreate() {
         super.onCreate()
@@ -65,6 +72,7 @@ class SciuroApp : Application(), KoinComponent {
                 budgetModule,
                 debtModule,
                 investmentModule,
+                platformInvestmentModule,
                 dashboardModule,
                 walletModule,
                 kanbanModule,
@@ -80,15 +88,28 @@ class SciuroApp : Application(), KoinComponent {
             )
         }
         
+        // Runtime receiver registration for Android 13+ (API 33+)
+        // Manifest-declared PACKAGE_ADDED receivers don't fire on API 33+ due to background restrictions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val receiver = com.najmi.sciuro.receiver.FinanceAppInstallReceiver()
+            val filter = IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REPLACED)
+                addDataScheme("package")
+            }
+            registerReceiver(receiver, filter, RECEIVER_EXPORTED)
+        }
+
         // Start the ingestion orchestrator to process raw events
         orchestrator.startListening(appScope)
         ruleLearner.start(appScope)
         netPositionSubscriber.start(appScope)
         financeAppSuggestionSubscriber.start()
         notificationSuppressionEngine.start()
+        universalEventSubscriber.start()
 
         val reconciliationRequest = PeriodicWorkRequestBuilder<IngestionReconciliationWorker>(
-            IngestionReconciliationWorker.REPEAT_INTERVAL_HOURS, TimeUnit.HOURS
+            15, TimeUnit.MINUTES
         ).build()
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "ingestion_reconciliation",
