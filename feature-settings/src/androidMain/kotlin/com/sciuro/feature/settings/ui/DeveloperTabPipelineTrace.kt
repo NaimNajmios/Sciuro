@@ -16,8 +16,8 @@ import java.util.Locale
 
 data class TraceEventSummary(
     val rawEventId: String?,
-    val firstAt: Long,
-    val lastAt: Long,
+    val firstAt: Long?,
+    val lastAt: Long?,
     val stageCount: Long
 )
 
@@ -137,7 +137,7 @@ fun DeveloperTabPipelineTrace(
                         )
                         Text("${event.stageCount} stages", style = MaterialTheme.typography.labelSmall)
                     }
-                    val ageMs = System.currentTimeMillis() - event.lastAt
+                    val ageMs = System.currentTimeMillis() - (event.lastAt ?: System.currentTimeMillis())
                     val ageText = when {
                         ageMs < 60_000 -> "${ageMs / 1000}s ago"
                         ageMs < 3_600_000 -> "${ageMs / 60_000}m ago"

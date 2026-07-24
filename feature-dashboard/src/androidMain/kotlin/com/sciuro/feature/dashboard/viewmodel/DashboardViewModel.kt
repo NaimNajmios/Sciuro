@@ -159,6 +159,10 @@ class DashboardViewModel(
         .map { it.size }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    val autoBookedTransactions: StateFlow<List<com.sciuro.core.ledger.db.Transaction_record>> = transactionRepository
+        .observeRecentlyAutoConfirmed(currentTimeMillis() - 24L * 60L * 60L * 1000L)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Removed ensureDefaultAccountExists() as it's now handled by the Onboarding flow.
 
     fun bookManualTransaction(

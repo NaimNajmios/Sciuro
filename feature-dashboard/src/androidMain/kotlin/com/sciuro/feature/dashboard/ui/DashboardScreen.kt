@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalGroceryStore
 import androidx.compose.material.icons.filled.LocalHospital
@@ -70,6 +71,8 @@ import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 fun DashboardScreen(
     settingsProvider: SettingsProvider = koinInject(),viewModel: DashboardViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
+    val autoBookedCount by viewModel.autoBookedTransactionsCount.collectAsState()
+    val autoBookedTxs by viewModel.autoBookedTransactions.collectAsState()
     var selectedRange by remember { mutableStateOf("All Time") }
     var selectedTypeFilter by remember { mutableStateOf("All") }
     val filterOptions = listOf("All", "Income", "Expense")
@@ -250,26 +253,61 @@ fun DashboardScreen(
                                         containerColor = MaterialTheme.colorScheme.primaryContainer
                                     )
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(16.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.CheckCircle,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                        Column {
-                                            Text(
-                                                "Auto-Booked",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.CheckCircle,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
                                             )
                                             Text(
-                                                "$autoBookedCount transactions auto-confirmed in last 24h",
-                                                style = MaterialTheme.typography.bodyMedium,
+                                                "$autoBookedCount auto-booked in last 24h",
+                                                style = MaterialTheme.typography.titleSmall,
                                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                                             )
+                                        }
+                                        if (autoBookedTxs.isNotEmpty()) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            autoBookedTxs.take(5).forEach { tx ->
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(vertical = 4.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            "${tx.merchant ?: "Unknown"} — RM ${"%.2f".format(tx.amount)}",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                        )
+                                                        Text(
+                                                            tx.direction,
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                                                        )
+                                                    }
+                                                    TextButton(
+                                                        onClick = { viewModel.undoAutoConfirm(tx.id) },
+                                                        colors = ButtonDefaults.textButtonColors(
+                                                            contentColor = MaterialTheme.colorScheme.error
+                                                        )
+                                                    ) {
+                                                        Text("Undo", style = MaterialTheme.typography.labelSmall)
+                                                    }
+                                                }
+                                            }
+                                            if (autoBookedTxs.size > 5) {
+                                                Text(
+                                                    "+${autoBookedTxs.size - 5} more",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
+                                                )
+                                            }
                                         }
                                     }
                                 }

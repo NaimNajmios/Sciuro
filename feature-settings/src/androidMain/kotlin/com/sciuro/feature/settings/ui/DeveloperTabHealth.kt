@@ -12,6 +12,7 @@ import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalIncome
 import com.sciuro.core.parsing.metrics.ParserHealthRepository
 import com.sciuro.core.parsing.metrics.ParserHealthRow
+import com.sciuro.core.ledger.db.SciuroDatabase
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.getKoin
 
@@ -69,6 +70,41 @@ fun DeveloperTabHealth(modifier: Modifier = Modifier) {
 
             items(healthData) { row ->
                 RowHealthCard(row, priorHealthData.find { it.packageName == row.packageName })
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Pipeline Metrics", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Trace-based rates over the last 7 days",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        item {
+            val database: SciuroDatabase = getKoin().get()
+            val sevenDaysMs = 7L * 24 * 60 * 60 * 1000
+            val sinceMs = System.currentTimeMillis() - sevenDaysMs
+
+            val outcomeCounts = remember {
+                database.pipelineTraceQueries.countTraceByOutcomeSince(sinceMs).executeAsList()
+            }
+
+            val llmTotal = outcomeCounts.filter { it.stage == "PARSE_LLM" }.sumOf { it.cnt }
+            val deadLetters = outcomeCounts.filter { it.stage == "STAGING" && it.outcome == "FAILURE" }.sumOf { it.cnt }
+
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    MetricRow("LLM fallback calls (7d)", "$llmTotal")
+                    MetricRow("Dead letters (7d)", "$deadLetters")
+                }
             }
         }
 
@@ -133,5 +169,16 @@ private fun RowHealthCard(row: ParserHealthRow, priorRow: ParserHealthRow?) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun MetricRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
     }
 }

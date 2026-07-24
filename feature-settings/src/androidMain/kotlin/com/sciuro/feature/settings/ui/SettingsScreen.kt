@@ -86,54 +86,7 @@ fun SettingsScreen(
                         modifier = Modifier.padding(vertical = 16.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Auto-confirm transactions", style = MaterialTheme.typography.bodyMedium)
-                                    Text(
-                                        "Auto-book transactions with high confidence; undoable for 24h",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Switch(
-                                    checked = isTransactionAutoConfirm,
-                                    onCheckedChange = {
-                                        isTransactionAutoConfirm = it
-                                        settingsProvider.setTransactionAutoConfirmEnabled(it)
-                                    }
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Trust validated LLM results", style = MaterialTheme.typography.bodyMedium)
-                                    Text(
-                                        "Accept LLM-parsed drafts when they pass amount and merchant validation",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Switch(
-                                    checked = isTrustValidatedLlm,
-                                    onCheckedChange = {
-                                        isTrustValidatedLlm = it
-                                        settingsProvider.setTrustValidatedLlmEnabled(it)
-                                    }
-                                )
-                            }
-
-                item {
+                            item {
                     com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Appearance", style = MaterialTheme.typography.titleMedium)
