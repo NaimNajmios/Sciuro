@@ -243,6 +243,38 @@ fun DashboardScreen(
                                 }
                             }
 
+                            if (autoBookedCount > 0) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CheckCircle,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        Column {
+                                            Text(
+                                                "Auto-Booked",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                            Text(
+                                                "$autoBookedCount transactions auto-confirmed in last 24h",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)

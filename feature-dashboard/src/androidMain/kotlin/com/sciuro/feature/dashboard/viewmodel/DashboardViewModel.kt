@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.repository.DebtRepository
@@ -33,6 +34,7 @@ import com.sciuro.core.obligations.repository.ObligationRepository
 data class DashboardState(
     val netPosition: Double = 0.0,
     val unreviewedTransactionsCount: Int = 0,
+    val autoBookedTransactionsCount: Int = 0,
     val activeBudgetsCount: Int = 0,
     val allTransactions: List<com.sciuro.core.ledger.db.Transaction_record> = emptyList(),
     val accounts: List<com.sciuro.core.ledger.db.Account> = emptyList(),
@@ -152,6 +154,11 @@ class DashboardViewModel(
         initialValue = DashboardState()
     )
 
+    val autoBookedTransactionsCount: StateFlow<Int> = transactionRepository
+        .observeRecentlyAutoConfirmed(currentTimeMillis() - 24L * 60L * 60L * 1000L)
+        .map { it.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
     // Removed ensureDefaultAccountExists() as it's now handled by the Onboarding flow.
 
     fun bookManualTransaction(
@@ -226,6 +233,12 @@ class DashboardViewModel(
     fun rejectTransaction(transactionId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             transactionRepository.rejectTransaction(transactionId)
+        }
+    }
+
+    fun undoAutoConfirm(transactionId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            transactionRepository.undoAutoConfirm(transactionId)
         }
     }
 

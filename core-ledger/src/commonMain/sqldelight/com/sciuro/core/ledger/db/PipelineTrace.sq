@@ -35,3 +35,23 @@ LIMIT ?;
 deleteTraceOlderThan:
 DELETE FROM pipeline_trace
 WHERE created_at < ?;
+
+selectDistinctTraceEvents:
+SELECT raw_event_id, MIN(created_at) AS first_at, MAX(created_at) AS last_at, COUNT(*) AS stage_count
+FROM pipeline_trace
+WHERE raw_event_id IS NOT NULL
+GROUP BY raw_event_id
+ORDER BY last_at DESC
+LIMIT ?;
+
+countTraceByOutcomeSince:
+SELECT stage, outcome, COUNT(*) AS cnt
+FROM pipeline_trace
+WHERE created_at >= ?
+GROUP BY stage, outcome
+ORDER BY cnt DESC;
+
+countTraceEventsSince:
+SELECT COUNT(DISTINCT raw_event_id) AS event_count
+FROM pipeline_trace
+WHERE created_at >= ? AND raw_event_id IS NOT NULL;
