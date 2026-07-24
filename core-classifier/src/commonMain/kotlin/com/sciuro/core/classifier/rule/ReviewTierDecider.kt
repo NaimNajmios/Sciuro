@@ -15,10 +15,14 @@ class ReviewTierDecider(
         accountId: String?,
         merchant: String?
     ): ReviewTier {
-        if (!autoConfirmEnabled) return ReviewTier.MANUAL
-
         val hasCategory = categoryId != null
         val hasAccount = accountId != null
+
+        if (confidence >= 1.0f && hasCategory && hasAccount) {
+            return ReviewTier.AUTO_SILENT
+        }
+
+        if (!autoConfirmEnabled) return ReviewTier.MANUAL
 
         if (confidence >= silentConfidenceThreshold && hasCategory && hasAccount && hasLearnedRule(merchant)) {
             return ReviewTier.AUTO_SILENT
