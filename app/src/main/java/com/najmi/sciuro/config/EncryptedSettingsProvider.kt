@@ -155,4 +155,20 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setTrustValidatedLlmEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("trust_validated_llm", enabled).apply()
     }
+
+    override fun isTransactionAutoConfirmEnabled(): Boolean {
+        return sharedPreferences.getBoolean("transaction_auto_confirm", false)
+    }
+
+    override fun setTransactionAutoConfirmEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("transaction_auto_confirm", enabled).apply()
+    }
+
+    override fun getSilentAutoConfirmThreshold(): Float {
+        return sharedPreferences.getFloat("silent_auto_confirm_threshold", 0.95f)
+    }
+
+    override fun setSilentAutoConfirmThreshold(threshold: Float) {
+        sharedPreferences.edit().putFloat("silent_auto_confirm_threshold", threshold).apply()
+    }
 }

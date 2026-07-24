@@ -1,0 +1,9 @@
+ALTER TABLE transaction_record ADD COLUMN review_tier TEXT NOT NULL DEFAULT 'MANUAL';
+ALTER TABLE transaction_record ADD COLUMN auto_confirmed_at INTEGER;
+
+CREATE INDEX idx_tx_review_tier ON transaction_record(review_tier, is_reviewed, timestamp);
+
+INSERT OR IGNORE INTO category(id, name, type, icon, color, created_at, updated_at)
+VALUES ('cat_debt_payment', 'Debt Payment', 'OUTFLOW', NULL, NULL, 0, 0);
+INSERT OR IGNORE INTO category(id, name, type, icon, color, created_at, updated_at)
+VALUES ('cat_transfer', 'Transfer', 'OUTFLOW', NULL, NULL, 0, 0);

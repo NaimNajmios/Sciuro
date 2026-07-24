@@ -37,5 +37,7 @@ data class Transaction(
     val isReviewed: Boolean,
     val extractionMethod: String? = null,
     val confidence: Double? = null,
-    val rawEventId: String? = null
+    val rawEventId: String? = null,
+    val reviewTier: String = "MANUAL",
+    val autoConfirmedAt: Long? = null
 )

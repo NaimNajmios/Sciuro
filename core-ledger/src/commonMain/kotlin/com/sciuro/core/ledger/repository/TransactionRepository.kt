@@ -53,6 +53,8 @@ class TransactionRepository(
                 extraction_method = transaction.extractionMethod,
                 confidence = transaction.confidence?.toDouble(),
                 raw_event_id = transaction.rawEventId,
+                review_tier = transaction.reviewTier,
+                auto_confirmed_at = transaction.autoConfirmedAt,
                 created_at = now,
                 updated_at = now
             )
@@ -280,5 +282,31 @@ class TransactionRepository(
             raw_event_id = rawEventId,
             captured_at = currentTimeMillis()
         )
+    }
+
+    fun observeRecentlyAutoConfirmed(sinceMs: Long): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
+        return database.transactionRecordQueries.selectRecentlyAutoConfirmed(sinceMs)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+    }
+
+    suspend fun undoAutoConfirm(transactionId: String) {
+        val tx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+
+        withAudit(
+            entityType = EntityType.TRANSACTION,
+            entityId = transactionId,
+            action = AuditAction.UPDATE,
+            beforeState = "review_tier=${tx.review_tier}, is_reviewed=${tx.is_reviewed}",
+            afterState = "review_tier=MANUAL, is_reviewed=0",
+            source = AuditSource.USER_MANUAL
+        ) {
+            if (tx.account_id != null) {
+                val balanceDelta = if (tx.direction == "INFLOW") -tx.amount else tx.amount
+                accountRepository.updateBalance(tx.account_id, balanceDelta)
+            }
+
+            database.transactionRecordQueries.undoAutoConfirm(currentTimeMillis(), transactionId)
+        }
     }
 }

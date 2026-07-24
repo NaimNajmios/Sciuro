@@ -32,4 +32,8 @@ interface SettingsProvider {
     fun setQuietHoursEnd(hour: Int)
     fun isTrustValidatedLlmEnabled(): Boolean
     fun setTrustValidatedLlmEnabled(enabled: Boolean)
+    fun isTransactionAutoConfirmEnabled(): Boolean
+    fun setTransactionAutoConfirmEnabled(enabled: Boolean)
+    fun getSilentAutoConfirmThreshold(): Float
+    fun setSilentAutoConfirmThreshold(threshold: Float)
 }

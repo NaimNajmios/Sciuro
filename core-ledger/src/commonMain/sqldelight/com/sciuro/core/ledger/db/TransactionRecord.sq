@@ -11,6 +11,8 @@ CREATE TABLE transaction_record (
     extraction_method TEXT,
     confidence REAL,
     raw_event_id TEXT,
+    review_tier TEXT NOT NULL DEFAULT 'MANUAL',
+    auto_confirmed_at INTEGER,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
     FOREIGN KEY(account_id) REFERENCES account(id),
@@ -18,8 +20,8 @@ CREATE TABLE transaction_record (
 );
 
 insertTransaction:
-INSERT INTO transaction_record(id, account_id, category_id, amount, direction, merchant, timestamp, reference_id, is_reviewed, extraction_method, confidence, raw_event_id, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO transaction_record(id, account_id, category_id, amount, direction, merchant, timestamp, reference_id, is_reviewed, extraction_method, confidence, raw_event_id, review_tier, auto_confirmed_at, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 markAsReviewed:
 UPDATE transaction_record
@@ -48,6 +50,16 @@ WHERE id = ?;
 
 selectUnreviewedTransactions:
 SELECT * FROM transaction_record WHERE is_reviewed = 0 ORDER BY timestamp DESC;
+
+selectRecentlyAutoConfirmed:
+SELECT * FROM transaction_record
+WHERE review_tier = 'AUTO_UNDO' AND created_at > ?
+ORDER BY created_at DESC;
+
+undoAutoConfirm:
+UPDATE transaction_record
+SET review_tier = 'MANUAL', is_reviewed = 0, auto_confirmed_at = NULL, updated_at = ?
+WHERE id = ?;
 
 selectAllTransactions:
 SELECT * FROM transaction_record ORDER BY timestamp DESC;

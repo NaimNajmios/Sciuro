@@ -22,6 +22,7 @@ import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.investment.engine.InvestmentEngine
 import com.sciuro.core.obligations.engine.ObligationDetectionEngine
 import com.sciuro.core.classifier.rule.CategoryResolver
+import com.sciuro.core.classifier.rule.ReviewTierDecider
 import com.sciuro.core.debt.engine.BnplRiskDetector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -43,6 +44,7 @@ class SciuroIngestionOrchestrator(
     private val obligationDetectionEngine: ObligationDetectionEngine,
     private val categoryResolver: CategoryResolver,
     private val bnplRiskDetector: BnplRiskDetector,
+    private val reviewTierDecider: ReviewTierDecider,
     private val tracer: PipelineTracer,
     private val confidenceThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD
 ) {
@@ -166,6 +168,15 @@ class SciuroIngestionOrchestrator(
 
             val extractionMethod = if (draft.confidenceScore >= confidenceThreshold) "REGEX" else "LLM_FALLBACK"
 
+            val tier = reviewTierDecider.decide(
+                confidence = draft.confidenceScore,
+                categoryId = categoryId,
+                accountId = accountId,
+                merchant = draft.merchant
+            )
+            val nowAuto = currentTimeMillis()
+            val isReviewed = tier != com.sciuro.core.audit.model.ReviewTier.MANUAL
+
             val transaction = Transaction(
                 id = generateUuid(),
                 accountId = accountId,
@@ -175,17 +186,19 @@ class SciuroIngestionOrchestrator(
                 merchant = draft.merchant,
                 timestamp = draft.timestamp,
                 referenceId = draft.referenceId,
-                isReviewed = draft.confidenceScore >= confidenceThreshold && categoryId != null && accountId != null,
+                isReviewed = isReviewed,
                 extractionMethod = extractionMethod,
                 confidence = draft.confidenceScore.toDouble(),
-                rawEventId = rawEvent.id
+                rawEventId = rawEvent.id,
+                reviewTier = tier.label,
+                autoConfirmedAt = if (isReviewed) nowAuto else null
             )
 
             val auditSource = if (draft.confidenceScore >= confidenceThreshold) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
             transactionRepository.bookTransaction(transaction, source = auditSource)
             tracer.trace(rawEvent.id, transaction.id, TraceStage.BOOK, TraceOutcome.SUCCESS,
                 confidence = draft.confidenceScore,
-                detail = mapOf("is_reviewed" to "${transaction.isReviewed}", "extraction_method" to extractionMethod))
+                detail = mapOf("is_reviewed" to "${transaction.isReviewed}", "review_tier" to tier.label, "extraction_method" to extractionMethod))
 
             transferDetectionEngine.onTransactionBooked(
                 newTxId = transaction.id,
