@@ -414,18 +414,13 @@ fun DashboardScreen(
                                         modifier = Modifier.padding(bottom = 12.dp)
                                     )
                                 }
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    items(filterOptions) { filter ->
-                                        FilterChip(
-                                            selected = typeFilter == filter,
-                                            onClick = { viewModel.setTypeFilter(filter) },
-                                            label = { Text(filter) }
-                                        )
-                                    }
-                                }
+                                PillToggle(
+                                    options = filterOptions,
+                                    selectedOption = typeFilter,
+                                    onOptionSelected = { viewModel.setTypeFilter(it) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    fillWidth = true
+                                )
                             }
 
                             if (paginatedTransactions.isEmpty()) {

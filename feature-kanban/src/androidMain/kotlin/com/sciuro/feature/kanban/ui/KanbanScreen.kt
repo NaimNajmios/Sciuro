@@ -146,9 +146,9 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             color = Color.White
                         )
                     },
-                    toggleOptions = emptyList(),
-                    selectedToggle = "",
-                    onToggleSelected = {},
+                    toggleOptions = tabs,
+                    selectedToggle = selectedTab,
+                    onToggleSelected = { selectedTab = it },
                     content = {
                         Row(
                             modifier = Modifier
@@ -182,15 +182,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    PillToggle(
-                        options = tabs,
-                        selectedOption = selectedTab,
-                        onOptionSelected = { selectedTab = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        fillWidth = true
-                    )
 
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     when (selectedTab) {
                         "Bills" -> BillsColumn(

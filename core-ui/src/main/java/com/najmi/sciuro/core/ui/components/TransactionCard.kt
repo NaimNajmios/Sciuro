@@ -141,8 +141,8 @@ fun TransactionCard(
                         .clip(CircleShape)
                         .background(dotColor)
                         .semantics { contentDescription = confidenceLabel }
-                        .padding(end = 6.dp)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
             }
 
             Text(
