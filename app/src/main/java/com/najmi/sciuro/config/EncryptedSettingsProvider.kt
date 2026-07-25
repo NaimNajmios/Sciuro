@@ -99,12 +99,12 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
         sharedPreferences.edit().putString("ingestion_allowlist_removals", packages.joinToString(",")).apply()
     }
 
-    override fun isAutoConfirmEnabled(): Boolean {
-        return sharedPreferences.getBoolean("auto_confirm_enabled", false)
+    override fun isObligationAutoConfirmEnabled(): Boolean {
+        return sharedPreferences.getBoolean("auto_confirm_obligations", false)
     }
 
-    override fun setAutoConfirmEnabled(enabled: Boolean) {
-        sharedPreferences.edit().putBoolean("auto_confirm_enabled", enabled).apply()
+    override fun setObligationAutoConfirmEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("auto_confirm_obligations", enabled).apply()
     }
 
     override fun getAutoConfirmThreshold(): Int {
@@ -157,11 +157,11 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     }
 
     override fun isTransactionAutoConfirmEnabled(): Boolean {
-        return sharedPreferences.getBoolean("transaction_auto_confirm", false)
+        return sharedPreferences.getBoolean("auto_confirm_transactions", false)
     }
 
     override fun setTransactionAutoConfirmEnabled(enabled: Boolean) {
-        sharedPreferences.edit().putBoolean("transaction_auto_confirm", enabled).apply()
+        sharedPreferences.edit().putBoolean("auto_confirm_transactions", enabled).apply()
     }
 
     override fun getSilentAutoConfirmThreshold(): Float {

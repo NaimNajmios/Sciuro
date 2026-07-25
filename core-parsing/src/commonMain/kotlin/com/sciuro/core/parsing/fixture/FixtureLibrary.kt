@@ -169,6 +169,16 @@ object FixtureLibrary {
             expectedAmount = 500.00, expectedDirection = TransactionDirection.OUTFLOW,
             expectedConfident = true),
 
+        // ── NEW: Multi-step Transfer ──
+        Fixture("Transfer Step 1 - Outflow", "com.cimbmalaysia", "Transfer Successful",
+            "RM 150.00 has been deducted from your account ending 1234 for transfer to MAYBANK account ending 9999.",
+            expectedAmount = 150.00, expectedDirection = TransactionDirection.OUTFLOW,
+            expectedMerchant = "MAYBANK", expectedConfident = true),
+        Fixture("Transfer Step 2 - Inflow", "com.maybank2u.life", "Transfer Received",
+            "RM 150.00 has been credited to your account ending 9999 from CIMB.",
+            expectedAmount = 150.00, expectedDirection = TransactionDirection.INFLOW,
+            expectedConfident = true),
+
         // ── NEW: Aggregator Forward ──
         Fixture("Gmail Forward Maybank", "com.google.android.gm", "Maybank2u Notification",
             "RM 8.90 Maybank: Payment to STARBUCKS was successful.",

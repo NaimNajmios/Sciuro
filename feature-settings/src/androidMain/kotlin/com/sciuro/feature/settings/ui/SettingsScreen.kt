@@ -47,7 +47,7 @@ fun SettingsScreen(
 ) {
     var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
     var isLockEnabled by rememberSaveable { mutableStateOf(settingsProvider.isLockEnabled()) }
-    var isAutoConfirmEnabled by rememberSaveable { mutableStateOf(settingsProvider.isAutoConfirmEnabled()) }
+    var isObligationAutoConfirmEnabled by rememberSaveable { mutableStateOf(settingsProvider.isObligationAutoConfirmEnabled()) }
     var apiKey by rememberSaveable { mutableStateOf(settingsProvider.getApiKey() ?: "") }
     var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
     var llmModelName by rememberSaveable { mutableStateOf(settingsProvider.getLlmModelName()) }
@@ -373,10 +373,10 @@ fun SettingsScreen(
                                 }
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Switch(
-                                    checked = isAutoConfirmEnabled,
+                                    checked = isObligationAutoConfirmEnabled,
                                     onCheckedChange = {
-                                        isAutoConfirmEnabled = it
-                                        settingsProvider.setAutoConfirmEnabled(it)
+                                        isObligationAutoConfirmEnabled = it
+                                        settingsProvider.setObligationAutoConfirmEnabled(it)
                                     }
                                 )
                             }

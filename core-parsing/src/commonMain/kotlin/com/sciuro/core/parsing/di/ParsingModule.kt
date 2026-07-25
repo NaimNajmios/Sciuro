@@ -25,6 +25,15 @@ val parsingModule = module {
             CimbParserRule(aggregatorPackages),
             MaybankParserRule(aggregatorPackages),
             BsnParserRule(aggregatorPackages),
+            RhbParserRule(aggregatorPackages),
+            HlbParserRule(aggregatorPackages),
+            PublicBankParserRule(aggregatorPackages),
+            HsbcParserRule(aggregatorPackages),
+            OcbcParserRule(aggregatorPackages),
+            UobParserRule(aggregatorPackages),
+            GxBankParserRule(aggregatorPackages),
+            AeonParserRule(aggregatorPackages),
+            ScParserRule(aggregatorPackages),
             TngParserRule(),
             GrabPayParserRule(),
             BoostParserRule(),
@@ -61,4 +70,3 @@ val parsingModule = module {
 
     single { ParserHealthRepository(get()) }
 }
-

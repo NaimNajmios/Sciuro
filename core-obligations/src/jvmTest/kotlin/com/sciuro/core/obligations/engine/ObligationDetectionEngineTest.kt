@@ -33,8 +33,16 @@ class ObligationDetectionEngineTest {
         var autoConfirmEnabled: Boolean = false,
         var autoConfirmThreshold: Int = 3
     ) : SettingsProvider {
-        override fun isAutoConfirmEnabled(): Boolean = autoConfirmEnabled
+        override fun isObligationAutoConfirmEnabled(): Boolean = autoConfirmEnabled
+        override fun setObligationAutoConfirmEnabled(enabled: Boolean) { autoConfirmEnabled = enabled }
         override fun getAutoConfirmThreshold(): Int = autoConfirmThreshold
+        override fun setAutoConfirmThreshold(threshold: Int) { autoConfirmThreshold = threshold }
+        override fun getSilentAutoConfirmThreshold(): Float = 0.8f
+        override fun setSilentAutoConfirmThreshold(threshold: Float) {}
+        override fun isTransactionAutoConfirmEnabled(): Boolean = false
+        override fun setTransactionAutoConfirmEnabled(enabled: Boolean) {}
+        override fun isTrustValidatedLlmEnabled(): Boolean = false
+        override fun setTrustValidatedLlmEnabled(enabled: Boolean) {}
         override fun isLockEnabled(): Boolean = false
         override fun setLockEnabled(enabled: Boolean) {}
         override fun isLlmEnabled(): Boolean = true

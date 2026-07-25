@@ -18,7 +18,7 @@ class ObligationDetectionEngine(
     suspend fun runDetection() {
         val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
         val confidenceTracker = ConfidenceTracker(database)
-        val autoConfirmEnabled = settingsProvider.isAutoConfirmEnabled()
+        val autoConfirmEnabled = settingsProvider.isObligationAutoConfirmEnabled()
         val autoConfirmThreshold = settingsProvider.getAutoConfirmThreshold()
 
         val byMerchant = allTransactions.filter { it.merchant != null }.groupBy { it.merchant!! }

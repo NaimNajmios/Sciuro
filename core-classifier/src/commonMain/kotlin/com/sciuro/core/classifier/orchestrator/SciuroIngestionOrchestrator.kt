@@ -161,10 +161,13 @@ class SciuroIngestionOrchestrator(
                 detail = mapOf("category_id" to categoryId, "merchant" to draft.merchant))
 
             var matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
-            if (matchedAccount == null && !draft.accountOrChannel.isNullOrBlank()) {
-                val suffixOnly = draft.accountOrChannel.takeLast(4).filter { it.isDigit() }
-                if (suffixOnly.isNotEmpty()) {
-                    matchedAccount = accountRepository.getAccountByNumberSuffix(suffixOnly)
+            if (matchedAccount == null) {
+                val accChannel = draft.accountOrChannel
+                if (!accChannel.isNullOrBlank()) {
+                    val suffixOnly = accChannel.takeLast(4).filter { it.isDigit() }
+                    if (suffixOnly.isNotEmpty()) {
+                        matchedAccount = accountRepository.getAccountByNumberSuffix(suffixOnly)
+                    }
                 }
             }
             val accountId = matchedAccount?.id
