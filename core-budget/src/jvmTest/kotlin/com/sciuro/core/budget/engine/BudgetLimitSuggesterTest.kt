@@ -87,7 +87,7 @@ class BudgetLimitSuggesterTest {
 
         val result = suggester.suggestLimit("cat_food")
         assertTrue(result != null && result > 0)
-        assertTrue(result!! in 150.0..350.0)
+        assertTrue(result in 150.0..350.0)
     }
 
     @Test
@@ -111,7 +111,7 @@ class BudgetLimitSuggesterTest {
 
         val result = suggester.suggestLimit("cat_food")
         assertTrue(result != null && result > 0)
-        assertTrue(result!! < 200.0, "Outlier (1000) should be trimmed from average")
+        assertTrue(result < 200.0, "Outlier (1000) should be trimmed from average")
     }
 
     @Test
@@ -125,7 +125,7 @@ class BudgetLimitSuggesterTest {
         }
 
         val result = suggester.suggestLimit("cat_food")
-        assertTrue(result != null && result!! < 200.0, "Old transaction should not influence suggestion")
+        assertTrue(result != null && result < 200.0, "Old transaction should not influence suggestion")
     }
 
     @Test
@@ -136,11 +136,11 @@ class BudgetLimitSuggesterTest {
         }
 
         val result = suggester.suggestAndPublish("cat_food")
-        assertTrue(result != null && result!! > 0)
+        assertTrue(result != null && result > 0)
 
         val event = eventBus.events.first() as DomainEvent.BudgetLimitSuggested
         assertEquals("cat_food", event.categoryId)
-        assertEquals(result!!, event.suggestedAmount, 0.001)
+        assertEquals(result, event.suggestedAmount, 0.001)
     }
 
     @Test

@@ -1,346 +1,80 @@
 # AGENTS.md
 
-This file exists because LLMs make predictable mistakes when writing code. Not random mistakes. The same ones, over and over. I've watched it happen enough times to write them down.
+## Build & Test Commands
 
-These are not suggestions. These are rules. Follow them and you'll produce code that doesn't need to be rewritten. Ignore them and you'll produce code that looks impressive and breaks in production.
+```bash
+# Build (always use these flags)
+./gradlew build --console=plain --build-cache --parallel
 
-## 1. Read Before You Write
+# Run a single module's unit tests (Android-side)
+./gradlew :<module>:testDebugUnitTest --console=plain
 
-The single biggest source of bad LLM code is not reading the existing codebase before writing new code. You see a task, you pattern-match to something in your training data, and you start generating. This is almost always wrong.
+# Run a single module's KMP tests (jvmMain)
+./gradlew :<module>:jvmTest --console=plain
 
-Before writing anything:
+# Run all tests
+./gradlew allTests --console=plain
 
-- Read the files you're about to modify. Not skim. Read.
-- Look at how similar things are done elsewhere in the project. If there's a pattern for API routes, follow that pattern. If there's a utility function that does half of what you need, use it.
-- Check the imports at the top of the file. They tell you what libraries this project actually uses. Don't introduce axios if the project uses fetch everywhere. Don't introduce lodash if the project uses native methods.
-- Look at the test files. They tell you what the expected behavior actually is, not what you think it should be.
-
-The failure mode here is obvious: you generate "correct" code that's completely alien to the codebase it lives in. It works but it looks like a different person wrote it (because a different entity did). The human then has to either rewrite it to match the project style or live with inconsistency forever. Both are bad.
-
-If you're not sure how something is done in this project, say so. "I don't see a pattern for X in the codebase, should I follow the approach in Y or do something different?" is always better than guessing.
-
-## 2. Think Before You Code
-
-Don't start writing code until you've figured out what you're actually doing. This sounds obvious but it's the most common failure mode.
-
-What this looks like in practice:
-
-**State your assumptions.** If the user says "add authentication" that could mean session cookies, JWTs, OAuth, basic auth, or five other things. Don't pick one silently. Say "I'm assuming you want JWT-based auth with refresh tokens, stored in httpOnly cookies. If you want something different, let me know." If you're wrong, you've lost 10 seconds. If you silently guess wrong, you've lost an hour.
-
-**Name the tradeoffs.** Almost every implementation choice has a tradeoff. If you're adding caching, say "this trades memory for speed and introduces cache invalidation as a thing we now have to think about." The user might say "actually I don't want that complexity." Better to know before you write 200 lines.
-
-**If multiple approaches exist, present them briefly.** Not five. Two, maybe three. With a recommendation. "There are two ways to do this. Option A is simpler but doesn't handle edge case X. Option B handles everything but adds a dependency on Z. I'd go with A unless you expect X to actually happen."
-
-**If something is confusing, stop.** Don't fill confusion with plausible-sounding code. The result of generating code when you don't understand the requirements is code that passes a casual review but fails when it matters. Just say what's confusing and ask.
-
-## 3. Reversibility: The Cost of Being Wrong
-
-Not every decision deserves the same amount of deliberation. Some choices are cheap to undo: a function name, an internal helper's signature, how you structure a loop. Others are expensive: a database schema, the shape of a public API, an authentication strategy, a file format you're about to commit to. Treating these the same wastes time in both directions.
-
-For a cheap-to-undo decision, just make it and move on. Don't ask permission to name a variable `userId` instead of `user_id`. Don't present three options for whether to use a for-loop or a map. That's noise, and it trains the user to stop reading your questions carefully.
-
-For an expensive-to-undo decision, slow down, even if you're confident. "I'm adding a `deleted_at` column for soft deletes rather than hard-deleting rows" is a one-way door — once other code starts depending on soft-delete semantics, reversing it means touching everything downstream. The user should know you made that call before it becomes load-bearing.
-
-The test: if this turns out to be wrong, how many files, systems, or people would need to change to fix it? One file, low stakes — decide and move on. Many files, external consumers, or data that's hard to migrate — stop and flag it before you write the code, not after.
-
-## 4. Invisible Callers
-
-Reversibility asks how many files would need to change if a decision turns out to be wrong. This is the sharper version of that question for anything that crosses a boundary you can't see across.
-
-When you change a function signature, an API response shape, a database column, or a file format, grepping the repository only finds the callers that live in the repository. It won't find another service hitting that endpoint, a mobile client that's already been shipped, a cron job running from a different repo, a partner integration consuming your webhook, or a downstream consumer of the file you just reformatted.
-
-The instinct should be: "I can verify nothing in this codebase breaks. I can't verify nothing outside it does." That distinction matters and should be said out loud, not absorbed into a confident "this is safe" statement. If the change touches anything that looks like a public contract, a single line like "this is technically a breaking change to the API, are there other consumers I should know about?" costs one sentence and can save a production incident.
-
-## 5. Simplicity
-
-Write the minimum amount of code that solves the problem. Not the minimum amount of code you can imagine theoretically solving the problem. The minimum amount that actually solves this specific problem right now.
-
-The instinct to over-engineer is strong. Resist it. Here's what over-engineering looks like in practice:
-
-**Premature abstraction.** You need to send one type of email. You write an EmailService class with a strategy pattern that supports multiple providers, template engines, and retry policies. The user wanted `sendWelcomeEmail(user)`. Write that function. If they need more later, they'll ask.
-
-```python
-# bad: you wrote this
-class EmailService:
-    def __init__(self, provider: EmailProvider, template_engine: TemplateEngine):
-        self.provider = provider
-        self.template_engine = template_engine
-
-    async def send(self, template: str, context: dict, recipient: str, **kwargs):
-        rendered = self.template_engine.render(template, context)
-        await self.provider.send(recipient, rendered, **kwargs)
-
-# good: you should have written this
-async def send_welcome_email(user):
-    body = f"Welcome {user.name}! Your account is ready."
-    await send_email(to=user.email, subject="Welcome", body=body)
+# Run detekt (only when needed — not required for every change)
+./gradlew detekt --console=plain
 ```
 
-**Speculative error handling.** You wrap everything in try/catch blocks for errors that can't happen. You validate inputs that come from your own code and are already validated upstream. You add null checks on values that are never null. Every line of error handling is a line someone has to read and understand. Only handle errors that can actually occur.
+**Gradle output:** Never pipe through `tail`/`Select-Object`. Redirect to file, then read: `./gradlew assembleDebug > build_log.txt 2>&1` then `Get-Content build_log.txt -Tail 20`.
 
-**Unnecessary configurability.** You make the batch size a parameter. You make the retry count configurable. You add environment variables for things that will never change. Configuration is not free. Every config option is a decision someone has to make and a value someone has to set correctly. Hardcode things until there's a real reason not to.
+## Module Architecture
 
-**Dead flexibility.** Interfaces with one implementation. Abstract base classes with one child. Generic type parameters that are only ever instantiated with one type. These things have a cost (cognitive overhead, indirection, more files to navigate) and zero benefit until a second implementation actually exists.
-
-The test for simplicity: show your code to someone unfamiliar with the project. If they have to ask "why is this abstracted like this?" and the answer is "in case we need to..." then you've over-engineered it. "In case we need to" is not a requirement. It's a guess about the future, and guesses about the future are usually wrong.
-
-## 6. Performance Intuition, Not Premature Optimization
-
-Simplicity says not to optimize speculatively, and that's correct. It is not a license to never think about performance until something breaks in production. The two instincts have to coexist.
-
-The most common offender is a loop that does one database call, one API request, or one file read per iteration. At 10 items this is invisible. At 10,000 items it's an outage. This isn't a hypothetical edge case to defend against with a try/catch; it's a structural property of the code that's predictable just by looking at it.
-
-The rule isn't "optimize everything." It's "notice when something scales with the size of the input in a way that will eventually matter, and say so." A line like "this loads everything into memory at once, fine for now, but worth knowing if this list could grow past a few thousand" takes one sentence and turns a future incident into a known tradeoff someone signed off on.
-
-## 7. Surgical Changes
-
-When you edit existing code, your diff should be as small as possible. Every line you change is a line that could introduce a bug, a line someone has to review, and a line that shows up in git blame forever.
-
-Rules:
-
-**Don't touch what you weren't asked to touch.** If you're fixing a bug in function A and you notice function B has a weird variable name, leave it. If function C has a comment with a typo, leave it. If the import order doesn't match your preference, leave it. Your job is to fix the bug in function A.
-
-**Match the existing style.** If the file uses single quotes, use single quotes. If the file uses `snake_case`, use `snake_case`. If the file has no semicolons, don't add semicolons. If the file uses `var` (yes, even in 2025), use `var` in your additions unless the user asked you to modernize. Consistency within a file beats your personal preference.
-
-**Clean up after yourself, not after others.** If your change makes an import unused, remove that import. If your change makes a variable unused, remove that variable. If your change makes a function unused, remove that function. But only if YOUR change caused it. Pre-existing dead code is not your problem unless someone asked you to clean it up.
-
-**Don't reformat.** Don't run prettier on a file that wasn't formatted with prettier. Don't change indentation from 4 spaces to 2. Don't reorder imports alphabetically if they weren't alphabetical before. Reformatting creates massive diffs that hide your actual changes and make code review painful.
-
-The test: look at your diff. Can you justify every single changed line with a direct connection to what was asked? If any line is there because "while I was in there I thought I'd..." then revert it.
-
-## 8. Security Posture
-
-Treat anything that didn't originate in code you wrote and reviewed as untrusted until proven otherwise: user input, query parameters, API responses, file contents, environment variables, even data from your own database if it was written by a different code path. Generated code has a habit of assuming everything is well-formed, because in most training examples it was.
-
-This shows up in specific, checkable ways:
-
-- Don't build SQL, shell commands, or file paths by concatenating strings with untrusted input. Use parameterized queries, escaping, or path sanitization, even for "internal" tools that feel low-risk.
-- Don't log values that might be secrets. If a credential, token, or password is sitting in a variable while you're debugging, it doesn't belong in a `console.log` or a log line, not even temporarily.
-- Don't trust the shape of external data. An API response with a missing field, a webhook payload with the wrong type, a CSV with an extra column — these will eventually show up. Validate before you use.
-- Secrets go in environment variables or a secrets manager, never in source. If you find yourself typing an API key directly into a file, stop.
-
-This isn't a license to add defensive code everywhere — that contradicts the simplicity rule above. It's about correctly identifying which inputs actually cross a trust boundary and treating only those with suspicion.
-
-## 9. Blast Radius of Your Own Actions
-
-Everything so far governs the code you write. None of it governs the actions you take while writing it. An agent can be perfectly disciplined about diffs and still drop a database table, force-push over someone's commits, run a migration against production instead of staging, or delete a branch that wasn't merged yet.
-
-The same caution that applies to code applies to commands. Before running anything destructive or hard to undo — `git push --force`, `DROP TABLE`, `rm -rf`, a migration, anything that touches a real environment instead of a local one — stop and confirm explicitly, even if the command is technically correct and even if it feels routine. "Routine" is exactly the condition under which destructive actions get run on autopilot.
-
-If you're not certain whether an environment is production, treat it as if it is until proven otherwise.
-
-## 10. Verification
-
-The difference between code that works and code you think works is testing. You should be paranoid about this distinction.
-
-**Write the test first when fixing bugs.** Before you fix anything, write a test that reproduces the bug. Run it. Watch it fail. Then fix the bug. Run the test. Watch it pass. This is not optional and not TDD dogma. It's the only way to prove you actually fixed the thing and didn't just make the symptoms go away.
-
-**Run existing tests before and after your changes.** If tests passed before your change and fail after, you broke something. This is obvious. What's less obvious: if tests were already failing before your change, say so. Don't silently ignore pre-existing failures and let your changes get blamed for them.
-
-**If you can't write a test, say why.** Sometimes the architecture makes testing hard. That's useful information. "I can't easily test this because the database calls are tightly coupled to the business logic" is a signal that something might need to be restructured. Don't just skip testing and hope.
-
-## 11. Self-Review Before You Present
-
-Verification proves the code works. It doesn't prove the diff is clean. Before you show your change to the user, read it once as if a stranger wrote it and you're the one reviewing it.
-
-Ask: does every changed line trace back to something that was actually asked for? Is there a line you added "while you were in there"? Is there a comment explaining something that should already be obvious from the code? Is there a variable name that made sense mid-generation but won't make sense to anyone reading it cold in six months?
-
-This catches a different category of mistake than testing does. Tests catch logic errors. A self-review catches scope creep, style drift, and the leftover debugging line you forgot to remove. It costs you one read-through. Skipping it costs the user a slower code review.
-
-## 12. Goal-Driven Execution
-
-Every task should have a clear success criterion before you start writing code. If the criterion is vague, make it specific. If you can't make it specific, ask.
-
-Transform vague tasks into verifiable ones:
-
-- "Add validation" becomes "reject inputs where email is missing or invalid, return 400 with a message that says what's wrong, add tests for both cases"
-- "Fix the bug" becomes "write a test that reproduces the reported behavior, make the test pass, verify existing tests still pass"
-- "Improve performance" becomes "profile first, identify the bottleneck, fix that specific thing, measure again"
-
-For anything that takes more than one step, state the plan before executing:
-
-```
-Plan:
-1. Add the new database column with a migration
-2. Update the model to include the new field
-3. Modify the API endpoint to accept and return the field
-4. Add validation for the field
-5. Write tests for the new behavior
-6. Run full test suite to check for regressions
-```
-
-This does two things: it lets the user catch mistakes in your approach before you waste time implementing them, and it forces you to actually think through the steps instead of just diving in and figuring it out as you go.
-
-## 13. Silent Scope Narrowing
-
-The Kitchen Sink failure mode, described below, is doing more than was asked. This is its mirror: doing less, quietly, and presenting it as complete.
-
-Asked to "add validation and write tests," it's common to ship the validation, run out of context or hit friction on the tests, and just not mention it. The result looks like a finished task in the conversation, but it isn't one. The user has to notice the gap themselves, usually later, usually at a worse time than now.
-
-If part of what was asked didn't get done — a test wasn't written, an edge case wasn't handled, a step in the plan was skipped — say so explicitly in the same message where you present the rest. "I added the validation but didn't get to the tests yet, want me to continue?" costs nothing. A silently partial result costs trust.
-
-## 14. Debugging
-
-When something doesn't work, don't guess. Investigate.
-
-**Read the error message.** The whole thing. Including the stack trace. LLMs have a terrible habit of seeing an error and immediately generating a "fix" based on the error type without reading what it actually says. A TypeError could mean a hundred different things. The message and stack trace tell you which one.
-
-**Reproduce first.** Before you change anything, make sure you can reproduce the problem. If you can't reproduce it, you can't verify your fix. "I think this should fix it" is not debugging. It's gambling.
-
-**Change one thing at a time.** If you change three things and the bug goes away, you don't know which change fixed it. You also don't know if the other two changes introduced new bugs. Change one thing. Test. Change another. Test.
-
-**Don't add workarounds without understanding the root cause.** If a value is unexpectedly null, don't just add a null check and move on. Figure out why it's null. The null check might prevent a crash, but the underlying bug is still there and will manifest differently later.
-
-**If you're stuck, say so.** "I've tried X and Y and neither worked. Here's what I'm seeing. I think the issue might be Z but I'm not sure." This is infinitely more useful than silently trying random things for 20 iterations.
-
-**Don't confabulate explanations for runtime behavior.** When asked "why does this function return null sometimes" or "why is this slow," there's a strong pull toward generating a confident-sounding cause. Resist it. Static code reading tells you what the code is supposed to do. It does not tell you what it actually does at runtime — what values are flowing through, what branch is being taken, what the database is actually returning. The honest answer is often "here's what the code says should happen, here's where I'd instrument or add logging to find out what's actually happening." A wrong confident explanation sends the user down the wrong debugging path. An honest uncertain one sends them toward the actual answer.
-
-## 15. Concurrency and Side Effects
-
-Code that works the first time you call it can still be wrong. Ask what happens if it runs twice, runs out of order, or runs at the same time as itself — generated code almost always silently assumes none of that happens.
-
-Concrete cases worth checking:
-
-- A form submission handler that isn't idempotent will create two records if the user double-clicks or the network retries.
-- A "check then write" pattern (check if a row exists, then insert it) has a race condition if two requests run it at the same time. Use a unique constraint or an atomic operation instead of trusting the check.
-- A background job that processes a queue needs to handle being interrupted halfway through and restarted, not just the case where it runs to completion uninterrupted.
-- A function that mutates shared state (a global, a cache, a file) needs to consider what happens if it's called from two places concurrently.
-
-You don't need to solve every concurrency problem for every function — most code genuinely only runs once, in one place, sequentially. But you should be able to say which is true for the code you just wrote, rather than not having thought about it at all.
-
-## 16. Dependencies
-
-Don't add dependencies without thinking about it.
-
-Every dependency you add is code you don't control that becomes a permanent part of the project. It needs to be maintained, updated, audited for security issues, and understood by everyone on the team. The cost is almost always higher than it looks.
-
-Before adding a package:
-
-- Can you do this with what's already in the project? If the project has axios, don't add node-fetch. If the project uses date-fns, don't add moment.
-- Can you do this with the standard library? You don't need lodash for `Array.prototype.map`. You don't need uuid if `crypto.randomUUID()` exists.
-- Is this dependency actually maintained? Check the last commit date. Check the issue count. Check if the maintainer responds to issues.
-- How big is it? If you're adding a 500KB package to format a date, that's probably not worth it.
-
-When you do add a dependency, say why. "I'm adding zod because this project needs runtime schema validation and there's nothing in the existing dependencies that does this" is fine. Silently adding packages to package.json is not.
-
-## 17. Communication
-
-How you communicate about code matters as much as the code itself.
-
-**Say what you did and why.** Don't just dump a code block. "I moved the validation logic into a separate function because it was duplicated in three endpoints. This also makes it testable independently." Now the user understands the change without reading every line.
-
-**Flag concerns.** If you implemented what was asked but you think there's a problem with the approach, say so. "This works but it makes a database call for every item in the list. If the list gets large this will be slow. Want me to batch it?" is the kind of proactive communication that saves hours later.
-
-**Be precise about what you're uncertain about.** "I'm not sure if this library supports streaming responses" is useful. "I think this should work" is not. The difference is that the first one tells the user exactly what to verify.
-
-**Don't explain things the user already knows.** If they asked you to add a REST endpoint, don't explain what REST is. If they asked for a database index, don't explain what indexes do. Match your explanation level to the user's demonstrated knowledge.
-
-**Commit messages matter.** If you're writing a commit message, make it specific. "Fix bug" is useless. "Fix null pointer in user lookup when email contains uppercase chars" tells the next person exactly what happened.
-
-## 18. Common Failure Modes
-
-These are the patterns I see most often. If you catch yourself doing any of these, stop and reconsider.
-
-**The Kitchen Sink.** Asked to add one feature, you restructure half the codebase "while you're at it." Don't. Do the one thing.
-
-**The Wrong Abstraction.** You build a beautiful generic solution to a problem that only exists in one place. Duplication is far cheaper than the wrong abstraction. Copy-paste twice before you abstract.
-
-**The Invisible Decision.** You make an architectural choice (database schema, API shape, auth strategy) without flagging it as a decision. These choices are hard to reverse and the user should be aware you made them.
-
-**The Optimistic Path.** You write code that handles the happy path perfectly and ignores or crashes on everything else. Think about what happens when the API returns 500. When the file doesn't exist. When the user submits an empty form.
-
-**The Knowledge Hallucination.** You confidently use an API that doesn't exist, a parameter that was removed two versions ago, or a library feature you're imagining. If you're not 100% sure a method exists with this exact signature, say so. Check the docs. Look at the actual source code in the project.
-
-**The Style Drift.** You write code in your "preferred" style instead of matching the project. Functional patterns in an OOP codebase. Classes in a functional codebase. TypeScript patterns in a JavaScript project. Match the codebase, not your preferences.
-
-**The Runaway Refactor.** You start fixing one thing. It touches another thing. That touches another. Twenty minutes later you've changed 15 files and you're not sure what you originally set out to do. If a fix is cascading, stop. Tell the user what's happening. Get buy-in before continuing.
-
-**The Sunk Cost Completion.** You're 70% through a multi-step plan and discover something that invalidates the whole approach — a schema works differently than you assumed, a dependency doesn't support what you need, a constraint you didn't know about changes everything. The wrong move is finishing anyway because you're already deep in. A completed task built on a broken premise wastes more time than stopping mid-way. Stop, surface what you found, get new direction before writing another line.
-
----
-
-## 19. Sciuro-Specific Conventions
-
-The rules above are universal. What follows is specific to Sciuro. These are not optional. The project is a Kotlin Multiplatform Android app with strict modular boundaries, Compose UI, SQLDelight + SQLCipher persistence, and Koin DI. If you write code that ignores these conventions, you are building debt, not features.
-
-### 19.1 Module layering
-
-The project has three rigid layers defined in `settings.gradle.kts:23-41`. The dependency rule is one-way:
+Three rigid layers, one-way dependency:
 
 ```
 app → feature-* → core-*
 ```
 
-`feature-*` modules are Android-only (UI). `core-*` modules are KMP (`commonMain` + `androidMain` + `jvmMain` in some cases). `core-ui` is a `core-*` module holding shared Compose primitives and theming.
+- `core-*` = KMP (`commonMain` + `androidMain` + `jvmMain`). Domain engines, persistence, shared logic.
+- `feature-*` = Android-only (UI). Compose screens, ViewModels.
+- `app` = thin shell. Wires Koin modules, hosts `NavHost`, `Application` subclass. No business logic.
+- `core-ui` = shared Compose primitives and theming (a `core-*` module).
+- `core-*` **never** depends on `feature-*`. `feature-*` **never** imports another `feature-*`. Cross-feature communication goes through the Domain Event Bus.
 
-Rules:
+New modules: `core-<noun>` for domain/persistence, `feature-<noun>` for UI. Koin modules go in `<Name>Module.kt` inside each module's `di/` package.
 
-- A `core-*` module **never** depends on a `feature-*` module. If you find yourself adding `implementation(project(":feature-X"))` to a `core` module, stop. You are inverting the dependency graph.
-- A `feature-*` module **never** imports from another `feature-*` module. Cross-feature communication goes through the Domain Event Bus — a central event stream that decouples feature modules. Do not bypass it with direct ViewModel references.
-- `app` is the thinnest possible shell: it wires Koin modules, hosts the `NavHost`, and provides the `Application` subclass. Do not add business logic, persistence calls, or parsing code here.
-- New modules follow the same layer: `core-<noun>` for domain engines and persistence, `feature-<noun>` for UI. If you're not sure which layer a new capability belongs to, say so before creating the module.
-- Koin modules are defined in `<Name>Module.kt` inside each module's `di/` package (e.g. `core-budget/.../di/BudgetModule.kt`). Follow that exact pattern for new modules.
+## Dependencies
 
-### 19.2 Version catalog and dependencies
+All versions live in `gradle/libs.versions.toml`. **Never** hardcode a version in `build.gradle.kts` — use `libs.<name>` / `libs.plugins.<name>`.
 
-All dependency versions live in `gradle/libs.versions.toml`. This is the single source of truth for the project's dependency graph.
+Existing stack: Koin (DI), Ktor (networking), SQLDelight + SQLCipher (persistence), kotlinx.serialization (JSON). Do not introduce alternatives without approval.
 
-Rules:
+Platform-specific drivers (Android SQLDelight driver, Ktor Android engine) go in `androidMain`, not `commonMain`.
 
-- **Never** hardcode a version string in any `build.gradle.kts`. Use `libs.<name>` for libraries, `libs.plugins.<name>` for plugins.
-- Adding a dependency means: (a) an entry in `gradle/libs.versions.toml`, (b) a justification in your change description per rule 16, (c) the `implementation(libs.xxx)` line in the relevant module's `build.gradle.kts`. Do not skip step (b).
-- The project already has Koin for DI, Ktor for networking, SQLDelight for persistence, and kotlinx.serialization for JSON. Do not introduce an alternative for any of these without explicit approval.
-- Platform-specific drivers (e.g. Android SQLDelight driver, Ktor Android engine) go in the platform source set (`androidMain`), not in `commonMain`.
+## Kotlin & Compose Conventions
 
-### 19.3 Kotlin and Compose conventions
+- **ViewModel:** Exposes a single `StateFlow<UiState>` where `UiState` is a `sealed interface` (`Loading`, `Empty`, `Success(data)`, `Error(message)`). Domain-specific variants exist. Never expose `MutableStateFlow`. Pattern: `feature-wallet/.../WalletViewModel.kt`.
+- **Composables:** Stateless. State lives in ViewModel. Pass data + callbacks down. Don't call Koin from Composables outside `@Preview`. `@Preview` must be static, no DI params, wrapped in `SciuroTheme { ... }`.
+- **UI primitives:** Use `core-ui` components only — `SciuroBottomSheet`, `SciuroTextField`, `SciuroDialog`, `HeroPanel`, `SheetList`. Don't create new ones in feature modules.
+- **Full-screen swiping pattern:** `Box(fillMaxSize) { LazyColumn { item { HeroPanel(...) } ; item { SheetList(offset(-24.dp).fillParentMaxHeight()) { Column { ... } } } } ; FAB(BottomEnd) }`. Content inside `SheetList` uses `Column` + `forEach` — never nested `LazyColumn`.
+- **Colors:** Only `SCI`-prefixed tokens from `SciuroTheme` (e.g. `SignalIncome`, `SignalDanger`, `AccountColorGreen`). Never `Color(0xFF...)` inline. No hardcoded colors.
+- **Strings:** In `app/src/main/res/values/strings.xml`. Not hardcoded in Composables. Not in a Kotlin `object`.
 
-This is a Compose project. There is no XML-based UI, no Fragments, no legacy View system in feature modules.
+## Phase Workflow & Docs
 
-Rules:
+Work tracked in `development_documentation/phase-<id>-<slug>/`.
 
-- ViewModel exposes a single `StateFlow<UiState>` where `UiState` is a `sealed interface`. Variants: `Loading`, `Empty`, `Success(data)`, `Error(message)`. Domain-specific variants exist (e.g. `DebtListState`). Follow the pattern in `feature-wallet/.../WalletViewModel.kt`. Never expose `MutableStateFlow` from a ViewModel.
-- Composables are stateless. State lives in the ViewModel. Pass data and callbacks down. Do not call Koin from a Composable outside of a `@Preview` — and `@Preview` composables must not call Koin at all.
-- `@Preview` functions must be annotated, static (top-level or class member), and must not have parameters that require DI. Wrap previews in `SciuroTheme { ... }`.
-- UI primitives in `core-ui` (`SciuroBottomSheet`, `SciuroTextField`, `SciuroDialog`, `HeroPanel`, `SheetList`) are the only approved building blocks for screens. Do not create a new bottom sheet or text field in a feature module. If a primitive is missing, extend `core-ui`, not the feature.
-- Full-screen swiping screens follow the pattern documented in `README.md:60-83`: `Box(fillMaxSize) { LazyColumn { item { HeroPanel(...) } ; item { SheetList(offset(-24.dp).fillParentMaxHeight()) { Column { ... } } } } ; FAB(BottomEnd) }`. Content inside `SheetList` uses `Column` + `forEach` — never a nested `LazyColumn`.
-- Hero figure text uses `headlineLarge` typography to prevent number overflow.
-- `SCI`-prefixed color tokens from `SciuroTheme` are the only colors used in Compose. Never use `Color(0xFF...)` inline. No hardcoded colors, period.
-- Strings go in `app/src/main/res/values/strings.xml`. Not hardcoded in Composables. Not in a Kotlin `object`.
+- Every phase folder needs `TEST_NOTES.md` (what was tested, result). Add `PROBLEMS.md` for unexpected behavior. Write entries as you test.
+- ADRs use format from `supporting_skills/ADR_PROMPT.md`. Place in relevant phase folder.
+- `reference/` has planning docs — link from phase docs, don't copy content.
+- `supporting_skills/` has reusable agent prompts (e.g. `COMPOSE_SCREEN_ARCHITECTURE_PROMPT.md`). Load and follow when applicable.
 
-### 19.4 Build, test, and static analysis
+## Commits
 
-Rules:
+- One logical change per commit. Subject ≤ 72 chars, imperative mood.
+- Scope prefix when module-specific: `core-transfer: fix self-transfer false positive on partial account match`.
+- `build:` for Gradle/config, `docs:` for documentation-only.
+- Specific messages. "Fix SelfTransferDetector crash when extracted account number is empty string" — not "Fix bug".
 
-- Gradle invocations always use `--console=plain`. Add `--build-cache` and `--parallel` unless you have a specific reason not to.
-- Never pipe Gradle output through `tail`, `Select-Object`, or any buffering command. Redirect to a file first, then read the tail. `./gradlew assembleDebug > build_log.txt 2>&1` followed by `Get-Content build_log.txt -Tail 20`.
-- Module-specific test targets:
-  - Android-side unit tests: `./gradlew :<module>:testDebugUnitTest`
-  - KMP shared tests: `./gradlew :<module>:jvmTest` (e.g. `core-transfer:jvmTest`)
-  - Full suite: `./gradlew allTests`
-- Detekt is the only static analysis tool. Config: `config/detekt/detekt.yml`. Run: `./gradlew detekt`. A PR must have a clean detekt run. Do not suppress detekt warnings with `@Suppress` unless you can explain why the rule does not apply to that specific case.
-- Do not add ktlint, Spotless, or any additional formatter/linter without explicit approval. The project uses detekt as the single lint gate.
+## Pre-Merge Checklist
 
-### 19.5 Phase workflow, docs, and git
-
-The project tracks work in phases under `development_documentation/phase-<id>-<slug>/`.
-
-Rules:
-
-- Every phase folder must contain at minimum `TEST_NOTES.md`. For phases that encounter unexpected behavior, add `PROBLEMS.md`. These are the project's institutional memory — they are not optional.
-- `TEST_NOTES.md` entries document what was tested, how it was tested, and whether it passed. Write them as you test, not retrospectively. A bullet list with test name + result is sufficient: `- [PASS] TransferEngine detects self-transfer from same-account-number pair`.
-- Architectural decisions use the ADR format from `supporting_skills/ADR_PROMPT.md`. Place them in the relevant phase folder. Do not invent a new format.
-- `reference/` contains planning documents (`sciuro-implementation-plan.md`, `sciuro-uiux-implementation-plan.md`, etc.). These are reference materials — link to them from phase docs, do not copy-paste their content.
-- `supporting_skills/` contains reusable agent prompts. When a task matches a skill (e.g. `COMPOSE_SCREEN_ARCHITECTURE_PROMPT.md`, `CODE_REVIEW_REFACTOR_PROMPT.md`, `UI_DESIGN_ENHANCEMENT_PROMPT.md`), load and follow the prompt. Do not re-derive its guidance from memory.
-- Commits: one logical change per commit. Subject line ≤ 72 chars, imperative mood. Prefix with the module when the change is scoped: `core-transfer: fix self-transfer false positive on partial account match`. Use `build:` for Gradle/config changes, `docs:` for documentation-only changes.
-- Commit messages must be specific. "Fix bug" is unacceptable. "Fix SelfTransferDetector crash when extracted account number is empty string" is what you write.
-
-### 19.6 Pre-merge checklist
-
-Before declaring any change complete, verify:
-
-- `./gradlew detekt` returns zero issues.
-- `./gradlew allTests` passes (or, if only a subset was relevant, name the subset and state the results).
-- `TEST_NOTES.md` for the current phase has been updated with the change.
-- For schema changes: the migration is documented and `PROBLEMS.md` records any data migration edge cases.
-- For UI changes: a before/after description is included in the commit body or phase doc.
-- No hardcoded colors, no inline version strings, no `printStackTrace()` or raw `Log.e` calls in production code paths. Use the audit log or structured logging channels the project already has.
+- `./gradlew allTests` passes (or name the relevant subset).
+- `TEST_NOTES.md` updated for current phase.
+- Schema changes documented, `PROBLEMS.md` records migration edge cases.
+- UI changes: before/after in commit body or phase doc.
+- No hardcoded colors, no inline version strings, no `printStackTrace()` / raw `Log.e` in production code.
+- Detekt clean (run when ready to merge, not required for every iteration).
