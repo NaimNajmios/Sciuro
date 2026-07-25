@@ -148,10 +148,10 @@ fun SciuroMainScreen() {
         return
     }
 
-    // Battery optimization step: shown after notification permission, before wallet setup
+    val settingsProvider: com.sciuro.core.ledger.config.SettingsProvider = org.koin.compose.koinInject()
     var isBatteryStepComplete by remember {
         mutableStateOf(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            settingsProvider.hasSeenBatteryPrompt() || if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
                 pm.isIgnoringBatteryOptimizations(context.packageName)
             } else {
@@ -168,8 +168,14 @@ fun SciuroMainScreen() {
             guideSteps = guideSteps,
             isAggressiveOem = isAggressiveOem,
             autostartIntent = autostartIntent,
-            onComplete = { isBatteryStepComplete = true },
-            onSkip = { isBatteryStepComplete = true }
+            onComplete = { 
+                settingsProvider.setHasSeenBatteryPrompt(true)
+                isBatteryStepComplete = true 
+            },
+            onSkip = { 
+                settingsProvider.setHasSeenBatteryPrompt(true)
+                isBatteryStepComplete = true 
+            }
         )
         return
     }

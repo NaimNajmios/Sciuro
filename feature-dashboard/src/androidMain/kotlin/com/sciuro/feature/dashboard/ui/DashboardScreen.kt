@@ -64,6 +64,11 @@ import com.najmi.sciuro.core.ui.components.AuditEventDisplay
 import com.najmi.sciuro.core.ui.components.TransactionCard
 import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
 import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
+import com.najmi.sciuro.core.ui.components.AdjustmentCard
+import com.najmi.sciuro.core.ui.components.AuditEventDisplay
+import com.najmi.sciuro.core.ui.components.TransactionCard
+import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
+import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,12 +81,15 @@ fun DashboardScreen(
     var selectedRange by remember { mutableStateOf("All Time") }
     var selectedTypeFilter by remember { mutableStateOf("All") }
     val filterOptions = listOf("All", "Income", "Expense")
+    val startDate by viewModel.startDate.collectAsState()
+    val endDate by viewModel.endDate.collectAsState()
+    var showDatePickerDialog by remember { mutableStateOf(false) }
 
     val categoryMap = remember(state.expenseCategories, state.incomeCategories) {
         (state.expenseCategories + state.incomeCategories).associateBy { it.id }
     }
 
-    val filteredTransactions = remember(state.allTransactions, selectedRange, selectedTypeFilter) {
+    val filteredTransactions = remember(state.allTransactions, selectedRange, selectedTypeFilter, startDate, endDate) {
         state.allTransactions.filter { tx ->
             val matchesTime = when (selectedRange) {
                 "This Month" -> {
@@ -92,6 +100,11 @@ fun DashboardScreen(
                     cal.set(java.util.Calendar.SECOND, 0)
                     cal.set(java.util.Calendar.MILLISECOND, 0)
                     tx.timestamp >= cal.timeInMillis
+                }
+                "Custom" -> {
+                    val afterStart = startDate?.let { tx.timestamp >= it } ?: true
+                    val beforeEnd = endDate?.let { tx.timestamp <= it } ?: true
+                    afterStart && beforeEnd
                 }
                 else -> true
             }
@@ -170,9 +183,14 @@ fun DashboardScreen(
                 HeroPanel(
                     title = "Total Net Position",
                     heroFigure = { HeroFigure(state.netPosition) },
-                    toggleOptions = listOf("This Month", "All Time"),
+                    toggleOptions = listOf("This Month", "All Time", "Custom"),
                     selectedToggle = selectedRange,
-                    onToggleSelected = { selectedRange = it },
+                    onToggleSelected = { 
+                        selectedRange = it 
+                        if (it == "Custom") {
+                            showDatePickerDialog = true
+                        }
+                    },
                     chartData = displayChartData,
                     content = {
                         Row(
@@ -507,6 +525,44 @@ fun DashboardScreen(
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add Transaction")
+        }
+    }
+    
+    if (showDatePickerDialog) {
+        val dateRangePickerState = rememberDateRangePickerState()
+        DatePickerDialog(
+            onDismissRequest = { 
+                showDatePickerDialog = false
+                if (startDate == null && endDate == null) {
+                    selectedRange = "All Time"
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setDateRange(
+                        dateRangePickerState.selectedStartDateMillis,
+                        dateRangePickerState.selectedEndDateMillis
+                    )
+                    showDatePickerDialog = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showDatePickerDialog = false
+                    if (startDate == null && endDate == null) {
+                        selectedRange = "All Time"
+                    }
+                }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DateRangePicker(
+                state = dateRangePickerState,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
     

@@ -215,4 +215,10 @@ class AccountDetailViewModel(
             rawEvent = rawEvent
         )
     }
+
+    fun deleteTransaction(transactionId: String) {
+        viewModelScope.launch {
+            transactionRepository.deleteTransaction(transactionId)
+        }
+    }
 }

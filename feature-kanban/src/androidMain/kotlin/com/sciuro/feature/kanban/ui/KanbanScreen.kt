@@ -81,7 +81,16 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     var paymentDebt by remember { mutableStateOf<DebtTask?>(null) }
     var paymentAmountText by remember { mutableStateOf("") }
 
+    var paymentAmountText by remember { mutableStateOf("") }
+
     var showAddSheet by remember { mutableStateOf(false) }
+
+    // Confirmation dialog states
+    var taskToApprove by remember { mutableStateOf<Triple<KanbanTask, String?, String>?>(null) }
+    var billToConfirmPayment by remember { mutableStateOf<BillTask?>(null) }
+    var debtToApplyPayment by remember { mutableStateOf<Triple<DebtTask, Double, () -> Unit>?>(null) }
+    var createBillAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var createDebtAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
@@ -200,8 +209,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             onStatusChange = { selectedStatus = it },
                             onReject = { taskToReject = it },
                             onApprove = { task, accountId, direction ->
-                                viewModel.updateTaskStatus(task.id, TaskStatus.DONE, accountId, direction)
-                                coroutineScope.launch { snackbarHostState.showSnackbar("Task Approved") }
+                                taskToApprove = Triple(task, accountId, direction)
                             }
                         )
                     }
@@ -243,6 +251,20 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         )
     }
 
+    taskToApprove?.let { (task, accountId, direction) ->
+        SciuroConfirmationDialog(
+            title = "Approve Task",
+            message = "Are you sure you want to approve '${task.title}'?",
+            confirmText = "Approve",
+            onConfirm = {
+                viewModel.updateTaskStatus(task.id, TaskStatus.DONE, accountId, direction)
+                taskToApprove = null
+                coroutineScope.launch { snackbarHostState.showSnackbar("Task Approved") }
+            },
+            onDismiss = { taskToApprove = null }
+        )
+    }
+
     paymentBill?.let { bill ->
         SciuroBottomSheet(onDismissRequest = { paymentBill = null }) {
             Text("Mark Bill as Paid", style = MaterialTheme.typography.headlineSmall)
@@ -251,13 +273,26 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
             SciuroPrimaryButton(
                 text = "Confirm Payment",
                 onClick = {
-                    viewModel.markBillAsPaid(bill.obligation)
-                    paymentBill = null
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Bill marked as paid") }
+                    billToConfirmPayment = bill
                 },
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+
+    billToConfirmPayment?.let { bill ->
+        SciuroConfirmationDialog(
+            title = "Confirm Payment",
+            message = "Are you sure you want to confirm payment for ${bill.name}?",
+            confirmText = "Confirm",
+            onConfirm = {
+                viewModel.markBillAsPaid(bill.obligation)
+                billToConfirmPayment = null
+                paymentBill = null
+                coroutineScope.launch { snackbarHostState.showSnackbar("Bill marked as paid") }
+            },
+            onDismiss = { billToConfirmPayment = null }
+        )
     }
 
     paymentDebt?.let { debt ->
@@ -277,16 +312,31 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 onClick = {
                     val amt = paymentAmountText.toDoubleOrNull() ?: 0.0
                     if (amt > 0) {
-                        viewModel.recordDebtPayment(debt.id, amt)
-                        paymentDebt = null
-                        paymentAmountText = ""
-                        coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
+                        debtToApplyPayment = Triple(debt, amt) {
+                            viewModel.recordDebtPayment(debt.id, amt)
+                            paymentDebt = null
+                            paymentAmountText = ""
+                            coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
+                        }
                     }
                 },
                 enabled = (paymentAmountText.toDoubleOrNull() ?: 0.0) > 0,
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+
+    debtToApplyPayment?.let { (debt, amount, onApply) ->
+        SciuroConfirmationDialog(
+            title = "Apply Payment",
+            message = "Are you sure you want to apply a payment of RM ${"%.2f".format(amount)} to ${debt.name}?",
+            confirmText = "Apply",
+            onConfirm = {
+                onApply()
+                debtToApplyPayment = null
+            },
+            onDismiss = { debtToApplyPayment = null }
+        )
     }
 
     if (showAddSheet) {
@@ -296,20 +346,50 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 expenseCategories = expenseCategories,
                 onDismiss = { showAddSheet = false },
                 onCreate = { name, amount, frequency, nextDueDate, categoryId, accountId ->
-                    viewModel.createObligation(name, amount, frequency, nextDueDate, categoryId, accountId)
-                    showAddSheet = false
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Bill created") }
+                    createBillAction = {
+                        viewModel.createObligation(name, amount, frequency, nextDueDate, categoryId, accountId)
+                        showAddSheet = false
+                        coroutineScope.launch { snackbarHostState.showSnackbar("Bill created") }
+                    }
                 }
             )
             "Debts" -> AddDebtSheet(
                 onDismiss = { showAddSheet = false },
                 onCreate = { name, type, direction, principalAmount, counterpartyName, notes ->
-                    viewModel.createDebt(name, type, direction, principalAmount, counterpartyName, notes)
-                    showAddSheet = false
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Debt created") }
+                    createDebtAction = {
+                        viewModel.createDebt(name, type, direction, principalAmount, counterpartyName, notes)
+                        showAddSheet = false
+                        coroutineScope.launch { snackbarHostState.showSnackbar("Debt created") }
+                    }
                 }
             )
         }
+    }
+
+    createBillAction?.let { action ->
+        SciuroConfirmationDialog(
+            title = "Create Bill",
+            message = "Are you sure you want to create this bill?",
+            confirmText = "Create",
+            onConfirm = {
+                action()
+                createBillAction = null
+            },
+            onDismiss = { createBillAction = null }
+        )
+    }
+
+    createDebtAction?.let { action ->
+        SciuroConfirmationDialog(
+            title = "Create Debt",
+            message = "Are you sure you want to create this debt?",
+            confirmText = "Create",
+            onConfirm = {
+                action()
+                createDebtAction = null
+            },
+            onDismiss = { createDebtAction = null }
+        )
     }
 }
 

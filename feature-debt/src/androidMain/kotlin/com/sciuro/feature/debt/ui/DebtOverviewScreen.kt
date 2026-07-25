@@ -45,6 +45,13 @@ fun DebtOverviewScreen(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showRecordPayment by remember { mutableStateOf<String?>(null) }
     var paymentAmountText by remember { mutableStateOf("") }
+    
+    // Confirmation dialog states
+    var showSaveConfirmation by remember { mutableStateOf(false) }
+    var showCreateConfirmation by remember { mutableStateOf(false) }
+    var showApplyPaymentConfirmation by remember { mutableStateOf(false) }
+    var showMarkFinishedConfirmation by remember { mutableStateOf(false) }
+    var autoMarkFinishedDebtId by remember { mutableStateOf<String?>(null) }
 
     // Form state
     var formName by remember { mutableStateOf("") }
@@ -325,10 +332,9 @@ fun DebtOverviewScreen(
                         }
 
                         SciuroPrimaryButton(
-                            text = "Mark Paid Off",
+                            text = "Mark as Finished",
                             onClick = {
-                                editingDebt?.let { viewModel.markAsPaidOff(it.id) }
-                                showFormSheet = false
+                                showMarkFinishedConfirmation = true
                             },
                             modifier = Modifier.weight(1f)
                         )
@@ -343,27 +349,10 @@ fun DebtOverviewScreen(
                         val amt = formAmountText.toDoubleOrNull() ?: 0.0
                         if (amt > 0 && formName.isNotBlank()) {
                             if (isEditing) {
-                                editingDebt?.let {
-                                    viewModel.updateDebt(
-                                        debt = it,
-                                        name = formName,
-                                        principalAmount = amt,
-                                        remainingBalance = amt,
-                                        counterpartyName = formCounterparty.ifBlank { null },
-                                        notes = formNotes.ifBlank { null }
-                                    )
-                                }
+                                showSaveConfirmation = true
                             } else {
-                                viewModel.createDebt(
-                                    name = formName,
-                                    type = formType,
-                                    direction = formDirection,
-                                    principalAmount = amt,
-                                    counterpartyName = formCounterparty.ifBlank { null },
-                                    notes = null
-                                )
+                                showCreateConfirmation = true
                             }
-                            showFormSheet = false
                         }
                     },
                     enabled = formName.isNotBlank() && (formAmountText.toDoubleOrNull() ?: 0.0) > 0,
@@ -371,6 +360,66 @@ fun DebtOverviewScreen(
                 )
             }
         }
+    }
+    
+    if (showMarkFinishedConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Mark as Finished",
+            message = "Are you sure you want to mark this debt as finished?",
+            confirmText = "Mark as Finished",
+            onConfirm = {
+                editingDebt?.let { viewModel.markAsPaidOff(it.id) }
+                showMarkFinishedConfirmation = false
+                showFormSheet = false
+            },
+            onDismiss = { showMarkFinishedConfirmation = false }
+        )
+    }
+
+    if (showSaveConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Save Changes",
+            message = "Are you sure you want to save these changes?",
+            confirmText = "Save",
+            onConfirm = {
+                val amt = formAmountText.toDoubleOrNull() ?: 0.0
+                editingDebt?.let {
+                    viewModel.updateDebt(
+                        debt = it,
+                        name = formName,
+                        principalAmount = amt,
+                        remainingBalance = amt, // Note: This might overwrite balance incorrectly if payment was made, but keeping original logic
+                        counterpartyName = formCounterparty.ifBlank { null },
+                        notes = formNotes.ifBlank { null }
+                    )
+                }
+                showSaveConfirmation = false
+                showFormSheet = false
+            },
+            onDismiss = { showSaveConfirmation = false }
+        )
+    }
+
+    if (showCreateConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Create Debt",
+            message = "Are you sure you want to create this debt?",
+            confirmText = "Create",
+            onConfirm = {
+                val amt = formAmountText.toDoubleOrNull() ?: 0.0
+                viewModel.createDebt(
+                    name = formName,
+                    type = formType,
+                    direction = formDirection,
+                    principalAmount = amt,
+                    counterpartyName = formCounterparty.ifBlank { null },
+                    notes = null
+                )
+                showCreateConfirmation = false
+                showFormSheet = false
+            },
+            onDismiss = { showCreateConfirmation = false }
+        )
     }
 
     if (showDeleteConfirmation) {
@@ -406,13 +455,47 @@ fun DebtOverviewScreen(
                 onClick = {
                     val amt = paymentAmountText.toDoubleOrNull() ?: 0.0
                     if (amt > 0) {
-                        viewModel.recordPayment(debtId, amt)
-                        showRecordPayment = null
+                        showApplyPaymentConfirmation = true
                     }
                 },
                 enabled = (paymentAmountText.toDoubleOrNull() ?: 0.0) > 0,
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+
+    if (showApplyPaymentConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Apply Payment",
+            message = "Are you sure you want to apply this payment?",
+            confirmText = "Apply",
+            onConfirm = {
+                val amt = paymentAmountText.toDoubleOrNull() ?: 0.0
+                showRecordPayment?.let { debtId ->
+                    viewModel.recordPayment(debtId, amt)
+                    
+                    val debt = allDebts.find { it.id == debtId }
+                    if (debt != null && (debt.remainingBalance - amt) <= 0) {
+                        autoMarkFinishedDebtId = debtId
+                    }
+                }
+                showApplyPaymentConfirmation = false
+                showRecordPayment = null
+            },
+            onDismiss = { showApplyPaymentConfirmation = false }
+        )
+    }
+
+    if (autoMarkFinishedDebtId != null) {
+        SciuroConfirmationDialog(
+            title = "Debt Fully Paid",
+            message = "This debt's balance has reached zero. Would you like to mark it as finished?",
+            confirmText = "Mark as Finished",
+            onConfirm = {
+                viewModel.markAsPaidOff(autoMarkFinishedDebtId!!)
+                autoMarkFinishedDebtId = null
+            },
+            onDismiss = { autoMarkFinishedDebtId = null }
+        )
     }
 }

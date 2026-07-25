@@ -71,6 +71,21 @@ fun AccountDetailScreen(
     var detailData by remember { mutableStateOf<com.sciuro.feature.wallet.viewmodel.TransactionDetailData?>(null) }
     var showQrFullScreen by remember { mutableStateOf(false) }
 
+    // Confirmation Dialogs
+    var showDeleteTxConfirmation by remember { mutableStateOf(false) }
+    var txToDelete by remember { mutableStateOf<com.sciuro.core.ledger.db.Transaction_record?>(null) }
+
+    var showAdjustConfirmation by remember { mutableStateOf(false) }
+    var adjustAmountTemp by remember { mutableStateOf(0.0) }
+    var adjustReasonTemp by remember { mutableStateOf("") }
+    var adjustRemarkTemp by remember { mutableStateOf<String?>(null) }
+    
+    var showColorConfirmation by remember { mutableStateOf(false) }
+
+    var showEditAccountConfirmation by remember { mutableStateOf(false) }
+    var editAccountNumberTemp by remember { mutableStateOf<String?>(null) }
+    var editAccountHolderNameTemp by remember { mutableStateOf<String?>(null) }
+    var editBankCodeTemp by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val qrImagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -351,9 +366,14 @@ fun AccountDetailScreen(
             auditEvents = auditEvents,
             onEditClick = {
                 showDetailSheet = false
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Edit transaction not yet implemented")
+                }
             },
             onDeleteClick = {
                 showDetailSheet = false
+                txToDelete = tx
+                showDeleteTxConfirmation = true
             }
         )
     }
@@ -363,11 +383,11 @@ fun AccountDetailScreen(
             currentBalance = state.account!!.balance,
             onDismiss = { showAdjustmentDialog = false },
             onConfirm = { amount, reason, remark ->
-                viewModel.recordCorrection(amount, reason, remark)
+                adjustAmountTemp = amount
+                adjustReasonTemp = reason
+                adjustRemarkTemp = remark
                 showAdjustmentDialog = false
-                coroutineScope.launch {
-                    snackbarHostState.showSnackbar("Balance adjustment recorded")
-                }
+                showAdjustConfirmation = true
             }
         )
     }
@@ -440,9 +460,8 @@ fun AccountDetailScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.updateAccountColor(selectedColor)
                     showColorDialog = false
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Account color updated") }
+                    showColorConfirmation = true
                 }) {
                     Text("Save")
                 }
@@ -496,17 +515,81 @@ fun AccountDetailScreen(
             isCashWallet = isCashWallet,
             onDismiss = { showEditDetailsDialog = false },
             onConfirm = { accountNumber, accountHolderName, bankInstitutionCode ->
-                viewModel.updateAccountDetails(accountNumber, accountHolderName, bankInstitutionCode)
+                editAccountNumberTemp = accountNumber
+                editAccountHolderNameTemp = accountHolderName
+                editBankCodeTemp = bankInstitutionCode
                 showEditDetailsDialog = false
-                coroutineScope.launch {
-                    snackbarHostState.showSnackbar("Account details updated")
-                }
+                showEditAccountConfirmation = true
             },
             onPickQr = { qrImagePicker.launch("image/*") },
             onRemoveQr = {
                 viewModel.updateQrImagePath(null)
                 coroutineScope.launch { snackbarHostState.showSnackbar("QR code removed") }
             }
+        )
+    }
+
+    if (showDeleteTxConfirmation && txToDelete != null) {
+        SciuroConfirmationDialog(
+            title = "Delete Transaction",
+            message = "Are you sure you want to delete this transaction?",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = {
+                txToDelete?.let { viewModel.deleteTransaction(it.id) }
+                showDeleteTxConfirmation = false
+                txToDelete = null
+                coroutineScope.launch { snackbarHostState.showSnackbar("Transaction deleted") }
+            },
+            onDismiss = {
+                showDeleteTxConfirmation = false
+                txToDelete = null
+            }
+        )
+    }
+
+    if (showAdjustConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Confirm Adjustment",
+            message = "Are you sure you want to record this balance adjustment of RM ${"%.2f".format(adjustAmountTemp)}?",
+            confirmText = "Confirm",
+            isDestructive = false,
+            onConfirm = {
+                viewModel.recordCorrection(adjustAmountTemp, adjustReasonTemp, adjustRemarkTemp)
+                showAdjustConfirmation = false
+                coroutineScope.launch { snackbarHostState.showSnackbar("Balance adjustment recorded") }
+            },
+            onDismiss = { showAdjustConfirmation = false }
+        )
+    }
+
+    if (showColorConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Save Color",
+            message = "Apply this new color to the account?",
+            confirmText = "Save",
+            isDestructive = false,
+            onConfirm = {
+                viewModel.updateAccountColor(selectedColor)
+                showColorConfirmation = false
+                coroutineScope.launch { snackbarHostState.showSnackbar("Account color updated") }
+            },
+            onDismiss = { showColorConfirmation = false }
+        )
+    }
+
+    if (showEditAccountConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Save Account Details",
+            message = "Are you sure you want to save these changes to the account details?",
+            confirmText = "Save",
+            isDestructive = false,
+            onConfirm = {
+                viewModel.updateAccountDetails(editAccountNumberTemp, editAccountHolderNameTemp, editBankCodeTemp)
+                showEditAccountConfirmation = false
+                coroutineScope.launch { snackbarHostState.showSnackbar("Account details updated") }
+            },
+            onDismiss = { showEditAccountConfirmation = false }
         )
     }
 }

@@ -36,4 +36,6 @@ interface SettingsProvider {
     fun setTransactionAutoConfirmEnabled(enabled: Boolean)
     fun getSilentAutoConfirmThreshold(): Float
     fun setSilentAutoConfirmThreshold(threshold: Float)
+    fun hasSeenBatteryPrompt(): Boolean
+    fun setHasSeenBatteryPrompt(hasSeen: Boolean)
 }

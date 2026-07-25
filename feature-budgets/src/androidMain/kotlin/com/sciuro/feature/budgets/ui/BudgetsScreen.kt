@@ -50,7 +50,12 @@ fun BudgetsScreen(
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
     var amountText by remember { mutableStateOf("") }
     var selectedPeriod by remember { mutableStateOf(BudgetPeriod.MONTHLY) }
+    
+    // Confirmation Dialogs
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showCreateConfirmation by remember { mutableStateOf(false) }
+    var showSaveConfirmation by remember { mutableStateOf(false) }
+    
     var suggestedAmount by remember { mutableStateOf<Double?>(null) }
     val suggester: BudgetLimitSuggester = getKoin().get()
 
@@ -297,12 +302,7 @@ fun BudgetsScreen(
                         onClick = {
                             val amt = amountText.toDoubleOrNull() ?: 0.0
                             if (amt > 0) {
-                                viewModel.updateBudget(
-                                    id = editingBudgetId!!,
-                                    allocatedAmount = amt,
-                                    period = selectedPeriod
-                                )
-                                showSheet = false
+                                showSaveConfirmation = true
                             }
                         },
                         modifier = Modifier.weight(1f),
@@ -315,12 +315,7 @@ fun BudgetsScreen(
                     onClick = {
                         val amt = amountText.toDoubleOrNull() ?: 0.0
                         if (amt > 0 && selectedCategoryId != null) {
-                            viewModel.createBudget(
-                                categoryId = selectedCategoryId!!,
-                                allocatedAmount = amt,
-                                period = selectedPeriod
-                            )
-                            showSheet = false
+                            showCreateConfirmation = true
                         }
                     },
                     enabled = amountText.toDoubleOrNull()?.let { it > 0 } == true
@@ -344,6 +339,44 @@ fun BudgetsScreen(
                 showSheet = false
             },
             onDismiss = { showDeleteConfirmation = false }
+        )
+    }
+
+    if (showSaveConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Save Changes",
+            message = "Are you sure you want to save these changes?",
+            confirmText = "Save",
+            onConfirm = {
+                val amt = amountText.toDoubleOrNull() ?: 0.0
+                viewModel.updateBudget(
+                    id = editingBudgetId!!,
+                    allocatedAmount = amt,
+                    period = selectedPeriod
+                )
+                showSaveConfirmation = false
+                showSheet = false
+            },
+            onDismiss = { showSaveConfirmation = false }
+        )
+    }
+
+    if (showCreateConfirmation) {
+        SciuroConfirmationDialog(
+            title = "Create Budget",
+            message = "Are you sure you want to create this budget?",
+            confirmText = "Create",
+            onConfirm = {
+                val amt = amountText.toDoubleOrNull() ?: 0.0
+                viewModel.createBudget(
+                    categoryId = selectedCategoryId!!,
+                    allocatedAmount = amt,
+                    period = selectedPeriod
+                )
+                showCreateConfirmation = false
+                showSheet = false
+            },
+            onDismiss = { showCreateConfirmation = false }
         )
     }
 }

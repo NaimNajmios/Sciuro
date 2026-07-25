@@ -79,6 +79,17 @@ class DashboardViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _startDate = MutableStateFlow<Long?>(null)
+    val startDate: StateFlow<Long?> = _startDate.asStateFlow()
+
+    private val _endDate = MutableStateFlow<Long?>(null)
+    val endDate: StateFlow<Long?> = _endDate.asStateFlow()
+
+    fun setDateRange(start: Long?, end: Long?) {
+        _startDate.value = start
+        _endDate.value = end
+    }
+
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true

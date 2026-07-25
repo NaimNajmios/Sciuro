@@ -171,4 +171,12 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setSilentAutoConfirmThreshold(threshold: Float) {
         sharedPreferences.edit().putFloat("silent_auto_confirm_threshold", threshold).apply()
     }
+
+    override fun hasSeenBatteryPrompt(): Boolean {
+        return sharedPreferences.getBoolean("has_seen_battery_prompt", false)
+    }
+
+    override fun setHasSeenBatteryPrompt(hasSeen: Boolean) {
+        sharedPreferences.edit().putBoolean("has_seen_battery_prompt", hasSeen).apply()
+    }
 }
