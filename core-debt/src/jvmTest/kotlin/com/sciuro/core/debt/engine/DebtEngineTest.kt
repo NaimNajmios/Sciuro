@@ -1,7 +1,8 @@
 package com.sciuro.core.debt.engine
 
 import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.jdbc.JdbcDriver
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.sciuro.core.ledger.engine.TransactionMatchingEngine
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.debt.repository.DebtPaymentLinkRepository
@@ -25,12 +26,12 @@ class DebtEngineTest {
 
     @BeforeTest
     fun setUp() {
-        driver = JdbcDriver("jdbc:sqlite::memory:")
+        driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         SciuroDatabase.Schema.create(driver)
         database = SciuroDatabase(driver)
         eventBus = DomainEventBus()
         linkRepository = DebtPaymentLinkRepository(database)
-        engine = DebtEngine(database, linkRepository, eventBus)
+        engine = DebtEngine(database, linkRepository, TransactionMatchingEngine(database, eventBus), eventBus)
     }
 
     @AfterTest
