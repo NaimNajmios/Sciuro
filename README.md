@@ -31,7 +31,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase I1 (Budget UX/UI Enhancement)**. Core domain modules are wired into the ingestion orchestrator and reactive UI. A Domain Event Bus with 23 event types provides cross-module event-driven communication — all published events now have notification subscribers. The Kanban screen unifies transaction review, bill tracking, and debt overview. Live investment pricing (gold spot, Malaysian stocks) is available via `YahooFinancePriceProvider`. Encrypted export/import is accessible from Settings > Data Backup. BNPL/pay-later risk detection, obligation amount drift tracking, cash recount domain events, and credit card statement tracking are all active. A category spending drilldown screen provides per-category budget analysis with unified threshold from Settings and back navigation. Budget cards display category icons, period badges, daily allowance, and days remaining. The budget module has been polished with snackbar feedback, inline validation, direct-action create/save flows, and consistent theme token usage. The design system is fully standardized — `SciuroTextField` is the single text-input surface across all 8 modules (35 call sites migrated), with built-in inline validation, placeholder, and error state support. Accessibility is hardened: reduced-motion gates on all infinite animations, 44dp min touch targets, and semantic labels on hero panels, confidence indicators, and swipe actions. `BudgetLimitSuggester` has 8 JVM unit tests covering trimmed mean, outlier trimming, lookback filtering, and event publication. All core modules — including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules — are fully integrated and tested.
+The project is fully functional and has completed **Phase J1 (Developer Options Enhancement)**. Core domain modules are wired into the ingestion orchestrator and reactive UI. A Domain Event Bus with 23 event types provides cross-module event-driven communication — all published events now have notification subscribers. The Kanban screen unifies transaction review, bill tracking, and debt overview. Live investment pricing (gold spot, Malaysian stocks) is available via `YahooFinancePriceProvider`. Encrypted export/import is accessible from Settings > Data Backup. BNPL/pay-later risk detection, obligation amount drift tracking, cash recount domain events, and credit card statement tracking are all active. A category spending drilldown screen provides per-category budget analysis with unified threshold from Settings and back navigation. Budget cards display category icons, period badges, daily allowance, and days remaining. The budget module has been polished with snackbar feedback, inline validation, direct-action create/save flows, and consistent theme token usage. The design system is fully standardized — `SciuroTextField` is the single text-input surface across all 8 modules (35 call sites migrated), with built-in inline validation, placeholder, and error state support. Accessibility is hardened: reduced-motion gates on all infinite animations, 44dp min touch targets, and semantic labels on hero panels, confidence indicators, and swipe actions. `BudgetLimitSuggester` has 8 JVM unit tests covering trimmed mean, outlier trimming, lookback filtering, and event publication. The Developer Options harness now features 7 tabs with full error handling, two-step delete confirmation, determinate batch progress, Koin dependency cleanup, and a gated activation pattern. All core modules — including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules — are fully integrated and tested.
 
 ## Architecture
 
@@ -62,7 +62,7 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 | Account Detail | Account balance | — | — | Adjust Balance + QR icon |
 | Debt Overview | I Owe / Owed to Me totals | — | — | Direction breakdown row |
 | Kanban | Active tasks / Bills due / Active debts (tab-aware) | — | — | Tab-aware: status breakdown / bill urgency / debt totals |
-| Developer Settings | Time since last capture | — | — | Pipeline pending/dead counts |
+| Developer Settings | Time since last capture | — | — | Pipeline pending/dead counts (7 tabs: Simulator, Sources, Ingestion Log, Diagnostics, Data Tools, Health, Pipeline Trace) |
 | Settings (×2) | "Config" / "More" | — | — | — |
 
 ### Full-Screen Swiping Architecture
@@ -91,16 +91,37 @@ Box(fillMaxSize) {
 
 ## Developer Tools
 
-Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with six tabs:
+Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with seven tabs. Developer Options are hidden by default in the Settings screen and revealed via a hidden activation (tap the "Developer Options" section header 7 times).
 
 | Tab | Description |
 |---|---|
-| **Simulator** | Manual pipeline: enter package/title/text and run through all parser rules. Includes a dynamic package+template picker sourced from `FixtureLibrary` (34 fixtures across 7 rules). |
+| **Simulator** | Manual pipeline: enter package/title/text and run through all parser rules. Includes a dynamic package+template picker sourced from `FixtureLibrary` (34 fixtures across 7 rules). Determinate batch progress bar shows `"12/47: com.dbs.card"` with fractional progress indicator. |
 | **Sources** | Editable allowlist view of notification packages grouped by Bank / E-Wallet / Aggregator / Custom. Add/remove packages dynamically — changes take effect immediately for the notification listener. |
 | **Ingestion Log** | Dead-letter event viewer with pending/dead-letter counts, per-event error display, and resend capability. |
 | **Diagnostics** | Per-rule match/no-match analysis with extracted fields. Shows LLM debug info (prompt, response, latency) when LLM fallback is triggered. |
-| **Data Tools** | Clear Inbox (unreviewed transactions) with confirmation dialog. |
-| **Health** | Per-package parser match-rate monitoring. Track which financial apps provide reliable extraction. |
+| **Data Tools** | Clear Inbox (unreviewed transactions) with two-step confirmation dialog requiring "DELETE" text input. |
+| **Health** | Per-package parser match-rate monitoring. Track which financial apps provide reliable extraction. Pipeline metrics with LLM fallback counts and dead-letter counts. |
+| **Pipeline Trace** | Trace event viewer showing the 100 most recent pipeline events with stage-by-stage breakdown (SUCCESS/FAILURE/DROP), duration, confidence, and detail JSON. |
+
+### Developer Options Access
+
+Developer Options are gated behind a hidden activation to prevent non-technical users from accidentally modifying pipeline settings:
+
+1. Navigate to **Settings** screen
+2. Scroll to the bottom section labeled "Developer Options"
+3. Tap the "Developer Options" section header **7 times** in quick succession
+4. A snackbar confirms "Developer Options enabled"
+5. The Developer Options card becomes visible and navigable
+
+Once revealed, Developer Options remain visible across app restarts (persisted via `EncryptedSharedPreferences`).
+
+### Error Handling
+
+All Developer Options operations (simulation, batch runs, inbox clearing, dead-letter resends) are wrapped in error handling with Snackbar feedback. Errors are displayed automatically and cleared after acknowledgment.
+
+### Deep Link Support
+
+The `FinanceAppSuggestionSubscriber` notification deep-links directly to the Sources tab of Developer Options when a new finance app is detected, allowing quick add-to-allowlist workflow.
 
 ### SMS Ingestion
 
