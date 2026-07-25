@@ -3,7 +3,6 @@ package com.sciuro.core.investment.engine
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
-
 import com.sciuro.core.ledger.engine.TransactionMatchingEngine
 
 class InvestmentEngine(
@@ -23,17 +22,24 @@ class InvestmentEngine(
                 it.id !in transferTxIds
             }
 
-            val totalInvested = purchases.sumOf { it.amount }
+            val sales = allTransactions.filter {
+                it.direction == "INFLOW" &&
+                (it.category_id == "cat_investment" || it.merchant?.contains(investment.asset_name, ignoreCase = true) == true) &&
+                it.id !in transferTxIds
+            }
 
-            if (kotlin.math.abs(totalInvested - investment.units_held) > 0.01) {
+            val totalInvested = purchases.sumOf { it.amount }
+            val totalSold = sales.sumOf { it.amount }
+            val netUnits = totalInvested - totalSold
+
+            if (kotlin.math.abs(netUnits - investment.units_held) > 0.01) {
                 val unitType = investment.unit_type.ifBlank { "UNITS" }
-                val newUnits = totalInvested
 
                 database.investmentQueries.updateInvestment(
                     asset_symbol = investment.asset_symbol,
                     asset_name = investment.asset_name,
                     asset_type = investment.asset_type,
-                    units_held = newUnits,
+                    units_held = netUnits,
                     unit_type = unitType,
                     average_buy_price = investment.average_buy_price,
                     associated_account_id = investment.associated_account_id,
@@ -41,13 +47,25 @@ class InvestmentEngine(
                     id = investment.id
                 )
 
-                eventBus.publish(
-                    DomainEvent.InvestmentTransactionRecorded(
-                        accountId = investment.associated_account_id.orEmpty(),
-                        action = "BUY",
-                        unitAmount = newUnits
+                if (purchases.isNotEmpty()) {
+                    eventBus.publish(
+                        DomainEvent.InvestmentTransactionRecorded(
+                            accountId = investment.associated_account_id.orEmpty(),
+                            action = "BUY",
+                            unitAmount = totalInvested
+                        )
                     )
-                )
+                }
+
+                if (sales.isNotEmpty()) {
+                    eventBus.publish(
+                        DomainEvent.InvestmentTransactionRecorded(
+                            accountId = investment.associated_account_id.orEmpty(),
+                            action = "SELL",
+                            unitAmount = totalSold
+                        )
+                    )
+                }
             }
         }
     }

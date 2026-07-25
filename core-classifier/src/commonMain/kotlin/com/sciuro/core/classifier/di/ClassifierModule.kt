@@ -1,6 +1,8 @@
 package com.sciuro.core.classifier.di
 
+import com.sciuro.core.classifier.orchestrator.EngineTriggerUseCase
 import com.sciuro.core.classifier.orchestrator.SciuroIngestionOrchestrator
+import com.sciuro.core.classifier.orchestrator.TransactionBookingUseCase
 import com.sciuro.core.classifier.rule.CategoryResolver
 import com.sciuro.core.classifier.rule.ReviewTierDecider
 import com.sciuro.core.classifier.rule.RuleLearner
@@ -19,23 +21,37 @@ val classifierModule = module {
             autoConfirmEnabled = settings.isTransactionAutoConfirmEnabled()
         )
     }
-    single { 
-        SciuroIngestionOrchestrator(
-            ingestionSource = get(),
+    single {
+        TransactionBookingUseCase(
             parserPipeline = get(),
             transactionRepository = get(),
             accountRepository = get(),
             rawEventRepository = get(),
+            categoryResolver = get(),
+            reviewTierDecider = get(),
+            tracer = get(),
+            confidenceThreshold = com.sciuro.core.parsing.model.DEFAULT_CONFIDENCE_THRESHOLD
+        )
+    }
+    single {
+        EngineTriggerUseCase(
             transferDetectionEngine = get(),
             obligationCycleMatcher = get(),
             budgetEngine = get(),
             debtEngine = get(),
             investmentEngine = get(),
             obligationDetectionEngine = get(),
-            categoryResolver = get(),
             bnplRiskDetector = get(),
-            reviewTierDecider = get(),
             tracer = get()
-        ) 
+        )
+    }
+    single {
+        SciuroIngestionOrchestrator(
+            ingestionSource = get(),
+            rawEventRepository = get(),
+            bookingUseCase = get(),
+            engineTriggerUseCase = get(),
+            tracer = get()
+        )
     }
 }

@@ -4,8 +4,14 @@ import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
-
 import com.sciuro.core.ledger.engine.TransactionMatchingEngine
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
 
 class BudgetEngine(
     private val database: SciuroDatabase,
@@ -18,13 +24,10 @@ class BudgetEngine(
         val transferTxIds = matchingEngine.getIneligibleTransactionIds()
 
         val now = currentTimeMillis()
-        val calendar = java.util.Calendar.getInstance().apply { timeInMillis = now }
-        val currentYear = calendar.get(java.util.Calendar.YEAR)
-        val currentMonth = calendar.get(java.util.Calendar.MONTH)
-
-        calendar.set(currentYear, currentMonth, 1, 0, 0, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        val monthStartMs = calendar.timeInMillis
+        val tz = TimeZone.currentSystemDefault()
+        val today = Clock.System.todayIn(tz)
+        val monthStartMs = today.minus(today.dayOfMonth - 1, DateTimeUnit.DAY)
+            .atStartOfDayIn(tz).toEpochMilliseconds()
 
         for (budget in allBudgets) {
             val periodStartMs = when (budget.period) {
@@ -44,7 +47,11 @@ class BudgetEngine(
                 val prevPeriodStart = when (budget.period) {
                     "WEEKLY" -> periodStartMs - 7L * 24 * 60 * 60 * 1000
                     "YEARLY" -> periodStartMs - 365L * 24 * 60 * 60 * 1000
-                    else -> monthStartMs - 30L * 24 * 60 * 60 * 1000
+                    else -> {
+                        val prevMonth = today.minus(1, DateTimeUnit.MONTH)
+                        prevMonth.minus(prevMonth.dayOfMonth - 1, DateTimeUnit.DAY)
+                            .atStartOfDayIn(tz).toEpochMilliseconds()
+                    }
                 }
                 val spentPrevPeriod = allTransactions.filter { tx ->
                     tx.category_id == budget.category_id &&

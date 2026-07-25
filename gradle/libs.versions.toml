@@ -13,6 +13,7 @@ detekt = "1.23.6"
 sqldelight = "2.0.1"
 ktor = "2.3.9"
 serialization = "1.6.3"
+datetime = "0.5.0"
 biometric = "1.1.0"
 sqlcipher = "4.5.4"
 workRuntimeKtx = "2.9.0"
@@ -54,6 +55,7 @@ ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 ktor-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version = "1.1.0-alpha06" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleRuntimeKtx" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }

@@ -37,14 +37,22 @@ class ObligationDetectionEngine(
             if (existing) continue
 
             val mostRecent = outflows.maxByOrNull { it.timestamp }!!
-            val thirtyDaysMs = 30L * 24 * 60 * 60 * 1000
+            val timestamps = outflows.map { it.timestamp }
+
+            val detectionResult = FrequencyDetector.detect(timestamps)
+            val frequency = detectionResult?.frequency ?: ObligationFrequency.MONTHLY
+            val nextDueDate = if (detectionResult != null) {
+                FrequencyDetector.nextDueDate(mostRecent.timestamp, frequency)
+            } else {
+                mostRecent.timestamp + 30L * 24 * 60 * 60 * 1000
+            }
 
             val newObligation = Obligation(
                 id = generateUuid(),
                 name = "${merchant.replaceFirstChar { it.uppercase() }} Subscription",
                 amount = firstAmount,
-                frequency = ObligationFrequency.MONTHLY,
-                nextDueDate = mostRecent.timestamp + thirtyDaysMs,
+                frequency = frequency,
+                nextDueDate = nextDueDate,
                 categoryId = mostRecent.category_id,
                 accountId = mostRecent.account_id,
                 isActive = true

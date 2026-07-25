@@ -2,6 +2,7 @@ package com.sciuro.core.budget.engine
 
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
+import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
 
 class BudgetLimitSuggester(
@@ -14,7 +15,7 @@ class BudgetLimitSuggester(
     }
 
     suspend fun suggestLimit(categoryId: String): Double? {
-        val lookbackStart = System.currentTimeMillis() - (LOOKBACK_DAYS * 24L * 60 * 60 * 1000)
+        val lookbackStart = currentTimeMillis() - (LOOKBACK_DAYS * 24L * 60 * 60 * 1000)
         val transactions = database.transactionRecordQueries
             .selectAllTransactions()
             .executeAsList()

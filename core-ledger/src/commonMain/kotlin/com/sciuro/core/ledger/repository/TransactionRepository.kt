@@ -320,4 +320,16 @@ class TransactionRepository(
             database.transactionRecordQueries.undoAutoConfirm(currentTimeMillis(), transactionId)
         }
     }
+
+    suspend fun getAllTransactionsOnce(): List<com.sciuro.core.ledger.db.Transaction_record> {
+        return database.transactionRecordQueries.selectAllTransactions().executeAsList()
+    }
+
+    suspend fun getTransactionById(transactionId: String): com.sciuro.core.ledger.db.Transaction_record? {
+        return database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull()
+    }
+
+    suspend fun getTransactionsByAccount(accountId: String): List<com.sciuro.core.ledger.db.Transaction_record> {
+        return database.transactionRecordQueries.selectTransactionsByAccount(accountId).executeAsList()
+    }
 }

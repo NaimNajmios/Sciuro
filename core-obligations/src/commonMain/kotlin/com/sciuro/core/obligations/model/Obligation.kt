@@ -1,7 +1,7 @@
 package com.sciuro.core.obligations.model
 
 enum class ObligationFrequency {
-    WEEKLY, MONTHLY, YEARLY
+    WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, YEARLY
 }
 
 data class Obligation(

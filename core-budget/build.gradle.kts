@@ -27,6 +27,7 @@ kotlin {
                 api(project(":core-audit"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.sqldelight.coroutines)
+                implementation(libs.kotlinx.datetime)
             }
         }
         val commonTest by getting {
