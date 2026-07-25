@@ -49,8 +49,6 @@ fun TransactionDetailSheet(
         SciuroBottomSheet(onDismissRequest = onDismiss) {
             Text("Transaction Details", style = MaterialTheme.typography.headlineSmall)
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -78,8 +76,6 @@ fun TransactionDetailSheet(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
             Text(
                 text = if (direction == "INFLOW") "Income" else "Expense",
                 style = MaterialTheme.typography.labelMedium,
@@ -87,7 +83,6 @@ fun TransactionDetailSheet(
             )
 
             if (hasTransferLink) {
-                Spacer(modifier = Modifier.height(4.dp))
                 Surface(
                     shape = RoundedCornerShape(4.dp),
                     color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
@@ -101,9 +96,7 @@ fun TransactionDetailSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-            Spacer(modifier = Modifier.height(24.dp))
 
             if (extractionMethod != null) {
                 val methodLabel = when (extractionMethod) {
@@ -143,22 +136,20 @@ fun TransactionDetailSheet(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
             if (rawEventTitle != null || rawEventText != null) {
                 var expanded by remember { mutableStateOf(false) }
 
-                Text(
-                    text = "Original Notification",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Surface(
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Original Notification",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    
+                    Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.fillMaxWidth()
@@ -197,23 +188,22 @@ fun TransactionDetailSheet(
                         }
                     }
                 }
+                }
 
-                Spacer(modifier = Modifier.height(24.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
             if (auditEvents.isNotEmpty()) {
-                Text(
-                    text = "History",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "History",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                     auditEvents.forEach { event ->
                         Surface(
                             shape = RoundedCornerShape(8.dp),
@@ -237,10 +227,9 @@ fun TransactionDetailSheet(
                         }
                     }
                 }
+                }
 
-                Spacer(modifier = Modifier.height(24.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
             Row(
