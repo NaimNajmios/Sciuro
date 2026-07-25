@@ -31,7 +31,7 @@ class DebtEngineTest {
         database = SciuroDatabase(driver)
         eventBus = DomainEventBus()
         linkRepository = DebtPaymentLinkRepository(database)
-        engine = DebtEngine(database, linkRepository, TransactionMatchingEngine(database, eventBus), eventBus)
+        engine = DebtEngine(database, linkRepository, eventBus, TransactionMatchingEngine(database, eventBus))
     }
 
     @AfterTest

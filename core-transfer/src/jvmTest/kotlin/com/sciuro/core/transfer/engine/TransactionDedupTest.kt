@@ -15,7 +15,8 @@ class TransactionDedupTest {
         val database = TestDatabase.create()
         val fakeAuditRepo = FakeAuditRepository()
         val accountRepo = com.sciuro.core.ledger.repository.AccountRepository(fakeAuditRepo, database)
-        val txRepo = com.sciuro.core.ledger.repository.TransactionRepository(fakeAuditRepo, database, accountRepo)
+        val eventBus = com.sciuro.core.audit.events.DomainEventBus()
+        val txRepo = com.sciuro.core.ledger.repository.TransactionRepository(fakeAuditRepo, database, accountRepo, eventBus)
 
         accountRepo.createAccount(Account(id = "acc_a", name = "A", type = "Bank"))
 
@@ -37,7 +38,8 @@ class TransactionDedupTest {
         val database = TestDatabase.create()
         val fakeAuditRepo = FakeAuditRepository()
         val accountRepo = com.sciuro.core.ledger.repository.AccountRepository(fakeAuditRepo, database)
-        val txRepo = com.sciuro.core.ledger.repository.TransactionRepository(fakeAuditRepo, database, accountRepo)
+        val eventBus = com.sciuro.core.audit.events.DomainEventBus()
+        val txRepo = com.sciuro.core.ledger.repository.TransactionRepository(fakeAuditRepo, database, accountRepo, eventBus)
 
         accountRepo.createAccount(Account(id = "acc_a", name = "A", type = "Bank"))
 
@@ -59,7 +61,8 @@ class TransactionDedupTest {
         val database = TestDatabase.create()
         val fakeAuditRepo = FakeAuditRepository()
         val accountRepo = com.sciuro.core.ledger.repository.AccountRepository(fakeAuditRepo, database)
-        val txRepo = com.sciuro.core.ledger.repository.TransactionRepository(fakeAuditRepo, database, accountRepo)
+        val eventBus = com.sciuro.core.audit.events.DomainEventBus()
+        val txRepo = com.sciuro.core.ledger.repository.TransactionRepository(fakeAuditRepo, database, accountRepo, eventBus)
 
         accountRepo.createAccount(Account(id = "acc_a", name = "A", type = "Bank"))
 
@@ -81,7 +84,8 @@ class TransactionDedupTest {
         val database = TestDatabase.create()
         val fakeAuditRepo = FakeAuditRepository()
         val accountRepo = com.sciuro.core.ledger.repository.AccountRepository(fakeAuditRepo, database)
-        val txRepo = com.sciuro.core.ledger.repository.TransactionRepository(fakeAuditRepo, database, accountRepo)
+        val eventBus = com.sciuro.core.audit.events.DomainEventBus()
+        val txRepo = com.sciuro.core.ledger.repository.TransactionRepository(fakeAuditRepo, database, accountRepo, eventBus)
 
         accountRepo.createAccount(Account(id = "acc_a", name = "A", type = "Bank"))
 

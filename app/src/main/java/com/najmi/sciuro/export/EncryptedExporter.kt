@@ -2,8 +2,11 @@ package com.najmi.sciuro.export
 
 import android.content.Context
 import android.util.Base64
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.OutputStream
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -12,7 +15,9 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 
 object EncryptedExporter {
 
@@ -25,6 +30,50 @@ object EncryptedExporter {
     private const val KEY_SIZE = 256
 
     private val secureRandom = SecureRandom()
+
+    suspend fun exportWithBiometric(
+        activity: FragmentActivity,
+        context: Context,
+        passphrase: String,
+        outputStream: OutputStream
+    ): Result<String> {
+        val authenticated = authenticateUser(activity)
+        if (!authenticated) return Result.failure(SecurityException("Biometric authentication failed or was cancelled"))
+
+        return export(context, passphrase, outputStream)
+    }
+
+    private suspend fun authenticateUser(activity: FragmentActivity): Boolean {
+        return suspendCancellableCoroutine { continuation ->
+            val executor = ContextCompat.getMainExecutor(activity)
+            val biometricPrompt = BiometricPrompt(activity, executor,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        super.onAuthenticationError(errorCode, errString)
+                        if (continuation.isActive) continuation.resume(false)
+                    }
+
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(result)
+                        if (continuation.isActive) continuation.resume(true)
+                    }
+
+                    override fun onAuthenticationFailed() {
+                        super.onAuthenticationFailed()
+                    }
+                })
+
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Authenticate to Export")
+                .setContentText("Verify your identity to export an encrypted backup")
+                .setAllowedAuthenticators(
+                    BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                )
+                .build()
+
+            biometricPrompt.authenticate(promptInfo)
+        }
+    }
 
     suspend fun export(context: Context, passphrase: String, outputStream: OutputStream): Result<String> {
         return withContext(Dispatchers.IO) {

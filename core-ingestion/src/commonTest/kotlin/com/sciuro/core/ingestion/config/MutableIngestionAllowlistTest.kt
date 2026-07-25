@@ -46,6 +46,10 @@ private class FakeSettingsProvider : SettingsProvider {
     override fun setQuietHoursStart(hour: Int) {}
     override fun getQuietHoursEnd(): Int = 7
     override fun setQuietHoursEnd(hour: Int) {}
+    override fun hasSeenBatteryPrompt(): Boolean = false
+    override fun setHasSeenBatteryPrompt(hasSeen: Boolean) {}
+    override fun isDeveloperOptionsVisible(): Boolean = false
+    override fun setDeveloperOptionsVisible(visible: Boolean) {}
 }
 
 class MutableIngestionAllowlistTest {

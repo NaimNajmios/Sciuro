@@ -1,4 +1,4 @@
-CREATE TABLE AuditLogEntity (
+CREATE TABLE audit_log_entity (
     id TEXT NOT NULL PRIMARY KEY,
     entityType TEXT NOT NULL,
     entityId TEXT NOT NULL,
@@ -11,14 +11,14 @@ CREATE TABLE AuditLogEntity (
 );
 
 insertLog:
-INSERT INTO AuditLogEntity(id, entityType, entityId, action, beforeState, afterState, source, confidence, timestamp)
+INSERT INTO audit_log_entity(id, entityType, entityId, action, beforeState, afterState, source, confidence, timestamp)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getLogsForEntity:
-SELECT * FROM AuditLogEntity
+SELECT * FROM audit_log_entity
 WHERE entityId = ? AND entityType = ?
 ORDER BY timestamp DESC;
 
 getAllLogs:
-SELECT * FROM AuditLogEntity
+SELECT * FROM audit_log_entity
 ORDER BY timestamp DESC;

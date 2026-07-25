@@ -39,7 +39,7 @@ class SqlDelightAuditRepository(
             .map { it.toDomain() }
     }
 
-    private fun com.sciuro.core.ledger.db.AuditLogEntity.toDomain(): AuditLog {
+    private fun com.sciuro.core.ledger.db.Audit_log_entity.toDomain(): AuditLog {
         return AuditLog(
             id = id,
             entityType = EntityType.valueOf(entityType),

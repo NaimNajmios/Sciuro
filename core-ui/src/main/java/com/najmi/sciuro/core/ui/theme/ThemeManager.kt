@@ -4,6 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.time.LocalTime
 
 enum class ThemePreference {
     SYSTEM_DEFAULT, LIGHT, DARK
@@ -27,6 +28,54 @@ class ThemeManager(context: Context) {
     fun setTheme(theme: ThemePreference) {
         prefs.edit().putString("theme", theme.name).apply()
         _themePreference.value = theme
+    }
+
+    fun isDarkModeScheduleEnabled(): Boolean = prefs.getBoolean("dark_mode_schedule_enabled", false)
+
+    fun setDarkModeScheduleEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("dark_mode_schedule_enabled", enabled).apply()
+    }
+
+    fun getDarkModeScheduleStart(): LocalTime {
+        val hour = prefs.getInt("dark_mode_start_hour", 20)
+        val minute = prefs.getInt("dark_mode_start_minute", 0)
+        return LocalTime.of(hour, minute)
+    }
+
+    fun setDarkModeScheduleStart(time: LocalTime) {
+        prefs.edit()
+            .putInt("dark_mode_start_hour", time.hour)
+            .putInt("dark_mode_start_minute", time.minute)
+            .apply()
+    }
+
+    fun getDarkModeScheduleEnd(): LocalTime {
+        val hour = prefs.getInt("dark_mode_end_hour", 7)
+        val minute = prefs.getInt("dark_mode_end_minute", 0)
+        return LocalTime.of(hour, minute)
+    }
+
+    fun setDarkModeScheduleEnd(time: LocalTime) {
+        prefs.edit()
+            .putInt("dark_mode_end_hour", time.hour)
+            .putInt("dark_mode_end_minute", time.minute)
+            .apply()
+    }
+
+    fun getEffectiveTheme(): ThemePreference {
+        if (!isDarkModeScheduleEnabled()) return getSavedTheme()
+
+        val now = LocalTime.now()
+        val start = getDarkModeScheduleStart()
+        val end = getDarkModeScheduleEnd()
+
+        val inDarkWindow = if (start.isBefore(end)) {
+            now in start..end
+        } else {
+            now >= start || now <= end
+        }
+
+        return if (inDarkWindow) ThemePreference.DARK else ThemePreference.LIGHT
     }
     
     companion object {
