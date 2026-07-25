@@ -27,11 +27,7 @@ class InvestmentEngine(
 
             if (kotlin.math.abs(totalInvested - investment.units_held) > 0.01) {
                 val unitType = investment.unit_type.ifBlank { "UNITS" }
-                val newUnits = if (unitType == "GRAMS" || unitType == "UNITS") {
-                    totalInvested
-                } else {
-                    totalInvested
-                }
+                val newUnits = totalInvested
 
                 database.investmentQueries.updateInvestment(
                     asset_symbol = investment.asset_symbol,
@@ -47,7 +43,7 @@ class InvestmentEngine(
 
                 eventBus.publish(
                     DomainEvent.InvestmentTransactionRecorded(
-                        accountId = investment.id,
+                        accountId = investment.associated_account_id.orEmpty(),
                         action = "BUY",
                         unitAmount = newUnits
                     )

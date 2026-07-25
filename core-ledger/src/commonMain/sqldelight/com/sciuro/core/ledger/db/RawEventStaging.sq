@@ -12,6 +12,9 @@ CREATE TABLE raw_event_staging (
     processed_at INTEGER
 );
 
+CREATE INDEX idx_raw_event_status ON raw_event_staging(status);
+CREATE INDEX idx_raw_event_status_captured ON raw_event_staging(status, captured_at);
+
 insertRawEvent:
 INSERT INTO raw_event_staging(id, source_type, source_package_or_address, title, text, timestamp, captured_at, status)
 VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING');

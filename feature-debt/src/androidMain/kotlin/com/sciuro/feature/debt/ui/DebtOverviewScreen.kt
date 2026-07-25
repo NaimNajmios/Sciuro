@@ -15,7 +15,6 @@ import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
-import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
@@ -163,8 +162,11 @@ fun DebtOverviewScreen(
 
                                         Spacer(modifier = Modifier.height(8.dp))
 
-                                        val progressColor = if (debt.progress > 0.75f) MaterialTheme.colorScheme.error
-                                            else MaterialTheme.colorScheme.primary
+                                        val progressColor = when {
+                                            debt.progress > 0.75f -> MaterialTheme.colorScheme.primary
+                                            debt.progress > 0.25f -> MaterialTheme.colorScheme.secondary
+                                            else -> MaterialTheme.colorScheme.error
+                                        }
                                         LinearProgressIndicator(
                                             progress = { if (debt.progress > 1f) 1f else debt.progress },
                                             modifier = Modifier.fillMaxWidth().height(8.dp),

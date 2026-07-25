@@ -26,9 +26,6 @@ class BudgetEngine(
         calendar.set(java.util.Calendar.MILLISECOND, 0)
         val monthStartMs = calendar.timeInMillis
 
-        calendar.add(java.util.Calendar.MONTH, 1)
-        calendar.timeInMillis
-
         for (budget in allBudgets) {
             val periodStartMs = when (budget.period) {
                 "WEEKLY" -> now - 7L * 24 * 60 * 60 * 1000

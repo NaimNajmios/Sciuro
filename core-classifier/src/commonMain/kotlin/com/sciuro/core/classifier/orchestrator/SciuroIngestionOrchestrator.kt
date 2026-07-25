@@ -24,6 +24,7 @@ import com.sciuro.core.obligations.engine.ObligationDetectionEngine
 import com.sciuro.core.classifier.rule.CategoryResolver
 import com.sciuro.core.classifier.rule.ReviewTierDecider
 import com.sciuro.core.debt.engine.BnplRiskDetector
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -88,6 +89,8 @@ class SciuroIngestionOrchestrator(
                 ingestionSource.observeEvents().collect { rawEvent ->
                     processOneEvent(rawEvent)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
                 attempt++
                 val delayMs = minOf(1000L * (1L shl minOf(attempt, 5)), MAX_BACKOFF_MS)
@@ -253,6 +256,8 @@ class SciuroIngestionOrchestrator(
             rawEventRepository.markProcessed(rawEvent.id)
             tracer.trace(rawEvent.id, transaction.id, TraceStage.STAGING, TraceOutcome.SUCCESS,
                 detail = mapOf("transition" to "PROCESSED"))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             rawEventRepository.markDeadLetter(rawEvent.id, "Unhandled exception: ${e.message}")
             tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.FAILURE,

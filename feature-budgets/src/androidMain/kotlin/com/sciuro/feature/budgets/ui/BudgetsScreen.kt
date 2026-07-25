@@ -35,7 +35,7 @@ import com.sciuro.core.budget.engine.BudgetLimitSuggester
 import com.sciuro.feature.budgets.model.BudgetHealth
 import com.sciuro.feature.budgets.viewmodel.BudgetsViewModel
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.getKoin
+import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -59,7 +59,7 @@ fun BudgetsScreen(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     var suggestedAmount by remember { mutableStateOf<Double?>(null) }
-    val suggester: BudgetLimitSuggester = getKoin().get()
+    val suggester: BudgetLimitSuggester = koinInject()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {

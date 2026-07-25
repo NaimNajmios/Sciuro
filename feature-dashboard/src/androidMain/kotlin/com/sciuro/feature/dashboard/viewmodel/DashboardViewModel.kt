@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.repository.DebtRepository
@@ -106,10 +105,13 @@ class DashboardViewModel(
     }
 
     fun refresh() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _isRefreshing.value = true
-            delay(600)
-            _isRefreshing.value = false
+            try {
+                categoryRepository.seedCategories()
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 

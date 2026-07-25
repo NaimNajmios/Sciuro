@@ -16,6 +16,8 @@ CREATE TABLE debt_record (
     FOREIGN KEY(associated_account_id) REFERENCES account(id)
 );
 
+CREATE INDEX idx_debt_status ON debt_record(status);
+
 insertDebt:
 INSERT INTO debt_record(id, name, debt_type, direction, counterparty_name, status, principal_amount, remaining_balance, interest_rate, due_date, associated_account_id, notes, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

@@ -19,6 +19,11 @@ CREATE TABLE transaction_record (
     FOREIGN KEY(category_id) REFERENCES category(id)
 );
 
+CREATE INDEX idx_transaction_account_id ON transaction_record(account_id);
+CREATE INDEX idx_transaction_direction ON transaction_record(direction);
+CREATE INDEX idx_transaction_category_id ON transaction_record(category_id);
+CREATE INDEX idx_transaction_timestamp ON transaction_record(timestamp);
+
 insertTransaction:
 INSERT INTO transaction_record(id, account_id, category_id, amount, direction, merchant, timestamp, reference_id, is_reviewed, extraction_method, confidence, raw_event_id, review_tier, auto_confirmed_at, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

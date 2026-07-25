@@ -464,8 +464,7 @@ fun WalletScreen(
                         val accountTx = allTransactions.filter { it.account_id == selectedAccountId }
                         val accountAdjustments = allAdjustments
 
-                        if (true) {
-                            if (txFilter == "Adjustments") {
+                        if (txFilter == "Adjustments") {
                                 if (accountAdjustments.isEmpty()) {
                                     com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No adjustments for this account.")
                                 } else {
@@ -528,8 +527,7 @@ fun WalletScreen(
                                     }
                                 }
                             }
-                        }
-                    } else if (selectedAssetType == "Investments") {
+                        } else if (selectedAssetType == "Investments") {
                         com.najmi.sciuro.core.ui.components.EmptyStateView(message = "Investment transactions are currently tracked manually.")
                     } else {
                         com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No data available.")

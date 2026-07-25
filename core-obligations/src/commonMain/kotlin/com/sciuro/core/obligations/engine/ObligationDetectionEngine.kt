@@ -21,7 +21,7 @@ class ObligationDetectionEngine(
         val autoConfirmEnabled = settingsProvider.isObligationAutoConfirmEnabled()
         val autoConfirmThreshold = settingsProvider.getAutoConfirmThreshold()
 
-        val byMerchant = allTransactions.filter { it.merchant != null }.groupBy { it.merchant!! }
+        val byMerchant = allTransactions.filter { it.merchant != null }.groupBy { it.merchant!!.lowercase() }
 
         for ((merchant, txs) in byMerchant) {
             if (txs.size < 3) continue

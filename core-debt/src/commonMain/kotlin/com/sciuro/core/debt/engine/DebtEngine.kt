@@ -40,7 +40,7 @@ class DebtEngine(
                 }
             }
 
-            val calculatedRemaining = linkRepository.recalculateDebtBalance(debt.id, debt.principal_amount)
+            val calculatedRemaining = maxOf(0.0, linkRepository.recalculateDebtBalance(debt.id, debt.principal_amount))
 
             if (kotlin.math.abs(calculatedRemaining - debt.remaining_balance) > 0.01) {
                 database.debtQueries.updateDebtBalance(
