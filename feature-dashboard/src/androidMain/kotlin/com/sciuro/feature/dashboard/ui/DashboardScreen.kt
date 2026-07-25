@@ -24,6 +24,20 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalGroceryStore
 import androidx.compose.material.icons.filled.LocalHospital
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalGroceryStore
+import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restaurant
@@ -31,7 +45,10 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import org.koin.compose.koinInject
@@ -182,17 +199,56 @@ fun DashboardScreen(
                     },
                     chartData = displayChartData,
                     content = {
+                        var isBreakdownExpanded by rememberSaveable { mutableStateOf(false) }
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp, vertical = 8.dp)
                         ) {
                             val netPos = state.netPositionBreakdown
-                            Text(
-                                text = "Cash: RM ${"%.2f".format(netPos.cash)}  •  Investments: RM ${"%.2f".format(netPos.investments)}  •  Debt: RM ${"%.2f".format(netPos.debts)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
+                            
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isBreakdownExpanded = !isBreakdownExpanded }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Net Position Breakdown",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                                Icon(
+                                    imageVector = if (isBreakdownExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                                    contentDescription = "Toggle Breakdown",
+                                    tint = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
+                            
+                            androidx.compose.animation.AnimatedVisibility(visible = isBreakdownExpanded) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp, bottom = 16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Cash", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                                        Text("RM ${"%.2f".format(netPos.cash)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                                    }
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Investments", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                                        Text("RM ${"%.2f".format(netPos.investments)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                                    }
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Debt", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                                        Text("RM ${"%.2f".format(netPos.debts)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                                    }
+                                }
+                            }
+                            
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
