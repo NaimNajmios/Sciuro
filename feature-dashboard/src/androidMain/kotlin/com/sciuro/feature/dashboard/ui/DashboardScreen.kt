@@ -416,8 +416,8 @@ fun DashboardScreen(
                                 }
                                 PillToggle(
                                     options = filterOptions,
-                                    selectedOption = typeFilter,
-                                    onOptionSelected = { viewModel.setTypeFilter(it) },
+                                    selectedOption = typeFilter ?: "All",
+                                    onOptionSelected = { viewModel.setTypeFilter(if (it == "All") null else it) },
                                     modifier = Modifier.fillMaxWidth(),
                                     fillWidth = true
                                 )
