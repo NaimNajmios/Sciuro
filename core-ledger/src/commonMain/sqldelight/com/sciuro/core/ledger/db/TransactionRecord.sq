@@ -64,6 +64,18 @@ WHERE id = ?;
 selectAllTransactions:
 SELECT * FROM transaction_record ORDER BY timestamp DESC;
 
+selectAllTransactionsPaginated:
+SELECT * FROM transaction_record ORDER BY timestamp DESC LIMIT :limit OFFSET :offset;
+
+selectTransactionsFilteredPaginated:
+SELECT * FROM transaction_record
+WHERE (:start IS NULL OR timestamp >= :start)
+AND (:end IS NULL OR timestamp <= :end)
+AND (:direction IS NULL OR direction = :direction)
+ORDER BY timestamp DESC
+LIMIT :limit OFFSET :offset;
+
+
 selectTransactionById:
 SELECT * FROM transaction_record WHERE id = ?;
 

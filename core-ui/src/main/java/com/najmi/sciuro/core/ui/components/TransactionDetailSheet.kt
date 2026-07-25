@@ -139,7 +139,7 @@ fun TransactionDetailSheet(
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
             }
 
-            if (rawEventTitle != null || rawEventText != null) {
+            if (!rawEventTitle.isNullOrBlank() || !rawEventText.isNullOrBlank()) {
                 var expanded by remember { mutableStateOf(false) }
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

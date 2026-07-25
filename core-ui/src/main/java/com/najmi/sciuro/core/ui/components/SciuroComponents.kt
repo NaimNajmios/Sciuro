@@ -31,6 +31,7 @@ fun SciuroBottomSheet(
         Column(
             modifier = modifier
                 .fillMaxWidth()
+                .weight(1f, fill = false)
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
                 .verticalScroll(rememberScrollState())

@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.repository.DebtRepository
@@ -33,8 +35,15 @@ import com.sciuro.core.obligations.repository.ObligationRepository
 import com.sciuro.core.audit.events.DomainEventBus
 import kotlinx.coroutines.flow.first
 
+data class NetPositionBreakdown(
+    val cash: Double = 0.0,
+    val debts: Double = 0.0,
+    val investments: Double = 0.0
+)
+
 data class DashboardState(
     val netPosition: Double = 0.0,
+    val netPositionBreakdown: NetPositionBreakdown = NetPositionBreakdown(),
     val unreviewedTransactionsCount: Int = 0,
     val autoBookedTransactionsCount: Int = 0,
     val activeBudgetsCount: Int = 0,
@@ -90,12 +99,40 @@ class DashboardViewModel(
         _endDate.value = end
     }
 
+    private val _typeFilter = MutableStateFlow<String?>("All")
+    val typeFilter: StateFlow<String?> = _typeFilter.asStateFlow()
+
+    fun setTypeFilter(filter: String?) {
+        _typeFilter.value = filter
+    }
+
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
             delay(600)
             _isRefreshing.value = false
         }
+    }
+
+    private val _transactionLimit = MutableStateFlow(50L)
+    val transactionLimit: StateFlow<Long> = _transactionLimit.asStateFlow()
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val paginatedTransactions: StateFlow<List<com.sciuro.core.ledger.db.Transaction_record>> = combine(
+        _transactionLimit, _startDate, _endDate, _typeFilter
+    ) { limit, start, end, type ->
+        val direction = when (type) {
+            "Income" -> "INFLOW"
+            "Expense" -> "OUTFLOW"
+            else -> null
+        }
+        transactionRepository.observeTransactionsFilteredPaginated(start, end, direction, limit, 0)
+    }.flatMapLatest { it }
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
+    fun loadMoreTransactions() {
+        _transactionLimit.value += 50L
     }
 
     val state: StateFlow<DashboardState> = combine(
@@ -123,6 +160,11 @@ class DashboardViewModel(
             else -it.remainingBalance.toDouble()
         }
         val netPosition = totalAccounts + totalInvestments + totalDebts
+        val breakdown = NetPositionBreakdown(
+            cash = totalAccounts,
+            debts = totalDebts,
+            investments = totalInvestments
+        )
 
         val incomePattern = incomeDetector.detectAndPublish()
         val thirtyDaysFromNow = currentTimeMillis() + 30L * 24L * 60L * 60L * 1000L
@@ -141,6 +183,7 @@ class DashboardViewModel(
         
         DashboardState(
             netPosition = netPosition,
+            netPositionBreakdown = breakdown,
             unreviewedTransactionsCount = unreviewed.size,
             activeBudgetsCount = budgets.size,
             allTransactions = filteredTxs,

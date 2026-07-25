@@ -75,41 +75,34 @@ fun DashboardScreen(
     val autoBookedCount by viewModel.autoBookedTransactionsCount.collectAsState()
     val autoBookedTxs by viewModel.autoBookedTransactions.collectAsState()
     var selectedRange by remember { mutableStateOf("All Time") }
-    var selectedTypeFilter by remember { mutableStateOf("All") }
+    val typeFilter by viewModel.typeFilter.collectAsState()
     val filterOptions = listOf("All", "Income", "Expense")
     val startDate by viewModel.startDate.collectAsState()
     val endDate by viewModel.endDate.collectAsState()
+    val paginatedTransactions by viewModel.paginatedTransactions.collectAsState()
     var showDatePickerDialog by remember { mutableStateOf(false) }
 
     val categoryMap = remember(state.expenseCategories, state.incomeCategories) {
         (state.expenseCategories + state.incomeCategories).associateBy { it.id }
     }
 
-    val filteredTransactions = remember(state.allTransactions, selectedRange, selectedTypeFilter) {
-        state.allTransactions.filter { tx ->
-            val matchesTime = when (selectedRange) {
-                "This Month" -> {
-                    val cal = java.util.Calendar.getInstance()
-                    cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
-                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                    cal.set(java.util.Calendar.MINUTE, 0)
-                    cal.set(java.util.Calendar.SECOND, 0)
-                    cal.set(java.util.Calendar.MILLISECOND, 0)
-                    tx.timestamp >= cal.timeInMillis
-                }
-                "Custom" -> {
-                    if (startDate != null && endDate != null) {
-                        tx.timestamp in startDate!!..endDate!!
-                    } else true
-                }
-                else -> true
+    LaunchedEffect(selectedRange, startDate, endDate) {
+        when (selectedRange) {
+            "This Month" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
             }
-            val matchesType = when (selectedTypeFilter) {
-                "Income" -> tx.direction == "INFLOW"
-                "Expense" -> tx.direction == "OUTFLOW"
-                else -> true
+            "Custom" -> {
+                viewModel.setDateRange(startDate, endDate)
             }
-            matchesTime && matchesType
+            else -> {
+                viewModel.setDateRange(null, null)
+            }
         }
     }
     
@@ -189,23 +182,34 @@ fun DashboardScreen(
                     },
                     chartData = displayChartData,
                     content = {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                                .padding(horizontal = 24.dp, vertical = 8.dp)
                         ) {
+                            val netPos = state.netPositionBreakdown
                             Text(
-                                text = "${state.accounts.size} accounts tracked",
+                                text = "Cash: RM ${"%.2f".format(netPos.cash)}  •  Investments: RM ${"%.2f".format(netPos.investments)}  •  Debt: RM ${"%.2f".format(netPos.debts)}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.6f)
+                                color = Color.White.copy(alpha = 0.8f)
                             )
-                            if (state.recentAdjustmentCount > 0) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Text(
-                                    text = "${state.recentAdjustmentCount} adjustments this week",
+                                    text = "${state.accounts.size} accounts tracked",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color.White.copy(alpha = 0.6f)
                                 )
+                                if (state.recentAdjustmentCount > 0) {
+                                    Text(
+                                        text = "${state.recentAdjustmentCount} adjustments this week",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.6f)
+                                    )
+                                }
                             }
                         }
                     }
@@ -399,33 +403,38 @@ fun DashboardScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp)
                             ) {
-                                Text(
-                                    "Transaction History",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(bottom = 12.dp)
-                                )
-
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "Transaction History",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.padding(bottom = 12.dp)
+                                    )
+                                }
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     items(filterOptions) { filter ->
                                         FilterChip(
-                                            selected = selectedTypeFilter == filter,
-                                            onClick = { selectedTypeFilter = filter },
+                                            selected = typeFilter == filter,
+                                            onClick = { viewModel.setTypeFilter(filter) },
                                             label = { Text(filter) }
                                         )
                                     }
                                 }
                             }
 
-                            if (filteredTransactions.isEmpty()) {
+                            if (paginatedTransactions.isEmpty()) {
                                 val noMatching = state.allTransactions.isNotEmpty()
                                 com.najmi.sciuro.core.ui.components.EmptyStateView(
                                     message = if (noMatching) "No transactions match the current filter." else "No transactions yet."
                                 )
                             } else {
-                                filteredTransactions.forEach { tx ->
+                                paginatedTransactions.forEach { tx ->
                                     val cat = categoryMap[tx.category_id]
                                     val catColor = cat?.color?.let { parseColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant
                                     val catIcon = mapCategoryIcon(tx.category_id)

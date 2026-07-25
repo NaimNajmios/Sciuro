@@ -256,6 +256,17 @@ class TransactionRepository(
             .mapToList(Dispatchers.Default)
     }
 
+    fun observeTransactionsFilteredPaginated(start: Long?, end: Long?, direction: String?, limit: Long, offset: Long): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
+        return database.transactionRecordQueries.selectTransactionsFilteredPaginated(
+            start = start,
+            end = end,
+            direction = direction,
+            limit = limit,
+            offset = offset
+        ).asFlow().mapToList(Dispatchers.Default)
+    }
+
+
     fun observeTransactionsForAccount(accountId: String): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
         return database.transactionRecordQueries.selectTransactionsByAccount(accountId)
             .asFlow()
