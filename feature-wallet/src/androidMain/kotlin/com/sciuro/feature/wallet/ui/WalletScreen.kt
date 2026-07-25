@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Toll
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
@@ -40,6 +41,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.util.lerp
 import kotlin.math.absoluteValue
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -119,6 +122,9 @@ fun WalletScreen(
     var txFilter by rememberSaveable { mutableStateOf("All") }
 
     val accountPagerState = rememberPagerState(pageCount = { accounts.size })
+
+    var showQrDialog by rememberSaveable { mutableStateOf(false) }
+    var selectedQrPath by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Transaction Edit State
     var showEditTransactionDialog by rememberSaveable { mutableStateOf(false) }
@@ -321,18 +327,18 @@ fun WalletScreen(
                                             color = contentCol
                                         )
                                         if (account.qrImagePath != null) {
-                                            val qrBitmap = remember(account.qrImagePath) {
-                                                try { BitmapFactory.decodeFile(account.qrImagePath) } catch (_: Exception) { null }
-                                            }
-                                            if (qrBitmap != null) {
-                                                Image(
-                                                    bitmap = qrBitmap.asImageBitmap(),
-                                                    contentDescription = "QR Code",
-                                                    modifier = Modifier
-                                                        .size(40.dp)
-                                                        .clip(RoundedCornerShape(4.dp))
-                                                )
-                                            }
+                                            Icon(
+                                                imageVector = Icons.Filled.QrCodeScanner,
+                                                contentDescription = "View QR Code",
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .clickable {
+                                                        selectedQrPath = account.qrImagePath
+                                                        showQrDialog = true
+                                                    }
+                                                    .padding(2.dp),
+                                                tint = contentCol.copy(alpha = 0.8f)
+                                            )
                                         }
                                     }
                                 }
@@ -1039,6 +1045,38 @@ fun WalletScreen(
                 coroutineScope.launch { snackbarHostState.showSnackbar("Investment deleted") }
             },
             onDismiss = { showDeleteInvestmentDialog = false }
+        )
+    }
+
+    if (showQrDialog && selectedQrPath != null) {
+        AlertDialog(
+            onDismissRequest = { showQrDialog = false; selectedQrPath = null },
+            title = { Text("QR Code", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+            text = {
+                Box(
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val bitmap = remember(selectedQrPath) {
+                        try { BitmapFactory.decodeFile(selectedQrPath) } catch (_: Exception) { null }
+                    }
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "QR Code",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Text("Unable to load QR image", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showQrDialog = false; selectedQrPath = null }) {
+                    Text("Close")
+                }
+            }
         )
     }
 }
