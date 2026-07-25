@@ -81,7 +81,6 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     var paymentDebt by remember { mutableStateOf<DebtTask?>(null) }
     var paymentAmountText by remember { mutableStateOf("") }
 
-    var paymentAmountText by remember { mutableStateOf("") }
 
     var showAddSheet by remember { mutableStateOf(false) }
 

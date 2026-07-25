@@ -64,11 +64,7 @@ import com.najmi.sciuro.core.ui.components.AuditEventDisplay
 import com.najmi.sciuro.core.ui.components.TransactionCard
 import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
 import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
-import com.najmi.sciuro.core.ui.components.AdjustmentCard
-import com.najmi.sciuro.core.ui.components.AuditEventDisplay
-import com.najmi.sciuro.core.ui.components.TransactionCard
-import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
-import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
+
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -235,28 +231,29 @@ fun DashboardScreen(
                                 Card(
                                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer
                                     )
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(16.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Icon(
                                             imageVector = Icons.Filled.Warning,
                                             contentDescription = "Review Inbox Warning",
-                                            tint = MaterialTheme.colorScheme.onErrorContainer
+                                            tint = MaterialTheme.colorScheme.onSecondaryContainer
                                         )
                                         Column {
                                             Text(
                                                 "Review Inbox",
                                                 style = MaterialTheme.typography.titleMedium,
-                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer
                                             )
                                             Text(
                                                 "${state.unreviewedTransactionsCount} items pending your review",
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer
                                             )
                                         }
                                     }
@@ -287,12 +284,11 @@ fun DashboardScreen(
                                             )
                                         }
                                         if (autoBookedTxs.isNotEmpty()) {
-                                            Spacer(modifier = Modifier.height(8.dp))
                                             autoBookedTxs.take(5).forEach { tx ->
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(vertical = 4.dp),
+                                                        .padding(vertical = 2.dp),
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
@@ -311,8 +307,9 @@ fun DashboardScreen(
                                                     TextButton(
                                                         onClick = { viewModel.undoAutoConfirm(tx.id) },
                                                         colors = ButtonDefaults.textButtonColors(
-                                                            contentColor = MaterialTheme.colorScheme.error
-                                                        )
+                                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                        ),
+                                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                                     ) {
                                                         Text("Undo", style = MaterialTheme.typography.labelSmall)
                                                     }
@@ -397,24 +394,30 @@ fun DashboardScreen(
                                 }
                             }
                             
-                            Text(
-                                "Transaction History",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
+                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 8.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    "Transaction History",
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
 
-                            LazyRow(
-                                modifier = Modifier.padding(bottom = 12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                items(filterOptions) { filter ->
-                                    FilterChip(
-                                        selected = selectedTypeFilter == filter,
-                                        onClick = { selectedTypeFilter = filter },
-                                        label = { Text(filter) }
-                                    )
-                                }
-                            }
+                                                LazyRow(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    items(filterOptions) { filter ->
+                                                        FilterChip(
+                                                            selected = selectedTypeFilter == filter,
+                                                            onClick = { selectedTypeFilter = filter },
+                                                            label = { Text(filter) }
+                                                        )
+                                                    }
+                                                }
+                                            }
 
                             if (filteredTransactions.isEmpty()) {
                                 val noMatching = state.allTransactions.isNotEmpty()
