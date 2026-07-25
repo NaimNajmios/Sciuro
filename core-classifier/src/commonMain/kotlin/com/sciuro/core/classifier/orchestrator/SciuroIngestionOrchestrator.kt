@@ -160,11 +160,17 @@ class SciuroIngestionOrchestrator(
                 if (categoryId != null) TraceOutcome.SUCCESS else TraceOutcome.SKIP,
                 detail = mapOf("category_id" to categoryId, "merchant" to draft.merchant))
 
-            val matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
+            var matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
+            if (matchedAccount == null && !draft.accountOrChannel.isNullOrBlank()) {
+                val suffixOnly = draft.accountOrChannel.takeLast(4).filter { it.isDigit() }
+                if (suffixOnly.isNotEmpty()) {
+                    matchedAccount = accountRepository.getAccountByNumberSuffix(suffixOnly)
+                }
+            }
             val accountId = matchedAccount?.id
             tracer.trace(rawEvent.id, null, TraceStage.ACCOUNT_MATCH,
                 if (accountId != null) TraceOutcome.SUCCESS else TraceOutcome.SKIP,
-                detail = mapOf("account_id" to accountId, "package" to rawEvent.sourcePackageOrAddress))
+                detail = mapOf("account_id" to accountId, "package" to rawEvent.sourcePackageOrAddress, "account_channel" to draft.accountOrChannel))
 
             val extractionMethod = if (draft.confidenceScore >= confidenceThreshold) "REGEX" else "LLM_FALLBACK"
 

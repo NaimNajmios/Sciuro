@@ -42,6 +42,9 @@ SELECT * FROM account WHERE id = ? AND status != 'DELETED';
 selectAccountByPackage:
 SELECT * FROM account WHERE associated_package = ? AND status != 'DELETED' LIMIT 1;
 
+selectAccountByNumberSuffix:
+SELECT * FROM account WHERE account_number LIKE ('%' || ?) AND status != 'DELETED' LIMIT 1;
+
 updateAccount:
 UPDATE account
 SET name = ?, type = ?, associated_package = ?, color = ?, updated_at = ?, account_number = ?, account_holder_name = ?, bank_institution_code = ?, qr_image_path = ?, qr_payload_text = ?

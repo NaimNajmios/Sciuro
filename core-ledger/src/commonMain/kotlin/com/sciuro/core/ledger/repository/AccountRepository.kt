@@ -152,6 +152,10 @@ class AccountRepository(
         return database.accountQueries.selectAccountByPackage(packageName).executeAsOneOrNull()
     }
 
+    suspend fun getAccountByNumberSuffix(suffix: String): com.sciuro.core.ledger.db.Account? {
+        return database.accountQueries.selectAccountByNumberSuffix(suffix).executeAsOneOrNull()
+    }
+
     suspend fun ensureDefaultAccountExists() {
         val accounts = database.accountQueries.selectAllAccounts().executeAsList()
         if (accounts.isEmpty()) {
