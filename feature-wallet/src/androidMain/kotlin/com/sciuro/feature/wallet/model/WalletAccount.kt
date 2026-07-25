@@ -8,5 +8,6 @@ data class WalletAccount(
     val isCashWallet: Boolean,
     val type: String,
     val associatedPackage: String?,
-    val color: String?
+    val color: String?,
+    val qrImagePath: String? = null
 )

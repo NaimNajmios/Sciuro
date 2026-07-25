@@ -2,6 +2,7 @@ package com.sciuro.feature.wallet.ui
 
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
@@ -35,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.lerp
 import kotlin.math.absoluteValue
@@ -113,6 +117,8 @@ fun WalletScreen(
     
     // Transaction list filter
     var txFilter by rememberSaveable { mutableStateOf("All") }
+
+    val accountPagerState = rememberPagerState(pageCount = { accounts.size })
 
     // Transaction Edit State
     var showEditTransactionDialog by rememberSaveable { mutableStateOf(false) }
@@ -216,27 +222,54 @@ fun WalletScreen(
                         }
                     )
                 } else {
-                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        accounts.forEach { account ->
-                            val containerCol = if (account.color != null) {
-                                try { Color(android.graphics.Color.parseColor(account.color)) } catch(e: Exception) { MaterialTheme.colorScheme.surfaceVariant }
-                            } else {
-                                MaterialTheme.colorScheme.surfaceVariant
-                            }
-                            val contentCol = if (account.color != null) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                            
-                            Card(
-                                modifier = Modifier.fillMaxWidth().clickable { onAccountClick(account.id) },
-                                colors = CardDefaults.cardColors(containerColor = containerCol, contentColor = contentCol),
-                                shape = MaterialTheme.shapes.large
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                    HorizontalPager(
+                        state = accountPagerState,
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 48.dp),
+                        pageSpacing = 12.dp
+                    ) { page ->
+                        val account = accounts[page]
+                        val containerCol = if (account.color != null) {
+                            try { Color(android.graphics.Color.parseColor(account.color)) } catch(e: Exception) { MaterialTheme.colorScheme.surfaceVariant }
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        }
+                        val contentCol = if (account.color != null) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                        
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1.586f)
+                                .graphicsLayer {
+                                    val pageOffset = (accountPagerState.currentPage - page + accountPagerState.currentPageOffsetFraction).absoluteValue.coerceIn(0f, 1f)
+                                    val scale = lerp(0.85f, 1f, 1f - pageOffset)
+                                    scaleX = scale
+                                    scaleY = scale
+                                    alpha = lerp(0.5f, 1f, 1f - pageOffset)
+                                }
+                                .clickable { onAccountClick(account.id) },
+                            shape = RoundedCornerShape(12.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                            colors = CardDefaults.cardColors(containerColor = containerCol, contentColor = contentCol)
+                        ) {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(Color.White.copy(alpha = 0.12f), Color.Transparent),
+                                                start = Offset(0f, 0f),
+                                                end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                                            )
+                                        )
+                                )
+                                Column(
+                                    modifier = Modifier.fillMaxSize().padding(20.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
@@ -244,7 +277,9 @@ fun WalletScreen(
                                             Image(
                                                 bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
                                                 contentDescription = null,
-                                                modifier = Modifier.size(40.dp).clip(CircleShape)
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .clip(CircleShape)
                                             )
                                         } else {
                                             Icon(
@@ -258,7 +293,11 @@ fun WalletScreen(
                                             )
                                         }
                                         Column {
-                                            Text(account.name, style = MaterialTheme.typography.titleMedium)
+                                            Text(
+                                                account.name,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = contentCol
+                                            )
                                             Text(
                                                 when {
                                                     account.isCashWallet -> "Cash Wallet"
@@ -270,12 +309,54 @@ fun WalletScreen(
                                             )
                                         }
                                     }
-                                    Text(
-                                        "RM ${"%.2f".format(account.balance)}",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.Bottom
+                                    ) {
+                                        Text(
+                                            "RM ${"%.2f".format(account.balance)}",
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono,
+                                            color = contentCol
+                                        )
+                                        if (account.qrImagePath != null) {
+                                            val qrBitmap = remember(account.qrImagePath) {
+                                                try { BitmapFactory.decodeFile(account.qrImagePath) } catch (_: Exception) { null }
+                                            }
+                                            if (qrBitmap != null) {
+                                                Image(
+                                                    bitmap = qrBitmap.asImageBitmap(),
+                                                    contentDescription = "QR Code",
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .clip(RoundedCornerShape(4.dp))
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
+                            }
+                        }
+                    }
+                    if (accounts.size > 1) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            repeat(accounts.size) { index ->
+                                val isSelected = accountPagerState.currentPage == index
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 4.dp)
+                                        .size(if (isSelected) 8.dp else 6.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isSelected) Color.White
+                                            else Color.White.copy(alpha = 0.4f)
+                                        )
+                                )
                             }
                         }
                     }
@@ -373,7 +454,8 @@ fun WalletScreen(
                 Text("Recent Transactions", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 16.dp))
 
                     if (selectedAssetType == "Liquid Cash" && accounts.isNotEmpty()) {
-                        val accountTx = allTransactions
+                        val selectedAccountId = accounts[accountPagerState.currentPage].id
+                        val accountTx = allTransactions.filter { it.account_id == selectedAccountId }
                         val accountAdjustments = allAdjustments
 
                         if (true) {

@@ -46,7 +46,8 @@ class WalletViewModel(
                     isCashWallet = it.type.lowercase().contains("cash") || it.type.lowercase().contains("personal"),
                     type = it.type,
                     associatedPackage = it.associated_package,
-                    color = it.color
+                    color = it.color,
+                    qrImagePath = it.qr_image_path
                 )
             }
         }
