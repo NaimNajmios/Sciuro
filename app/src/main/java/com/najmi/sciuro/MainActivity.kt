@@ -4,16 +4,19 @@ import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.*
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -22,6 +25,8 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 import com.najmi.sciuro.core.ui.theme.SciuroMotion
+import com.najmi.sciuro.core.ui.theme.DarkSurfaceSheet
+import com.najmi.sciuro.core.ui.theme.LightSurfaceSheet
 import com.sciuro.feature.dashboard.ui.DashboardScreen
 import com.sciuro.feature.wallet.ui.WalletScreen
 import com.sciuro.feature.kanban.ui.KanbanScreen
@@ -32,7 +37,6 @@ import org.koin.androidx.compose.koinViewModel
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material.icons.filled.Settings
 
 import android.os.Build
 import android.Manifest
@@ -51,6 +55,18 @@ import kotlinx.coroutines.launch
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.withContext
+
+sealed class NavItem(
+    val route: String,
+    val label: String,
+    val icon: ImageVector
+) {
+    data object Dashboard : NavItem("dashboard", "Home", Icons.Filled.Home)
+    data object Kanban : NavItem("kanban", "Tasks", Icons.Filled.Assignment)
+    data object Wallet : NavItem("wallet", "Wallet", Icons.Filled.AccountBalanceWallet)
+    data object Budgets : NavItem("budgets", "Budgets", Icons.Filled.PieChart)
+    data object Settings : NavItem("settings", "Settings", Icons.Filled.Settings)
+}
 
 class MainActivity : FragmentActivity() {
     
@@ -99,11 +115,11 @@ fun SciuroMainScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
     
     val items = listOf(
-        Pair("dashboard", Icons.Filled.Home),
-        Pair("kanban", Icons.Filled.List),
-        Pair("wallet", Icons.Filled.ShoppingCart),
-        Pair("budgets", Icons.Filled.CheckCircle),
-        Pair("settings", Icons.Filled.Settings)
+        NavItem.Dashboard,
+        NavItem.Kanban,
+        NavItem.Wallet,
+        NavItem.Budgets,
+        NavItem.Settings
     )
     
     val context = LocalContext.current
@@ -204,17 +220,21 @@ fun SciuroMainScreen() {
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
             if (onboardingState.isOnboardingComplete) {
-                NavigationBar {
+                val isDarkTheme = isSystemInDarkTheme()
+                NavigationBar(
+                    containerColor = if (isDarkTheme) DarkSurfaceSheet else LightSurfaceSheet,
+                    tonalElevation = 0.dp
+                ) {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
                 
-                items.forEach { screen ->
+                items.forEach { item ->
                     NavigationBarItem(
-                        icon = { Icon(screen.second, contentDescription = screen.first) },
-                        label = { Text(screen.first.replaceFirstChar { it.uppercase() }) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.first } == true,
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = { Text(item.label) },
+                        selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
                         onClick = {
-                            navController.navigate(screen.first) {
+                            navController.navigate(item.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -225,7 +245,7 @@ fun SciuroMainScreen() {
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
