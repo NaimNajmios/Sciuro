@@ -14,13 +14,17 @@ import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.sciuro.feature.budgets.viewmodel.CategoryDrilldownViewModel
+import org.koin.compose.koinInject
+import com.sciuro.core.ledger.config.SettingsProvider
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun CategoryDrilldownScreen(
-    viewModel: CategoryDrilldownViewModel = koinViewModel()
+    viewModel: CategoryDrilldownViewModel = koinViewModel(),
+    settingsProvider: SettingsProvider = koinInject()
 ) {
     val state by viewModel.state.collectAsState()
+    val threshold = settingsProvider.getBudgetWarningThreshold()
 
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
@@ -79,8 +83,8 @@ fun CategoryDrilldownScreen(
                                 if (budget > 0) {
                                     val percent = (cat.spend / budget).toFloat().coerceIn(0f, 1f)
                                     val barColor = when {
-                                        percent >= 0.9f -> com.najmi.sciuro.core.ui.theme.SignalDanger
-                                        percent >= 0.7f -> com.najmi.sciuro.core.ui.theme.SignalWarning
+                                        percent >= threshold -> com.najmi.sciuro.core.ui.theme.SignalDanger
+                                        percent >= threshold - 0.1f -> com.najmi.sciuro.core.ui.theme.SignalWarning
                                         else -> MaterialTheme.colorScheme.primary
                                     }
                                     LinearProgressIndicator(

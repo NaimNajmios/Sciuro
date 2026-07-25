@@ -33,7 +33,7 @@ class BudgetEngineTest {
 
     @AfterTest
     fun tearDown() {
-        database.driver.close()
+        driver.close()
     }
 
     @Test

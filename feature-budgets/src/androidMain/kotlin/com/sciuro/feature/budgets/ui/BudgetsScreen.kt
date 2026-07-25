@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -13,6 +14,8 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 import org.koin.compose.koinInject
 import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.graphics.Color
@@ -155,14 +158,56 @@ fun BudgetsScreen(
                                             editingBudgetId = budget.id
                                             selectedCategoryId = null
                                             amountText = budget.allocatedAmount.roundToInt().toString()
-                                            selectedPeriod = BudgetPeriod.MONTHLY
+                                            selectedPeriod = BudgetPeriod.valueOf(budget.period)
                                             showSheet = true
                                         }
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
-                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text(budget.categoryName, style = MaterialTheme.typography.titleMedium)
-                                            Text("RM ${"%.2f".format(budget.currentSpent)} / RM ${"%.2f".format(budget.allocatedAmount)}", style = MaterialTheme.typography.bodyMedium)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                if (budget.categoryIcon != null) {
+                                                    val iconBg = if (budget.categoryColor != null) {
+                                                        try { Color(android.graphics.Color.parseColor(budget.categoryColor)) } catch (_: Exception) { MaterialTheme.colorScheme.primaryContainer }
+                                                    } else {
+                                                        MaterialTheme.colorScheme.primaryContainer
+                                                    }
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(40.dp)
+                                                            .clip(CircleShape)
+                                                            .background(iconBg),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = budget.categoryIcon,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(20.dp),
+                                                            tint = Color.White
+                                                        )
+                                                    }
+                                                }
+                                                Column {
+                                                    Text(budget.categoryName, style = MaterialTheme.typography.titleMedium)
+                                                    if (budget.rollover) {
+                                                        Text(
+                                                            "Rollover active",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Text(
+                                                "RM ${"%.2f".format(budget.currentSpent)} / RM ${"%.2f".format(budget.allocatedAmount)}",
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
                                         }
                                         Spacer(modifier = Modifier.height(8.dp))
                                         val health = budget.health(settingsProvider.getBudgetWarningThreshold())
@@ -177,6 +222,23 @@ fun BudgetsScreen(
                                             color = progressColor,
                                             trackColor = MaterialTheme.colorScheme.surfaceVariant
                                         )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                "${budget.daysRemaining} days left",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                "RM ${"%.2f".format(budget.dailyAllowance)}/day",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -297,29 +359,22 @@ fun BudgetsScreen(
                         Text("Delete")
                     }
 
+                    val parsedAmount = amountText.toDoubleOrNull()
+                    val isValidAmount = parsedAmount != null && parsedAmount > 0 && parsedAmount <= 100_000
                     SciuroPrimaryButton(
                         text = "Save",
-                        onClick = {
-                            val amt = amountText.toDoubleOrNull() ?: 0.0
-                            if (amt > 0) {
-                                showSaveConfirmation = true
-                            }
-                        },
+                        onClick = { showSaveConfirmation = true },
                         modifier = Modifier.weight(1f),
-                        enabled = amountText.toDoubleOrNull()?.let { it > 0 } == true
+                        enabled = isValidAmount
                     )
                 }
             } else {
+                val parsedAmount = amountText.toDoubleOrNull()
+                val isValidAmount = parsedAmount != null && parsedAmount > 0 && parsedAmount <= 100_000
                 SciuroPrimaryButton(
                     text = "Create Budget",
-                    onClick = {
-                        val amt = amountText.toDoubleOrNull() ?: 0.0
-                        if (amt > 0 && selectedCategoryId != null) {
-                            showCreateConfirmation = true
-                        }
-                    },
-                    enabled = amountText.toDoubleOrNull()?.let { it > 0 } == true
-                            && selectedCategoryId != null
+                    onClick = { showCreateConfirmation = true },
+                    enabled = isValidAmount && selectedCategoryId != null
                 )
             }
         }

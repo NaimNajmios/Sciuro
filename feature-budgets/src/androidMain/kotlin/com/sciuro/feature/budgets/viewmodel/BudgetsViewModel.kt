@@ -8,6 +8,7 @@ import com.sciuro.core.budget.repository.BudgetRepository
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.feature.budgets.model.BudgetUiModel
+import com.sciuro.feature.budgets.model.mapCategoryIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,12 +46,17 @@ class BudgetsViewModel(
     ) { budgets, categories ->
         val categoryMap = categories.associateBy { it.id }
         budgets.map {
+            val cat = categoryMap[it.category_id]
             BudgetUiModel(
                 id = it.id,
-                categoryName = categoryMap[it.category_id]?.name ?: it.category_id,
+                categoryName = cat?.name ?: it.category_id,
                 allocatedAmount = it.allocated_amount,
                 currentSpent = it.current_spent,
-                alertThresholdPercent = it.alert_threshold_percent
+                alertThresholdPercent = it.alert_threshold_percent,
+                categoryIcon = mapCategoryIcon(it.category_id).let { icon -> icon ?: cat?.icon?.let { mapCategoryIcon(it) } },
+                categoryColor = cat?.color,
+                period = it.period,
+                rollover = it.rollover == 1L
             )
         }
     }.stateIn(
