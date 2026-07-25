@@ -65,7 +65,7 @@ object EncryptedExporter {
 
             val promptInfo = BiometricPrompt.PromptInfo.Builder()
                 .setTitle("Authenticate to Export")
-                .setContentText("Verify your identity to export an encrypted backup")
+                .setSubtitle("Verify your identity to export an encrypted backup")
                 .setAllowedAuthenticators(
                     BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
                 )

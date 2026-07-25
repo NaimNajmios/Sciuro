@@ -3,7 +3,7 @@ package com.najmi.sciuro.engine
 import android.content.Context
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
-import com.sciuro.worker.NotificationHelper
+import com.najmi.sciuro.worker.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

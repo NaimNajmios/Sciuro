@@ -69,6 +69,10 @@ import com.najmi.sciuro.core.ui.theme.AccountColorGrey
 import com.najmi.sciuro.core.ui.theme.AccountColorBlack
 import com.najmi.sciuro.core.ui.theme.AccountColorBrown
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.sciuro.feature.wallet.ui.components.AccountCard
+import com.sciuro.feature.wallet.ui.components.AccountPagerDots
+import com.sciuro.feature.wallet.ui.components.InvestmentCard
+import com.sciuro.feature.wallet.ui.components.QrCodeDialog
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -235,137 +239,22 @@ fun WalletScreen(
                         pageSpacing = 12.dp
                     ) { page ->
                         val account = accounts[page]
-                        val containerCol = if (account.color != null) {
-                            try { Color(android.graphics.Color.parseColor(account.color)) } catch(e: Exception) { MaterialTheme.colorScheme.surfaceVariant }
-                        } else {
-                            MaterialTheme.colorScheme.surfaceVariant
-                        }
-                        val contentCol = if (account.color != null) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                        
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1.586f)
-                                .graphicsLayer {
-                                    val pageOffset = (accountPagerState.currentPage - page + accountPagerState.currentPageOffsetFraction).absoluteValue.coerceIn(0f, 1f)
-                                    val scale = lerp(0.85f, 1f, 1f - pageOffset)
-                                    scaleX = scale
-                                    scaleY = scale
-                                    alpha = lerp(0.5f, 1f, 1f - pageOffset)
-                                }
-                                .clickable { onAccountClick(account.id) },
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                            colors = CardDefaults.cardColors(containerColor = containerCol, contentColor = contentCol)
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            brush = Brush.linearGradient(
-                                                colors = listOf(Color.White.copy(alpha = 0.12f), Color.Transparent),
-                                                start = Offset(0f, 0f),
-                                                end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                                            )
-                                        )
-                                )
-                                Column(
-                                    modifier = Modifier.fillMaxSize().padding(20.dp),
-                                    verticalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
-                                        if (associatedApp != null) {
-                                            Image(
-                                                bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .size(40.dp)
-                                                    .clip(CircleShape)
-                                            )
-                                        } else {
-                                            Icon(
-                                                imageVector = when {
-                                                    account.isCashWallet -> Icons.Filled.Wallet
-                                                    account.isEWallet -> Icons.Filled.AccountBalanceWallet
-                                                    else -> Icons.Filled.AccountBalance
-                                                },
-                                                contentDescription = null,
-                                                modifier = Modifier.size(32.dp)
-                                            )
-                                        }
-                                        Column {
-                                            Text(
-                                                account.name,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = contentCol
-                                            )
-                                            Text(
-                                                when {
-                                                    account.isCashWallet -> "Cash Wallet"
-                                                    account.isEWallet -> "E-Wallet"
-                                                    else -> "Bank Account"
-                                                },
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = contentCol.copy(alpha = 0.7f)
-                                            )
-                                        }
-                                    }
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.Bottom
-                                    ) {
-                                        Text(
-                                            "RM ${"%.2f".format(account.balance)}",
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono,
-                                            color = contentCol
-                                        )
-                                        if (account.qrImagePath != null) {
-                                            Icon(
-                                                imageVector = Icons.Filled.QrCodeScanner,
-                                                contentDescription = "View QR Code",
-                                                modifier = Modifier
-                                                    .size(28.dp)
-                                                    .clickable {
-                                                        selectedQrPath = account.qrImagePath
-                                                        showQrDialog = true
-                                                    }
-                                                    .padding(2.dp),
-                                                tint = contentCol.copy(alpha = 0.8f)
-                                            )
-                                        }
-                                    }
-                                }
+                        val pageOffset = (accountPagerState.currentPage - page + accountPagerState.currentPageOffsetFraction).absoluteValue.coerceIn(0f, 1f)
+                        AccountCard(
+                            account = account,
+                            installedApps = installedApps,
+                            pagerOffset = pageOffset,
+                            onAccountClick = onAccountClick,
+                            onQrClick = { path ->
+                                selectedQrPath = path
+                                showQrDialog = true
                             }
-                        }
+                        )
                     }
-                    if (accounts.size > 1) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            repeat(accounts.size) { index ->
-                                val isSelected = accountPagerState.currentPage == index
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 4.dp)
-                                        .size(if (isSelected) 8.dp else 6.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isSelected) Color.White
-                                            else Color.White.copy(alpha = 0.4f)
-                                        )
-                                )
-                            }
-                        }
-                    }
+                    AccountPagerDots(
+                        pageCount = accounts.size,
+                        currentPage = accountPagerState.currentPage
+                    )
                 }
             } else {
                 if (investments.isEmpty()) {
@@ -386,8 +275,9 @@ fun WalletScreen(
                 } else {
                     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         investments.forEach { inv ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth().clickable {
+                            InvestmentCard(
+                                investment = inv,
+                                onClick = {
                                     editingInvestmentId = inv.id
                                     newAssetType = inv.assetType
                                     newAssetSymbol = inv.assetSymbol
@@ -396,37 +286,8 @@ fun WalletScreen(
                                     newAvgBuyPrice = inv.averageBuyPrice.toString()
                                     newAssociatedAccountId = inv.associatedAccountId ?: ""
                                     showAddInvestmentDialog = true
-                                },
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiary, contentColor = MaterialTheme.colorScheme.onTertiary),
-                                shape = MaterialTheme.shapes.large
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = if (inv.assetType == "Gold") Icons.Filled.Toll else Icons.AutoMirrored.Filled.TrendingUp,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(32.dp)
-                                        )
-                                        Column {
-                                            Text(inv.assetSymbol, style = MaterialTheme.typography.titleMedium)
-                                            Text(inv.assetName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.7f))
-                                        }
-                                    }
-                                    val valNow = inv.unitsHeld * inv.averageBuyPrice
-                                    Text(
-                                        "RM ${"%.2f".format(valNow)}",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
-                                    )
                                 }
-                            }
+                            )
                         }
                     }
                 }
@@ -1047,34 +908,9 @@ fun WalletScreen(
     }
 
     if (showQrDialog && selectedQrPath != null) {
-        AlertDialog(
-            onDismissRequest = { showQrDialog = false; selectedQrPath = null },
-            title = { Text("QR Code", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
-            text = {
-                Box(
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val bitmap = remember(selectedQrPath) {
-                        try { BitmapFactory.decodeFile(selectedQrPath) } catch (_: Exception) { null }
-                    }
-                    if (bitmap != null) {
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "QR Code",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
-                    } else {
-                        Text("Unable to load QR image", color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showQrDialog = false; selectedQrPath = null }) {
-                    Text("Close")
-                }
-            }
+        QrCodeDialog(
+            qrPath = selectedQrPath!!,
+            onDismiss = { showQrDialog = false; selectedQrPath = null }
         )
     }
 }

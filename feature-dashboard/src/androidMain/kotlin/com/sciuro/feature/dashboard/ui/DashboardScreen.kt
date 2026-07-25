@@ -2,71 +2,41 @@ package com.sciuro.feature.dashboard.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material.icons.filled.Computer
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocalGroceryStore
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import org.koin.compose.koinInject
 import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.Alignment
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
-import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.HeroFigure
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
-import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
-import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.FastTransactionSheet
 import com.najmi.sciuro.core.ui.components.FastTxOption
-import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
 
-import com.najmi.sciuro.core.ui.components.AdjustmentCard
 import com.najmi.sciuro.core.ui.components.AuditEventDisplay
-import com.najmi.sciuro.core.ui.components.TransactionCard
 import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
 import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
 
-import com.najmi.sciuro.core.ui.theme.IBMPlexMono
+import com.sciuro.feature.dashboard.ui.components.NetPositionBreakdownPanel
+import com.sciuro.feature.dashboard.ui.components.ReviewInboxBanner
+import com.sciuro.feature.dashboard.ui.components.AutoBookedBanner
+import com.sciuro.feature.dashboard.ui.components.DashboardSummaryRow
+import com.sciuro.feature.dashboard.ui.components.AdjustmentBanner
+import com.sciuro.feature.dashboard.ui.components.TransactionHistoryHeader
+import com.sciuro.feature.dashboard.ui.components.TransactionList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -183,75 +153,11 @@ fun DashboardScreen(
                     },
                     chartData = displayChartData,
                     content = {
-                        var isBreakdownExpanded by rememberSaveable { mutableStateOf(false) }
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 8.dp)
-                        ) {
-                            val netPos = state.netPositionBreakdown
-                            
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { isBreakdownExpanded = !isBreakdownExpanded }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Net Position Breakdown",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.9f)
-                                )
-                                Icon(
-                                    imageVector = if (isBreakdownExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                    contentDescription = "Toggle Breakdown",
-                                    tint = Color.White.copy(alpha = 0.9f)
-                                )
-                            }
-                            
-                            androidx.compose.animation.AnimatedVisibility(visible = isBreakdownExpanded) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp, bottom = 16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Cash", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-                                        Text("RM ${"%.2f".format(netPos.cash)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-                                    }
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Investments", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-                                        Text("RM ${"%.2f".format(netPos.investments)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-                                    }
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Debt", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-                                        Text("RM ${"%.2f".format(netPos.debts)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-                                    }
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "${state.accounts.size} accounts tracked",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.6f)
-                                )
-                                if (state.recentAdjustmentCount > 0) {
-                                    Text(
-                                        text = "${state.recentAdjustmentCount} adjustments this week",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.6f)
-                                    )
-                                }
-                            }
-                        }
+                        NetPositionBreakdownPanel(
+                            breakdown = state.netPositionBreakdown,
+                            accountsCount = state.accounts.size,
+                            recentAdjustmentCount = state.recentAdjustmentCount
+                        )
                     }
                 )
             }
@@ -260,208 +166,37 @@ fun DashboardScreen(
                 SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Content inside the sheet
                     Column(
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
-                            .padding(bottom = 80.dp) // Space for FAB
+                            .padding(bottom = 80.dp)
                     ) {
                         if (state.unreviewedTransactionsCount == 0 && state.activeBudgetsCount == 0 && state.allTransactions.isEmpty()) {
                             com.najmi.sciuro.core.ui.components.EmptyStateView(
                                 message = "Nothing gathered yet — once your bank notifications start coming in or you add a manual entry, this is where they'll show up."
                             )
                         } else {
-                            if (state.unreviewedTransactionsCount > 0) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                    )
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(16.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Warning,
-                                            contentDescription = "Review Inbox Warning",
-                                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                        Column {
-                                            Text(
-                                                "Review Inbox",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                                            )
-                                            Text(
-                                                "${state.unreviewedTransactionsCount} items pending your review",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (autoBookedCount > 0) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                                    )
-                                ) {
-                                    Column(modifier = Modifier.padding(12.dp)) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.CheckCircle,
-                                                contentDescription = "Auto-booked Success",
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                            Text(
-                                                "$autoBookedCount auto-booked in last 24h",
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
-                                        if (autoBookedTxs.isNotEmpty()) {
-                                            autoBookedTxs.take(5).forEach { tx ->
-                                                Row(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .padding(vertical = 2.dp),
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Column(modifier = Modifier.weight(1f)) {
-                                                        Text(
-                                                            "${tx.merchant ?: "Unknown"} — RM ${"%.2f".format(tx.amount)}",
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                                                        )
-                                                        Text(
-                                                            tx.direction,
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
-                                                        )
-                                                    }
-                                                    TextButton(
-                                                        onClick = { viewModel.undoAutoConfirm(tx.id) },
-                                                        colors = ButtonDefaults.textButtonColors(
-                                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                                        ),
-                                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                                                    ) {
-                                                        Text("Undo", style = MaterialTheme.typography.labelSmall)
-                                                    }
-                                                }
-                                            }
-                                            if (autoBookedTxs.size > 5) {
-                                                Text(
-                                                    "+${autoBookedTxs.size - 5} more",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                SciuroCard(modifier = Modifier.weight(1f)) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Text("Active Budgets", style = MaterialTheme.typography.titleSmall)
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("${state.activeBudgetsCount}", style = MaterialTheme.typography.headlineSmall)
-                                    }
-                                }
-                                SciuroCard(modifier = Modifier.weight(1f)) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Text(
-                                            "Runway",
-                                            style = MaterialTheme.typography.titleSmall
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            "RM ${"%.0f".format(state.runway)}",
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            color = if (state.runway < 0) com.najmi.sciuro.core.ui.theme.SignalDanger else MaterialTheme.colorScheme.onSurface
-                                        )
-                                        if (!state.hasIncomePattern) {
-                                            Text(
-                                                "based on bills only",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (state.recentAdjustmentCount > 0) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-                                    )
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column {
-                                            Text(
-                                                "Balance Adjustments",
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                                            )
-                                            Text(
-                                                "${state.recentAdjustmentCount} this week",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
-                                            )
-                                        }
-                                        Text(
-                                            "View in Wallet",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
+                            ReviewInboxBanner(unreviewedCount = state.unreviewedTransactionsCount)
                             
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        "Transaction History",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.padding(bottom = 12.dp)
-                                    )
-                                }
-                                PillToggle(
-                                    options = filterOptions,
-                                    selectedOption = typeFilter ?: "All",
-                                    onOptionSelected = { viewModel.setTypeFilter(if (it == "All") null else it) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    fillWidth = true
-                                )
-                            }
+                            AutoBookedBanner(
+                                autoBookedCount = autoBookedCount,
+                                autoBookedTxs = autoBookedTxs,
+                                onUndo = { viewModel.undoAutoConfirm(it) }
+                            )
+
+                            DashboardSummaryRow(
+                                activeBudgetsCount = state.activeBudgetsCount,
+                                runway = state.runway,
+                                hasIncomePattern = state.hasIncomePattern
+                            )
+
+                            AdjustmentBanner(adjustmentCount = state.recentAdjustmentCount)
+                            
+                            TransactionHistoryHeader(
+                                typeFilter = typeFilter,
+                                filterOptions = filterOptions,
+                                onFilterSelected = { viewModel.setTypeFilter(if (it == "All") null else it) }
+                            )
 
                             if (paginatedTransactions.isEmpty()) {
                                 val noMatching = state.allTransactions.isNotEmpty()
@@ -469,82 +204,22 @@ fun DashboardScreen(
                                     message = if (noMatching) "No transactions match the current filter." else "No transactions yet."
                                 )
                             } else {
-                                paginatedTransactions.forEach { tx ->
-                                    val cat = categoryMap[tx.category_id]
-                                    val catColor = cat?.color?.let { parseColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant
-                                    val catIcon = mapCategoryIcon(tx.category_id)
-                                    val isTransfer = tx.category_id == "cat_transfer"
-                                    val statusText = if (tx.is_reviewed == 1L) "Reviewed" else "Swipe right to approve, left to reject"
-
-                                    val cardContent = @Composable {
-                                        TransactionCard(
-                                            merchantName = tx.merchant ?: "Unknown Merchant",
-                                            amount = "RM ${"%.2f".format(tx.amount)}",
-                                            direction = tx.direction,
-                                            statusText = statusText,
-                                            categoryIcon = catIcon,
-                                            categoryColor = catColor,
-                                            isTransfer = isTransfer,
-                                            confidence = tx.confidence,
-                                            extractionMethod = tx.extraction_method,
-                                            onClick = {
-                                                selectedTxForDetail = tx
-                                                showDetailSheet = true
-                                            }
-                                        )
+                                TransactionList(
+                                    transactions = paginatedTransactions,
+                                    categoryMap = categoryMap,
+                                    onTransactionClick = { tx ->
+                                        selectedTxForDetail = tx
+                                        showDetailSheet = true
+                                    },
+                                    onSwipeApprove = { tx ->
+                                        pendingApprovalTxId = tx.id
+                                        selectedAccountIdForApproval = tx.account_id
+                                    },
+                                    onSwipeReject = { tx ->
+                                        viewModel.rejectTransaction(tx.id)
+                                        coroutineScope.launch { snackbarHostState.showSnackbar("Transaction rejected") }
                                     }
-
-                                    if (tx.is_reviewed == 0L) {
-                                        val dismissState = rememberSwipeToDismissBoxState(
-                                            confirmValueChange = {
-                                                when(it) {
-                                                    SwipeToDismissBoxValue.StartToEnd -> {
-                                                        pendingApprovalTxId = tx.id
-                                                        selectedAccountIdForApproval = tx.account_id
-                                                        false
-                                                    }
-                                                    SwipeToDismissBoxValue.EndToStart -> {
-                                                        viewModel.rejectTransaction(tx.id)
-                                                        coroutineScope.launch { snackbarHostState.showSnackbar("Transaction rejected") }
-                                                        true
-                                                    }
-                                                    else -> false
-                                                }
-                                            }
-                                        )
-                                        SwipeToDismissBox(
-                                            state = dismissState,
-                                            backgroundContent = {
-                                                val color = when (dismissState.targetValue) {
-                                                    SwipeToDismissBoxValue.StartToEnd -> com.najmi.sciuro.core.ui.theme.SignalIncome
-                                                    SwipeToDismissBoxValue.EndToStart -> com.najmi.sciuro.core.ui.theme.SignalDanger
-                                                    else -> Color.Transparent
-                                                }
-                                                val icon = when (dismissState.targetValue) {
-                                                    SwipeToDismissBoxValue.StartToEnd -> Icons.Filled.Check
-                                                    SwipeToDismissBoxValue.EndToStart -> Icons.Filled.Delete
-                                                    else -> null
-                                                }
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(bottom = 8.dp)
-                                                        .clip(CardDefaults.shape)
-                                                        .background(color),
-                                                    contentAlignment = if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-                                                ) {
-                                                    if (icon != null) {
-                                            Icon(icon, contentDescription = if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) "Approve" else "Reject", tint = Color.White, modifier = Modifier.padding(horizontal = 20.dp))
-                                                    }
-                                                }
-                                            }
-                                        ) {
-                                            cardContent()
-                                        }
-                                    } else {
-                                        cardContent()
-                                    }
-                                }
+                                )
                             }
                         }
                     }
@@ -752,37 +427,5 @@ fun DashboardScreen(
         )
     }
 }
-
-private fun parseColor(hex: String?): Color? {
-    if (hex == null) return null
-    return try {
-        Color(android.graphics.Color.parseColor(hex))
-    } catch (e: Exception) {
-        null
-    }
-}
-
-private fun mapCategoryIcon(categoryId: String?): ImageVector? {
-    return when (categoryId) {
-        "cat_dining", "cat_exp_1" -> Icons.Filled.Restaurant
-        "cat_groceries", "cat_exp_6" -> Icons.Filled.LocalGroceryStore
-        "cat_transport", "cat_exp_2" -> Icons.Filled.DirectionsCar
-        "cat_utilities", "cat_exp_3" -> Icons.Filled.Home
-        "cat_exp_4" -> Icons.Filled.ShoppingCart
-        "cat_exp_5" -> Icons.Filled.Description
-        "cat_exp_7" -> Icons.Filled.LocalHospital
-        "cat_exp_8" -> Icons.Filled.School
-        "cat_exp_9", "cat_inc_6" -> Icons.Filled.MoreHoriz
-        "cat_inc_1" -> Icons.Filled.AccountBalance
-        "cat_inc_2" -> Icons.Filled.Computer
-        "cat_inc_3" -> Icons.Filled.CardGiftcard
-        "cat_inc_4" -> Icons.AutoMirrored.Filled.TrendingUp
-        "cat_inc_5" -> Icons.Filled.Refresh
-        "cat_transfer" -> Icons.Filled.SwapHoriz
-        else -> null
-    }
-}
-
-
 
 

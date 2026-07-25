@@ -41,6 +41,7 @@ import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.model.DebtType
 import com.sciuro.core.obligations.model.ObligationFrequency
 import com.sciuro.core.ledger.model.Category
+import com.sciuro.feature.kanban.ui.components.KanbanDialogs
 import org.koin.androidx.compose.koinViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -231,128 +232,76 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         }
     }
 
-    taskToReject?.let { task ->
-        SciuroConfirmationDialog(
-            title = "Reject Task",
-            message = "Are you sure you want to reject '${task.title}'?",
-            confirmText = "Reject",
-            isDestructive = true,
-            onConfirm = {
-                viewModel.updateTaskStatus(task.id, TaskStatus.REJECTED, null)
-                taskToReject = null
-                coroutineScope.launch { snackbarHostState.showSnackbar("Task Rejected") }
-            },
-            onDismiss = { taskToReject = null }
-        )
-    }
-
-    debtToDelete?.let { debt ->
-        SciuroConfirmationDialog(
-            title = "Delete Debt",
-            message = "Are you sure you want to delete '${debt.name}'?",
-            confirmText = "Delete",
-            isDestructive = true,
-            onConfirm = {
-                viewModel.deleteDebt(debt.id)
-                debtToDelete = null
-                coroutineScope.launch { snackbarHostState.showSnackbar("Debt deleted") }
-            },
-            onDismiss = { debtToDelete = null }
-        )
-    }
-
-    debtToEdit?.let { debt ->
-        EditDebtSheet(
-            debt = debt,
-            onDismiss = { debtToEdit = null },
-            onEdit = { name, principalAmount, notes ->
-                viewModel.updateDebt(debt.id, name, principalAmount, notes)
-                debtToEdit = null
-                coroutineScope.launch { snackbarHostState.showSnackbar("Debt updated") }
+    KanbanDialogs(
+        taskToReject = taskToReject,
+        onRejectConfirmed = { task ->
+            viewModel.updateTaskStatus(task.id, TaskStatus.REJECTED, null)
+            taskToReject = null
+            coroutineScope.launch { snackbarHostState.showSnackbar("Task Rejected") }
+        },
+        onRejectDismiss = { taskToReject = null },
+        debtToDelete = debtToDelete,
+        onDeleteDebtConfirmed = { debt ->
+            viewModel.deleteDebt(debt.id)
+            debtToDelete = null
+            coroutineScope.launch { snackbarHostState.showSnackbar("Debt deleted") }
+        },
+        onDeleteDebtDismiss = { debtToDelete = null },
+        debtToEdit = debtToEdit,
+        onEditDebtConfirmed = { debt, name, principalAmount, notes ->
+            viewModel.updateDebt(debt.id, name, principalAmount, notes)
+            debtToEdit = null
+            coroutineScope.launch { snackbarHostState.showSnackbar("Debt updated") }
+        },
+        onEditDebtDismiss = { debtToEdit = null },
+        taskToApprove = taskToApprove,
+        onApproveConfirmed = { task, accountId, direction ->
+            viewModel.updateTaskStatus(task.id, TaskStatus.DONE, accountId, direction)
+            taskToApprove = null
+            coroutineScope.launch { snackbarHostState.showSnackbar("Task Approved") }
+        },
+        onApproveDismiss = { taskToApprove = null },
+        paymentBill = paymentBill,
+        onBillPaid = { bill ->
+            viewModel.markBillAsPaid(bill.obligation)
+            paymentBill = null
+            coroutineScope.launch { snackbarHostState.showSnackbar("Bill marked as paid") }
+        },
+        onBillPaymentDismiss = { paymentBill = null },
+        paymentDebt = paymentDebt,
+        paymentAmountText = paymentAmountText,
+        onPaymentAmountChange = { paymentAmountText = it },
+        onDebtPaymentApply = { debt, amt ->
+            viewModel.recordDebtPayment(debt.id, amt)
+            paymentDebt = null
+            paymentAmountText = ""
+            if (debt.remainingBalance - amt <= 0) {
+                autoMarkFinishedDebtId = debt.id
+            } else {
+                coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
             }
-        )
-    }
-
-    taskToApprove?.let { (task, accountId, direction) ->
-        SciuroConfirmationDialog(
-            title = "Approve Task",
-            message = "Are you sure you want to approve '${task.title}'?",
-            confirmText = "Approve",
-            onConfirm = {
-                viewModel.updateTaskStatus(task.id, TaskStatus.DONE, accountId, direction)
-                taskToApprove = null
-                coroutineScope.launch { snackbarHostState.showSnackbar("Task Approved") }
-            },
-            onDismiss = { taskToApprove = null }
-        )
-    }
-
-    paymentBill?.let { bill ->
-        SciuroBottomSheet(onDismissRequest = { paymentBill = null }) {
-            Text("Mark Bill as Paid", style = MaterialTheme.typography.headlineSmall)
-            Text("${bill.name} — RM ${"%.2f".format(bill.amount)}", style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-            SciuroPrimaryButton(
-                text = "Confirm Payment",
-                onClick = {
-                    viewModel.markBillAsPaid(bill.obligation)
-                    paymentBill = null
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Bill marked as paid") }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-
-    paymentDebt?.let { debt ->
-        SciuroBottomSheet(onDismissRequest = { paymentDebt = null }) {
-            Text("Record Payment", style = MaterialTheme.typography.headlineSmall)
-            Text("${debt.name} — RM ${"%.2f".format(debt.remainingBalance)} remaining", style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.height(12.dp))
-            SciuroTextField(
-                value = paymentAmountText,
-                onValueChange = { paymentAmountText = it },
-                label = "Payment Amount (RM)",
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            SciuroPrimaryButton(
-                text = "Apply Payment",
-                onClick = {
-                    val amt = paymentAmountText.toDoubleOrNull() ?: 0.0
-                    if (amt > 0) {
-                        viewModel.recordDebtPayment(debt.id, amt)
-                        paymentDebt = null
-                        paymentAmountText = ""
-                        if (debt.remainingBalance - amt <= 0) {
-                            autoMarkFinishedDebtId = debt.id
-                        } else {
-                            coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
-                        }
-                    }
-                },
-                enabled = (paymentAmountText.toDoubleOrNull() ?: 0.0) > 0,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-
-    autoMarkFinishedDebtId?.let { debtId ->
-        SciuroConfirmationDialog(
-            title = "Mark Debt as Finished",
-            message = "This payment fully covers the remaining balance. Would you like to mark this debt as finished?",
-            confirmText = "Mark Finished",
-            isDestructive = false,
-            onConfirm = {
-                viewModel.markDebtAsFinished(debtId)
-                autoMarkFinishedDebtId = null
-                coroutineScope.launch { snackbarHostState.showSnackbar("Debt marked as finished") }
-            },
-            onDismiss = {
-                autoMarkFinishedDebtId = null
-            }
-        )
-    }
+        },
+        onDebtPaymentDismiss = { paymentDebt = null },
+        autoMarkFinishedDebtId = autoMarkFinishedDebtId,
+        onMarkFinishedConfirmed = { debtId ->
+            viewModel.markDebtAsFinished(debtId)
+            autoMarkFinishedDebtId = null
+            coroutineScope.launch { snackbarHostState.showSnackbar("Debt marked as finished") }
+        },
+        onMarkFinishedDismiss = { autoMarkFinishedDebtId = null },
+        createBillAction = createBillAction,
+        onCreateBillConfirmed = {
+            createBillAction?.invoke()
+            createBillAction = null
+        },
+        onCreateBillDismiss = { createBillAction = null },
+        createDebtAction = createDebtAction,
+        onCreateDebtConfirmed = {
+            createDebtAction?.invoke()
+            createDebtAction = null
+        },
+        onCreateDebtDismiss = { createDebtAction = null }
+    )
 
     if (showAddSheet) {
         when (selectedTab) {
@@ -955,7 +904,7 @@ private fun AddDebtSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditDebtSheet(
+internal fun EditDebtSheet(
     debt: DebtTask,
     onDismiss: () -> Unit,
     onEdit: (name: String, principalAmount: Double, notes: String?) -> Unit
