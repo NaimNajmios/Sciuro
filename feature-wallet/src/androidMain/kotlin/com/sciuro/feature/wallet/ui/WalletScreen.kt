@@ -73,6 +73,8 @@ data class AppInfo(
     val icon: Drawable
 )
 
+private var cachedInstalledApps: List<AppInfo>? = null
+
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun WalletScreen(
@@ -123,17 +125,22 @@ fun WalletScreen(
     var installedApps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            val pm = context.packageManager
-            val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-            val appList = packages.mapNotNull { info ->
-                if (pm.getLaunchIntentForPackage(info.packageName) != null) {
-                    val appName = pm.getApplicationLabel(info).toString()
-                    val icon = pm.getApplicationIcon(info)
-                    AppInfo(appName, info.packageName, icon)
-                } else null
-            }.sortedBy { it.name }
-            installedApps = appList
+        if (cachedInstalledApps == null) {
+            withContext(Dispatchers.IO) {
+                val pm = context.packageManager
+                val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+                val appList = packages.mapNotNull { info ->
+                    if (pm.getLaunchIntentForPackage(info.packageName) != null) {
+                        val appName = pm.getApplicationLabel(info).toString()
+                        val icon = pm.getApplicationIcon(info)
+                        AppInfo(appName, info.packageName, icon)
+                    } else null
+                }.sortedBy { it.name }
+                cachedInstalledApps = appList
+                installedApps = appList
+            }
+        } else {
+            installedApps = cachedInstalledApps!!
         }
     }
     
@@ -145,9 +152,6 @@ fun WalletScreen(
     val allTransactions by viewModel.allTransactions.collectAsState()
     val allAdjustments by viewModel.allAdjustments.collectAsState()
     
-    val accountPagerState = rememberPagerState(pageCount = { maxOf(1, accounts.size) })
-    val investmentPagerState = rememberPagerState(pageCount = { maxOf(1, investments.size) })
-
     val pullToRefreshState = rememberPullToRefreshState()
 
     if (pullToRefreshState.isRefreshing) {
@@ -212,13 +216,8 @@ fun WalletScreen(
                         }
                     )
                 } else {
-                    HorizontalPager(
-                        state = accountPagerState,
-                        contentPadding = PaddingValues(horizontal = 32.dp),
-                        pageSpacing = 16.dp
-                    ) { page ->
-                        val account = accounts.getOrNull(page)
-                        if (account != null) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        accounts.forEach { account ->
                             val containerCol = if (account.color != null) {
                                 try { Color(android.graphics.Color.parseColor(account.color)) } catch(e: Exception) { MaterialTheme.colorScheme.surfaceVariant }
                             } else {
@@ -227,29 +226,25 @@ fun WalletScreen(
                             val contentCol = if (account.color != null) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             
                             Card(
-                                modifier = Modifier.fillMaxWidth().height(180.dp),
+                                modifier = Modifier.fillMaxWidth().clickable { onAccountClick(account.id) },
                                 colors = CardDefaults.cardColors(containerColor = containerCol, contentColor = contentCol),
-                                shape = MaterialTheme.shapes.extraLarge
+                                shape = MaterialTheme.shapes.large
                             ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(24.dp)
-                                        .clickable { onAccountClick(account.id) },
-                                    verticalArrangement = Arrangement.SpaceBetween
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(account.name, style = MaterialTheme.typography.titleLarge)
                                         val associatedApp = installedApps.find { it.packageName == account.associatedPackage }
                                         if (associatedApp != null) {
                                             Image(
                                                 bitmap = associatedApp.icon.toBitmap().asImageBitmap(),
                                                 contentDescription = null,
-                                                modifier = Modifier.size(32.dp).clip(CircleShape)
+                                                modifier = Modifier.size(40.dp).clip(CircleShape)
                                             )
                                         } else {
                                             Icon(
@@ -258,30 +253,28 @@ fun WalletScreen(
                                                     account.isEWallet -> Icons.Filled.AccountBalanceWallet
                                                     else -> Icons.Filled.AccountBalance
                                                 },
-                                                contentDescription = null
+                                                contentDescription = null,
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                        }
+                                        Column {
+                                            Text(account.name, style = MaterialTheme.typography.titleMedium)
+                                            Text(
+                                                when {
+                                                    account.isCashWallet -> "Cash Wallet"
+                                                    account.isEWallet -> "E-Wallet"
+                                                    else -> "Bank Account"
+                                                },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = contentCol.copy(alpha = 0.7f)
                                             )
                                         }
                                     }
                                     Text(
                                         "RM ${"%.2f".format(account.balance)}",
-                                        style = MaterialTheme.typography.headlineMedium,
+                                        style = MaterialTheme.typography.titleMedium,
                                         fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
                                     )
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            when {
-                                                account.isCashWallet -> "Cash Wallet"
-                                                account.isEWallet -> "E-Wallet"
-                                                else -> "Bank Account"
-                                            },
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = contentCol.copy(alpha = 0.7f)
-                                        )
-                                    }
                                 }
                             }
                         }
@@ -304,15 +297,10 @@ fun WalletScreen(
                         }
                     )
                 } else {
-                    HorizontalPager(
-                        state = investmentPagerState,
-                        contentPadding = PaddingValues(horizontal = 32.dp),
-                        pageSpacing = 16.dp
-                    ) { page ->
-                        val inv = investments.getOrNull(page)
-                        if (inv != null) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        investments.forEach { inv ->
                             Card(
-                                modifier = Modifier.fillMaxWidth().height(180.dp).clickable {
+                                modifier = Modifier.fillMaxWidth().clickable {
                                     editingInvestmentId = inv.id
                                     newAssetType = inv.assetType
                                     newAssetSymbol = inv.assetSymbol
@@ -323,27 +311,31 @@ fun WalletScreen(
                                     showAddInvestmentDialog = true
                                 },
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiary, contentColor = MaterialTheme.colorScheme.onTertiary),
-                                shape = MaterialTheme.shapes.extraLarge
+                                shape = MaterialTheme.shapes.large
                             ) {
-                                Column(
-                                    modifier = Modifier.fillMaxSize().padding(24.dp),
-                                    verticalArrangement = Arrangement.SpaceBetween
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(inv.assetSymbol, style = MaterialTheme.typography.titleLarge)
                                         Icon(
                                             imageVector = if (inv.assetType == "Gold") Icons.Filled.Toll else Icons.AutoMirrored.Filled.TrendingUp,
-                                            contentDescription = null
+                                            contentDescription = null,
+                                            modifier = Modifier.size(32.dp)
                                         )
+                                        Column {
+                                            Text(inv.assetSymbol, style = MaterialTheme.typography.titleMedium)
+                                            Text(inv.assetName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.7f))
+                                        }
                                     }
                                     val valNow = inv.unitsHeld * inv.averageBuyPrice
                                     Text(
                                         "RM ${"%.2f".format(valNow)}",
-                                        style = MaterialTheme.typography.headlineMedium,
+                                        style = MaterialTheme.typography.titleMedium,
                                         fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono
                                     )
                                 }
@@ -381,13 +373,10 @@ fun WalletScreen(
                 Text("Recent Transactions", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 16.dp))
 
                     if (selectedAssetType == "Liquid Cash" && accounts.isNotEmpty()) {
-                        val currentAccountPage = accountPagerState.currentPage
-                        val activeAccount = accounts.getOrNull(currentAccountPage)
-                        val accountTx = if (activeAccount != null) allTransactions.filter { it.account_id == activeAccount.id } else emptyList()
+                        val accountTx = allTransactions
+                        val accountAdjustments = allAdjustments
 
-                        val accountAdjustments = if (activeAccount != null) allAdjustments.filter { it.account_id == activeAccount.id } else emptyList()
-
-                        if (activeAccount != null) {
+                        if (true) {
                             if (txFilter == "Adjustments") {
                                 if (accountAdjustments.isEmpty()) {
                                     com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No adjustments for this account.")
