@@ -89,8 +89,6 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
 
     // Confirmation dialog states
     var taskToApprove by remember { mutableStateOf<Triple<KanbanTask, String?, String>?>(null) }
-    var billToConfirmPayment by remember { mutableStateOf<BillTask?>(null) }
-    var debtToApplyPayment by remember { mutableStateOf<Triple<DebtTask, Double, () -> Unit>?>(null) }
     var debtToDelete by remember { mutableStateOf<DebtTask?>(null) }
     var debtToEdit by remember { mutableStateOf<DebtTask?>(null) }
     var createBillAction by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -155,27 +153,24 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceAround
                         ) {
                             when (selectedTab) {
                                 "Bills" -> {
-                                    Text("Overdue: $billOverdue", style = MaterialTheme.typography.bodySmall,
-                                        color = if (billOverdue > 0) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.7f))
-                                    Text("Due Soon: $billDueSoon", style = MaterialTheme.typography.bodySmall,
-                                        color = if (billDueSoon > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = "Overdue", value = billOverdue.toString(), color = if (billOverdue > 0) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = "Due Soon", value = billDueSoon.toString(), color = if (billDueSoon > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f))
                                 }
                                 "Debts" -> {
                                     val totalOwe = remember(debtTasks) { debtTasks.filter { it.direction == com.sciuro.core.debt.model.DebtDirection.I_OWE }.sumOf { it.remainingBalance } }
                                     val totalOwed = remember(debtTasks) { debtTasks.filter { it.direction == com.sciuro.core.debt.model.DebtDirection.OWED_TO_ME }.sumOf { it.remainingBalance } }
-                                    Text("I Owe: RM ${"%.0f".format(totalOwe)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
-                                    Text("Owed: RM ${"%.0f".format(totalOwed)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = "I Owe", value = "RM ${"%.0f".format(totalOwe)}", color = Color.White.copy(alpha = 0.9f))
+                                    HeroMetric(label = "Owed To Me", value = "RM ${"%.0f".format(totalOwed)}", color = Color.White.copy(alpha = 0.9f))
                                 }
                                 else -> {
-                                    Text("Upcoming: $todoCount", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
-                                    Text("Due: $inProgressCount", style = MaterialTheme.typography.bodySmall,
-                                        color = if (inProgressCount > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f))
-                                    Text("Settled: $doneCount", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = "To Do", value = todoCount.toString(), color = Color.White.copy(alpha = 0.9f))
+                                    HeroMetric(label = "In Progress", value = inProgressCount.toString(), color = if (inProgressCount > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = "Done", value = doneCount.toString(), color = Color.White.copy(alpha = 0.7f))
                                 }
                             }
                         }
@@ -308,26 +303,13 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
             SciuroPrimaryButton(
                 text = "Confirm Payment",
                 onClick = {
-                    billToConfirmPayment = bill
+                    viewModel.markBillAsPaid(bill.obligation)
+                    paymentBill = null
+                    coroutineScope.launch { snackbarHostState.showSnackbar("Bill marked as paid") }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
         }
-    }
-
-    billToConfirmPayment?.let { bill ->
-        SciuroConfirmationDialog(
-            title = "Confirm Payment",
-            message = "Are you sure you want to confirm payment for ${bill.name}?",
-            confirmText = "Confirm",
-            onConfirm = {
-                viewModel.markBillAsPaid(bill.obligation)
-                billToConfirmPayment = null
-                paymentBill = null
-                coroutineScope.launch { snackbarHostState.showSnackbar("Bill marked as paid") }
-            },
-            onDismiss = { billToConfirmPayment = null }
-        )
     }
 
     paymentDebt?.let { debt ->
@@ -347,15 +329,13 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 onClick = {
                     val amt = paymentAmountText.toDoubleOrNull() ?: 0.0
                     if (amt > 0) {
-                        debtToApplyPayment = Triple(debt, amt) {
-                            viewModel.recordDebtPayment(debt.id, amt)
-                            paymentDebt = null
-                            paymentAmountText = ""
-                            if (debt.remainingBalance - amt <= 0) {
-                                autoMarkFinishedDebtId = debt.id
-                            } else {
-                                coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
-                            }
+                        viewModel.recordDebtPayment(debt.id, amt)
+                        paymentDebt = null
+                        paymentAmountText = ""
+                        if (debt.remainingBalance - amt <= 0) {
+                            autoMarkFinishedDebtId = debt.id
+                        } else {
+                            coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
                         }
                     }
                 },
@@ -363,19 +343,6 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 modifier = Modifier.fillMaxWidth()
             )
         }
-    }
-
-    debtToApplyPayment?.let { (debt, amount, onApply) ->
-        SciuroConfirmationDialog(
-            title = "Apply Payment",
-            message = "Are you sure you want to apply a payment of RM ${"%.2f".format(amount)} to ${debt.name}?",
-            confirmText = "Apply",
-            onConfirm = {
-                onApply()
-                debtToApplyPayment = null
-            },
-            onDismiss = { debtToApplyPayment = null }
-        )
     }
 
     autoMarkFinishedDebtId?.let { debtId ->
@@ -496,18 +463,18 @@ private fun BillsColumn(
         val upcomingBills = bills.filter { it.status == BillStatus.UPCOMING }
 
         if (bills.isEmpty()) {
-            EmptyStateView(message = "No bills or subscriptions yet. They will appear once detected from recurring transactions.")
+            EmptyStateView(message = "No bills or subscriptions found.\nTap + to add one manually.")
         } else {
             if (overdueBills.isNotEmpty()) {
-                Text("Overdue", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
+                Text("Overdue", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                 overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
             if (dueSoonBills.isNotEmpty()) {
-                Text("Due Soon", style = MaterialTheme.typography.labelLarge, color = com.najmi.sciuro.core.ui.theme.SignalWarning)
+                Text("Due Soon", style = MaterialTheme.typography.titleMedium, color = com.najmi.sciuro.core.ui.theme.SignalWarning, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                 dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
             if (upcomingBills.isNotEmpty()) {
-                Text("Upcoming", style = MaterialTheme.typography.labelLarge)
+                Text("Upcoming", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                 upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
         }
@@ -561,7 +528,7 @@ private fun DebtsColumn(
         val activeDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.ACTIVE }
 
         if (activeDebts.isEmpty()) {
-            EmptyStateView(message = "No active debts.")
+            EmptyStateView(message = "No active debts.\nTap + to add a new debt.")
         } else {
             val noMotion = reducedMotion()
             activeDebts.forEach { debt ->
@@ -659,42 +626,49 @@ fun KanbanTaskCard(
     }
     var accountDropdownExpanded by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (task.accountId == null) MaterialTheme.colorScheme.errorContainer
-                             else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+    SciuroCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = task.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (task.accountId == null) MaterialTheme.colorScheme.onErrorContainer else Color.Unspecified
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = task.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (task.accountId == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (task.accountId == null) {
-                    Icon(
-                        imageVector = Icons.Filled.Warning,
-                        contentDescription = "Unassigned Account",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+            if (task.accountId == null) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Warning,
+                            contentDescription = "Unassigned Account",
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            "Needs an account assignment",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = task.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (task.title.startsWith("Review Transaction")) {
                 PillToggle(
@@ -704,7 +678,7 @@ fun KanbanTaskCard(
                         selectedDirection = if (label == "Expense") "OUTFLOW" else "INFLOW"
                     },
                     fillWidth = true,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
                 )
             }
 
@@ -1037,3 +1011,10 @@ private fun EditDebtSheet(
     }
 }
 
+@Composable
+private fun HeroMetric(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleMedium, color = color, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.7f))
+    }
+}

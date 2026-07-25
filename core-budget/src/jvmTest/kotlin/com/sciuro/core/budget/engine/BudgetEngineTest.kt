@@ -12,7 +12,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import org.sqlite.SQLiteDataSource
+import app.cash.sqldelight.driver.jdbc.JdbcDriver
+import com.sciuro.core.ledger.engine.TransactionMatchingEngine
 
 class BudgetEngineTest {
 
@@ -23,13 +24,11 @@ class BudgetEngineTest {
 
     @BeforeTest
     fun setUp() {
-        val dataSource = SQLiteDataSource()
-        dataSource.setUrl("jdbc:sqlite::memory:")
-        driver = app.cash.sqldelight.driver.jdbc.JdbcDrivers.fromDataSource(dataSource)
+        driver = JdbcDriver("jdbc:sqlite::memory:")
         SciuroDatabase.Schema.create(driver)
         database = SciuroDatabase(driver)
         eventBus = DomainEventBus()
-        engine = BudgetEngine(database, eventBus)
+        engine = BudgetEngine(database, eventBus, TransactionMatchingEngine(database))
     }
 
     @AfterTest
@@ -224,7 +223,7 @@ class BudgetEngineTest {
 
         engine.processBudgets()
 
-        val event = eventBus.events.firstOrNull()
+        val event = kotlinx.coroutines.withTimeoutOrNull(100) { eventBus.events.first() }
         assertEquals(null, event)
     }
 
