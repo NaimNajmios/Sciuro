@@ -58,7 +58,16 @@ fun HeroPanel(
                 )
             }
 
-            if (toggleOptions.isNotEmpty()) {
+        }
+
+        if (toggleOptions.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.Start
+            ) {
                 PillToggle(
                     options = toggleOptions,
                     selectedOption = selectedToggle,

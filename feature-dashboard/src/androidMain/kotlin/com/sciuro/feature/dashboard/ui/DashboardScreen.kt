@@ -394,30 +394,30 @@ fun DashboardScreen(
                                 }
                             }
                             
-                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 8.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    "Transaction History",
-                                                    style = MaterialTheme.typography.titleMedium
-                                                )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                            ) {
+                                Text(
+                                    "Transaction History",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
 
-                                                LazyRow(
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                ) {
-                                                    items(filterOptions) { filter ->
-                                                        FilterChip(
-                                                            selected = selectedTypeFilter == filter,
-                                                            onClick = { selectedTypeFilter = filter },
-                                                            label = { Text(filter) }
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    items(filterOptions) { filter ->
+                                        FilterChip(
+                                            selected = selectedTypeFilter == filter,
+                                            onClick = { selectedTypeFilter = filter },
+                                            label = { Text(filter) }
+                                        )
+                                    }
+                                }
+                            }
 
                             if (filteredTransactions.isEmpty()) {
                                 val noMatching = state.allTransactions.isNotEmpty()
