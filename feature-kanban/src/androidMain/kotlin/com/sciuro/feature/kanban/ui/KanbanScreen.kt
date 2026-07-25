@@ -16,6 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.PillToggle
@@ -88,6 +91,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     var taskToApprove by remember { mutableStateOf<Triple<KanbanTask, String?, String>?>(null) }
     var billToConfirmPayment by remember { mutableStateOf<BillTask?>(null) }
     var debtToApplyPayment by remember { mutableStateOf<Triple<DebtTask, Double, () -> Unit>?>(null) }
+    var debtToDelete by remember { mutableStateOf<DebtTask?>(null) }
+    var debtToEdit by remember { mutableStateOf<DebtTask?>(null) }
     var createBillAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var createDebtAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -201,7 +206,9 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         "Debts" -> DebtsColumn(
                             debtTasks = debtTasks,
                             recentlySettledIds = recentlySettledIds,
-                            onRecordPayment = { paymentDebt = it }
+                            onRecordPayment = { paymentDebt = it },
+                            onEditDebt = { debtToEdit = it },
+                            onDeleteDebt = { debtToDelete = it }
                         )
                         else -> ReviewColumn(
                             tasks = filteredTasks,
@@ -249,6 +256,33 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 coroutineScope.launch { snackbarHostState.showSnackbar("Task Rejected") }
             },
             onDismiss = { taskToReject = null }
+        )
+    }
+
+    debtToDelete?.let { debt ->
+        SciuroConfirmationDialog(
+            title = "Delete Debt",
+            message = "Are you sure you want to delete '${debt.name}'?",
+            confirmText = "Delete",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.deleteDebt(debt.id)
+                debtToDelete = null
+                coroutineScope.launch { snackbarHostState.showSnackbar("Debt deleted") }
+            },
+            onDismiss = { debtToDelete = null }
+        )
+    }
+
+    debtToEdit?.let { debt ->
+        EditDebtSheet(
+            debt = debt,
+            onDismiss = { debtToEdit = null },
+            onEdit = { name, principalAmount, notes ->
+                viewModel.updateDebt(debt.id, name, principalAmount, notes)
+                debtToEdit = null
+                coroutineScope.launch { snackbarHostState.showSnackbar("Debt updated") }
+            }
         )
     }
 
@@ -519,7 +553,9 @@ private fun BillCard(
 private fun DebtsColumn(
     debtTasks: List<DebtTask>,
     recentlySettledIds: List<String>,
-    onRecordPayment: (DebtTask) -> Unit
+    onRecordPayment: (DebtTask) -> Unit,
+    onEditDebt: (DebtTask) -> Unit,
+    onDeleteDebt: (DebtTask) -> Unit
 ) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val activeDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.ACTIVE }
@@ -548,7 +584,36 @@ private fun DebtsColumn(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            Text("RM ${"%.2f".format(debt.remainingBalance)}", style = MaterialTheme.typography.titleMedium)
+                            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                Text("RM ${"%.2f".format(debt.remainingBalance)}", style = MaterialTheme.typography.titleMedium)
+                                var expanded by remember { mutableStateOf(false) }
+                                Box {
+                                    IconButton(onClick = { expanded = true }) {
+                                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "More Options")
+                                    }
+                                    DropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text("Edit") },
+                                            onClick = {
+                                                expanded = false
+                                                onEditDebt(debt)
+                                            },
+                                            leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                            onClick = {
+                                                expanded = false
+                                                onDeleteDebt(debt)
+                                            },
+                                            leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -921,3 +986,54 @@ private fun AddDebtSheet(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditDebtSheet(
+    debt: DebtTask,
+    onDismiss: () -> Unit,
+    onEdit: (name: String, principalAmount: Double, notes: String?) -> Unit
+) {
+    var name by remember { mutableStateOf(debt.name) }
+    var amountText by remember { mutableStateOf(debt.debt.principalAmount.toString()) }
+    var notes by remember { mutableStateOf(debt.debt.notes ?: "") }
+
+    SciuroBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Text("Edit Debt", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SciuroTextField(value = name, onValueChange = { name = it }, label = "Debt Name")
+
+            Spacer(modifier = Modifier.height(8.dp))
+            SciuroTextField(
+                value = amountText,
+                onValueChange = { amountText = it },
+                label = "Principal Amount (RM)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            SciuroTextField(value = notes, onValueChange = { notes = it }, label = "Notes (Optional)")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SciuroPrimaryButton(
+                text = "Save Changes",
+                onClick = {
+                    onEdit(
+                        name,
+                        amountText.toDouble(),
+                        notes.ifBlank { null }
+                    )
+                },
+                enabled = name.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+

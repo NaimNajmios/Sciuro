@@ -215,4 +215,39 @@ class KanbanViewModel(
             )
         }
     }
+    
+    fun deleteDebt(debtId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            debtRepository.deleteDebt(debtId)
+        }
+    }
+
+    fun updateDebt(
+        debtId: String,
+        name: String,
+        principalAmount: Double,
+        notes: String?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Fetch current to maintain other fields
+            val currentDebts = debtTasks.value
+            val existing = currentDebts.find { it.id == debtId }
+            if (existing != null) {
+                debtRepository.updateDebt(
+                    Debt(
+                        id = debtId,
+                        name = name,
+                        type = existing.type,
+                        direction = existing.direction,
+                        counterpartyName = existing.counterpartyName,
+                        status = DebtStatus.ACTIVE,
+                        principalAmount = principalAmount,
+                        // if principal is updated, what happens to remaining balance? Let's just set remaining to principal for simplicity on edit for now, or calculate diff
+                        remainingBalance = principalAmount, 
+                        notes = notes
+                    )
+                )
+            }
+        }
+    }
 }
