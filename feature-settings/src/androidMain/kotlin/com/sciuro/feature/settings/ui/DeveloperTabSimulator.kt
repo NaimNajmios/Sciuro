@@ -31,6 +31,7 @@ fun DeveloperTabSimulator(
 
     val batchRunning by viewModel.batchRunning.collectAsState()
     val batchProgress by viewModel.batchProgress.collectAsState()
+    val batchProgressFraction by viewModel.batchProgressFraction.collectAsState()
 
     val templates = remember(selectedPackage) {
         if (selectedPackage.isNotBlank()) FixtureLibrary.fixturesForPackage(selectedPackage)
@@ -201,7 +202,10 @@ fun DeveloperTabSimulator(
                     }
                     if (batchProgress.isNotBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        LinearProgressIndicator(
+                            progress = { batchProgressFraction },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             batchProgress,

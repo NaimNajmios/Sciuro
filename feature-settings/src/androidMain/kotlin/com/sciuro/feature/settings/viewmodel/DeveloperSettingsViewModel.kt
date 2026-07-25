@@ -2,15 +2,18 @@ package com.sciuro.feature.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
 import com.sciuro.core.ledger.db.Raw_event_staging
+import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.parsing.engine.SimulationEngine
 import com.sciuro.core.parsing.engine.SimulationResult
 import com.sciuro.core.parsing.fixture.FixtureLibrary
+import com.sciuro.core.parsing.metrics.ParserHealthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +29,10 @@ class DeveloperSettingsViewModel(
     private val notificationSourceAdapter: NotificationSourceAdapter,
     private val transactionRepository: TransactionRepository,
     private val simulationEngine: SimulationEngine,
-    private val rawEventRepository: RawEventRepository
+    private val rawEventRepository: RawEventRepository,
+    val ingestionAllowlist: MutableIngestionAllowlist,
+    val parserHealthRepository: ParserHealthRepository,
+    val database: SciuroDatabase
 ) : ViewModel() {
 
     private val _simulationResult = MutableStateFlow<SimulationResult?>(null)
@@ -51,24 +57,38 @@ class DeveloperSettingsViewModel(
     private val _batchProgress = MutableStateFlow("")
     val batchProgress: StateFlow<String> = _batchProgress.asStateFlow()
 
+    private val _batchProgressFraction = MutableStateFlow(0f)
+    val batchProgressFraction: StateFlow<Float> = _batchProgressFraction.asStateFlow()
+
+    private val _uiError = MutableStateFlow<String?>(null)
+    val uiError: StateFlow<String?> = _uiError.asStateFlow()
+
     init {
         refreshCounts()
     }
 
+    fun clearUiError() {
+        _uiError.value = null
+    }
+
     fun simulateNotification(title: String, text: String, packageName: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val rawEvent = RawEvent(
-                id = UUID.randomUUID().toString(),
-                sourceType = SourceType.NOTIFICATION,
-                sourcePackageOrAddress = packageName,
-                title = title,
-                text = text,
-                timestamp = System.currentTimeMillis()
-            )
-            _simulationResult.value = null
-            val result = simulationEngine.simulate(rawEvent)
-            _simulationResult.value = result
-            notificationSourceAdapter.emitNotification(rawEvent)
+            try {
+                val rawEvent = RawEvent(
+                    id = UUID.randomUUID().toString(),
+                    sourceType = SourceType.NOTIFICATION,
+                    sourcePackageOrAddress = packageName,
+                    title = title,
+                    text = text,
+                    timestamp = System.currentTimeMillis()
+                )
+                _simulationResult.value = null
+                val result = simulationEngine.simulate(rawEvent)
+                _simulationResult.value = result
+                notificationSourceAdapter.emitNotification(rawEvent)
+            } catch (e: Exception) {
+                _uiError.value = e.message ?: "Simulation failed"
+            }
         }
     }
 
@@ -78,51 +98,71 @@ class DeveloperSettingsViewModel(
 
     fun refreshCounts() {
         viewModelScope.launch(Dispatchers.IO) {
-            _pendingCount.value = rawEventRepository.countPending()
-            _deadLetterCount.value = rawEventRepository.countDeadLetter()
-            _lastCapturedAt.value = rawEventRepository.getLastCapturedAt()
+            try {
+                _pendingCount.value = rawEventRepository.countPending()
+                _deadLetterCount.value = rawEventRepository.countDeadLetter()
+                _lastCapturedAt.value = rawEventRepository.getLastCapturedAt()
+            } catch (e: Exception) {
+                _uiError.value = e.message ?: "Failed to refresh counts"
+            }
         }
     }
 
     fun clearInbox() {
         viewModelScope.launch(Dispatchers.IO) {
-            val transactions = transactionRepository.observeUnreviewedTransactions().first()
-            transactions.forEach {
-                transactionRepository.deleteTransaction(it.id)
+            try {
+                val transactions = transactionRepository.observeUnreviewedTransactions().first()
+                transactions.forEach {
+                    transactionRepository.deleteTransaction(it.id)
+                }
+            } catch (e: Exception) {
+                _uiError.value = e.message ?: "Failed to clear inbox"
             }
         }
     }
 
     fun resendDeadLetter(rawEventId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            rawEventRepository.requeueRawEvent(rawEventId)
-            refreshCounts()
+            try {
+                rawEventRepository.requeueRawEvent(rawEventId)
+                refreshCounts()
+            } catch (e: Exception) {
+                _uiError.value = e.message ?: "Failed to resend dead letter"
+            }
         }
     }
 
     fun runAllFixtures(delayMs: Long = 500L, forceLlm: Boolean = false) {
         if (_batchRunning.value) return
         viewModelScope.launch(Dispatchers.IO) {
-            _batchRunning.value = true
-            _batchProgress.value = "Starting..."
-            val fixtures = FixtureLibrary.fixtures
-            fixtures.forEachIndexed { index, fixture ->
-                _batchProgress.value = "${index + 1}/${fixtures.size}: ${fixture.description}"
-                val rawEvent = RawEvent(
-                    id = UUID.randomUUID().toString(),
-                    sourceType = SourceType.NOTIFICATION,
-                    sourcePackageOrAddress = if (forceLlm) "com.llm.test" else fixture.packageName,
-                    title = fixture.title,
-                    text = fixture.text,
-                    timestamp = System.currentTimeMillis()
-                )
-                _simulationResult.value = simulationEngine.simulate(rawEvent)
-                notificationSourceAdapter.emitNotification(rawEvent)
-                delay(delayMs)
+            try {
+                _batchRunning.value = true
+                _batchProgress.value = "Starting..."
+                _batchProgressFraction.value = 0f
+                val fixtures = FixtureLibrary.fixtures
+                fixtures.forEachIndexed { index, fixture ->
+                    _batchProgress.value = "${index + 1}/${fixtures.size}: ${fixture.description}"
+                    _batchProgressFraction.value = (index + 1).toFloat() / fixtures.size
+                    val rawEvent = RawEvent(
+                        id = UUID.randomUUID().toString(),
+                        sourceType = SourceType.NOTIFICATION,
+                        sourcePackageOrAddress = if (forceLlm) "com.llm.test" else fixture.packageName,
+                        title = fixture.title,
+                        text = fixture.text,
+                        timestamp = System.currentTimeMillis()
+                    )
+                    _simulationResult.value = simulationEngine.simulate(rawEvent)
+                    notificationSourceAdapter.emitNotification(rawEvent)
+                    delay(delayMs)
+                }
+                _batchProgress.value = "Done \u2014 ${fixtures.size} fixtures sent"
+                _batchProgressFraction.value = 1f
+            } catch (e: Exception) {
+                _uiError.value = e.message ?: "Batch run failed"
+            } finally {
+                _batchRunning.value = false
+                refreshCounts()
             }
-            _batchProgress.value = "Done — ${fixtures.size} fixtures sent"
-            _batchRunning.value = false
-            refreshCounts()
         }
     }
 }

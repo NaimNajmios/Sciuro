@@ -6,20 +6,24 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalIncome
 import com.najmi.sciuro.core.ui.components.SciuroCard
-import com.sciuro.core.parsing.metrics.ParserHealthRepository
 import com.sciuro.core.parsing.metrics.ParserHealthRow
-import com.sciuro.core.ledger.db.SciuroDatabase
+import com.sciuro.feature.settings.R
+import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
 import kotlinx.coroutines.launch
-import org.koin.compose.getKoin
 
 @Composable
-fun DeveloperTabHealth(modifier: Modifier = Modifier) {
-    val healthRepo: ParserHealthRepository = getKoin().get()
+fun DeveloperTabHealth(
+    viewModel: DeveloperSettingsViewModel,
+    modifier: Modifier = Modifier
+) {
+    val healthRepo = viewModel.parserHealthRepository
+    val database = viewModel.database
     var healthData by remember { mutableStateOf<List<ParserHealthRow>>(emptyList()) }
     var priorHealthData by remember { mutableStateOf<List<ParserHealthRow>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -38,10 +42,10 @@ fun DeveloperTabHealth(modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Parser Health", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.dev_health_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "Per-package match rates over the last 7 days",
+                stringResource(R.string.dev_health_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -51,7 +55,7 @@ fun DeveloperTabHealth(modifier: Modifier = Modifier) {
         if (healthData.isEmpty()) {
             item {
                 Text(
-                    "No ingestion events in the last 7 days.",
+                    stringResource(R.string.dev_health_no_data),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -62,9 +66,9 @@ fun DeveloperTabHealth(modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Package", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    Text("Processed / Total", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    Text("Trend", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.dev_health_package), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.dev_health_processed), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.dev_health_trend), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                 }
                 HorizontalDivider()
             }
@@ -76,10 +80,10 @@ fun DeveloperTabHealth(modifier: Modifier = Modifier) {
 
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Pipeline Metrics", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.dev_health_pipeline_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "Trace-based rates over the last 7 days",
+                stringResource(R.string.dev_health_pipeline_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -87,7 +91,6 @@ fun DeveloperTabHealth(modifier: Modifier = Modifier) {
         }
 
         item {
-            val database: SciuroDatabase = getKoin().get()
             val sevenDaysMs = 7L * 24 * 60 * 60 * 1000
             val sinceMs = System.currentTimeMillis() - sevenDaysMs
 
@@ -103,8 +106,8 @@ fun DeveloperTabHealth(modifier: Modifier = Modifier) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    MetricRow("LLM fallback calls (7d)", "$llmTotal")
-                    MetricRow("Dead letters (7d)", "$deadLetters")
+                    MetricRow(stringResource(R.string.dev_health_llm_calls), "$llmTotal")
+                    MetricRow(stringResource(R.string.dev_health_dead_letters), "$deadLetters")
                 }
             }
         }
@@ -125,8 +128,8 @@ private fun RowHealthCard(row: ParserHealthRow, priorRow: ParserHealthRow?) {
     }
     val trendIcon = when {
         priorMatchRate == null -> ""
-        matchRate >= priorMatchRate -> "↑"
-        else -> "↓"
+        matchRate >= priorMatchRate -> "\u2191"
+        else -> "\u2193"
     }
     val isDegraded = priorMatchRate != null && (priorMatchRate - matchRate) > 0.2
 
@@ -163,7 +166,7 @@ private fun RowHealthCard(row: ParserHealthRow, priorRow: ParserHealthRow?) {
             }
             if (isDegraded) {
                 Text(
-                    text = "Match rate dropped from ${"%.0f".format(priorMatchRate!! * 100)}% — format drift may be occurring.",
+                    text = stringResource(R.string.dev_health_degraded, "%.0f".format(priorMatchRate!! * 100)),
                     style = MaterialTheme.typography.bodySmall,
                     color = SignalDanger,
                     modifier = Modifier.padding(top = 2.dp)

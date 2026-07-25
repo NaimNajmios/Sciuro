@@ -5,8 +5,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.parsing.engine.SimulationResult
+import com.sciuro.feature.settings.R
 import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroTextField
@@ -24,24 +26,24 @@ fun DeveloperTabDiagnostics(
     LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Parser Diagnostics", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.dev_diagnostics_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
             SciuroTextField(
                 value = diagPackage,
                 onValueChange = { diagPackage = it },
-                label = "Package Name"
+                label = stringResource(R.string.dev_diagnostics_package_label)
             )
             Spacer(modifier = Modifier.height(8.dp))
             SciuroTextField(
                 value = diagTitle,
                 onValueChange = { diagTitle = it },
-                label = "Title"
+                label = stringResource(R.string.dev_diagnostics_title_label)
             )
             Spacer(modifier = Modifier.height(8.dp))
             SciuroTextField(
                 value = diagText,
                 onValueChange = { diagText = it },
-                label = "Text",
+                label = stringResource(R.string.dev_diagnostics_text_label),
                 minLines = 3
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -51,7 +53,7 @@ fun DeveloperTabDiagnostics(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Run Diagnostics")
+                Text(stringResource(R.string.dev_diagnostics_run))
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -60,7 +62,7 @@ fun DeveloperTabDiagnostics(
             item {
                 SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Rule Match Results", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.dev_diagnostics_rule_results), style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -77,15 +79,15 @@ fun DeveloperTabDiagnostics(
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(
-                            "${ruleResult.ruleName}: ${if (ruleResult.matches) "MATCH" else "NO MATCH"}",
+                            "${ruleResult.ruleName}: ${if (ruleResult.matches) stringResource(R.string.dev_diagnostics_match) else stringResource(R.string.dev_diagnostics_no_match)}",
                             style = MaterialTheme.typography.titleSmall
                         )
                         ruleResult.extractedDraft?.let { draft ->
-                            Text("Amount: RM ${"%.2f".format(draft.amount)}")
-                            Text("Direction: ${draft.direction ?: "Unknown"}")
-                            Text("Merchant: ${draft.merchant ?: "N/A"}")
-                            Text("Account: ${draft.accountOrChannel ?: "N/A"}")
-                            Text("Confidence: ${"%.0f".format(draft.confidenceScore * 100)}%")
+                            Text(stringResource(R.string.dev_diagnostics_amount, "%.2f".format(draft.amount)))
+                            Text(stringResource(R.string.dev_diagnostics_direction, draft.direction ?: stringResource(R.string.dev_simulator_unknown)))
+                            Text(stringResource(R.string.dev_diagnostics_merchant, draft.merchant ?: stringResource(R.string.dev_simulator_na)))
+                            Text(stringResource(R.string.dev_diagnostics_account, draft.accountOrChannel ?: stringResource(R.string.dev_simulator_na)))
+                            Text(stringResource(R.string.dev_diagnostics_confidence, "%.0f".format(draft.confidenceScore * 100)))
                         }
                     }
                 }
@@ -96,19 +98,19 @@ fun DeveloperTabDiagnostics(
                     Spacer(modifier = Modifier.height(12.dp))
                     SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("LLM Debug", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.dev_diagnostics_llm_debug), style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
-                            debug.modelUsed?.let { Text("Model: $it") }
-                            debug.latencyMs?.let { Text("Latency: ${it}ms") }
-                            debug.error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
+                            debug.modelUsed?.let { Text(stringResource(R.string.dev_diagnostics_model, it)) }
+                            debug.latencyMs?.let { Text(stringResource(R.string.dev_diagnostics_latency, it)) }
+                            debug.error?.let { Text(stringResource(R.string.dev_diagnostics_error, it), color = MaterialTheme.colorScheme.error) }
                             debug.prompt?.let {
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("Prompt:", style = MaterialTheme.typography.labelMedium)
+                                Text(stringResource(R.string.dev_diagnostics_prompt_label), style = MaterialTheme.typography.labelMedium)
                                 Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 20)
                             }
                             debug.rawResponse?.let {
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("Raw Response:", style = MaterialTheme.typography.labelMedium)
+                                Text(stringResource(R.string.dev_diagnostics_response_label), style = MaterialTheme.typography.labelMedium)
                                 Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 10)
                             }
                         }
@@ -123,10 +125,10 @@ fun DeveloperTabDiagnostics(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("LLM-Fallback Candidate", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.dev_diagnostics_llm_candidate), style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "No deterministic rule matched this package. Consider creating a new ParserRule.",
+                                stringResource(R.string.dev_diagnostics_llm_candidate_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -143,7 +145,7 @@ fun DeveloperTabDiagnostics(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                     ) {
-                        Text("Error: $err", modifier = Modifier.padding(16.dp))
+                        Text(stringResource(R.string.dev_diagnostics_error, err), modifier = Modifier.padding(16.dp))
                     }
                 }
             }

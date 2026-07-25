@@ -51,11 +51,11 @@ fun PillToggle(
                             spotColor = activeColor
                         ) else Modifier)
                         .then(if (fillWidth) Modifier.weight(1f) else Modifier)
-                        .defaultMinSize(minHeight = 44.dp)
+                        .defaultMinSize(minHeight = 32.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(if (isSelected) activeColor else Color.Transparent)
                         .clickable { onOptionSelected(option) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(

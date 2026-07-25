@@ -22,6 +22,7 @@ data class SettingsUiState(
     val isQuietHoursEnabled: Boolean = false,
     val quietHoursStart: Int = 22,
     val quietHoursEnd: Int = 7,
+    val isDeveloperOptionsVisible: Boolean = false,
     val connectionTestState: ConnectionTestState = ConnectionTestState.Idle
 )
 
@@ -53,7 +54,8 @@ class SettingsViewModel(
             budgetWarningThreshold = settingsProvider.getBudgetWarningThreshold(),
             isQuietHoursEnabled = settingsProvider.isQuietHoursEnabled(),
             quietHoursStart = settingsProvider.getQuietHoursStart(),
-            quietHoursEnd = settingsProvider.getQuietHoursEnd()
+            quietHoursEnd = settingsProvider.getQuietHoursEnd(),
+            isDeveloperOptionsVisible = settingsProvider.isDeveloperOptionsVisible()
         )
     }
 
@@ -132,5 +134,10 @@ class SettingsViewModel(
 
     fun clearConnectionTestState() {
         _uiState.value = _uiState.value.copy(connectionTestState = ConnectionTestState.Idle)
+    }
+
+    fun setDeveloperOptionsVisible(visible: Boolean) {
+        settingsProvider.setDeveloperOptionsVisible(visible)
+        _uiState.value = _uiState.value.copy(isDeveloperOptionsVisible = visible)
     }
 }

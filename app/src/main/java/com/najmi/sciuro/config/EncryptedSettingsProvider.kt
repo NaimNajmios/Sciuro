@@ -179,4 +179,12 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setHasSeenBatteryPrompt(hasSeen: Boolean) {
         sharedPreferences.edit().putBoolean("has_seen_battery_prompt", hasSeen).apply()
     }
+
+    override fun isDeveloperOptionsVisible(): Boolean {
+        return sharedPreferences.getBoolean("developer_options_visible", false)
+    }
+
+    override fun setDeveloperOptionsVisible(visible: Boolean) {
+        sharedPreferences.edit().putBoolean("developer_options_visible", visible).apply()
+    }
 }

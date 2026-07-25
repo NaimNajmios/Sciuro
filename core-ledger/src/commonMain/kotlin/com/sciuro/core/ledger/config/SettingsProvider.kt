@@ -38,4 +38,6 @@ interface SettingsProvider {
     fun setSilentAutoConfirmThreshold(threshold: Float)
     fun hasSeenBatteryPrompt(): Boolean
     fun setHasSeenBatteryPrompt(hasSeen: Boolean)
+    fun isDeveloperOptionsVisible(): Boolean
+    fun setDeveloperOptionsVisible(visible: Boolean)
 }

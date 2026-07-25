@@ -21,6 +21,8 @@ import androidx.navigation.compose.*
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
@@ -34,6 +36,7 @@ import com.sciuro.feature.budgets.ui.BudgetsScreen
 import com.sciuro.feature.debt.ui.DebtOverviewScreen
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import org.koin.androidx.compose.koinViewModel
+import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
@@ -213,6 +216,25 @@ fun SciuroMainScreen() {
             }
         }
     }
+
+    val activity = context as? Activity
+    val intentOpenTab = activity?.intent?.getStringExtra("open_tab")
+    val intentDeveloperTab = activity?.intent?.getStringExtra("developer_tab")
+    LaunchedEffect(intentOpenTab, intentDeveloperTab) {
+        if (!onboardingState.isOnboardingComplete) return@LaunchedEffect
+        if (intentOpenTab == "settings") {
+            val tabMap = mapOf(
+                "simulator" to 0, "sources" to 1, "ingestion" to 2,
+                "diagnostics" to 3, "data_tools" to 4, "health" to 5, "pipeline_trace" to 6
+            )
+            val tab = tabMap[intentDeveloperTab] ?: 0
+            navController.navigate("developer_settings?initialTab=$tab") {
+                popUpTo("dashboard") { inclusive = false }
+            }
+            activity?.intent?.removeExtra("open_tab")
+            activity?.intent?.removeExtra("developer_tab")
+        }
+    }
     
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         Scaffold(
@@ -319,7 +341,7 @@ fun SciuroMainScreen() {
                 val context = LocalContext.current
                 val scope = rememberCoroutineScope()
                 com.sciuro.feature.settings.ui.SettingsScreen(
-                    onNavigateToDeveloperSettings = { navController.navigate("developer_settings") },
+                    onNavigateToDeveloperSettings = { navController.navigate("developer_settings?initialTab=0") },
                     onNavigateToCategorySettings = { navController.navigate("category_settings") },
                     onNavigateToLinkedAccounts = { navController.navigate("linked_accounts") },
                     onExportBackup = { password ->
@@ -399,13 +421,16 @@ fun SciuroMainScreen() {
                 ) 
             }
             composable(
-                "developer_settings",
+                "developer_settings?initialTab={initialTab}",
+                arguments = listOf(navArgument("initialTab") { defaultValue = "0" }),
                 enterTransition = drillInEnter,
                 popExitTransition = drillInPopExit
-            ) { 
+            ) { backStackEntry ->
+                val initialTab = backStackEntry.arguments?.getString("initialTab")?.toIntOrNull() ?: 0
                 com.sciuro.feature.settings.ui.DeveloperSettingsScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                ) 
+                    onNavigateBack = { navController.popBackStack() },
+                    initialTab = initialTab
+                )
             }
             composable(
                 "linked_accounts",

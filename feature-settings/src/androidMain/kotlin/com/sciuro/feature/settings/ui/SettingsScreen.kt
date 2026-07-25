@@ -32,6 +32,7 @@ import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.sciuro.feature.settings.viewmodel.ConnectionTestState
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -42,6 +43,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.sciuro.feature.settings.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -60,6 +62,10 @@ fun SettingsScreen(
     var showLlmFields by remember { mutableStateOf(uiState.isLlmEnabled) }
     var showQuietHoursPicker by remember { mutableStateOf(false) }
     var apiKeyVisible by remember { mutableStateOf(false) }
+    var developerTapCount by remember { mutableIntStateOf(0) }
+    val snackbarHostState = LocalSnackbarHostState.current
+    val devGateSnackbarText = stringResource(R.string.dev_gate_snackbar)
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(uiState.isLlmEnabled) {
         showLlmFields = uiState.isLlmEnabled
@@ -535,21 +541,35 @@ fun SettingsScreen(
 
                 // Section: Developer
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_developer_options))
+                    SettingsSectionHeader(
+                        title = stringResource(R.string.settings_developer_options),
+                        modifier = Modifier.clickable {
+                            developerTapCount++
+                            if (developerTapCount >= 7) {
+                                developerTapCount = 0
+                                viewModel.setDeveloperOptionsVisible(true)
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(devGateSnackbarText)
+                                }
+                            }
+                        }
+                    )
                 }
 
-                item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        onClick = onNavigateToDeveloperSettings
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                if (uiState.isDeveloperOptionsVisible) {
+                    item {
+                        SciuroCard(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            onClick = onNavigateToDeveloperSettings
                         ) {
-                            Text(stringResource(R.string.settings_developer_options), style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_developer_options))
+                            Row(
+                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(stringResource(R.string.settings_developer_options), style = MaterialTheme.typography.titleMedium)
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_developer_options))
+                            }
                         }
                     }
                 }
@@ -559,13 +579,16 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsSectionHeader(title: String) {
+private fun SettingsSectionHeader(
+    title: String,
+    modifier: Modifier = Modifier
+) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
         fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 4.dp)
+        modifier = modifier.padding(start = 4.dp, top = 20.dp, bottom = 4.dp)
     )
 }
 

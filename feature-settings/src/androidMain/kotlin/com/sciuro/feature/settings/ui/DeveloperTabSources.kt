@@ -8,17 +8,20 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
 import com.sciuro.feature.settings.R
+import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
 import com.najmi.sciuro.core.ui.components.SciuroTextField
-import org.koin.compose.getKoin
 
 @Composable
-fun DeveloperTabSources(modifier: Modifier = Modifier) {
-    val allowlist: MutableIngestionAllowlist = getKoin().get()
+fun DeveloperTabSources(
+    viewModel: DeveloperSettingsViewModel,
+    modifier: Modifier = Modifier
+) {
+    val allowlist = viewModel.ingestionAllowlist
     var customPackage by remember { mutableStateOf("") }
     var pendingRemovePackage by remember { mutableStateOf<String?>(null) }
     val effectivePackages by allowlist.effectivePackages.collectAsState()
@@ -106,7 +109,7 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 SciuroTextField(
                     value = customPackage,
@@ -147,7 +150,7 @@ private fun SourceRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 pkg,

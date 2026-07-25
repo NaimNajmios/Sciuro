@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import org.koin.androidx.compose.koinViewModel
@@ -263,18 +264,13 @@ fun AccountDetailScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
-                LazyRow(
-                    modifier = Modifier.padding(bottom = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(filterOptions) { filter ->
-                        FilterChip(
-                            selected = state.selectedFilter == filter,
-                            onClick = { viewModel.setFilter(filter) },
-                            label = { Text(filter) }
-                        )
-                    }
-                }
+                PillToggle(
+                    options = filterOptions,
+                    selectedOption = state.selectedFilter,
+                    onOptionSelected = { viewModel.setFilter(it) },
+                    modifier = Modifier.fillMaxWidth(),
+                    fillWidth = true
+                )
 
                 if (state.timeline.isEmpty()) {
                     com.najmi.sciuro.core.ui.components.EmptyStateView(

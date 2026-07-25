@@ -129,4 +129,55 @@
     <string name="dev_data_tools_clear_title">Clear Inbox</string>
     <string name="dev_data_tools_clear_confirm">Delete all unreviewed transactions? This cannot be undone.</string>
     <string name="dev_data_tools_delete">Delete</string>
+    <string name="dev_data_tools_type_delete">Type DELETE to confirm</string>
+    <string name="dev_data_tools_clear_success">Inbox cleared successfully</string>
+
+    <!-- Developer Tab: Diagnostics -->
+    <string name="dev_diagnostics_title">Parser Diagnostics</string>
+    <string name="dev_diagnostics_package_label">Package Name</string>
+    <string name="dev_diagnostics_title_label">Title</string>
+    <string name="dev_diagnostics_text_label">Text</string>
+    <string name="dev_diagnostics_run">Run Diagnostics</string>
+    <string name="dev_diagnostics_rule_results">Rule Match Results</string>
+    <string name="dev_diagnostics_llm_debug">LLM Debug</string>
+    <string name="dev_diagnostics_llm_candidate">LLM-Fallback Candidate</string>
+    <string name="dev_diagnostics_llm_candidate_desc">No deterministic rule matched this package. Consider creating a new ParserRule.</string>
+    <string name="dev_diagnostics_match">MATCH</string>
+    <string name="dev_diagnostics_no_match">NO MATCH</string>
+    <string name="dev_diagnostics_model">Model: %s</string>
+    <string name="dev_diagnostics_latency">Latency: %dms</string>
+    <string name="dev_diagnostics_error">Error: %s</string>
+    <string name="dev_diagnostics_prompt_label">Prompt:</string>
+    <string name="dev_diagnostics_response_label">Raw Response:</string>
+    <string name="dev_diagnostics_amount">Amount: RM %s</string>
+    <string name="dev_diagnostics_direction">Direction: %s</string>
+    <string name="dev_diagnostics_merchant">Merchant: %s</string>
+    <string name="dev_diagnostics_account">Account: %s</string>
+    <string name="dev_diagnostics_confidence">Confidence: %s%%</string>
+
+    <!-- Developer Tab: Health -->
+    <string name="dev_health_title">Parser Health</string>
+    <string name="dev_health_subtitle">Per-package match rates over the last 7 days</string>
+    <string name="dev_health_no_data">No ingestion events in the last 7 days.</string>
+    <string name="dev_health_package">Package</string>
+    <string name="dev_health_processed">Processed / Total</string>
+    <string name="dev_health_trend">Trend</string>
+    <string name="dev_health_pipeline_title">Pipeline Metrics</string>
+    <string name="dev_health_pipeline_subtitle">Trace-based rates over the last 7 days</string>
+    <string name="dev_health_llm_calls">LLM fallback calls (7d)</string>
+    <string name="dev_health_dead_letters">Dead letters (7d)</string>
+    <string name="dev_health_degraded">Match rate dropped from %1$s%% — format drift may be occurring.</string>
+
+    <!-- Developer Tab: Pipeline Trace -->
+    <string name="dev_trace_title">Recent pipeline events</string>
+    <string name="dev_trace_no_data">No trace data yet. Process a notification to see traces.</string>
+    <string name="dev_trace_event_label">Event %s…</string>
+    <string name="dev_trace_back">Back</string>
+    <string name="dev_trace_no_traces">No traces for this event.</string>
+    <string name="dev_trace_stages">%d stages</string>
+    <string name="dev_trace_detail_label">Detail:</string>
+    <string name="dev_trace_unknown_id">?</string>
+
+    <!-- Developer Settings Gate -->
+    <string name="dev_gate_snackbar">Developer Options enabled</string>
 </resources>

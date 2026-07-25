@@ -8,6 +8,6 @@ import org.koin.dsl.module
 
 val settingsModule = module {
     viewModel { SettingsViewModel(get()) }
-    viewModel { DeveloperSettingsViewModel(get(), get(), get(), get()) }
+    viewModel { DeveloperSettingsViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LinkedAccountsViewModel(get()) }
 }
