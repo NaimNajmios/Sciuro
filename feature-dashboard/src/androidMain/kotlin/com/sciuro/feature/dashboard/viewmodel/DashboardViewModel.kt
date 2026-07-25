@@ -32,7 +32,7 @@ import com.sciuro.core.debt.repository.DebtRepository
 import com.sciuro.core.investment.repository.InvestmentRepository
 import com.sciuro.core.obligations.engine.IncomeRecurrencePatternDetector
 import com.sciuro.core.obligations.repository.ObligationRepository
-import com.sciuro.core.audit.events.DomainEventBus
+
 import kotlinx.coroutines.flow.first
 
 data class NetPositionBreakdown(
@@ -75,8 +75,7 @@ class DashboardViewModel(
     private val debtRepository: DebtRepository,
     private val investmentRepository: InvestmentRepository,
     private val obligationRepository: ObligationRepository,
-    private val incomeDetector: IncomeRecurrencePatternDetector,
-    private val eventBus: DomainEventBus
+    private val incomeDetector: IncomeRecurrencePatternDetector
 ) : ViewModel() {
     
     init {
