@@ -30,6 +30,8 @@ import com.sciuro.core.debt.repository.DebtRepository
 import com.sciuro.core.investment.repository.InvestmentRepository
 import com.sciuro.core.obligations.engine.IncomeRecurrencePatternDetector
 import com.sciuro.core.obligations.repository.ObligationRepository
+import com.sciuro.core.audit.events.DomainEventBus
+import kotlinx.coroutines.flow.first
 
 data class DashboardState(
     val netPosition: Double = 0.0,
@@ -64,7 +66,8 @@ class DashboardViewModel(
     private val debtRepository: DebtRepository,
     private val investmentRepository: InvestmentRepository,
     private val obligationRepository: ObligationRepository,
-    private val incomeDetector: IncomeRecurrencePatternDetector
+    private val incomeDetector: IncomeRecurrencePatternDetector,
+    private val eventBus: DomainEventBus
 ) : ViewModel() {
     
     init {
@@ -84,75 +87,76 @@ class DashboardViewModel(
         }
     }
 
-    val state: StateFlow<DashboardState> = combine(
-        accountRepository.observeAccounts(),
-        transactionRepository.observeUnreviewedTransactions(),
-        budgetRepository.observeBudgets(),
-        transactionRepository.observeAllTransactions(),
-        categoryRepository.observeCategoriesByType("OUTFLOW"),
-        categoryRepository.observeCategoriesByType("INFLOW"),
-        cashAdjustmentRepository.observeAllAdjustments(),
-        debtRepository.observeDebts(),
-        investmentRepository.observeInvestments(),
-        obligationRepository.observeActiveObligations()
-    ) { data ->
-        val accounts = data[0] as List<com.sciuro.core.ledger.db.Account>
-        val unreviewed = data[1] as List<com.sciuro.core.ledger.db.Transaction_record>
-        val budgets = data[2] as List<com.sciuro.core.budget.model.Budget>
-        val allTransactions = data[3] as List<com.sciuro.core.ledger.db.Transaction_record>
-        val expenseCats = data[4] as List<com.sciuro.core.ledger.model.Category>
-        val incomeCats = data[5] as List<com.sciuro.core.ledger.model.Category>
-        val allAdjustments = data[6] as List<com.sciuro.core.ledger.db.Cash_adjustment>
-        val debts = data[7] as List<*>
-        val investments = data[8] as List<*>
-        val obligations = data[9] as List<com.sciuro.core.obligations.model.Obligation>
-        
-        val oneWeekAgo = currentTimeMillis() - 7L * 24L * 60L * 60L * 1000L
-        val recentAdjustments = allAdjustments.filter { it.timestamp > oneWeekAgo }
-        
-        val balanceHistory = computeBalanceHistory(allTransactions)
-        
-        val totalAccounts = accounts.sumOf { it.balance }
-        val totalInvestments = investments.filterIsInstance<com.sciuro.core.investment.model.Investment>().sumOf { (it.unitsHeld * it.averageBuyPrice).toDouble() }
-        val totalDebts = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().sumOf {
-            if (it.direction == DebtDirection.OWED_TO_ME) it.remainingBalance.toDouble()
-            else -it.remainingBalance.toDouble()
+    private val _state = MutableStateFlow(DashboardState())
+    val state: StateFlow<DashboardState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            eventBus.events.collect { event ->
+                // Refresh state on any domain event that might affect the dashboard
+                refreshState()
+            }
         }
-        val netPosition = totalAccounts + totalInvestments + totalDebts
+        // Initial load
+        refreshState()
+    }
 
-        val incomePattern = incomeDetector.detectAndPublish()
-        val thirtyDaysFromNow = currentTimeMillis() + 30L * 24L * 60L * 60L * 1000L
-        val nextIncome = incomePattern?.nextExpectedDate ?: thirtyDaysFromNow
-        val expectedIncome = incomePattern?.amount ?: 0.0
+    private fun refreshState() {
+        viewModelScope.launch {
+            val accounts = accountRepository.observeAccounts().first()
+            val unreviewed = transactionRepository.observeUnreviewedTransactions().first()
+            val budgets = budgetRepository.observeBudgets().first()
+            val allTransactions = transactionRepository.observeAllTransactions().first()
+            val expenseCats = categoryRepository.observeCategoriesByType("OUTFLOW").first()
+            val incomeCats = categoryRepository.observeCategoriesByType("INFLOW").first()
+            val allAdjustments = cashAdjustmentRepository.observeAllAdjustments().first()
+            val debts = debtRepository.observeDebts().first()
+            val investments = investmentRepository.observeInvestments().first()
+            val obligations = obligationRepository.observeActiveObligations().first()
+            
+            val oneWeekAgo = currentTimeMillis() - 7L * 24L * 60L * 60L * 1000L
+            val recentAdjustments = allAdjustments.filter { it.timestamp > oneWeekAgo }
+            
+            val balanceHistory = computeBalanceHistory(allTransactions)
+            
+            val totalAccounts = accounts.sumOf { it.balance }
+            val totalInvestments = investments.filterIsInstance<com.sciuro.core.investment.model.Investment>().sumOf { (it.unitsHeld * it.averageBuyPrice).toDouble() }
+            val totalDebts = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().sumOf {
+                if (it.direction == DebtDirection.OWED_TO_ME) it.remainingBalance.toDouble()
+                else -it.remainingBalance.toDouble()
+            }
+            val netPosition = totalAccounts + totalInvestments + totalDebts
 
-        val obligationsDue = obligations.filter {
-            it.nextDueDate <= nextIncome
-        }.sumOf { it.amount }
+            val incomePattern = incomeDetector.detectAndPublish()
+            val thirtyDaysFromNow = currentTimeMillis() + 30L * 24L * 60L * 60L * 1000L
+            val nextIncome = incomePattern?.nextExpectedDate ?: thirtyDaysFromNow
+            val expectedIncome = incomePattern?.amount ?: 0.0
 
-        val debtsDue = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().filter { debt ->
-            debt.direction == DebtDirection.I_OWE && debt.dueDate != null && debt.dueDate!! <= nextIncome
-        }.sumOf { it.remainingBalance.toDouble() }
+            val obligationsDue = obligations.filter {
+                it.nextDueDate <= nextIncome
+            }.sumOf { it.amount }
 
-        val runway = totalAccounts + expectedIncome - obligationsDue - debtsDue
-        
-        DashboardState(
-            netPosition = netPosition,
-            unreviewedTransactionsCount = unreviewed.size,
-            activeBudgetsCount = budgets.size,
-            allTransactions = allTransactions,
-            accounts = accounts,
-            expenseCategories = expenseCats,
-            incomeCategories = incomeCats,
-            recentAdjustmentCount = recentAdjustments.size,
-            balanceHistory = balanceHistory,
-            runway = runway,
-            hasIncomePattern = incomePattern != null
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = DashboardState()
-    )
+            val debtsDue = debts.filterIsInstance<com.sciuro.core.debt.model.Debt>().filter { debt ->
+                debt.direction == DebtDirection.I_OWE && debt.dueDate != null && debt.dueDate!! <= nextIncome
+            }.sumOf { it.remainingBalance.toDouble() }
+
+            val runway = totalAccounts + expectedIncome - obligationsDue - debtsDue
+            
+            _state.value = DashboardState(
+                netPosition = netPosition,
+                unreviewedTransactionsCount = unreviewed.size,
+                activeBudgetsCount = budgets.size,
+                allTransactions = allTransactions,
+                accounts = accounts,
+                expenseCategories = expenseCats,
+                incomeCategories = incomeCats,
+                recentAdjustmentCount = recentAdjustments.size,
+                balanceHistory = balanceHistory,
+                runway = runway,
+                hasIncomePattern = incomePattern != null
+            )
+        }
+    }
 
     val autoBookedTransactionsCount: StateFlow<Int> = transactionRepository
         .observeRecentlyAutoConfirmed(currentTimeMillis() - 24L * 60L * 60L * 1000L)

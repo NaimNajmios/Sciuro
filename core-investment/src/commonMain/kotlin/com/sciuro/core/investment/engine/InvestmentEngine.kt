@@ -4,16 +4,17 @@ import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
 
+import com.sciuro.core.ledger.engine.TransactionMatchingEngine
+
 class InvestmentEngine(
     private val database: SciuroDatabase,
-    private val eventBus: DomainEventBus
+    private val eventBus: DomainEventBus,
+    private val matchingEngine: TransactionMatchingEngine
 ) {
     suspend fun processInvestments() {
         val allInvestments = database.investmentQueries.selectAllInvestments().executeAsList()
         val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
-        val transferTxIds = database.transferLinkQueries.selectAllTransferLinks().executeAsList()
-            .flatMap { listOf(it.outflow_transaction_id, it.inflow_transaction_id) }
-            .toSet()
+        val transferTxIds = matchingEngine.getIneligibleTransactionIds()
 
         for (investment in allInvestments) {
             val purchases = allTransactions.filter {
