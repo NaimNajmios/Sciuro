@@ -96,6 +96,7 @@ fun OnboardingBatteryScreen(
                             data = android.net.Uri.parse("package:${context.packageName}")
                         }
                         context.startActivity(intent)
+                        onComplete()
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -110,6 +111,7 @@ fun OnboardingBatteryScreen(
                     onClick = {
                         try {
                             context.startActivity(autostartIntent)
+                            onComplete()
                         } catch (e: Exception) {
                             // Intent may not resolve on some devices
                         }

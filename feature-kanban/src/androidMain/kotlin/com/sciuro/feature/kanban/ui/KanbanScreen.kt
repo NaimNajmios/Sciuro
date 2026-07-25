@@ -106,6 +106,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         }
     }
 
+    var autoMarkFinishedDebtId by remember { mutableStateOf<String?>(null) }
+    
     val pullToRefreshState = rememberPullToRefreshState()
 
     if (pullToRefreshState.isRefreshing) {
@@ -316,7 +318,11 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             viewModel.recordDebtPayment(debt.id, amt)
                             paymentDebt = null
                             paymentAmountText = ""
-                            coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
+                            if (debt.remainingBalance - amt <= 0) {
+                                autoMarkFinishedDebtId = debt.id
+                            } else {
+                                coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
+                            }
                         }
                     }
                 },
@@ -336,6 +342,23 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 debtToApplyPayment = null
             },
             onDismiss = { debtToApplyPayment = null }
+        )
+    }
+
+    autoMarkFinishedDebtId?.let { debtId ->
+        SciuroConfirmationDialog(
+            title = "Mark Debt as Finished",
+            message = "This payment fully covers the remaining balance. Would you like to mark this debt as finished?",
+            confirmText = "Mark Finished",
+            isDestructive = false,
+            onConfirm = {
+                viewModel.markDebtAsFinished(debtId)
+                autoMarkFinishedDebtId = null
+                coroutineScope.launch { snackbarHostState.showSnackbar("Debt marked as finished") }
+            },
+            onDismiss = {
+                autoMarkFinishedDebtId = null
+            }
         )
     }
 

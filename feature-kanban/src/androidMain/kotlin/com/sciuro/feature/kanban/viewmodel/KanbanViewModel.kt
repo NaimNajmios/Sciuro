@@ -161,6 +161,12 @@ class KanbanViewModel(
         }
     }
 
+    fun markDebtAsFinished(debtId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            debtRepository.markAsPaidOff(debtId)
+        }
+    }
+
     fun createObligation(
         name: String,
         amount: Double,

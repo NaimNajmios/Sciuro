@@ -89,7 +89,7 @@ fun DashboardScreen(
         (state.expenseCategories + state.incomeCategories).associateBy { it.id }
     }
 
-    val filteredTransactions = remember(state.allTransactions, selectedRange, selectedTypeFilter, startDate, endDate) {
+    val filteredTransactions = remember(state.allTransactions, selectedRange, selectedTypeFilter) {
         state.allTransactions.filter { tx ->
             val matchesTime = when (selectedRange) {
                 "This Month" -> {
@@ -102,9 +102,9 @@ fun DashboardScreen(
                     tx.timestamp >= cal.timeInMillis
                 }
                 "Custom" -> {
-                    val afterStart = startDate?.let { tx.timestamp >= it } ?: true
-                    val beforeEnd = endDate?.let { tx.timestamp <= it } ?: true
-                    afterStart && beforeEnd
+                    if (startDate != null && endDate != null) {
+                        tx.timestamp in startDate!!..endDate!!
+                    } else true
                 }
                 else -> true
             }
@@ -244,7 +244,7 @@ fun DashboardScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Filled.Warning,
-                                            contentDescription = null,
+                                            contentDescription = "Review Inbox Warning",
                                             tint = MaterialTheme.colorScheme.onErrorContainer
                                         )
                                         Column {
@@ -277,7 +277,7 @@ fun DashboardScreen(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Filled.CheckCircle,
-                                                contentDescription = null,
+                                                contentDescription = "Auto-booked Success",
                                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
                                             )
                                             Text(
@@ -530,98 +530,32 @@ fun DashboardScreen(
     
     if (showDatePickerDialog) {
         val dateRangePickerState = rememberDateRangePickerState()
-        DatePickerDialog(
-            onDismissRequest = { 
+        com.sciuro.feature.dashboard.ui.components.DashboardDatePicker(
+            dateRangePickerState = dateRangePickerState,
+            onDismiss = {
                 showDatePickerDialog = false
                 if (startDate == null && endDate == null) {
                     selectedRange = "All Time"
                 }
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.setDateRange(
-                        dateRangePickerState.selectedStartDateMillis,
-                        dateRangePickerState.selectedEndDateMillis
-                    )
-                    showDatePickerDialog = false
-                }) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showDatePickerDialog = false
-                    if (startDate == null && endDate == null) {
-                        selectedRange = "All Time"
-                    }
-                }) {
-                    Text("Cancel")
-                }
+            onConfirm = { start, end ->
+                viewModel.setDateRange(start, end)
+                showDatePickerDialog = false
             }
-        ) {
-            DateRangePicker(
-                state = dateRangePickerState,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        )
     }
     
     if (pendingApprovalTxId != null) {
-        AlertDialog(
-            onDismissRequest = { pendingApprovalTxId = null },
-            title = { Text("Approve Transaction") },
-            text = {
-                var accountExpanded by remember { mutableStateOf(false) }
-                Column {
-                    Text("Select an account for this transaction:")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ExposedDropdownMenuBox(
-                        expanded = accountExpanded,
-                        onExpandedChange = { accountExpanded = it }
-                    ) {
-                        val selAcc = state.accounts.find { it.id == selectedAccountIdForApproval }
-                        SciuroTextField(
-                            value = selAcc?.name ?: "Select Account",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = "Wallet Account",
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                            modifier = Modifier.menuAnchor()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = accountExpanded,
-                            onDismissRequest = { accountExpanded = false }
-                        ) {
-                            state.accounts.forEach { acc ->
-                                DropdownMenuItem(
-                                    text = { Text(acc.name) },
-                                    onClick = {
-                                        selectedAccountIdForApproval = acc.id
-                                        accountExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
+        com.sciuro.feature.dashboard.ui.components.ApproveTransactionDialog(
+            accounts = state.accounts,
+            selectedAccountId = selectedAccountIdForApproval,
+            onAccountSelected = { selectedAccountIdForApproval = it },
+            onApprove = {
+                viewModel.approveTransaction(pendingApprovalTxId!!, selectedAccountIdForApproval)
+                pendingApprovalTxId = null
+                coroutineScope.launch { snackbarHostState.showSnackbar("Transaction approved") }
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.approveTransaction(pendingApprovalTxId!!, selectedAccountIdForApproval)
-                        pendingApprovalTxId = null
-                        coroutineScope.launch { snackbarHostState.showSnackbar("Transaction approved") }
-                    },
-                    enabled = selectedAccountIdForApproval != null
-                ) {
-                    Text("Approve")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingApprovalTxId = null }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { pendingApprovalTxId = null }
         )
     }
     
@@ -721,118 +655,36 @@ fun DashboardScreen(
     }
 
     if (showEditTransactionDialog) {
-        SciuroBottomSheet(
-            onDismissRequest = { showEditTransactionDialog = false }
-        ) {
-            Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
-            
-            SciuroTextField(
-                value = editTxAmount,
-                onValueChange = { editTxAmount = it },
-                label = "Amount (RM)",
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
-            )
-            
-            SciuroTextField(
-                value = editTxMerchant,
-                onValueChange = { editTxMerchant = it },
-                label = "Merchant / Note"
-            )
-            
-            PillToggle(
-                options = listOf("Expense", "Income"),
-                selectedOption = if (editTxDirection == "OUTFLOW") "Expense" else "Income",
-                onOptionSelected = { label ->
-                    editTxDirection = if (label == "Expense") "OUTFLOW" else "INFLOW"
-                    editTxCategoryId = null
-                },
-                fillWidth = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-                
-                var accountExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = accountExpanded,
-                    onExpandedChange = { accountExpanded = it }
-                ) {
-                    val selAcc = state.accounts.find { it.id == editTxAccountId }
-                    SciuroTextField(
-                        value = selAcc?.name ?: "Select Account",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = "Wallet Account",
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = accountExpanded,
-                        onDismissRequest = { accountExpanded = false }
-                    ) {
-                        state.accounts.forEach { acc ->
-                            DropdownMenuItem(
-                                text = { Text(acc.name) },
-                                onClick = {
-                                    editTxAccountId = acc.id
-                                    accountExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                Text("Category", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    val relevantCategories = if (editTxDirection == "OUTFLOW") state.expenseCategories else state.incomeCategories
-                    items(relevantCategories) { cat ->
-                        FilterChip(
-                            selected = editTxCategoryId == cat.id,
-                            onClick = { editTxCategoryId = cat.id },
-                            label = { Text(cat.name) }
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            showDeleteConfirmation = true
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Text("Delete")
-                    }
-                    
-                    SciuroPrimaryButton(
-                        text = "Save",
-                        onClick = {
-                            val amt = editTxAmount.toDoubleOrNull() ?: 0.0
-                            viewModel.editTransaction(
-                                transactionId = editingTxId!!,
-                                amount = amt,
-                                direction = editTxDirection,
-                                merchant = editTxMerchant,
-                                categoryId = editTxCategoryId,
-                                accountId = editTxAccountId
-                            )
-                            showEditTransactionDialog = false
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Transaction updated")
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = editTxAmount.isNotBlank() && editTxAccountId != null
-                    )
-                }
-        }
+        com.sciuro.feature.dashboard.ui.components.EditTransactionSheet(
+            amount = editTxAmount,
+            onAmountChange = { editTxAmount = it },
+            merchant = editTxMerchant,
+            onMerchantChange = { editTxMerchant = it },
+            direction = editTxDirection,
+            onDirectionChange = { editTxDirection = it },
+            categoryId = editTxCategoryId,
+            onCategoryIdChange = { editTxCategoryId = it },
+            accountId = editTxAccountId,
+            onAccountIdChange = { editTxAccountId = it },
+            accounts = state.accounts,
+            expenseCategories = state.expenseCategories,
+            incomeCategories = state.incomeCategories,
+            onSave = {
+                val amt = editTxAmount.toDoubleOrNull() ?: 0.0
+                viewModel.editTransaction(
+                    transactionId = editingTxId!!,
+                    amount = amt,
+                    direction = editTxDirection,
+                    merchant = editTxMerchant,
+                    categoryId = editTxCategoryId,
+                    accountId = editTxAccountId
+                )
+                showEditTransactionDialog = false
+                coroutineScope.launch { snackbarHostState.showSnackbar("Transaction updated") }
+            },
+            onDelete = { showDeleteConfirmation = true },
+            onDismiss = { showEditTransactionDialog = false }
+        )
     }
 
     if (showDeleteConfirmation) {
