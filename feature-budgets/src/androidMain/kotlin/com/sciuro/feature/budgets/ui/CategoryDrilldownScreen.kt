@@ -1,27 +1,30 @@
 package com.sciuro.feature.budgets.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroPanel
-import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
+import com.najmi.sciuro.core.ui.theme.SignalDanger
+import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.sciuro.core.ledger.config.SettingsProvider
 import com.sciuro.feature.budgets.viewmodel.CategoryDrilldownViewModel
 import org.koin.compose.koinInject
-import com.sciuro.core.ledger.config.SettingsProvider
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun CategoryDrilldownScreen(
-    viewModel: CategoryDrilldownViewModel = koinViewModel(),
-    settingsProvider: SettingsProvider = koinInject()
+    onNavigateBack: () -> Unit = {},
+    settingsProvider: SettingsProvider = koinInject(),
+    viewModel: CategoryDrilldownViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val threshold = settingsProvider.getBudgetWarningThreshold()
@@ -33,32 +36,36 @@ fun CategoryDrilldownScreen(
                 Text(
                     "RM %.0f".format(state.totalSpend),
                     style = MaterialTheme.typography.headlineLarge,
-                    color = Color.White,
+                    color = androidx.compose.ui.graphics.Color.White,
                     fontFamily = IBMPlexMono
                 )
             },
             toggleOptions = emptyList(),
             selectedToggle = "",
-            onToggleSelected = {}
+            onToggleSelected = {},
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = androidx.compose.ui.graphics.Color.White
+                    )
+                }
+            }
         )
 
         SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
-            LazyColumn(
+            Column(
                 modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
             ) {
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                Spacer(modifier = Modifier.height(16.dp))
 
                 if (state.categories.isEmpty()) {
-                    item {
-                        Text(
-                            "No spending data for this period.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
+                    EmptyStateView(
+                        message = "No outflow spending in the last 30 days."
+                    )
                 } else {
-                    items(state.categories) { cat ->
+                    state.categories.forEach { cat ->
                         SciuroCard(
                             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                         ) {
@@ -83,8 +90,8 @@ fun CategoryDrilldownScreen(
                                 if (budget > 0) {
                                     val percent = (cat.spend / budget).toFloat().coerceIn(0f, 1f)
                                     val barColor = when {
-                                        percent >= threshold -> com.najmi.sciuro.core.ui.theme.SignalDanger
-                                        percent >= threshold - 0.1f -> com.najmi.sciuro.core.ui.theme.SignalWarning
+                                        percent >= threshold -> SignalDanger
+                                        percent >= threshold - 0.1f -> SignalWarning
                                         else -> MaterialTheme.colorScheme.primary
                                     }
                                     LinearProgressIndicator(

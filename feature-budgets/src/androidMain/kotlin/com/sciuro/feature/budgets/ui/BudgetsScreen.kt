@@ -1,5 +1,6 @@
 package com.sciuro.feature.budgets.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,72 +10,58 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.background
-import org.koin.compose.koinInject
-import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
 import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.theme.IBMPlexMono
+import com.najmi.sciuro.core.ui.theme.SignalDanger
+import com.najmi.sciuro.core.ui.theme.SignalWarning
 import com.sciuro.core.budget.model.BudgetPeriod
 import com.sciuro.core.budget.engine.BudgetLimitSuggester
 import com.sciuro.feature.budgets.model.BudgetHealth
 import com.sciuro.feature.budgets.viewmodel.BudgetsViewModel
 import org.koin.androidx.compose.koinViewModel
-import org.koin.androidx.compose.getKoin
+import org.koin.compose.getKoin
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetsScreen(
-    settingsProvider: SettingsProvider = koinInject(),
+    onNavigateToCategoryDrilldown: () -> Unit = {},
     viewModel: BudgetsViewModel = koinViewModel()
 ) {
     val budgets by viewModel.budgets.collectAsState()
     val expenseCategories by viewModel.expenseCategories.collectAsState()
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
 
     var showSheet by remember { mutableStateOf(false) }
     var editingBudgetId by remember { mutableStateOf<String?>(null) }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
     var amountText by remember { mutableStateOf("") }
     var selectedPeriod by remember { mutableStateOf(BudgetPeriod.MONTHLY) }
-    
-    // Confirmation Dialogs
+
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-    var showCreateConfirmation by remember { mutableStateOf(false) }
-    var showSaveConfirmation by remember { mutableStateOf(false) }
-    
+
     var suggestedAmount by remember { mutableStateOf<Double?>(null) }
     val suggester: BudgetLimitSuggester = getKoin().get()
 
-    val pullToRefreshState = rememberPullToRefreshState()
-
-    if (pullToRefreshState.isRefreshing) {
-        LaunchedEffect(true) {
-            viewModel.refresh()
-            pullToRefreshState.endRefresh()
-        }
-    }
-
-    Box(modifier = Modifier
-        .nestedScroll(pullToRefreshState.nestedScrollConnection)
-        .fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 val totalSpent = remember(budgets) { budgets.sumOf { it.currentSpent } }
@@ -86,9 +73,9 @@ fun BudgetsScreen(
                 }
 
                 HeroPanel(
-                    title = "Monthly Budgets",
+                    title = "Budgets",
                     heroFigure = if (budgets.isEmpty()) {
-                        { Text("0 Active", style = MaterialTheme.typography.headlineLarge, color = Color.White) }
+                        { Text("No Active Budgets", style = MaterialTheme.typography.headlineLarge, color = Color.White) }
                     } else {
                         { HeroFigurePair(first = totalSpent, second = totalAllocated) }
                     },
@@ -101,7 +88,7 @@ fun BudgetsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 24.dp, vertical = 4.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 atRisk.forEach { budget ->
                                     Row(
@@ -117,14 +104,21 @@ fun BudgetsScreen(
                                         Text(
                                             text = "${(budget.progress * 100).toInt()}%",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = when (budget.health(settingsProvider.getBudgetWarningThreshold())) {
-                                                BudgetHealth.OVER -> com.najmi.sciuro.core.ui.theme.SignalDanger
-                                                BudgetHealth.APPROACHING -> com.najmi.sciuro.core.ui.theme.SignalWarning
+                                            color = when (budget.health()) {
+                                                BudgetHealth.OVER -> SignalDanger
+                                                BudgetHealth.APPROACHING -> SignalWarning
                                                 BudgetHealth.HEALTHY -> Color.White.copy(alpha = 0.6f)
                                             }
                                         )
                                     }
                                 }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "View Categories",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    modifier = Modifier.clickable { onNavigateToCategoryDrilldown() }
+                                )
                             }
                         }
                     }
@@ -138,8 +132,8 @@ fun BudgetsScreen(
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         if (budgets.isEmpty()) {
                             EmptyStateView(
-                                message = "No budgets yet — set a monthly limit for any category to start tracking against it.",
-                                primaryCtaText = "Set your first budget",
+                                message = "No budgets yet \u2014 set a limit for any category to start tracking.",
+                                primaryCtaText = "Create Budget",
                                 onPrimaryCtaClick = {
                                     selectedCategoryId = null
                                     amountText = ""
@@ -150,7 +144,7 @@ fun BudgetsScreen(
                             )
                         } else {
                             budgets.forEach { budget ->
-                                com.najmi.sciuro.core.ui.components.SciuroCard(
+                                SciuroCard(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 16.dp)
@@ -173,11 +167,7 @@ fun BudgetsScreen(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 if (budget.categoryIcon != null) {
-                                                    val iconBg = if (budget.categoryColor != null) {
-                                                        try { Color(android.graphics.Color.parseColor(budget.categoryColor)) } catch (_: Exception) { MaterialTheme.colorScheme.primaryContainer }
-                                                    } else {
-                                                        MaterialTheme.colorScheme.primaryContainer
-                                                    }
+                                                    val iconBg = MaterialTheme.colorScheme.primaryContainer
                                                     Box(
                                                         modifier = Modifier
                                                             .size(40.dp)
@@ -189,40 +179,62 @@ fun BudgetsScreen(
                                                             imageVector = budget.categoryIcon,
                                                             contentDescription = null,
                                                             modifier = Modifier.size(20.dp),
-                                                            tint = Color.White
+                                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                                                         )
                                                     }
                                                 }
                                                 Column {
                                                     Text(budget.categoryName, style = MaterialTheme.typography.titleMedium)
-                                                    if (budget.rollover) {
-                                                        Text(
-                                                            "Rollover active",
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        val periodLabel = when (BudgetPeriod.valueOf(budget.period)) {
+                                                            BudgetPeriod.WEEKLY -> "Weekly"
+                                                            BudgetPeriod.MONTHLY -> "Monthly"
+                                                            BudgetPeriod.YEARLY -> "Yearly"
+                                                        }
+                                                        Surface(
+                                                            shape = MaterialTheme.shapes.small,
+                                                            color = MaterialTheme.colorScheme.surfaceVariant
+                                                        ) {
+                                                            Text(
+                                                                periodLabel,
+                                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            )
+                                                        }
+                                                        if (budget.rollover) {
+                                                            Text(
+                                                                "Rollover",
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
                                             Text(
                                                 "RM ${"%.2f".format(budget.currentSpent)} / RM ${"%.2f".format(budget.allocatedAmount)}",
-                                                style = MaterialTheme.typography.bodyMedium
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontFamily = IBMPlexMono
                                             )
                                         }
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        val health = budget.health(settingsProvider.getBudgetWarningThreshold())
+                                        val health = budget.health()
                                         val progressColor = when (health) {
-                                            BudgetHealth.OVER -> com.najmi.sciuro.core.ui.theme.SignalDanger
-                                            BudgetHealth.APPROACHING -> com.najmi.sciuro.core.ui.theme.SignalWarning
+                                            BudgetHealth.OVER -> SignalDanger
+                                            BudgetHealth.APPROACHING -> SignalWarning
                                             BudgetHealth.HEALTHY -> MaterialTheme.colorScheme.primary
                                         }
                                         LinearProgressIndicator(
                                             progress = { if (budget.progress > 1f) 1f else budget.progress },
-                                            modifier = Modifier.fillMaxWidth().height(8.dp),
+                                            modifier = Modifier.fillMaxWidth().height(6.dp),
                                             color = progressColor,
                                             trackColor = MaterialTheme.colorScheme.surfaceVariant
                                         )
-                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween
@@ -235,7 +247,7 @@ fun BudgetsScreen(
                                             Text(
                                                 "RM ${"%.2f".format(budget.dailyAllowance)}/day",
                                                 style = MaterialTheme.typography.bodySmall,
-                                                fontFamily = com.najmi.sciuro.core.ui.theme.IBMPlexMono,
+                                                fontFamily = IBMPlexMono,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
@@ -247,11 +259,6 @@ fun BudgetsScreen(
                 }
             }
         }
-
-        PullToRefreshContainer(
-            state = pullToRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
 
         if (budgets.isNotEmpty()) {
             FloatingActionButton(
@@ -265,8 +272,8 @@ fun BudgetsScreen(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Add Budget")
             }
@@ -301,10 +308,14 @@ fun BudgetsScreen(
                 }
             }
 
+            val parsedAmount = amountText.toDoubleOrNull()
+            val isAmountError = amountText.isNotEmpty() && (parsedAmount == null || parsedAmount <= 0 || parsedAmount > 100_000)
             SciuroTextField(
                 value = amountText,
                 onValueChange = { amountText = it },
                 label = "Monthly Limit (RM)",
+                isError = isAmountError,
+                supportingText = if (isAmountError) "Enter a valid amount (1 \u2013 100,000)" else null,
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                 )
@@ -359,21 +370,40 @@ fun BudgetsScreen(
                         Text("Delete")
                     }
 
-                    val parsedAmount = amountText.toDoubleOrNull()
                     val isValidAmount = parsedAmount != null && parsedAmount > 0 && parsedAmount <= 100_000
                     SciuroPrimaryButton(
                         text = "Save",
-                        onClick = { showSaveConfirmation = true },
+                        onClick = {
+                            coroutineScope.launch {
+                                viewModel.updateBudget(
+                                    id = editingBudgetId!!,
+                                    allocatedAmount = parsedAmount!!,
+                                    period = selectedPeriod
+                                )
+                                showSheet = false
+                                snackbarHostState.showSnackbar("Budget updated")
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         enabled = isValidAmount
                     )
                 }
             } else {
-                val parsedAmount = amountText.toDoubleOrNull()
                 val isValidAmount = parsedAmount != null && parsedAmount > 0 && parsedAmount <= 100_000
                 SciuroPrimaryButton(
                     text = "Create Budget",
-                    onClick = { showCreateConfirmation = true },
+                    onClick = {
+                        coroutineScope.launch {
+                            viewModel.createBudget(
+                                categoryId = selectedCategoryId!!,
+                                allocatedAmount = parsedAmount!!,
+                                period = selectedPeriod
+                            )
+                            showSheet = false
+                            val catName = expenseCategories.find { it.id == selectedCategoryId }?.name ?: "category"
+                            snackbarHostState.showSnackbar("Budget created for $catName")
+                        }
+                    },
                     enabled = isValidAmount && selectedCategoryId != null
                 )
             }
@@ -387,53 +417,14 @@ fun BudgetsScreen(
             confirmText = "Delete",
             isDestructive = true,
             onConfirm = {
-                if (editingBudgetId != null) {
+                coroutineScope.launch {
                     viewModel.deleteBudget(editingBudgetId!!)
+                    showDeleteConfirmation = false
+                    showSheet = false
+                    snackbarHostState.showSnackbar("Budget deleted")
                 }
-                showDeleteConfirmation = false
-                showSheet = false
             },
             onDismiss = { showDeleteConfirmation = false }
         )
     }
-
-    if (showSaveConfirmation) {
-        SciuroConfirmationDialog(
-            title = "Save Changes",
-            message = "Are you sure you want to save these changes?",
-            confirmText = "Save",
-            onConfirm = {
-                val amt = amountText.toDoubleOrNull() ?: 0.0
-                viewModel.updateBudget(
-                    id = editingBudgetId!!,
-                    allocatedAmount = amt,
-                    period = selectedPeriod
-                )
-                showSaveConfirmation = false
-                showSheet = false
-            },
-            onDismiss = { showSaveConfirmation = false }
-        )
-    }
-
-    if (showCreateConfirmation) {
-        SciuroConfirmationDialog(
-            title = "Create Budget",
-            message = "Are you sure you want to create this budget?",
-            confirmText = "Create",
-            onConfirm = {
-                val amt = amountText.toDoubleOrNull() ?: 0.0
-                viewModel.createBudget(
-                    categoryId = selectedCategoryId!!,
-                    allocatedAmount = amt,
-                    period = selectedPeriod
-                )
-                showCreateConfirmation = false
-                showSheet = false
-            },
-            onDismiss = { showCreateConfirmation = false }
-        )
-    }
 }
-
-

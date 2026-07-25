@@ -279,13 +279,19 @@ fun SciuroMainScreen() {
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-            composable("budgets") { BudgetsScreen() }
+            composable("budgets") {
+                com.sciuro.feature.budgets.ui.BudgetsScreen(
+                    onNavigateToCategoryDrilldown = { navController.navigate("category_drilldown") }
+                )
+            }
             composable(
                 "category_drilldown",
                 enterTransition = drillInEnter,
                 popExitTransition = drillInPopExit
             ) {
-                com.sciuro.feature.budgets.ui.CategoryDrilldownScreen()
+                com.sciuro.feature.budgets.ui.CategoryDrilldownScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
             composable("debt_overview") { DebtOverviewScreen() }
             composable("kanban") { KanbanScreen() }
