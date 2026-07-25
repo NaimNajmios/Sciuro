@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.sciuro.core.ledger.db.SciuroDatabase
 import org.koin.compose.koinInject
 import java.text.SimpleDateFormat
@@ -121,7 +122,7 @@ fun DeveloperTabPipelineTrace(
         }
 
         items(events) { event ->
-            Card(
+            SciuroCard(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
                 onClick = { loadTraces(event.rawEventId) }
             ) {

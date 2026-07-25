@@ -1,22 +1,24 @@
 package com.sciuro.feature.settings.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
-import com.sciuro.feature.settings.viewmodel.SettingsViewModel
+import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
+import com.najmi.sciuro.core.ui.theme.SignalDanger
+import com.sciuro.feature.settings.R
+import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun DeveloperSettingsScreen(
     onNavigateBack: () -> Unit,
-    viewModel: SettingsViewModel = koinViewModel()
+    viewModel: DeveloperSettingsViewModel = koinViewModel()
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Simulator", "Sources", "Ingestion Log", "Diagnostics", "Data Tools", "Health", "Pipeline Trace")
@@ -24,9 +26,10 @@ fun DeveloperSettingsScreen(
     val pendingCount by viewModel.pendingCount.collectAsState()
     val deadLetterCount by viewModel.deadLetterCount.collectAsState()
     val lastCapturedAt by viewModel.lastCapturedAt.collectAsState()
+    val noCapturesText = stringResource(R.string.developer_no_captures)
 
-    val lastCaptureText = remember(lastCapturedAt) {
-        if (lastCapturedAt == null) "No captures yet" else {
+    val lastCaptureText = remember(lastCapturedAt, noCapturesText) {
+        if (lastCapturedAt == null) noCapturesText else {
             val elapsed = (System.currentTimeMillis() - lastCapturedAt!!) / 1000
             when {
                 elapsed < 60 -> "Just now"
@@ -39,8 +42,8 @@ fun DeveloperSettingsScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
-            title = "Developer Options",
-            heroFigure = { Text(lastCaptureText, style = MaterialTheme.typography.headlineLarge, color = Color.White) },
+            title = stringResource(R.string.developer_title),
+            heroFigure = { Text(lastCaptureText, style = MaterialTheme.typography.headlineLarge, color = BrandPrimaryDark) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {},
@@ -48,8 +51,8 @@ fun DeveloperSettingsScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Back",
-                        tint = Color.White
+                        contentDescription = stringResource(R.string.linked_accounts_back),
+                        tint = BrandPrimaryDark
                     )
                 }
             },
@@ -61,14 +64,14 @@ fun DeveloperSettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Text(
-                        text = "Pending: $pendingCount",
+                        text = stringResource(R.string.developer_pending, pendingCount.toInt()),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = BrandPrimaryDark.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = "Dead: $deadLetterCount",
+                        text = stringResource(R.string.developer_dead, deadLetterCount.toInt()),
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (deadLetterCount > 0) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.7f)
+                        color = if (deadLetterCount > 0) SignalDanger else BrandPrimaryDark.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -95,4 +98,3 @@ fun DeveloperSettingsScreen(
         }
     }
 }
-

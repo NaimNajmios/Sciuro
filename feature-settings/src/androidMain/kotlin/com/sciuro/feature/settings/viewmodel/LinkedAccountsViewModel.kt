@@ -9,6 +9,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+data class LinkedAccountsUiState(
+    val isLoading: Boolean = true,
+    val accounts: List<com.sciuro.core.ledger.db.Account> = emptyList(),
+    val selectedIds: Set<String> = emptySet(),
+    val linkedPairs: List<Pair<String, String>> = emptyList(),
+    val canLink: Boolean = false,
+    val message: String? = null
+) {
+    companion object {
+        val Loading = LinkedAccountsUiState(isLoading = true)
+        val Empty = LinkedAccountsUiState(isLoading = false)
+    }
+}
+
 class LinkedAccountsViewModel(
     private val accountRepository: AccountRepository
 ) : ViewModel() {
@@ -23,13 +37,14 @@ class LinkedAccountsViewModel(
     fun loadAccounts() {
         viewModelScope.launch {
             val accounts = accountRepository.observeAccounts().first()
+            val linkedPairs = accountRepository.observeLinkedPairs().first()
             if (accounts.isEmpty()) {
                 _state.value = LinkedAccountsUiState.Empty
             } else {
-                _state.value = LinkedAccountsUiState.Ready(
+                _state.value = LinkedAccountsUiState(
+                    isLoading = false,
                     accounts = accounts,
-                    selectedIds = emptySet(),
-                    canLink = false
+                    linkedPairs = linkedPairs
                 )
             }
         }
@@ -37,7 +52,6 @@ class LinkedAccountsViewModel(
 
     fun toggleSelection(accountId: String) {
         val current = _state.value
-        if (current !is LinkedAccountsUiState.Ready) return
         val newSelected = if (accountId in current.selectedIds) {
             current.selectedIds - accountId
         } else {
@@ -51,12 +65,28 @@ class LinkedAccountsViewModel(
 
     fun linkSelectedPair() {
         val current = _state.value
-        if (current !is LinkedAccountsUiState.Ready) return
         val ids = current.selectedIds.toList()
         if (ids.size != 2) return
         viewModelScope.launch {
             accountRepository.linkAccountPair(ids[0], ids[1])
-            _state.value = LinkedAccountsUiState.Linked("Accounts linked successfully.")
+            _state.value = current.copy(
+                message = "Accounts linked successfully.",
+                selectedIds = emptySet(),
+                canLink = false
+            )
+            loadAccounts()
         }
+    }
+
+    fun unlinkPair(accountIdA: String, accountIdB: String) {
+        viewModelScope.launch {
+            accountRepository.unlinkAccountPair(accountIdA, accountIdB)
+            _state.value = _state.value.copy(message = "Accounts unlinked.")
+            loadAccounts()
+        }
+    }
+
+    fun clearMessage() {
+        _state.value = _state.value.copy(message = null)
     }
 }

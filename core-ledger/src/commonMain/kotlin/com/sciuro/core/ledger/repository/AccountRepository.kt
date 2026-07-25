@@ -13,6 +13,7 @@ import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class AccountRepository(
     auditRepository: AuditRepository,
@@ -140,6 +141,30 @@ class AccountRepository(
         val sorted = listOf(accountIdA, accountIdB).sorted()
         if (sorted.size != 2) return
         database.accountQueries.insertAccountPairConfirmation(sorted[0], sorted[1], currentTimeMillis())
+    }
+
+    suspend fun unlinkAccountPair(accountIdA: String, accountIdB: String) {
+        val sorted = listOf(accountIdA, accountIdB).sorted()
+        if (sorted.size != 2) return
+        withAudit(
+            entityType = EntityType.ACCOUNT,
+            entityId = sorted.joinToString(":"),
+            action = AuditAction.UPDATE,
+            beforeState = "linked pair: ${sorted[0]} <-> ${sorted[1]}",
+            afterState = null,
+            source = AuditSource.USER_MANUAL
+        ) {
+            database.accountQueries.deleteAccountPairConfirmation(sorted[0], sorted[1])
+        }
+    }
+
+    fun observeLinkedPairs(): Flow<List<Pair<String, String>>> {
+        return database.accountQueries.selectAllAccountPairConfirmations()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { rows ->
+                rows.map { row -> Pair(row.account_id_a, row.account_id_b) }
+            }
     }
     
     fun observeAccounts(): Flow<List<com.sciuro.core.ledger.db.Account>> {

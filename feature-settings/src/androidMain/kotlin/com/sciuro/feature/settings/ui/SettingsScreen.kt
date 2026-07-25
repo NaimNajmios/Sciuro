@@ -1,40 +1,47 @@
 package com.sciuro.feature.settings.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
-import com.sciuro.core.ledger.config.SettingsProvider
+import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.koin.compose.koinInject
+import com.sciuro.feature.settings.viewmodel.ConnectionTestState
+import com.sciuro.feature.settings.viewmodel.SettingsViewModel
+import org.koin.androidx.compose.koinViewModel
 import android.os.Build
 import android.os.PowerManager
-import android.provider.Settings as SystemSettings
-import java.net.HttpURLConnection
-import java.net.URL
 import com.najmi.sciuro.core.ui.util.OemAutostartHelper
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.sciuro.feature.settings.R
 
 @Composable
 fun SettingsScreen(
@@ -43,66 +50,66 @@ fun SettingsScreen(
     onNavigateToLinkedAccounts: () -> Unit = {},
     onExportBackup: (String) -> Unit = {},
     onImportBackup: (Uri, String) -> Unit = { _, _ -> },
-    settingsProvider: SettingsProvider = koinInject()
+    viewModel: SettingsViewModel = koinViewModel()
 ) {
-    var isLlmOptIn by rememberSaveable { mutableStateOf(settingsProvider.isLlmEnabled()) }
-    var isLockEnabled by rememberSaveable { mutableStateOf(settingsProvider.isLockEnabled()) }
-    var isObligationAutoConfirmEnabled by rememberSaveable { mutableStateOf(settingsProvider.isObligationAutoConfirmEnabled()) }
-    var apiKey by rememberSaveable { mutableStateOf(settingsProvider.getApiKey() ?: "") }
-    var testStatus by rememberSaveable { mutableStateOf<String?>(null) }
-    var llmModelName by rememberSaveable { mutableStateOf(settingsProvider.getLlmModelName()) }
-    var budgetThreshold by rememberSaveable { mutableStateOf(settingsProvider.getBudgetWarningThreshold()) }
-
-    val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val themeManager = remember { ThemeManager.getInstance(context) }
     val themePref by themeManager.themePreference.collectAsState()
 
+    var showLlmFields by remember { mutableStateOf(uiState.isLlmEnabled) }
+    var showQuietHoursPicker by remember { mutableStateOf(false) }
+    var apiKeyVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.isLlmEnabled) {
+        showLlmFields = uiState.isLlmEnabled
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
-            title = "Settings",
-            heroFigure = { Text("Settings", style = MaterialTheme.typography.headlineLarge, color = Color.White) },
+            title = stringResource(R.string.settings_title),
+            heroFigure = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineLarge, color = BrandPrimaryDark) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {}
         )
 
         SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
-            Spacer(modifier = Modifier.height(16.dp))
-
             LazyColumn(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .fillMaxWidth()
                     .weight(1f)
             ) {
+                // Section: Appearance
                 item {
-                    Text(
-                        "Application Settings",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                                )
-                            }
-                            item {
-                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    SettingsSectionHeader(stringResource(R.string.settings_section_appearance))
+                }
+
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Appearance", style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            val themeLabels = listOf("System", "Light", "Dark")
+                            val themeLabels = listOf(
+                                stringResource(R.string.settings_theme_system),
+                                stringResource(R.string.settings_theme_light),
+                                stringResource(R.string.settings_theme_dark)
+                            )
+                            val themeSystemLabel = stringResource(R.string.settings_theme_system)
+                            val themeLightLabel = stringResource(R.string.settings_theme_light)
+                            val themeDarkLabel = stringResource(R.string.settings_theme_dark)
                             val selectedLabel = when (themePref) {
-                                ThemePreference.SYSTEM_DEFAULT -> "System"
-                                ThemePreference.LIGHT -> "Light"
-                                ThemePreference.DARK -> "Dark"
+                                ThemePreference.SYSTEM_DEFAULT -> themeSystemLabel
+                                ThemePreference.LIGHT -> themeLightLabel
+                                ThemePreference.DARK -> themeDarkLabel
                             }
                             PillToggle(
                                 options = themeLabels,
                                 selectedOption = selectedLabel,
                                 onOptionSelected = { label ->
                                     val pref = when (label) {
-                                        "System" -> ThemePreference.SYSTEM_DEFAULT
-                                        "Light" -> ThemePreference.LIGHT
-                                        "Dark" -> ThemePreference.DARK
+                                        themeSystemLabel -> ThemePreference.SYSTEM_DEFAULT
+                                        themeLightLabel -> ThemePreference.LIGHT
+                                        themeDarkLabel -> ThemePreference.DARK
                                         else -> ThemePreference.SYSTEM_DEFAULT
                                     }
                                     themeManager.setTheme(pref)
@@ -114,6 +121,11 @@ fun SettingsScreen(
                     }
                 }
 
+                // Section: Background Reliability
+                item {
+                    SettingsSectionHeader(stringResource(R.string.settings_section_background_reliability))
+                }
+
                 item {
                     val isBatteryExempt = remember {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -123,15 +135,11 @@ fun SettingsScreen(
                             true
                         }
                     }
-                    com.najmi.sciuro.core.ui.components.SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                    ) {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Background Reliability", style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                if (isBatteryExempt) "Battery optimization is disabled. Sciuro can run reliably in the background."
-                                else "Battery optimization is active and may interrupt background notification capture.",
+                                if (isBatteryExempt) stringResource(R.string.settings_battery_optimization_disabled)
+                                else stringResource(R.string.settings_battery_optimization_active),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isBatteryExempt) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                             )
@@ -148,7 +156,7 @@ fun SettingsScreen(
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Disable Battery Optimization")
+                                    Text(stringResource(R.string.settings_disable_battery_optimization))
                                 }
                             }
                             val autostartIntent = remember { OemAutostartHelper.getAutostartIntent() }
@@ -158,50 +166,137 @@ fun SettingsScreen(
                                     onClick = {
                                         try {
                                             context.startActivity(autostartIntent)
-                                        } catch (_: Exception) { /* ActivityNotFoundException or SecurityException - ignore */ }
+                                        } catch (_: Exception) { }
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Open Autostart Settings")
+                                    Text(stringResource(R.string.settings_open_autostart))
                                 }
                             }
                         }
                     }
                 }
 
+                // Quiet Hours (under Reliability)
                 item {
-                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Security", style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(8.dp))
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showQuietHoursPicker = !showQuietHoursPicker },
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Lock app on launch", style = MaterialTheme.typography.bodyMedium)
+                                    Text(stringResource(R.string.settings_section_quiet_hours), style = MaterialTheme.typography.titleMedium)
                                     Text(
-                                        "Require biometric or device PIN to open Sciuro",
+                                        if (uiState.isQuietHoursEnabled) stringResource(R.string.settings_quiet_hours_suppressed, uiState.quietHoursStart, uiState.quietHoursEnd)
+                                        else stringResource(R.string.settings_quiet_hours_description),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Switch(
-                                    checked = isLockEnabled,
-                                    onCheckedChange = {
-                                        isLockEnabled = it
-                                        settingsProvider.setLockEnabled(it)
-                                    }
+                                Icon(
+                                    if (showQuietHoursPicker) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            }
+                            AnimatedVisibility(
+                                visible = showQuietHoursPicker,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
+                                Column {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(stringResource(R.string.settings_section_quiet_hours), style = MaterialTheme.typography.bodyMedium)
+                                        Switch(
+                                            checked = uiState.isQuietHoursEnabled,
+                                            onCheckedChange = { viewModel.setQuietHoursEnabled(it) }
+                                        )
+                                    }
+                                    if (uiState.isQuietHoursEnabled) {
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceEvenly,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(stringResource(R.string.settings_quiet_hours_start), style = MaterialTheme.typography.labelSmall)
+                                                Text("${uiState.quietHoursStart}:00", style = MaterialTheme.typography.titleMedium)
+                                                Row {
+                                                    IconButton(onClick = {
+                                                        if (uiState.quietHoursStart > 0) viewModel.setQuietHoursStart(uiState.quietHoursStart - 1)
+                                                    }) { Text("\u2212") }
+                                                    IconButton(onClick = {
+                                                        if (uiState.quietHoursStart < 23) viewModel.setQuietHoursStart(uiState.quietHoursStart + 1)
+                                                    }) { Text("+") }
+                                                }
+                                            }
+                                            Text(stringResource(R.string.settings_quiet_hours_to), style = MaterialTheme.typography.bodyMedium)
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(stringResource(R.string.settings_quiet_hours_end), style = MaterialTheme.typography.labelSmall)
+                                                Text("${uiState.quietHoursEnd}:00", style = MaterialTheme.typography.titleMedium)
+                                                Row {
+                                                    IconButton(onClick = {
+                                                        if (uiState.quietHoursEnd > 0) viewModel.setQuietHoursEnd(uiState.quietHoursEnd - 1)
+                                                    }) { Text("\u2212") }
+                                                    IconButton(onClick = {
+                                                        if (uiState.quietHoursEnd < 23) viewModel.setQuietHoursEnd(uiState.quietHoursEnd + 1)
+                                                    }) { Text("+") }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
+                // Section: Security
                 item {
-                    var showExportDialog by rememberSaveable { mutableStateOf(false) }
+                    SettingsSectionHeader(stringResource(R.string.settings_section_security))
+                }
+
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.settings_lock_app_on_launch), style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    stringResource(R.string.settings_lock_app_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Switch(
+                                checked = uiState.isLockEnabled,
+                                onCheckedChange = { viewModel.setLockEnabled(it) }
+                            )
+                        }
+                    }
+                }
+
+                // Section: Data & Accounts
+                item {
+                    SettingsSectionHeader(stringResource(R.string.settings_section_data_backup))
+                }
+
+                item {
+                    var showExportDialog by remember { mutableStateOf(false) }
                     var importFileUri by remember { mutableStateOf<Uri?>(null) }
 
                     val importFilePickerLauncher = rememberLauncherForActivityResult(
@@ -210,12 +305,10 @@ fun SettingsScreen(
                         importFileUri = uri
                     }
 
-                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Data Backup", style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Encrypted export (AES-256-GCM) and import with pre-import backup.",
+                                stringResource(R.string.settings_data_backup_description),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -228,27 +321,27 @@ fun SettingsScreen(
                                     onClick = { showExportDialog = true },
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Text("Export")
+                                    Text(stringResource(R.string.settings_export))
                                 }
                                 OutlinedButton(
                                     onClick = { importFilePickerLauncher.launch(arrayOf("*/*")) },
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Text("Import")
+                                    Text(stringResource(R.string.settings_import))
                                 }
                             }
                         }
                     }
                     if (showExportDialog) {
                         BackupPasswordDialog(
-                            title = "Export Encrypted Backup",
+                            title = stringResource(R.string.settings_backup_export_title),
                             onConfirm = { showExportDialog = false; onExportBackup(it) },
                             onDismiss = { showExportDialog = false }
                         )
                     }
                     importFileUri?.let { uri ->
                         BackupPasswordDialog(
-                            title = "Import Encrypted Backup", 
+                            title = stringResource(R.string.settings_backup_import_title),
                             onConfirm = { password ->
                                 importFileUri = null
                                 onImportBackup(uri, password)
@@ -259,203 +352,8 @@ fun SettingsScreen(
                 }
 
                 item {
-                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("LLM Classification", style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Use Groq Llama 3 for Fallback", style = MaterialTheme.typography.bodyMedium)
-                                Switch(
-                                    checked = isLlmOptIn,
-                                    onCheckedChange = {
-                                        isLlmOptIn = it
-                                        settingsProvider.setLlmEnabled(it)
-                                    }
-                                )
-                            }
-
-                            if (isLlmOptIn) {
-                                Spacer(modifier = Modifier.height(16.dp))
-                                com.najmi.sciuro.core.ui.components.SciuroTextField(
-                                    value = apiKey,
-                                    onValueChange = {
-                                        apiKey = it
-                                        settingsProvider.setApiKey(it)
-                                    },
-                                    label = "Groq API Key",
-                                    singleLine = true,
-                                    visualTransformation = PasswordVisualTransformation(),
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                com.najmi.sciuro.core.ui.components.SciuroTextField(
-                                    value = llmModelName,
-                                    onValueChange = {
-                                        llmModelName = it
-                                        settingsProvider.setLlmModelName(it)
-                                    },
-                                    label = "Groq LLM Model",
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Button(
-                                        onClick = {
-                                            testStatus = "Testing..."
-                                            scope.launch {
-                                                testStatus = withContext(Dispatchers.IO) {
-                                                    try {
-                                                        val url = URL("https://api.groq.com/openai/v1/models")
-                                                        val connection = url.openConnection() as HttpURLConnection
-                                                        connection.requestMethod = "GET"
-                                                        connection.setRequestProperty("Authorization", "Bearer $apiKey")
-                                                        connection.connectTimeout = 5000
-                                                        connection.readTimeout = 5000
-
-                                                        when (connection.responseCode) {
-                                                            200 -> "Success! Connection established."
-                                                            401 -> "Error: Invalid API Key."
-                                                            else -> "Error: ${connection.responseCode}"
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        "Failed: ${e.message}"
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        enabled = apiKey.isNotBlank()
-                                    ) {
-                                        Text("Test Connection")
-                                    }
-
-                                    Spacer(modifier = Modifier.width(16.dp))
-
-                                    testStatus?.let {
-                                        Text(
-                                            text = it,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = if (it.startsWith("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item {
-                    com.najmi.sciuro.core.ui.components.SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Automation", style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Auto-confirm recurring bills", style = MaterialTheme.typography.bodyMedium)
-                                    Text(
-                                        "Auto-create obligations from trusted merchants you've confirmed 3+ times",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Switch(
-                                    checked = isObligationAutoConfirmEnabled,
-                                    onCheckedChange = {
-                                        isObligationAutoConfirmEnabled = it
-                                        settingsProvider.setObligationAutoConfirmEnabled(it)
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                item {
-                    var isQuietHoursEnabled by rememberSaveable { mutableStateOf(settingsProvider.isQuietHoursEnabled()) }
-                    var quietStart by rememberSaveable { mutableStateOf(settingsProvider.getQuietHoursStart()) }
-                    var quietEnd by rememberSaveable { mutableStateOf(settingsProvider.getQuietHoursEnd()) }
-                    com.najmi.sciuro.core.ui.components.SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Quiet Hours", style = MaterialTheme.typography.titleMedium)
-                                    Text(
-                                        if (isQuietHoursEnabled) "Suppressed: ${quietStart}:00\u2013${quietEnd}:00"
-                                        else "Suppress non-critical notifications during your off-hours",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Switch(
-                                    checked = isQuietHoursEnabled,
-                                    onCheckedChange = {
-                                        isQuietHoursEnabled = it
-                                        settingsProvider.setQuietHoursEnabled(it)
-                                    }
-                                )
-                            }
-                            if (isQuietHoursEnabled) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("Start", style = MaterialTheme.typography.labelSmall)
-                                        Text("${quietStart}:00", style = MaterialTheme.typography.titleMedium)
-                                        Row {
-                                            IconButton(onClick = {
-                                                if (quietStart > 0) { quietStart -= 1; settingsProvider.setQuietHoursStart(quietStart) }
-                                            }) { Text("\u2212") }
-                                            IconButton(onClick = {
-                                                if (quietStart < 23) { quietStart += 1; settingsProvider.setQuietHoursStart(quietStart) }
-                                            }) { Text("+") }
-                                        }
-                                    }
-                                    Text("to", style = MaterialTheme.typography.bodyMedium)
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("End", style = MaterialTheme.typography.labelSmall)
-                                        Text("${quietEnd}:00", style = MaterialTheme.typography.titleMedium)
-                                        Row {
-                                            IconButton(onClick = {
-                                                if (quietEnd > 0) { quietEnd -= 1; settingsProvider.setQuietHoursEnd(quietEnd) }
-                                            }) { Text("\u2212") }
-                                            IconButton(onClick = {
-                                                if (quietEnd < 23) { quietEnd += 1; settingsProvider.setQuietHoursEnd(quietEnd) }
-                                            }) { Text("+") }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item {
-                    com.najmi.sciuro.core.ui.components.SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                         onClick = onNavigateToLinkedAccounts
                     ) {
                         Row(
@@ -463,15 +361,15 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Linked Account Pairs", style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Linked Account Pairs")
+                            Text(stringResource(R.string.settings_linked_accounts), style = MaterialTheme.typography.titleMedium)
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_linked_accounts))
                         }
                     }
                 }
 
                 item {
-                    com.najmi.sciuro.core.ui.components.SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                         onClick = onNavigateToCategorySettings
                     ) {
                         Row(
@@ -479,40 +377,170 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Manage Categories", style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Manage Categories")
+                            Text(stringResource(R.string.settings_manage_categories), style = MaterialTheme.typography.titleMedium)
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_manage_categories))
                         }
                     }
                 }
 
                 item {
-                    com.najmi.sciuro.core.ui.components.SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                    ) {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                            Text(stringResource(R.string.settings_budget_warning_threshold), style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Budget Warning Threshold", style = MaterialTheme.typography.titleMedium)
-                                Text("%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Slider(
+                                    value = uiState.budgetWarningThreshold,
+                                    onValueChange = { viewModel.setBudgetWarningThreshold(it) },
+                                    valueRange = 0.5f..1.0f,
+                                    steps = 9,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "${(uiState.budgetWarningThreshold * 100).toInt()}%",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.width(40.dp)
+                                )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Slider(
-                                value = budgetThreshold,
-                                onValueChange = { budgetThreshold = it },
-                                onValueChangeFinished = { settingsProvider.setBudgetWarningThreshold(budgetThreshold) },
-                                valueRange = 0.5f..1.0f,
-                                steps = 9
+                        }
+                    }
+                }
+
+                // Section: Intelligence & Automation
+                item {
+                    SettingsSectionHeader(stringResource(R.string.settings_section_llm))
+                }
+
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(stringResource(R.string.settings_llm_toggle), style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = uiState.isLlmEnabled,
+                                    onCheckedChange = {
+                                        viewModel.setLlmEnabled(it)
+                                        showLlmFields = it
+                                    }
+                                )
+                            }
+
+                            AnimatedVisibility(
+                                visible = showLlmFields,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
+                                Column {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    SciuroTextField(
+                                        value = uiState.apiKey,
+                                        onValueChange = { viewModel.setApiKey(it) },
+                                        label = stringResource(R.string.settings_llm_api_key),
+                                        singleLine = true,
+                                        visualTransformation = if (apiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                        trailingIcon = {
+                                            IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
+                                                Text(
+                                                    text = if (apiKeyVisible) "Hide" else "Show",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    SciuroTextField(
+                                        value = uiState.llmModelName,
+                                        onValueChange = { viewModel.setLlmModelName(it) },
+                                        label = stringResource(R.string.settings_llm_model),
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Button(
+                                            onClick = { viewModel.testConnection() },
+                                            enabled = uiState.apiKey.isNotBlank() && uiState.connectionTestState !is ConnectionTestState.Testing
+                                        ) {
+                                            Text(stringResource(R.string.settings_test_connection))
+                                        }
+
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        when (val state = uiState.connectionTestState) {
+                                            is ConnectionTestState.Testing -> {
+                                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                            }
+                                            is ConnectionTestState.Success -> {
+                                                Text(
+                                                    text = stringResource(R.string.settings_connection_success),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                            is ConnectionTestState.Error -> {
+                                                Text(
+                                                    text = state.message,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                            is ConnectionTestState.Idle -> { }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.settings_auto_confirm_recurring), style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    stringResource(R.string.settings_auto_confirm_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Switch(
+                                checked = uiState.isObligationAutoConfirmEnabled,
+                                onCheckedChange = { viewModel.setObligationAutoConfirmEnabled(it) }
                             )
                         }
                     }
                 }
 
+                // Section: Developer
                 item {
-                    com.najmi.sciuro.core.ui.components.SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    SettingsSectionHeader(stringResource(R.string.settings_developer_options))
+                }
+
+                item {
+                    SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                         onClick = onNavigateToDeveloperSettings
                     ) {
                         Row(
@@ -520,14 +548,25 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Developer Options", style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Developer Options")
+                            Text(stringResource(R.string.settings_developer_options), style = MaterialTheme.typography.titleMedium)
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_developer_options))
                         }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SettingsSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 4.dp)
+    )
 }
 
 @Composable
@@ -542,12 +581,12 @@ private fun BackupPasswordDialog(
         title = { Text(title) },
         text = {
             Column {
-                Text("Enter a passphrase to encrypt/decrypt your backup.")
+                Text(stringResource(R.string.settings_backup_passphrase_description))
                 Spacer(modifier = Modifier.height(12.dp))
-                com.najmi.sciuro.core.ui.components.SciuroTextField(
+                SciuroTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = "Passphrase",
+                    label = stringResource(R.string.settings_backup_passphrase),
                     singleLine = true
                 )
             }
@@ -557,18 +596,13 @@ private fun BackupPasswordDialog(
                 onClick = { if (password.isNotBlank()) onConfirm(password) },
                 enabled = password.isNotBlank()
             ) {
-                Text("Confirm")
+                Text(stringResource(R.string.settings_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.settings_cancel))
             }
         }
     )
 }
-
-
-
-
-

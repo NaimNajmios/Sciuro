@@ -1,105 +1,194 @@
 package com.sciuro.feature.settings.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.sciuro.feature.settings.viewmodel.LinkedAccountsUiState
+import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
+import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
+import com.sciuro.feature.settings.R
 import com.sciuro.feature.settings.viewmodel.LinkedAccountsViewModel
 
 @Composable
 fun LinkedAccountsScreen(
     viewModel: LinkedAccountsViewModel,
+    onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsState()
+    var pairToUnlink by remember { mutableStateOf<Pair<String, String>?>(null) }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        when (val s = state) {
-            is LinkedAccountsUiState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            is LinkedAccountsUiState.Empty -> {
-                Text(
-                    "No accounts found. Create an account first.",
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-            is LinkedAccountsUiState.Ready -> {
-                LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Select two accounts to link:", style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    items(s.accounts) { account ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (account.id in s.selectedIds)
-                                        MaterialTheme.colorScheme.primaryContainer
-                                    else
-                                        MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp).fillMaxWidth().clickable { viewModel.toggleSelection(account.id) }) {
-                                    Text(
-                                        account.name,
-                                        style = MaterialTheme.typography.titleSmall
-                                    )
-                                    Text(
-                                        "${account.type} · ${account.account_number ?: "No account number"}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                    }
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { viewModel.linkSelectedPair() },
-                            enabled = s.canLink,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(if (s.selectedIds.size == 2) "Link Selected Pair" else "Select two accounts")
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
+    Column(modifier = modifier.fillMaxSize()) {
+        HeroPanel(
+            title = stringResource(R.string.linked_accounts_title),
+            heroFigure = { Text(stringResource(R.string.linked_accounts_title), style = MaterialTheme.typography.headlineLarge, color = BrandPrimaryDark) },
+            toggleOptions = emptyList(),
+            selectedToggle = "",
+            onToggleSelected = {},
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.linked_accounts_back),
+                        tint = BrandPrimaryDark
+                    )
                 }
             }
-            is LinkedAccountsUiState.Linked -> {
-                Column(
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(s.message, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.loadAccounts() }) {
-                        Text("Back")
+        )
+
+        SheetList(modifier = Modifier.offset(y = (-24).dp).fillMaxWidth().weight(1f)) {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                when {
+                    state.isLoading -> {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(32.dp)) {
+                                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                            }
+                        }
+                    }
+                    state.accounts.isEmpty() -> {
+                        item {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    stringResource(R.string.linked_accounts_empty),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        if (state.linkedPairs.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Existing Links",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                            items(state.linkedPairs) { (idA, idB) ->
+                                val nameA = state.accounts.find { it.id == idA }?.name ?: idA
+                                val nameB = state.accounts.find { it.id == idB }?.name ?: idB
+                                SciuroCard(
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("$nameA \u2194 $nameB", style = MaterialTheme.typography.bodyMedium)
+                                        }
+                                        TextButton(onClick = { pairToUnlink = Pair(idA, idB) }) {
+                                            Text(stringResource(R.string.linked_accounts_unlink), color = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                stringResource(R.string.linked_accounts_select),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                        items(state.accounts) { account ->
+                            SciuroCard(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp).fillMaxWidth().clickable { viewModel.toggleSelection(account.id) },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = account.id in state.selectedIds,
+                                        onCheckedChange = { viewModel.toggleSelection(account.id) }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(account.name, style = MaterialTheme.typography.titleSmall)
+                                        Text(
+                                            "${account.type} \u00B7 ${account.account_number ?: "No account number"}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { viewModel.linkSelectedPair() },
+                                enabled = state.canLink,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(if (state.selectedIds.size == 2) stringResource(R.string.linked_accounts_link_button) else stringResource(R.string.linked_accounts_select_hint))
+                            }
+                            Spacer(modifier = Modifier.height(80.dp))
+                        }
                     }
                 }
             }
         }
+    }
+
+    state.message?.let { message ->
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { viewModel.clearMessage() }) {
+                    Text("OK")
+                }
+            }
+        ) {
+            Text(message)
+        }
+    }
+
+    pairToUnlink?.let { (idA, idB) ->
+        val nameA = state.accounts.find { it.id == idA }?.name ?: idA
+        val nameB = state.accounts.find { it.id == idB }?.name ?: idB
+        SciuroConfirmationDialog(
+            title = stringResource(R.string.linked_accounts_unlink),
+            message = "Unlink $nameA and $nameB?",
+            confirmText = stringResource(R.string.linked_accounts_unlink),
+            isDestructive = true,
+            onConfirm = {
+                viewModel.unlinkPair(idA, idB)
+                pairToUnlink = null
+            },
+            onDismiss = { pairToUnlink = null }
+        )
     }
 }

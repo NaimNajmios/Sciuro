@@ -8,15 +8,18 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.sciuro.feature.settings.viewmodel.SettingsViewModel
+import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.sciuro.feature.settings.R
+import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
 fun DeveloperTabIngestionLog(
-    viewModel: SettingsViewModel,
+    viewModel: DeveloperSettingsViewModel,
     modifier: Modifier = Modifier
 ) {
     val deadLetterEvents by viewModel.deadLetterEvents.collectAsState()
@@ -31,15 +34,15 @@ fun DeveloperTabIngestionLog(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Card(modifier = Modifier.weight(1f)) {
+                SciuroCard(modifier = Modifier.weight(1f)) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Pending", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.dev_ingestion_pending), style = MaterialTheme.typography.labelMedium)
                         Text("$pendingCount", style = MaterialTheme.typography.headlineSmall)
                     }
                 }
-                Card(modifier = Modifier.weight(1f)) {
+                SciuroCard(modifier = Modifier.weight(1f)) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Dead Letter", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.dev_ingestion_dead_letter), style = MaterialTheme.typography.labelMedium)
                         Text("$deadLetterCount", style = MaterialTheme.typography.headlineSmall)
                     }
                 }
@@ -49,7 +52,7 @@ fun DeveloperTabIngestionLog(
         if (deadLetterEvents.isEmpty()) {
             item {
                 Text(
-                    "No dead-letter events.",
+                    stringResource(R.string.dev_ingestion_no_dead_letter),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 24.dp)
@@ -66,7 +69,7 @@ fun DeveloperTabIngestionLog(
                     val timeStr = remember(event.captured_at) {
                         SimpleDateFormat("MM/dd HH:mm", Locale.getDefault()).format(Date(event.captured_at))
                     }
-                    Text("$timeStr — ${event.source_package_or_address}", style = MaterialTheme.typography.labelSmall)
+                    Text("$timeStr \u2014 ${event.source_package_or_address}", style = MaterialTheme.typography.labelSmall)
                     Text(event.title, style = MaterialTheme.typography.titleSmall)
                     Text(event.text, maxLines = 2, style = MaterialTheme.typography.bodySmall)
                     event.last_error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
@@ -77,11 +80,11 @@ fun DeveloperTabIngestionLog(
                     ) {
                         Icon(
                             Icons.Filled.Refresh,
-                            contentDescription = "Resend",
+                            contentDescription = stringResource(R.string.dev_ingestion_resend),
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Resend")
+                        Text(stringResource(R.string.dev_ingestion_resend))
                     }
                 }
             }

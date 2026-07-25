@@ -6,16 +6,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.parsing.engine.SimulationResult
 import com.sciuro.core.parsing.fixture.FixtureLibrary
-import com.sciuro.feature.settings.viewmodel.SettingsViewModel
+import com.sciuro.feature.settings.R
+import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
+import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeveloperTabSimulator(
-    viewModel: SettingsViewModel,
+    viewModel: DeveloperSettingsViewModel,
     simulationResult: SimulationResult?,
     modifier: Modifier = Modifier
 ) {
@@ -39,41 +42,41 @@ fun DeveloperTabSimulator(
         item {
             Spacer(modifier = Modifier.height(16.dp))
 
-            Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+            SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Dynamic Pipeline Simulator", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.dev_simulator_title), style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     SciuroTextField(
                         value = customPackage,
                         onValueChange = { customPackage = it; selectedPackage = "" },
-                        label = "Package Name"
+                        label = stringResource(R.string.dev_simulator_package)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     SciuroTextField(
                         value = customTitle,
                         onValueChange = { customTitle = it },
-                        label = "Notification Title"
+                        label = stringResource(R.string.dev_simulator_title_label)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     SciuroTextField(
                         value = customText,
                         onValueChange = { customText = it },
-                        label = "Notification Text"
+                        label = stringResource(R.string.dev_simulator_text)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = { viewModel.simulateNotification(customTitle, customText, customPackage) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Send to Pipeline")
+                        Text(stringResource(R.string.dev_simulator_send))
                     }
                 }
             }
 
-            Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+            SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Quick Simulators", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.dev_simulator_quick_title), style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     ExposedDropdownMenuBox(
@@ -81,10 +84,10 @@ fun DeveloperTabSimulator(
                         onExpandedChange = { expandedPackage = !expandedPackage }
                     ) {
                         SciuroTextField(
-                            value = selectedPackage.ifBlank { "Select package..." },
+                            value = selectedPackage.ifBlank { stringResource(R.string.dev_simulator_package_hint) },
                             onValueChange = {},
                             readOnly = true,
-                            label = "Package",
+                            label = stringResource(R.string.dev_simulator_package_label),
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPackage) },
                             modifier = Modifier.menuAnchor()
                         )
@@ -120,10 +123,10 @@ fun DeveloperTabSimulator(
                             onExpandedChange = { expandedTemplate = !expandedTemplate }
                         ) {
                             SciuroTextField(
-                                value = selectedTemplate?.description ?: "Select template...",
+                                value = selectedTemplate?.description ?: stringResource(R.string.dev_simulator_template_hint),
                                 onValueChange = {},
                                 readOnly = true,
-                                label = "Template",
+                                label = stringResource(R.string.dev_simulator_template_label),
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTemplate) },
                                 modifier = Modifier.menuAnchor()
                             )
@@ -153,7 +156,7 @@ fun DeveloperTabSimulator(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Simulate Selected Template")
+                            Text(stringResource(R.string.dev_simulator_simulate))
                         }
                     }
                 }
@@ -168,10 +171,10 @@ fun DeveloperTabSimulator(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Batch Test Runner", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.dev_simulator_batch_title), style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Runs all ${FixtureLibrary.count} fixtures through the real pipeline with a 500ms stagger. Watch logcat (SciuroTrace) or Pipeline Trace tab.",
+                        stringResource(R.string.dev_simulator_batch_description, FixtureLibrary.count),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -186,7 +189,7 @@ fun DeveloperTabSimulator(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(checked = forceLlm, onCheckedChange = { forceLlm = it })
-                            Text("Force LLM on all fixtures", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.dev_simulator_force_llm), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                     Button(
@@ -194,7 +197,7 @@ fun DeveloperTabSimulator(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !batchRunning
                     ) {
-                        Text(if (batchRunning) "Running..." else "Run All ${FixtureLibrary.count} Fixtures")
+                        Text(if (batchRunning) stringResource(R.string.dev_simulator_running) else stringResource(R.string.dev_simulator_run_all, FixtureLibrary.count))
                     }
                     if (batchProgress.isNotBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -222,19 +225,19 @@ fun SimulationResultCard(result: SimulationResult) {
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Simulation Result", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.dev_simulator_result_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Matched Rule: ${result.matchedRule ?: "None"}")
+            Text(stringResource(R.string.dev_simulator_matched_rule, result.matchedRule ?: "None"))
             result.finalDraft?.let { draft ->
-                Text("Amount: RM ${"%.2f".format(draft.amount)}")
-                Text("Direction: ${draft.direction ?: "Unknown"}")
-                Text("Merchant: ${draft.merchant ?: "N/A"}")
-                Text("Account: ${draft.accountOrChannel ?: "N/A"}")
-                Text("Confidence: ${"%.0f".format(draft.confidenceScore * 100)}%")
-            } ?: Text("No draft produced", color = MaterialTheme.colorScheme.error)
-            Text("LLM Fallback: ${if (result.usedLlmFallback) "Yes" else "No"}")
-            result.llmLatencyMs?.let { Text("LLM Latency: ${it}ms") }
-            result.error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
+                Text(stringResource(R.string.dev_simulator_amount, "%.2f".format(draft.amount)))
+                Text(stringResource(R.string.dev_simulator_direction, draft.direction ?: stringResource(R.string.dev_simulator_unknown)))
+                Text(stringResource(R.string.dev_simulator_merchant, draft.merchant ?: stringResource(R.string.dev_simulator_na)))
+                Text(stringResource(R.string.dev_simulator_account, draft.accountOrChannel ?: stringResource(R.string.dev_simulator_na)))
+                Text(stringResource(R.string.dev_simulator_confidence, "%.0f".format(draft.confidenceScore * 100)))
+            } ?: Text(stringResource(R.string.dev_simulator_no_draft), color = MaterialTheme.colorScheme.error)
+            Text(stringResource(R.string.dev_simulator_llm_fallback, if (result.usedLlmFallback) stringResource(R.string.dev_simulator_yes) else stringResource(R.string.dev_simulator_no)))
+            result.llmLatencyMs?.let { Text(stringResource(R.string.dev_simulator_llm_latency, it)) }
+            result.error?.let { Text(stringResource(R.string.dev_simulator_error, it), color = MaterialTheme.colorScheme.error) }
         }
     }
 }

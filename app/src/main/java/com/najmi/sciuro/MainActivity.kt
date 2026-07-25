@@ -394,7 +394,8 @@ fun SciuroMainScreen() {
             ) {
                 val linkedAccountsViewModel: com.sciuro.feature.settings.viewmodel.LinkedAccountsViewModel = koinViewModel()
                 com.sciuro.feature.settings.ui.LinkedAccountsScreen(
-                    viewModel = linkedAccountsViewModel
+                    viewModel = linkedAccountsViewModel,
+                    onNavigateBack = { navController.popBackStack() }
                 )
         }
     }

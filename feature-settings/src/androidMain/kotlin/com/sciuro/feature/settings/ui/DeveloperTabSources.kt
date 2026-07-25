@@ -9,8 +9,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
+import com.sciuro.feature.settings.R
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import org.koin.compose.getKoin
 
@@ -25,16 +27,16 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
     if (removeDialog != null) {
         AlertDialog(
             onDismissRequest = { pendingRemovePackage = null },
-            title = { Text("Remove source") },
-            text = { Text("Remove \"$removeDialog\" from the ingestion allowlist?") },
+            title = { Text(stringResource(R.string.dev_sources_remove_title)) },
+            text = { Text(stringResource(R.string.dev_sources_remove_confirm, removeDialog)) },
             confirmButton = {
                 TextButton(onClick = {
                     allowlist.removePackage(removeDialog)
                     pendingRemovePackage = null
-                }) { Text("Remove") }
+                }) { Text(stringResource(R.string.dev_sources_remove_action)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingRemovePackage = null }) { Text("Cancel") }
+                TextButton(onClick = { pendingRemovePackage = null }) { Text(stringResource(R.string.settings_cancel)) }
             }
         )
     }
@@ -42,7 +44,7 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Notification Sources", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.dev_sources_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -58,7 +60,7 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
 
         if (bankPackages.isNotEmpty()) {
             item {
-                Text("Direct Bank Apps", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.dev_sources_banks), style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(4.dp))
             }
             items(bankPackages) { pkg ->
@@ -73,7 +75,7 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
         if (aggPackages.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Aggregator Apps", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.dev_sources_aggregators), style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(4.dp))
             }
             items(aggPackages) { pkg ->
@@ -88,7 +90,7 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
         if (customPackages.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Custom", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.dev_sources_custom), style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(4.dp))
             }
             items(customPackages) { pkg ->
@@ -109,7 +111,7 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
                 SciuroTextField(
                     value = customPackage,
                     onValueChange = { customPackage = it },
-                    label = "Add Custom Package",
+                    label = stringResource(R.string.dev_sources_add_hint),
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -123,7 +125,7 @@ fun DeveloperTabSources(modifier: Modifier = Modifier) {
                     },
                     enabled = customPackage.isNotBlank()
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add package")
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.dev_sources_add_action))
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -156,7 +158,7 @@ private fun SourceRow(
                 IconButton(onClick = onRemove) {
                     Icon(
                         Icons.Filled.Delete,
-                        contentDescription = "Remove $pkg",
+                        contentDescription = stringResource(R.string.dev_sources_remove_action),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

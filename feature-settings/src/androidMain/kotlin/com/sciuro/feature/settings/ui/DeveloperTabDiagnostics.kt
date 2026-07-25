@@ -7,12 +7,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.parsing.engine.SimulationResult
-import com.sciuro.feature.settings.viewmodel.SettingsViewModel
+import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
+import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 
 @Composable
 fun DeveloperTabDiagnostics(
-    viewModel: SettingsViewModel,
+    viewModel: DeveloperSettingsViewModel,
     simulationResult: SimulationResult?,
     modifier: Modifier = Modifier
 ) {
@@ -57,7 +58,7 @@ fun DeveloperTabDiagnostics(
 
         simulationResult?.let { result ->
             item {
-                Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Rule Match Results", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -93,7 +94,7 @@ fun DeveloperTabDiagnostics(
             result.llmDebugInfo?.let { debug ->
                 item {
                     Spacer(modifier = Modifier.height(12.dp))
-                    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("LLM Debug", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))

@@ -58,3 +58,9 @@ SELECT * FROM account_pair_confirmation WHERE account_id_a = ? AND account_id_b 
 
 insertAccountPairConfirmation:
 INSERT OR IGNORE INTO account_pair_confirmation(account_id_a, account_id_b, confirmed_at) VALUES (?, ?, ?);
+
+deleteAccountPairConfirmation:
+DELETE FROM account_pair_confirmation WHERE account_id_a = ? AND account_id_b = ?;
+
+selectAllAccountPairConfirmations:
+SELECT * FROM account_pair_confirmation;

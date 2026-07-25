@@ -1,6 +1,4 @@
 <resources>
-    <string name="app_name">Sciuro</string>
-
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_application">Application Settings</string>
@@ -49,11 +47,14 @@
     <!-- Category Settings Screen -->
     <string name="categories_title">Categories</string>
     <string name="categories_manage">Manage Categories</string>
+    <string name="categories_empty">No categories yet. Tap + to add your first category.</string>
     <string name="categories_delete">Delete Category</string>
     <string name="categories_delete_confirm">Delete \"%s\"? This cannot be undone.</string>
     <string name="categories_delete_action">Delete</string>
     <string name="categories_add">Add Category</string>
     <string name="categories_add_hint">Category name</string>
+    <string name="categories_type_expense">Expense</string>
+    <string name="categories_type_income">Income</string>
 
     <!-- Linked Accounts Screen -->
     <string name="linked_accounts_title">Linked Accounts</string>
@@ -79,15 +80,15 @@
     <string name="dev_simulator_text">Notification Text</string>
     <string name="dev_simulator_send">Send to Pipeline</string>
     <string name="dev_simulator_quick_title">Quick Simulators</string>
-    <string name="dev_simulator_package_hint">Select package…</string>
+    <string name="dev_simulator_package_hint">Select package\u2026</string>
     <string name="dev_simulator_package_label">Package</string>
-    <string name="dev_simulator_template_hint">Select template…</string>
+    <string name="dev_simulator_template_hint">Select template\u2026</string>
     <string name="dev_simulator_template_label">Template</string>
     <string name="dev_simulator_simulate">Simulate Selected Template</string>
     <string name="dev_simulator_batch_title">Batch Test Runner</string>
     <string name="dev_simulator_batch_description">Runs all %d fixtures through the real pipeline with a 500ms stagger. Watch logcat (SciuroTrace) or Pipeline Trace tab.</string>
     <string name="dev_simulator_force_llm">Force LLM on all fixtures</string>
-    <string name="dev_simulator_running">Running…</string>
+    <string name="dev_simulator_running">Running\u2026</string>
     <string name="dev_simulator_run_all">Run All %d Fixtures</string>
     <string name="dev_simulator_result_title">Simulation Result</string>
     <string name="dev_simulator_matched_rule">Matched Rule: %s</string>
@@ -110,7 +111,7 @@
     <string name="dev_sources_banks">Direct Bank Apps</string>
     <string name="dev_sources_aggregators">Aggregator Apps</string>
     <string name="dev_sources_custom">Custom</string>
-    <string name="dev_sources_add_hint">Add Custom Package</string>
+    <string name="dev_sources_add_hint">Add Package</string>
     <string name="dev_sources_add_action">Add package</string>
     <string name="dev_sources_remove_title">Remove source</string>
     <string name="dev_sources_remove_confirm">Remove \"%s\" from the ingestion allowlist?</string>

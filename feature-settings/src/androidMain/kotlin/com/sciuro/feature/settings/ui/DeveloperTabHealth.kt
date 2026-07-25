@@ -10,6 +10,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalIncome
+import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.sciuro.core.parsing.metrics.ParserHealthRepository
 import com.sciuro.core.parsing.metrics.ParserHealthRow
 import com.sciuro.core.ledger.db.SciuroDatabase
