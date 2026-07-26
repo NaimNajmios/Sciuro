@@ -126,7 +126,10 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         .nestedScroll(pullToRefreshState.nestedScrollConnection)
         .fillMaxSize()
     ) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp)
+        ) {
             item {
                 val billOverdue = remember(bills) { bills.count { it.status == BillStatus.OVERDUE } }
                 val billDueSoon = remember(bills) { bills.count { it.status == BillStatus.DUE_SOON } }
@@ -240,7 +243,10 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 onClick = { showAddSheet = true },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(16.dp),
+                    .padding(
+                        end = 16.dp, 
+                        bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp
+                    ),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {

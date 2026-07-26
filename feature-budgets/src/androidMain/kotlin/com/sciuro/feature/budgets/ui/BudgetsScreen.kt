@@ -64,7 +64,10 @@ fun BudgetsScreen(
     val suggester: BudgetLimitSuggester = koinInject()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp)
+        ) {
             item {
                 val totalSpent = remember(budgets) { budgets.sumOf { it.currentSpent } }
                 val totalAllocated = remember(budgets) { budgets.sumOf { it.allocatedAmount } }
@@ -273,7 +276,10 @@ fun BudgetsScreen(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(16.dp),
+                    .padding(
+                        end = 16.dp, 
+                        bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp
+                    ),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {

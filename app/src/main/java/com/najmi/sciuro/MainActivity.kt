@@ -249,7 +249,7 @@ fun SciuroMainScreen() {
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.background,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
                 if (showNav) {
@@ -315,13 +315,15 @@ fun SciuroMainScreen() {
                                                 tint = if (isSelected) selectedContentColor else unselectedContentColor,
                                                 modifier = Modifier.size(24.dp)
                                             )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = item.label,
-                                                color = if (isSelected) selectedContentColor else unselectedContentColor,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                maxLines = 1
-                                            )
+                                            AnimatedVisibility(visible = isSelected) {
+                                                Text(
+                                                    text = item.label,
+                                                    color = selectedContentColor,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    maxLines = 1,
+                                                    modifier = Modifier.padding(start = 4.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -349,7 +351,7 @@ fun SciuroMainScreen() {
             NavHost(
                 navController, 
                 startDestination = startDest, 
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding()),
                 enterTransition = lateralEnter,
                 exitTransition = lateralExit
             ) {

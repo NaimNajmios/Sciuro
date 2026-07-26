@@ -135,7 +135,10 @@ fun DashboardScreen(
         .nestedScroll(pullToRefreshState.nestedScrollConnection)
         .fillMaxSize()
     ) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp)
+        ) {
             item {
                 val displayChartData = remember(state.balanceHistory, selectedRange) {
                     if (state.balanceHistory.isEmpty()) {
@@ -250,7 +253,10 @@ fun DashboardScreen(
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp),
+                .padding(
+                    end = 16.dp, 
+                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp
+                ),
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
