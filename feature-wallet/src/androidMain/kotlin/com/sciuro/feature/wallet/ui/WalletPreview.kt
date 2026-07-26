@@ -12,6 +12,7 @@ import com.najmi.sciuro.core.ui.components.HeroFigure
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Wallet - Empty")
 @Composable
 private fun WalletPreviewEmpty() {
@@ -50,6 +51,7 @@ private fun WalletPreviewEmpty() {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Wallet - With Data")
 @Composable
 private fun WalletPreviewWithData() {

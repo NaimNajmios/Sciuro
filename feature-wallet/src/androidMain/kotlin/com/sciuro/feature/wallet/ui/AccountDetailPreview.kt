@@ -11,6 +11,7 @@ import com.najmi.sciuro.core.ui.components.HeroFigure
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Account Detail")
 @Composable
 private fun AccountDetailPreview() {

@@ -12,6 +12,7 @@ import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Budgets - Empty")
 @Composable
 private fun BudgetsPreviewEmpty() {
@@ -39,6 +40,7 @@ private fun BudgetsPreviewEmpty() {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Budgets - With Data")
 @Composable
 private fun BudgetsPreviewWithData() {

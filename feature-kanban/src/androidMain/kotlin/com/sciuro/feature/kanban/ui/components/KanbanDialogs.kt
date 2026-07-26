@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 
+@Suppress("LongParameterList")
 @Composable
 fun KanbanDialogs(
     taskToReject: KanbanTask?,
@@ -53,6 +54,7 @@ fun KanbanDialogs(
     createDebtAction: (() -> Unit)?,
     onCreateDebtConfirmed: () -> Unit,
     onCreateDebtDismiss: () -> Unit,
+    @Suppress("UnusedParameter")
     modifier: Modifier = Modifier
 ) {
     taskToReject?.let { task ->

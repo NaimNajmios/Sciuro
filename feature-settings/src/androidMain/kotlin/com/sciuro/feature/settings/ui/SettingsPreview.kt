@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Settings")
 @Composable
 private fun SettingsPreview() {

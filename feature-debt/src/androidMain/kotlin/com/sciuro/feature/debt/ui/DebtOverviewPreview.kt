@@ -12,6 +12,7 @@ import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Debt Overview - Empty")
 @Composable
 private fun DebtOverviewPreviewEmpty() {
@@ -39,6 +40,7 @@ private fun DebtOverviewPreviewEmpty() {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Debt Overview - With Data")
 @Composable
 private fun DebtOverviewPreviewWithData() {

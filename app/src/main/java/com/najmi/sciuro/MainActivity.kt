@@ -4,9 +4,11 @@ import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Assignment
@@ -15,9 +17,14 @@ import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.*
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -240,64 +247,84 @@ fun SciuroMainScreen() {
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
             if (onboardingState.isOnboardingComplete) {
                 val isDarkTheme = isSystemInDarkTheme()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
-                val selectedRoute = currentDestination?.hierarchy?.any { it.route != null }?.let {
-                    currentDestination?.route
-                }
 
-                Surface(
+                val barColor = if (isDarkTheme) DarkSurfaceSheet else LightSurfaceSheet
+                val selectedPillColor = if (isDarkTheme) Color.White else Color.Black
+                val selectedContentColor = if (isDarkTheme) Color.Black else Color.White
+                val unselectedContentColor = if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF444444)
+
+                Box(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .fillMaxWidth(),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    color = if (isDarkTheme) DarkSurfaceSheet else LightSurfaceSheet,
-                    tonalElevation = if (isDarkTheme) 4.dp else 2.dp,
-                    shadowElevation = if (isDarkTheme) 8.dp else 4.dp
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 12.dp)
                 ) {
-                    NavigationBar(
-                        containerColor = Color.Transparent,
-                        tonalElevation = 0.dp,
-                        modifier = Modifier.height(56.dp)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(28.dp),
+                        color = barColor,
+                        shadowElevation = 12.dp
                     ) {
-                    items.forEach { item ->
-                        val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                        NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = {
-                                Text(
-                                    text = item.label,
-                                    color = if (isSelected) {
-                                        if (isDarkTheme) Color.Black else Color.White
-                                    } else {
-                                        if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF444444)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .padding(horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            items.forEach { item ->
+                                val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(42.dp)
+                                        .clip(RoundedCornerShape(21.dp))
+                                        .background(
+                                            if (isSelected) selectedPillColor else Color.Transparent
+                                        )
+                                        .clickable {
+                                            navController.navigate(item.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = item.icon,
+                                            contentDescription = item.label,
+                                            tint = if (isSelected) selectedContentColor else unselectedContentColor,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = item.label,
+                                            color = if (isSelected) selectedContentColor else unselectedContentColor,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            maxLines = 1
+                                        )
                                     }
-                                )
-                            },
-                            selected = isSelected,
-                            onClick = {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = if (isDarkTheme) Color.Black else Color.White,
-                                selectedTextColor = Color.Transparent,
-                                indicatorColor = if (isDarkTheme) Color.White else Color.Black,
-                                unselectedIconColor = if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF444444),
-                                unselectedTextColor = Color.Transparent
-                            )
-                        )
+                            }
+                        }
                     }
-                }
                 }
             }
             }

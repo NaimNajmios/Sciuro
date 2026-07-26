@@ -13,6 +13,7 @@ import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Dashboard - Empty")
 @Composable
 private fun DashboardPreviewEmpty() {
@@ -38,6 +39,7 @@ private fun DashboardPreviewEmpty() {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Dashboard - With Data")
 @Composable
 private fun DashboardPreviewWithData() {

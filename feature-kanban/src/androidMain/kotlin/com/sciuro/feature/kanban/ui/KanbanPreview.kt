@@ -13,6 +13,7 @@ import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Kanban - Review")
 @Composable
 private fun KanbanPreviewReview() {
@@ -48,6 +49,7 @@ private fun KanbanPreviewReview() {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true, showSystemUi = true, name = "Kanban - Bills")
 @Composable
 private fun KanbanPreviewBills() {

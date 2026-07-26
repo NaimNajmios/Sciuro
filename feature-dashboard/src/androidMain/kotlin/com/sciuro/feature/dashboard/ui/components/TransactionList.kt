@@ -42,6 +42,7 @@ fun TransactionList(
     onTransactionClick: (Transaction_record) -> Unit,
     onSwipeApprove: (Transaction_record) -> Unit,
     onSwipeReject: (Transaction_record) -> Unit,
+    @Suppress("UnusedParameter")
     modifier: Modifier = Modifier
 ) {
 
