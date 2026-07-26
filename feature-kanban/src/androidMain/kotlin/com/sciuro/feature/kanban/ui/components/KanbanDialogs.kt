@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.sciuro.feature.kanban.R
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
@@ -55,9 +57,9 @@ fun KanbanDialogs(
 ) {
     taskToReject?.let { task ->
         SciuroConfirmationDialog(
-            title = "Reject Task",
-            message = "Are you sure you want to reject '${task.title}'?",
-            confirmText = "Reject",
+            title = stringResource(R.string.kanban_reject_task_title),
+            message = stringResource(R.string.kanban_confirm_reject_message, task.title),
+            confirmText = stringResource(R.string.kanban_confirm_reject),
             isDestructive = true,
             onConfirm = { onRejectConfirmed(task) },
             onDismiss = onRejectDismiss
@@ -66,9 +68,9 @@ fun KanbanDialogs(
 
     debtToDelete?.let { debt ->
         SciuroConfirmationDialog(
-            title = "Delete Debt",
-            message = "Are you sure you want to delete '${debt.name}'?",
-            confirmText = "Delete",
+            title = stringResource(R.string.kanban_delete_debt_title),
+            message = stringResource(R.string.kanban_confirm_delete_debt_message, debt.name),
+            confirmText = stringResource(R.string.kanban_confirm_delete),
             isDestructive = true,
             onConfirm = { onDeleteDebtConfirmed(debt) },
             onDismiss = onDeleteDebtDismiss
@@ -87,9 +89,9 @@ fun KanbanDialogs(
 
     taskToApprove?.let { (task, accountId, direction) ->
         SciuroConfirmationDialog(
-            title = "Approve Task",
-            message = "Are you sure you want to approve '${task.title}'?",
-            confirmText = "Approve",
+            title = stringResource(R.string.kanban_approve_task_title),
+            message = stringResource(R.string.kanban_confirm_approve_message, task.title),
+            confirmText = stringResource(R.string.kanban_confirm_approve),
             onConfirm = { onApproveConfirmed(task, accountId, direction) },
             onDismiss = onApproveDismiss
         )
@@ -97,11 +99,11 @@ fun KanbanDialogs(
 
     paymentBill?.let { bill ->
         SciuroBottomSheet(onDismissRequest = onBillPaymentDismiss) {
-            Text("Mark Bill as Paid", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.kanban_mark_bill_paid_title), style = MaterialTheme.typography.headlineSmall)
             Text("${bill.name} — RM ${"%.2f".format(bill.amount)}", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(16.dp))
             SciuroPrimaryButton(
-                text = "Confirm Payment",
+                text = stringResource(R.string.kanban_confirm_payment),
                 onClick = { onBillPaid(bill) },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -110,18 +112,18 @@ fun KanbanDialogs(
 
     paymentDebt?.let { debt ->
         SciuroBottomSheet(onDismissRequest = onDebtPaymentDismiss) {
-            Text("Record Payment", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.kanban_record_payment), style = MaterialTheme.typography.headlineSmall)
             Text("${debt.name} — RM ${"%.2f".format(debt.remainingBalance)} remaining", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(12.dp))
             SciuroTextField(
                 value = paymentAmountText,
                 onValueChange = onPaymentAmountChange,
-                label = "Payment Amount (RM)",
+                label = stringResource(R.string.kanban_payment_amount_rm),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
             Spacer(modifier = Modifier.height(12.dp))
             SciuroPrimaryButton(
-                text = "Apply Payment",
+                text = stringResource(R.string.kanban_apply_payment),
                 onClick = {
                     val amt = paymentAmountText.toDoubleOrNull() ?: 0.0
                     if (amt > 0) {
@@ -136,9 +138,9 @@ fun KanbanDialogs(
 
     autoMarkFinishedDebtId?.let { debtId ->
         SciuroConfirmationDialog(
-            title = "Mark Debt as Finished",
-            message = "This payment fully covers the remaining balance. Would you like to mark this debt as finished?",
-            confirmText = "Mark Finished",
+            title = stringResource(R.string.kanban_mark_debt_finished_title),
+            message = stringResource(R.string.kanban_mark_finished_message),
+            confirmText = stringResource(R.string.kanban_mark_finished),
             isDestructive = false,
             onConfirm = { onMarkFinishedConfirmed(debtId) },
             onDismiss = onMarkFinishedDismiss
@@ -147,9 +149,9 @@ fun KanbanDialogs(
 
     createBillAction?.let {
         SciuroConfirmationDialog(
-            title = "Create Bill",
-            message = "Are you sure you want to create this bill?",
-            confirmText = "Create",
+            title = stringResource(R.string.kanban_create_bill_title),
+            message = stringResource(R.string.kanban_create_bill_message),
+            confirmText = stringResource(R.string.kanban_confirm_create),
             onConfirm = onCreateBillConfirmed,
             onDismiss = onCreateBillDismiss
         )
@@ -157,9 +159,9 @@ fun KanbanDialogs(
 
     createDebtAction?.let {
         SciuroConfirmationDialog(
-            title = "Create Debt",
-            message = "Are you sure you want to create this debt?",
-            confirmText = "Create",
+            title = stringResource(R.string.kanban_create_debt_title),
+            message = stringResource(R.string.kanban_create_debt_message),
+            confirmText = stringResource(R.string.kanban_confirm_create),
             onConfirm = onCreateDebtConfirmed,
             onDismiss = onCreateDebtDismiss
         )

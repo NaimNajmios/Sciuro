@@ -2,12 +2,13 @@
 *.apk
 *.ap_
 *.aab
-
+.env
 # Files for the ART/Dalvik VM
 *.dex
-
+opencode.json
 # Java class files
 *.class
+auth.json
 
 # Generated files
 bin/
@@ -65,3 +66,7 @@ captures/
 
 # Detekt baseline if not intended to commit
 # detekt-baseline.xml
+
+# Build/test output logs
+*.log
+*.txt

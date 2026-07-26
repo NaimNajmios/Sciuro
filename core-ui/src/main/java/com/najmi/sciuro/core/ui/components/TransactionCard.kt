@@ -18,8 +18,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import com.najmi.sciuro.core.ui.R
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalIncome
@@ -113,13 +115,13 @@ fun TransactionCard(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.SwapHoriz,
-                            contentDescription = "Transfer",
+                            contentDescription = stringResource(R.string.tx_transfer),
                             modifier = Modifier.size(12.dp),
                             tint = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Spacer(modifier = Modifier.width(2.dp))
                         Text(
-                            text = "Transfer",
+                            text = stringResource(R.string.tx_transfer),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
@@ -134,7 +136,8 @@ fun TransactionCard(
                     confidence >= 0.50f -> SignalWarning
                     else -> SignalDanger
                 }
-                val confidenceLabel = if (extractionMethod == "MANUAL") "Manual entry" else "Confidence ${(confidence * 100).toInt()} percent"
+                val manualEntryLabel = stringResource(R.string.tx_manual_entry)
+                val confidenceLabel = if (extractionMethod == "MANUAL") manualEntryLabel else "Confidence ${(confidence * 100).toInt()} percent"
                 Box(
                     modifier = Modifier
                         .size(8.dp)

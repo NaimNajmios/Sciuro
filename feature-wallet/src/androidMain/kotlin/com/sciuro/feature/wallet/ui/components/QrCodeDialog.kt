@@ -12,8 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.sciuro.feature.wallet.R
 
 @Composable
 fun QrCodeDialog(
@@ -23,7 +25,7 @@ fun QrCodeDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("QR Code", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+        title = { Text(stringResource(R.string.wallet_qr_code), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
         text = {
             Box(
                 modifier = modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)),
@@ -35,18 +37,18 @@ fun QrCodeDialog(
                 if (bitmap != null) {
                     Image(
                         bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "QR Code",
+                        contentDescription = stringResource(R.string.wallet_qr_code),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit
                     )
                 } else {
-                    Text("Unable to load QR image", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.wallet_unable_to_load_qr), color = MaterialTheme.colorScheme.error)
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.wallet_close))
             }
         }
     )

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- General -->
+    <string name="wallet_save">Save</string>
+    <string name="wallet_delete">Delete</string>
+    <string name="wallet_cancel">Cancel</string>
+    <string name="wallet_close">Close</string>
+    <string name="wallet_confirm">Confirm</string>
+    <string name="wallet_change">Change</string>
+    <string name="wallet_remove">Remove</string>
+    <string name="wallet_none">None</string>
+    <string name="wallet_reviewed">Reviewed</string>
+    <string name="wallet_unreviewed">Unreviewed</string>
+    <string name="wallet_unknown_merchant">Unknown Merchant</string>
+
+    <!-- WalletScreen -->
+    <string name="wallet_total_liquidity">Total Liquidity</string>
+    <string name="wallet_total_investments">Total Investments</string>
+    <string name="wallet_empty_no_accounts">No accounts yet — add your first wallet to start tracking.</string>
+    <string name="wallet_add_account">Add Account</string>
+    <string name="wallet_empty_no_investments">No investments yet — add your first investment to start tracking.</string>
+    <string name="wallet_add_investment">Add Investment</string>
+    <string name="wallet_recent_transactions">Recent Transactions</string>
+    <string name="wallet_empty_no_adjustments">No adjustments for this account.</string>
+    <string name="wallet_empty_no_transactions">No transactions for this account.</string>
+    <string name="wallet_empty_investment_tracked_manually">Investment transactions are currently tracked manually.</string>
+    <string name="wallet_empty_no_data">No data available.</string>
+    <string name="wallet_add_cd">Add</string>
+    <string name="wallet_edit_account">Edit Account</string>
+    <string name="wallet_account_name_hint">Account Name (e.g. Maybank)</string>
+    <string name="wallet_associated_app_optional">Associated App (Optional)</string>
+    <string name="wallet_search_apps">Search apps…</string>
+    <string name="wallet_initial_balance_rm">Initial Balance (RM)</string>
+    <string name="wallet_account_color">Account Color</string>
+    <string name="wallet_account_created">Account created</string>
+    <string name="wallet_account_updated">Account updated</string>
+    <string name="wallet_edit_investment">Edit Investment</string>
+    <string name="wallet_symbol">Symbol</string>
+    <string name="wallet_symbol_hint">e.g. AAPL</string>
+    <string name="wallet_name">Name</string>
+    <string name="wallet_name_hint_apple">e.g. Apple Inc.</string>
+    <string name="wallet_account_name_label">Account Name</string>
+    <string name="wallet_name_hint_gold">e.g. Maybank Gold Account</string>
+    <string name="wallet_grams_held">Grams Held</string>
+    <string name="wallet_units_held">Units Held</string>
+    <string name="wallet_avg_price_rm">Avg Price (RM)</string>
+    <string name="wallet_funding_account_optional">Funding Account (Optional)</string>
+    <string name="wallet_investment_created">Investment created</string>
+    <string name="wallet_investment_updated">Investment updated</string>
+    <string name="wallet_edit_transaction">Edit Transaction</string>
+    <string name="wallet_amount_rm">Amount (RM)</string>
+    <string name="wallet_merchant_note">Merchant / Note</string>
+    <string name="wallet_select_account">Select Account</string>
+    <string name="wallet_wallet_account">Wallet Account</string>
+    <string name="wallet_category">Category</string>
+    <string name="wallet_delete_account_title">Delete Account</string>
+    <string name="wallet_delete_account_message">Are you sure you want to delete this account? This will also remove any related transactions.</string>
+    <string name="wallet_account_deleted">Account deleted</string>
+    <string name="wallet_delete_investment_title">Delete Investment</string>
+    <string name="wallet_delete_investment_message">Are you sure you want to delete this investment asset? This action cannot be undone.</string>
+    <string name="wallet_investment_deleted">Investment deleted</string>
+
+    <!-- AccountDetailScreen -->
+    <string name="wallet_back_cd">Back</string>
+    <string name="wallet_view_qr_cd">View QR Code</string>
+    <string name="wallet_adjust_balance">Adjust Balance</string>
+    <string name="wallet_more_options_cd">More options</string>
+    <string name="wallet_edit_details">Edit Details</string>
+    <string name="wallet_change_color">Change Color</string>
+    <string name="wallet_archive_account">Archive Account</string>
+    <string name="wallet_transaction_history">Transaction History</string>
+    <string name="wallet_empty_no_adjustments_recorded">No adjustments recorded for this account.</string>
+    <string name="wallet_empty_no_tx_or_adjustments">No transactions or adjustments found for this account.</string>
+    <string name="wallet_empty_no_items_filter">No items match the current filter.</string>
+    <string name="wallet_qr_code_saved">QR code saved</string>
+    <string name="wallet_qr_code_removed">QR code removed</string>
+    <string name="wallet_edit_tx_not_implemented">Edit transaction not yet implemented</string>
+    <string name="wallet_archive_account_message">Are you sure you want to archive this account? It will be hidden from the main wallet views but historical transactions will be kept.</string>
+    <string name="wallet_archive">Archive</string>
+    <string name="wallet_account_archived">Account archived</string>
+    <string name="wallet_delete_account_permanently_message">Are you sure you want to permanently delete this account? This action cannot be undone.</string>
+    <string name="wallet_choose_account_color">Choose Account Color</string>
+    <string name="wallet_qr_code">QR Code</string>
+    <string name="wallet_unable_to_load_qr">Unable to load QR image</string>
+    <string name="wallet_edit_account_details">Edit Account Details</string>
+    <string name="wallet_account_number">Account Number</string>
+    <string name="wallet_account_number_hint">e.g. 1234567890 or last 4 digits</string>
+    <string name="wallet_account_holder_name">Account Holder Name</string>
+    <string name="wallet_account_holder_name_hint">e.g. AHMAD BIN ABDULLAH</string>
+    <string name="wallet_bank_code">Bank Code</string>
+    <string name="wallet_bank_code_hint">e.g. CIMB, MBB, BSN</string>
+    <string name="wallet_select_qr_image">Select QR Image</string>
+    <string name="wallet_delete_transaction_title">Delete Transaction</string>
+    <string name="wallet_delete_transaction_message">Are you sure you want to delete this transaction?</string>
+    <string name="wallet_transaction_deleted">Transaction deleted</string>
+    <string name="wallet_confirm_adjustment_title">Confirm Adjustment</string>
+    <string name="wallet_confirm_adjustment_message">Are you sure you want to record this balance adjustment of RM %.2f?</string>
+    <string name="wallet_balance_adjustment_recorded">Balance adjustment recorded</string>
+    <string name="wallet_save_color">Save Color</string>
+    <string name="wallet_apply_color_message">Apply this new color to the account?</string>
+    <string name="wallet_account_color_updated">Account color updated</string>
+    <string name="wallet_save_account_details">Save Account Details</string>
+    <string name="wallet_save_account_details_message">Are you sure you want to save these changes to the account details?</string>
+    <string name="wallet_account_details_updated">Account details updated</string>
+
+    <!-- OnboardingScreen -->
+    <string name="wallet_welcome">Welcome to Sciuro</string>
+    <string name="wallet_set_up_personal_wallet">Set Up Personal Wallet</string>
+    <string name="wallet_onboarding_description">How much physical cash do you currently have on hand? This will be your un-deletable default wallet.</string>
+    <string name="wallet_initial_balance_myr">Initial Balance (MYR)</string>
+    <string name="wallet_complete_setup">Complete Setup</string>
+
+    <!-- OnboardingBatteryScreen -->
+    <string name="wallet_stay_reliable">Stay Reliable</string>
+    <string name="wallet_battery_description">Sciuro needs to run in the background to capture your bank notifications passively. Battery optimization may prevent this, causing missed transactions.</string>
+    <string name="wallet_device_needs_extra_steps">Your device needs extra steps</string>
+    <string name="wallet_allow_background_activity">Allow Background Activity</string>
+    <string name="wallet_open_autostart_settings">Open Autostart Settings</string>
+    <string name="wallet_skip_for_now">Skip for now</string>
+
+    <!-- AddTransactionDialog -->
+    <string name="wallet_add_manual_transaction">Add Manual Transaction</string>
+    <string name="wallet_account">Account</string>
+    <string name="wallet_merchant_description">Merchant / Description</string>
+    <string name="wallet_save_transaction">Save Transaction</string>
+
+    <!-- AccountPager -->
+    <string name="wallet_cash_wallet">Cash Wallet</string>
+    <string name="wallet_e_wallet">E-Wallet</string>
+    <string name="wallet_bank_account">Bank Account</string>
+</resources>

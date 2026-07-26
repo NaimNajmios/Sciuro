@@ -30,8 +30,10 @@ import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalWarning
+import androidx.compose.ui.res.stringResource
 import com.sciuro.core.budget.model.BudgetPeriod
 import com.sciuro.core.budget.engine.BudgetLimitSuggester
+import com.sciuro.feature.budgets.R
 import com.sciuro.feature.budgets.model.BudgetHealth
 import com.sciuro.feature.budgets.viewmodel.BudgetsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -73,9 +75,9 @@ fun BudgetsScreen(
                 }
 
                 HeroPanel(
-                    title = "Budgets",
+                    title = stringResource(R.string.budget_title),
                     heroFigure = if (budgets.isEmpty()) {
-                        { Text("No Active Budgets", style = MaterialTheme.typography.headlineLarge, color = Color.White) }
+                        { Text(stringResource(R.string.budget_no_active), style = MaterialTheme.typography.headlineLarge, color = Color.White) }
                     } else {
                         { HeroFigurePair(first = totalSpent, second = totalAllocated) }
                     },
@@ -114,7 +116,7 @@ fun BudgetsScreen(
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "View Categories",
+                                    text = stringResource(R.string.budget_view_categories),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color.White.copy(alpha = 0.8f),
                                     modifier = Modifier.clickable { onNavigateToCategoryDrilldown() }
@@ -132,8 +134,8 @@ fun BudgetsScreen(
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         if (budgets.isEmpty()) {
                             EmptyStateView(
-                                message = "No budgets yet \u2014 set a limit for any category to start tracking.",
-                                primaryCtaText = "Create Budget",
+                                message = stringResource(R.string.budget_empty_state),
+                                primaryCtaText = stringResource(R.string.budget_create),
                                 onPrimaryCtaClick = {
                                     selectedCategoryId = null
                                     amountText = ""
@@ -190,9 +192,9 @@ fun BudgetsScreen(
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         val periodLabel = when (BudgetPeriod.valueOf(budget.period)) {
-                                                            BudgetPeriod.WEEKLY -> "Weekly"
-                                                            BudgetPeriod.MONTHLY -> "Monthly"
-                                                            BudgetPeriod.YEARLY -> "Yearly"
+                                                            BudgetPeriod.WEEKLY -> stringResource(R.string.budget_weekly)
+                                                            BudgetPeriod.MONTHLY -> stringResource(R.string.budget_monthly)
+                                                            BudgetPeriod.YEARLY -> stringResource(R.string.budget_yearly)
                                                         }
                                                         Surface(
                                                             shape = MaterialTheme.shapes.small,
@@ -207,7 +209,7 @@ fun BudgetsScreen(
                                                         }
                                                         if (budget.rollover) {
                                                             Text(
-                                                                "Rollover",
+                                                                stringResource(R.string.budget_rollover),
                                                                 style = MaterialTheme.typography.labelSmall,
                                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
@@ -275,14 +277,14 @@ fun BudgetsScreen(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Budget")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.budget_add))
             }
         }
     }
 
     if (showSheet) {
         val isEditing = editingBudgetId != null
-        val title = if (isEditing) "Edit Budget" else "Create Budget"
+        val title = if (isEditing) stringResource(R.string.budget_edit) else stringResource(R.string.budget_create)
 
         LaunchedEffect(selectedCategoryId) {
             if (!isEditing && selectedCategoryId != null) {
@@ -296,7 +298,7 @@ fun BudgetsScreen(
             Text(title, style = MaterialTheme.typography.headlineSmall)
 
             if (!isEditing) {
-                Text("Category", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.budget_category_label), style = MaterialTheme.typography.labelLarge)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(expenseCategories) { cat ->
                         FilterChip(
@@ -313,9 +315,9 @@ fun BudgetsScreen(
             SciuroTextField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                label = "Monthly Limit (RM)",
+                label = stringResource(R.string.budget_monthly_limit_label),
                 isError = isAmountError,
-                supportingText = if (isAmountError) "Enter a valid amount (1 \u2013 100,000)" else null,
+                supportingText = if (isAmountError) stringResource(R.string.budget_amount_error) else null,
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                 )
@@ -330,7 +332,7 @@ fun BudgetsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        "Suggested:",
+                        stringResource(R.string.budget_suggested),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -341,7 +343,7 @@ fun BudgetsScreen(
                 }
             }
 
-            Text("Period", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.budget_period_label), style = MaterialTheme.typography.labelLarge)
             val periodLabels = BudgetPeriod.entries.map { it.name.lowercase().replaceFirstChar { it.uppercaseChar() } }
             PillToggle(
                 options = periodLabels,
@@ -367,12 +369,13 @@ fun BudgetsScreen(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.budget_delete))
                     }
 
                     val isValidAmount = parsedAmount != null && parsedAmount > 0 && parsedAmount <= 100_000
+                    val budgetUpdatedText = stringResource(R.string.budget_updated)
                     SciuroPrimaryButton(
-                        text = "Save",
+                        text = stringResource(R.string.budget_save),
                         onClick = {
                             coroutineScope.launch {
                                 viewModel.updateBudget(
@@ -381,7 +384,7 @@ fun BudgetsScreen(
                                     period = selectedPeriod
                                 )
                                 showSheet = false
-                                snackbarHostState.showSnackbar("Budget updated")
+                                snackbarHostState.showSnackbar(budgetUpdatedText)
                             }
                         },
                         modifier = Modifier.weight(1f),
@@ -391,7 +394,7 @@ fun BudgetsScreen(
             } else {
                 val isValidAmount = parsedAmount != null && parsedAmount > 0 && parsedAmount <= 100_000
                 SciuroPrimaryButton(
-                    text = "Create Budget",
+                    text = stringResource(R.string.budget_create),
                     onClick = {
                         coroutineScope.launch {
                             viewModel.createBudget(
@@ -411,17 +414,18 @@ fun BudgetsScreen(
     }
 
     if (showDeleteConfirmation) {
+        val budgetDeletedText = stringResource(R.string.budget_deleted)
         SciuroConfirmationDialog(
-            title = "Delete Budget",
-            message = "Are you sure you want to delete this budget? This action cannot be undone.",
-            confirmText = "Delete",
+            title = stringResource(R.string.budget_delete_title),
+            message = stringResource(R.string.budget_delete_message),
+            confirmText = stringResource(R.string.budget_delete),
             isDestructive = true,
             onConfirm = {
                 coroutineScope.launch {
                     viewModel.deleteBudget(editingBudgetId!!)
                     showDeleteConfirmation = false
                     showSheet = false
-                    snackbarHostState.showSnackbar("Budget deleted")
+                    snackbarHostState.showSnackbar(budgetDeletedText)
                 }
             },
             onDismiss = { showDeleteConfirmation = false }

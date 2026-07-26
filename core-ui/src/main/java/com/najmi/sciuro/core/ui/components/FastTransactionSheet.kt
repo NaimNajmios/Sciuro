@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import com.najmi.sciuro.core.ui.R
 
 data class FastTxOption(val id: String, val name: String)
 
@@ -76,18 +78,21 @@ fun FastTransactionSheet(
         )
 
         // Direction Toggle
-        val directionLabels = listOf("Expense", "Income", "Transfer")
+        val expenseLabel = stringResource(R.string.tx_expense)
+        val incomeLabel = stringResource(R.string.tx_income)
+        val transferLabel = stringResource(R.string.tx_transfer)
+        val directionLabels = listOf(expenseLabel, incomeLabel, transferLabel)
         PillToggle(
             options = directionLabels,
             selectedOption = when (direction) {
-                "OUTFLOW" -> "Expense"
-                "INFLOW" -> "Income"
-                else -> "Transfer"
+                "OUTFLOW" -> expenseLabel
+                "INFLOW" -> incomeLabel
+                else -> transferLabel
             },
             onOptionSelected = { label ->
                 direction = when (label) {
-                    "Expense" -> "OUTFLOW"
-                    "Income" -> "INFLOW"
+                    expenseLabel -> "OUTFLOW"
+                    incomeLabel -> "INFLOW"
                     else -> "TRANSFER"
                 }
                 categoryId = null
@@ -101,7 +106,7 @@ fun FastTransactionSheet(
         SciuroTextField(
             value = merchant,
             onValueChange = { merchant = it },
-            label = "Description / Label"
+            label = stringResource(R.string.fast_tx_description_label)
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
             items(presetLabels) { label ->
@@ -116,7 +121,7 @@ fun FastTransactionSheet(
         // Category Selection
         AnimatedVisibility(visible = direction != "TRANSFER") {
             Column {
-                Text("Category (Required)", style = MaterialTheme.typography.labelLarge, color = if (showCategoryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
+                Text(stringResource(R.string.fast_tx_category_required), style = MaterialTheme.typography.labelLarge, color = if (showCategoryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     val cats = if (direction == "OUTFLOW") expenseCategories else incomeCategories
                     items(cats) { cat ->
@@ -134,7 +139,7 @@ fun FastTransactionSheet(
         }
 
         // Account Selection
-        Text(if (direction == "TRANSFER") "Source Account" else "Account", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+        Text(if (direction == "TRANSFER") stringResource(R.string.fast_tx_source_account) else stringResource(R.string.shared_account), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(accounts) { acc ->
                 FilterChip(
@@ -147,7 +152,7 @@ fun FastTransactionSheet(
 
         AnimatedVisibility(visible = direction == "TRANSFER") {
             Column {
-                Text("Destination Account", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+                Text(stringResource(R.string.fast_tx_destination_account), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(accounts.filter { it.id != accountId }) { acc ->
                         FilterChip(
@@ -161,6 +166,8 @@ fun FastTransactionSheet(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        val manualEntryLabel = stringResource(R.string.tx_manual_entry_title)
 
         // Numpad
         Numpad(
@@ -191,7 +198,7 @@ fun FastTransactionSheet(
                 } else if (!isCategoryValid) {
                     showCategoryError = true
                 } else if (accountId != null && isDestinationValid) {
-                    val finalMerchant = merchant.ifBlank { "Manual Entry" }
+                    val finalMerchant = merchant.ifBlank { manualEntryLabel }
                     onSubmit(amt, direction, finalMerchant, categoryId, accountId, destinationAccountId)
                 }
             }
@@ -235,14 +242,14 @@ fun Numpad(
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onNumberClick("0") 
             }, modifier = Modifier.weight(1f))
-            NumpadButton(text = "Backspace", icon = Icons.Filled.Backspace, onClick = {
+            NumpadButton(text = stringResource(R.string.shared_backspace), icon = Icons.Filled.Backspace, onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onBackspaceClick()
             }, modifier = Modifier.weight(1f))
         }
         
         SciuroPrimaryButton(
-            text = "Save Transaction",
+            text = stringResource(R.string.tx_save_transaction),
             onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onSaveClick()

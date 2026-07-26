@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
@@ -15,6 +16,7 @@ import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.sciuro.core.ledger.db.Account
 import com.sciuro.core.ledger.model.Category
+import com.sciuro.feature.dashboard.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,19 +39,19 @@ fun EditTransactionSheet(
     onDismiss: () -> Unit
 ) {
     SciuroBottomSheet(onDismissRequest = onDismiss) {
-        Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.dashboard_edit_transaction), style = MaterialTheme.typography.headlineSmall)
         
         SciuroTextField(
             value = amount,
             onValueChange = onAmountChange,
-            label = "Amount (RM)",
+            label = stringResource(R.string.dashboard_amount_label),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
         
         SciuroTextField(
             value = merchant,
             onValueChange = onMerchantChange,
-            label = "Merchant / Note"
+            label = stringResource(R.string.dashboard_merchant_label)
         )
         
         PillToggle(
@@ -70,10 +72,10 @@ fun EditTransactionSheet(
         ) {
             val selAcc = accounts.find { it.id == accountId }
             SciuroTextField(
-                value = selAcc?.name ?: "Select Account",
+                value = selAcc?.name ?: stringResource(R.string.dashboard_select_account),
                 onValueChange = {},
                 readOnly = true,
-                label = "Wallet Account",
+                label = stringResource(R.string.dashboard_wallet_account),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
                 modifier = Modifier.menuAnchor()
             )
@@ -93,7 +95,7 @@ fun EditTransactionSheet(
             }
         }
         
-        Text("Category", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.dashboard_category), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
@@ -119,11 +121,11 @@ fun EditTransactionSheet(
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
-                Text("Delete")
+                Text(stringResource(R.string.dashboard_delete))
             }
             
             SciuroPrimaryButton(
-                text = "Save",
+                text = stringResource(R.string.dashboard_save),
                 onClick = onSave,
                 modifier = Modifier.weight(1f),
                 enabled = amount.isNotBlank() && accountId != null

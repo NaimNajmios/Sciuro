@@ -3,6 +3,8 @@ package com.sciuro.feature.dashboard.ui.components
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.sciuro.feature.dashboard.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,12 +22,12 @@ fun DashboardDatePicker(
                     dateRangePickerState.selectedEndDateMillis
                 )
             }) {
-                Text("OK")
+                Text(stringResource(R.string.dashboard_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.dashboard_cancel))
             }
         }
     ) {

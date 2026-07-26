@@ -10,8 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.sciuro.feature.wallet.R
 
 @Composable
 fun OnboardingBatteryScreen(
@@ -48,14 +50,13 @@ fun OnboardingBatteryScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Stay Reliable",
+                stringResource(R.string.wallet_stay_reliable),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Sciuro needs to run in the background to capture your bank notifications passively. " +
-                "Battery optimization may prevent this, causing missed transactions.",
+                stringResource(R.string.wallet_battery_description),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -71,7 +72,7 @@ fun OnboardingBatteryScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            "Your device needs extra steps",
+                            stringResource(R.string.wallet_device_needs_extra_steps),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -102,7 +103,7 @@ fun OnboardingBatteryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Allow Background Activity")
+                Text(stringResource(R.string.wallet_allow_background_activity))
             }
 
             if (autostartIntent != null) {
@@ -118,14 +119,14 @@ fun OnboardingBatteryScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Open Autostart Settings")
+                    Text(stringResource(R.string.wallet_open_autostart_settings))
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
             TextButton(onClick = onSkip) {
                 Text(
-                    "Skip for now",
+                    stringResource(R.string.wallet_skip_for_now),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

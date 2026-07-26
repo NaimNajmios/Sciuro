@@ -12,7 +12,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.sciuro.feature.dashboard.R
 import com.sciuro.feature.dashboard.viewmodel.NetPositionBreakdown
 
 @Composable
@@ -38,13 +40,13 @@ fun NetPositionBreakdownPanel(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Net Position Breakdown",
+                text = stringResource(R.string.dashboard_net_position_breakdown),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.9f)
             )
             Icon(
                 imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                contentDescription = if (isExpanded) "Collapse breakdown" else "Expand breakdown",
+                contentDescription = if (isExpanded) stringResource(R.string.dashboard_collapse_breakdown_cd) else stringResource(R.string.dashboard_expand_breakdown_cd),
                 tint = Color.White.copy(alpha = 0.9f)
             )
         }
@@ -57,15 +59,15 @@ fun NetPositionBreakdownPanel(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Cash", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.dashboard_cash), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
                     Text("RM ${"%.2f".format(breakdown.cash)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Investments", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.dashboard_investments), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
                     Text("RM ${"%.2f".format(breakdown.investments)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Debt", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.dashboard_debt), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
                     Text("RM ${"%.2f".format(breakdown.debts)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
                 }
             }

@@ -24,7 +24,15 @@ fun DeveloperSettingsScreen(
     viewModel: DeveloperSettingsViewModel = koinViewModel()
 ) {
     var selectedTab by remember { mutableIntStateOf(initialTab) }
-    val tabs = listOf("Simulator", "Sources", "Ingestion Log", "Diagnostics", "Data Tools", "Health", "Pipeline Trace")
+    val tabs = listOf(
+        stringResource(R.string.dev_tab_simulator),
+        stringResource(R.string.dev_tab_sources),
+        stringResource(R.string.dev_tab_ingestion_log),
+        stringResource(R.string.dev_tab_diagnostics),
+        stringResource(R.string.dev_tab_data_tools),
+        stringResource(R.string.dev_tab_health),
+        stringResource(R.string.dev_tab_pipeline_trace)
+    )
     val simulationResult by viewModel.simulationResult.collectAsState()
     val pendingCount by viewModel.pendingCount.collectAsState()
     val deadLetterCount by viewModel.deadLetterCount.collectAsState()

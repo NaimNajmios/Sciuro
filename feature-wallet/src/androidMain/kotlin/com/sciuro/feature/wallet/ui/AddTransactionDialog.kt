@@ -5,11 +5,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.sciuro.feature.wallet.R
 import com.sciuro.feature.wallet.model.WalletAccount
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,7 +29,7 @@ fun AddTransactionDialog(
     SciuroBottomSheet(
         onDismissRequest = onDismiss
     ) {
-            Text("Add Manual Transaction", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.wallet_add_manual_transaction), style = MaterialTheme.typography.headlineSmall)
             
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
@@ -36,10 +38,10 @@ fun AddTransactionDialog(
             ) {
                 val selectedAccount = accounts.find { it.id == selectedAccountId }
                 SciuroTextField(
-                    value = selectedAccount?.name ?: "Select Account",
+                    value = selectedAccount?.name ?: stringResource(R.string.wallet_select_account),
                     onValueChange = { },
                     readOnly = true,
-                    label = "Account",
+                    label = stringResource(R.string.wallet_account),
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier.menuAnchor()
                 )
@@ -62,14 +64,14 @@ fun AddTransactionDialog(
             SciuroTextField(
                 value = amount,
                 onValueChange = { amount = it },
-                label = "Amount (RM)",
+                label = stringResource(R.string.wallet_amount_rm),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
             
             SciuroTextField(
                 value = merchant,
                 onValueChange = { merchant = it },
-                label = "Merchant / Description"
+                label = stringResource(R.string.wallet_merchant_description)
             )
             
             Row(
@@ -93,7 +95,7 @@ fun AddTransactionDialog(
             }
             
             SciuroPrimaryButton(
-                text = "Save Transaction",
+                text = stringResource(R.string.wallet_save_transaction),
                 onClick = {
                     val parsedAmount = amount.toDoubleOrNull() ?: 0.0
                     if (selectedAccountId.isNotBlank() && parsedAmount > 0) {

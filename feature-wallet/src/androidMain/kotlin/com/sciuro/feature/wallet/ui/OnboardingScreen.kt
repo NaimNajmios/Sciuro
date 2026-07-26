@@ -5,9 +5,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
+import com.sciuro.feature.wallet.R
 import com.sciuro.feature.wallet.viewmodel.OnboardingViewModel
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
@@ -23,7 +25,7 @@ fun OnboardingScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Welcome to Sciuro") },
+                title = { Text(stringResource(R.string.wallet_welcome)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
@@ -41,13 +43,13 @@ fun OnboardingScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Set Up Personal Wallet",
+                stringResource(R.string.wallet_set_up_personal_wallet),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "How much physical cash do you currently have on hand? This will be your un-deletable default wallet.",
+                stringResource(R.string.wallet_onboarding_description),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -57,13 +59,13 @@ fun OnboardingScreen(
             SciuroTextField(
                 value = initialBalanceStr,
                 onValueChange = { initialBalanceStr = it },
-                label = "Initial Balance (MYR)",
+                label = stringResource(R.string.wallet_initial_balance_myr),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             SciuroPrimaryButton(
-                text = "Complete Setup",
+                text = stringResource(R.string.wallet_complete_setup),
                 onClick = {
                     val amount = initialBalanceStr.toDoubleOrNull() ?: 0.0
                     viewModel.setupPersonalWallet(amount)

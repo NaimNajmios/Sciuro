@@ -6,8 +6,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.sciuro.feature.dashboard.R
 
 @Composable
 fun TransactionHistoryHeader(
@@ -27,7 +29,7 @@ fun TransactionHistoryHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Transaction History",
+                stringResource(R.string.dashboard_transaction_history),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 12.dp)
             )

@@ -13,8 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.R
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalIncome
@@ -47,7 +49,7 @@ fun TransactionDetailSheet(
 ) {
     if (showSheet) {
         SciuroBottomSheet(onDismissRequest = onDismiss) {
-            Text("Transaction Details", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.tx_details_title), style = MaterialTheme.typography.headlineSmall)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -77,7 +79,7 @@ fun TransactionDetailSheet(
             }
 
             Text(
-                text = if (direction == "INFLOW") "Income" else "Expense",
+                text = if (direction == "INFLOW") stringResource(R.string.tx_income) else stringResource(R.string.tx_expense),
                 style = MaterialTheme.typography.labelMedium,
                 color = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
             )
@@ -88,7 +90,7 @@ fun TransactionDetailSheet(
                     color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
                 ) {
                     Text(
-                        text = "Part of a transfer",
+                        text = stringResource(R.string.tx_part_of_transfer),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -100,9 +102,9 @@ fun TransactionDetailSheet(
 
             if (extractionMethod != null) {
                 val methodLabel = when (extractionMethod) {
-                    "REGEX" -> "Auto-parsed (regex)"
-                    "LLM_FALLBACK" -> "AI-assisted"
-                    "MANUAL" -> "Manual entry"
+                    "REGEX" -> stringResource(R.string.tx_auto_parsed)
+                    "LLM_FALLBACK" -> stringResource(R.string.tx_ai_assisted)
+                    "MANUAL" -> stringResource(R.string.tx_manual_entry)
                     else -> extractionMethod
                 }
                 val dotColor = when {
@@ -144,7 +146,7 @@ fun TransactionDetailSheet(
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Original Notification",
+                        text = stringResource(R.string.tx_original_notification),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -180,7 +182,7 @@ fun TransactionDetailSheet(
                                     modifier = Modifier.padding(top = 4.dp)
                                 ) {
                                     Text(
-                                        text = if (expanded) "Show less" else "Show more",
+                                        text = if (expanded) stringResource(R.string.tx_show_less) else stringResource(R.string.tx_show_more),
                                         style = MaterialTheme.typography.labelSmall
                                     )
                                 }
@@ -196,7 +198,7 @@ fun TransactionDetailSheet(
             if (auditEvents.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "History",
+                        text = stringResource(R.string.shared_history),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -247,7 +249,7 @@ fun TransactionDetailSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Delete")
+                    Text(stringResource(R.string.shared_delete))
                 }
 
                 Button(
@@ -261,7 +263,7 @@ fun TransactionDetailSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Edit")
+                    Text(stringResource(R.string.shared_edit))
                 }
             }
         }

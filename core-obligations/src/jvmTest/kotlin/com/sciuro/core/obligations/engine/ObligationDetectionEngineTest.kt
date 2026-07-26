@@ -1,7 +1,7 @@
 package com.sciuro.core.obligations.engine
 
 import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.jdbc.JdbcDriver
+import app.cash.sqldelight.driver.sqlite.JdbcSqliteDriver
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.model.AuditLog
@@ -78,7 +78,7 @@ class ObligationDetectionEngineTest {
 
     @BeforeTest
     fun setUp() {
-        driver = JdbcDriver("jdbc:sqlite::memory:")
+        driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         SciuroDatabase.Schema.create(driver)
         database = SciuroDatabase(driver)
         eventBus = DomainEventBus()

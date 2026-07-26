@@ -5,9 +5,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.theme.SignalDanger
+import com.sciuro.feature.dashboard.R
 
 @Composable
 fun DashboardSummaryRow(
@@ -22,7 +24,7 @@ fun DashboardSummaryRow(
     ) {
         SciuroCard(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Active Budgets", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.dashboard_active_budgets), style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("$activeBudgetsCount", style = MaterialTheme.typography.headlineSmall)
             }
@@ -30,7 +32,7 @@ fun DashboardSummaryRow(
         SciuroCard(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "Runway",
+                    stringResource(R.string.dashboard_runway),
                     style = MaterialTheme.typography.titleSmall
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -41,7 +43,7 @@ fun DashboardSummaryRow(
                 )
                 if (!hasIncomePattern) {
                     Text(
-                        "based on bills only",
+                        stringResource(R.string.dashboard_based_on_bills_only),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

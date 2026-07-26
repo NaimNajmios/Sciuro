@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -48,6 +49,7 @@ import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.sciuro.feature.wallet.R
 import org.koin.androidx.compose.koinViewModel
 
 private val filterOptions = listOf("All", "Transactions", "Adjustments", "Income", "Expense")
@@ -102,7 +104,7 @@ fun AccountDetailScreen(
                     file
                 }
                 viewModel.updateQrImagePath(destFile.absolutePath)
-                snackbarHostState.showSnackbar("QR code saved")
+                snackbarHostState.showSnackbar(context.getString(R.string.wallet_qr_code_saved))
             }
         }
     }
@@ -151,7 +153,7 @@ fun AccountDetailScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.wallet_back_cd),
                             tint = Color.White
                         )
                     }
@@ -175,7 +177,7 @@ fun AccountDetailScreen(
                             ) {
                                 Icon(
                                     Icons.Filled.QrCodeScanner,
-                                    contentDescription = "View QR Code",
+                                    contentDescription = stringResource(R.string.wallet_view_qr_cd),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -194,7 +196,7 @@ fun AccountDetailScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Adjust Balance")
+                            Text(stringResource(R.string.wallet_adjust_balance))
                         }
                     }
                 }
@@ -205,7 +207,7 @@ fun AccountDetailScreen(
                 IconButton(onClick = { expanded = true }) {
                     Icon(
                         Icons.Filled.MoreVert,
-                        contentDescription = "More options",
+                        contentDescription = stringResource(R.string.wallet_more_options_cd),
                         tint = Color.White
                     )
                 }
@@ -214,7 +216,7 @@ fun AccountDetailScreen(
                     onDismissRequest = { expanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Edit Details") },
+                        text = { Text(stringResource(R.string.wallet_edit_details)) },
                         leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
                         onClick = {
                             expanded = false
@@ -222,7 +224,7 @@ fun AccountDetailScreen(
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Change Color") },
+                        text = { Text(stringResource(R.string.wallet_change_color)) },
                         onClick = {
                             expanded = false
                             selectedColor = state.account?.color
@@ -231,14 +233,14 @@ fun AccountDetailScreen(
                     )
                     if (state.account?.is_system == 0L) {
                         DropdownMenuItem(
-                            text = { Text("Archive Account") },
+                            text = { Text(stringResource(R.string.wallet_archive_account)) },
                             onClick = {
                                 expanded = false
                                 showArchiveDialog = true
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Delete Account", color = MaterialTheme.colorScheme.error) },
+                            text = { Text(stringResource(R.string.wallet_delete_account_title), color = MaterialTheme.colorScheme.error) },
                             leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                             onClick = {
                                 expanded = false
@@ -259,7 +261,7 @@ fun AccountDetailScreen(
                     .padding(bottom = 32.dp)
             ) {
                 Text(
-                    "Transaction History",
+                    stringResource(R.string.wallet_transaction_history),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
@@ -274,9 +276,9 @@ fun AccountDetailScreen(
 
                 if (state.timeline.isEmpty()) {
                     com.najmi.sciuro.core.ui.components.EmptyStateView(
-                        message = if (state.selectedFilter == "Adjustments") "No adjustments recorded for this account."
-                                   else if (state.selectedFilter == "All" && state.transactions.isEmpty() && state.adjustments.isEmpty()) "No transactions or adjustments found for this account."
-                                   else "No items match the current filter."
+                        message = if (state.selectedFilter == "Adjustments") stringResource(R.string.wallet_empty_no_adjustments_recorded)
+                                   else if (state.selectedFilter == "All" && state.transactions.isEmpty() && state.adjustments.isEmpty()) stringResource(R.string.wallet_empty_no_tx_or_adjustments)
+                                   else stringResource(R.string.wallet_empty_no_items_filter)
                     )
                 } else {
                     for (item in state.timeline) {
@@ -284,9 +286,9 @@ fun AccountDetailScreen(
                             is TimelineItem.TransactionItem -> {
                                 val tx = item.tx
                                 val isTransfer = tx.category_id == "cat_transfer"
-                                val statusText = if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed"
+                                val statusText = if (tx.is_reviewed == 1L) stringResource(R.string.wallet_reviewed) else stringResource(R.string.wallet_unreviewed)
                                 TransactionCard(
-                                    merchantName = tx.merchant ?: "Unknown Merchant",
+                                    merchantName = tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
                                     amount = "RM ${"%.2f".format(tx.amount)}",
                                     direction = tx.direction,
                                     statusText = statusText,
@@ -350,7 +352,7 @@ fun AccountDetailScreen(
         TransactionDetailSheet(
             showSheet = showDetailSheet,
             onDismiss = { showDetailSheet = false },
-            merchantName = tx.merchant ?: "Unknown Merchant",
+            merchantName = tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
             amount = "RM ${"%.2f".format(tx.amount)}",
             direction = tx.direction,
             timestamp = formattedTimestamp,
@@ -363,7 +365,7 @@ fun AccountDetailScreen(
             onEditClick = {
                 showDetailSheet = false
                 coroutineScope.launch {
-                    snackbarHostState.showSnackbar("Edit transaction not yet implemented")
+                    snackbarHostState.showSnackbar(context.getString(R.string.wallet_edit_tx_not_implemented))
                 }
             },
             onDeleteClick = {
@@ -390,14 +392,14 @@ fun AccountDetailScreen(
 
     if (showArchiveDialog) {
         SciuroConfirmationDialog(
-            title = "Archive Account",
-            message = "Are you sure you want to archive this account? It will be hidden from the main wallet views but historical transactions will be kept.",
-            confirmText = "Archive",
+            title = stringResource(R.string.wallet_archive_account),
+            message = stringResource(R.string.wallet_archive_account_message),
+            confirmText = stringResource(R.string.wallet_archive),
             isDestructive = false,
             onConfirm = {
                 viewModel.archiveAccount()
                 showArchiveDialog = false
-                coroutineScope.launch { snackbarHostState.showSnackbar("Account archived") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_account_archived)) }
                 onNavigateBack()
             },
             onDismiss = { showArchiveDialog = false }
@@ -406,14 +408,14 @@ fun AccountDetailScreen(
 
     if (showDeleteDialog) {
         SciuroConfirmationDialog(
-            title = "Delete Account",
-            message = "Are you sure you want to permanently delete this account? This action cannot be undone.",
-            confirmText = "Delete",
+            title = stringResource(R.string.wallet_delete_account_title),
+            message = stringResource(R.string.wallet_delete_account_permanently_message),
+            confirmText = stringResource(R.string.wallet_delete),
             isDestructive = true,
             onConfirm = {
                 viewModel.deleteAccount()
                 showDeleteDialog = false
-                coroutineScope.launch { snackbarHostState.showSnackbar("Account deleted") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_account_deleted)) }
                 onNavigateBack()
             },
             onDismiss = { showDeleteDialog = false }
@@ -423,7 +425,7 @@ fun AccountDetailScreen(
     if (showColorDialog) {
         AlertDialog(
             onDismissRequest = { showColorDialog = false },
-            title = { Text("Choose Account Color") },
+            title = { Text(stringResource(R.string.wallet_choose_account_color)) },
             text = {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -459,12 +461,12 @@ fun AccountDetailScreen(
                     showColorDialog = false
                     showColorConfirmation = true
                 }) {
-                    Text("Save")
+                    Text(stringResource(R.string.wallet_save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showColorDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.wallet_cancel))
                 }
             }
         )
@@ -473,7 +475,7 @@ fun AccountDetailScreen(
     if (showQrFullScreen && account.qr_image_path != null) {
         AlertDialog(
             onDismissRequest = { showQrFullScreen = false },
-            title = { Text("QR Code", textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+            title = { Text(stringResource(R.string.wallet_qr_code), textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
             text = {
                 Box(
                     modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)),
@@ -485,18 +487,18 @@ fun AccountDetailScreen(
                     if (bitmap != null) {
                         Image(
                             bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "QR Code",
+                            contentDescription = stringResource(R.string.wallet_qr_code),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Fit
                         )
                     } else {
-                        Text("Unable to load QR image", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.wallet_unable_to_load_qr), color = MaterialTheme.colorScheme.error)
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showQrFullScreen = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.wallet_close))
                 }
             }
         )
@@ -520,22 +522,22 @@ fun AccountDetailScreen(
             onPickQr = { qrImagePicker.launch("image/*") },
             onRemoveQr = {
                 viewModel.updateQrImagePath(null)
-                coroutineScope.launch { snackbarHostState.showSnackbar("QR code removed") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_qr_code_removed)) }
             }
         )
     }
 
     if (showDeleteTxConfirmation && txToDelete != null) {
         SciuroConfirmationDialog(
-            title = "Delete Transaction",
-            message = "Are you sure you want to delete this transaction?",
-            confirmText = "Delete",
+            title = stringResource(R.string.wallet_delete_transaction_title),
+            message = stringResource(R.string.wallet_delete_transaction_message),
+            confirmText = stringResource(R.string.wallet_delete),
             isDestructive = true,
             onConfirm = {
                 txToDelete?.let { viewModel.deleteTransaction(it.id) }
                 showDeleteTxConfirmation = false
                 txToDelete = null
-                coroutineScope.launch { snackbarHostState.showSnackbar("Transaction deleted") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_transaction_deleted)) }
             },
             onDismiss = {
                 showDeleteTxConfirmation = false
@@ -546,14 +548,14 @@ fun AccountDetailScreen(
 
     if (showAdjustConfirmation) {
         SciuroConfirmationDialog(
-            title = "Confirm Adjustment",
-            message = "Are you sure you want to record this balance adjustment of RM ${"%.2f".format(adjustAmountTemp)}?",
-            confirmText = "Confirm",
+            title = stringResource(R.string.wallet_confirm_adjustment_title),
+            message = stringResource(R.string.wallet_confirm_adjustment_message, adjustAmountTemp),
+            confirmText = stringResource(R.string.wallet_confirm),
             isDestructive = false,
             onConfirm = {
                 viewModel.recordCorrection(adjustAmountTemp, adjustReasonTemp, adjustRemarkTemp)
                 showAdjustConfirmation = false
-                coroutineScope.launch { snackbarHostState.showSnackbar("Balance adjustment recorded") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_balance_adjustment_recorded)) }
             },
             onDismiss = { showAdjustConfirmation = false }
         )
@@ -561,14 +563,14 @@ fun AccountDetailScreen(
 
     if (showColorConfirmation) {
         SciuroConfirmationDialog(
-            title = "Save Color",
-            message = "Apply this new color to the account?",
-            confirmText = "Save",
+            title = stringResource(R.string.wallet_save_color),
+            message = stringResource(R.string.wallet_apply_color_message),
+            confirmText = stringResource(R.string.wallet_save),
             isDestructive = false,
             onConfirm = {
                 viewModel.updateAccountColor(selectedColor)
                 showColorConfirmation = false
-                coroutineScope.launch { snackbarHostState.showSnackbar("Account color updated") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_account_color_updated)) }
             },
             onDismiss = { showColorConfirmation = false }
         )
@@ -576,14 +578,14 @@ fun AccountDetailScreen(
 
     if (showEditAccountConfirmation) {
         SciuroConfirmationDialog(
-            title = "Save Account Details",
-            message = "Are you sure you want to save these changes to the account details?",
-            confirmText = "Save",
+            title = stringResource(R.string.wallet_save_account_details),
+            message = stringResource(R.string.wallet_save_account_details_message),
+            confirmText = stringResource(R.string.wallet_save),
             isDestructive = false,
             onConfirm = {
                 viewModel.updateAccountDetails(editAccountNumberTemp, editAccountHolderNameTemp, editBankCodeTemp)
                 showEditAccountConfirmation = false
-                coroutineScope.launch { snackbarHostState.showSnackbar("Account details updated") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_account_details_updated)) }
             },
             onDismiss = { showEditAccountConfirmation = false }
         )
@@ -601,7 +603,7 @@ private fun QrCodeThumbnail(
     if (bitmap != null) {
         Image(
             bitmap = bitmap.asImageBitmap(),
-            contentDescription = "QR Code",
+            contentDescription = stringResource(R.string.wallet_qr_code),
             modifier = modifier,
             contentScale = ContentScale.Fit
         )
@@ -627,7 +629,7 @@ private fun EditAccountDetailsSheet(
 
     SciuroBottomSheet(onDismissRequest = onDismiss) {
         Text(
-            "Edit Account Details",
+            stringResource(R.string.wallet_edit_account_details),
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -636,8 +638,8 @@ private fun EditAccountDetailsSheet(
         SciuroTextField(
             value = accountNumber,
             onValueChange = { accountNumber = it },
-            label = "Account Number",
-            placeholder = "e.g. 1234567890 or last 4 digits"
+            label = stringResource(R.string.wallet_account_number),
+            placeholder = stringResource(R.string.wallet_account_number_hint)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -645,8 +647,8 @@ private fun EditAccountDetailsSheet(
         SciuroTextField(
             value = accountHolderName,
             onValueChange = { accountHolderName = it },
-            label = "Account Holder Name",
-            placeholder = "e.g. AHMAD BIN ABDULLAH"
+            label = stringResource(R.string.wallet_account_holder_name),
+            placeholder = stringResource(R.string.wallet_account_holder_name_hint)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -654,15 +656,15 @@ private fun EditAccountDetailsSheet(
         SciuroTextField(
             value = bankInstitutionCode,
             onValueChange = { bankInstitutionCode = it },
-            label = "Bank Code",
-            placeholder = "e.g. CIMB, MBB, BSN"
+            label = stringResource(R.string.wallet_bank_code),
+            placeholder = stringResource(R.string.wallet_bank_code_hint)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         if (!isCashWallet) {
             Text(
-                "QR Code",
+                stringResource(R.string.wallet_qr_code),
                 style = MaterialTheme.typography.titleSmall
             )
 
@@ -687,11 +689,11 @@ private fun EditAccountDetailsSheet(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     OutlinedButton(onClick = onPickQr) {
-                        Text("Change")
+                        Text(stringResource(R.string.wallet_change))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = onRemoveQr) {
-                        Text("Remove", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.wallet_remove), color = MaterialTheme.colorScheme.error)
                     }
                 }
             } else {
@@ -701,7 +703,7 @@ private fun EditAccountDetailsSheet(
                 ) {
                     Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Select QR Image")
+                    Text(stringResource(R.string.wallet_select_qr_image))
                 }
             }
         }
@@ -716,11 +718,11 @@ private fun EditAccountDetailsSheet(
                 onClick = onDismiss,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.wallet_cancel))
             }
 
             SciuroPrimaryButton(
-                text = "Save",
+                text = stringResource(R.string.wallet_save),
                 onClick = { onConfirm(accountNumber.ifBlank { null }, accountHolderName.ifBlank { null }, bankInstitutionCode.ifBlank { null }) },
                 modifier = Modifier.weight(1f)
             )

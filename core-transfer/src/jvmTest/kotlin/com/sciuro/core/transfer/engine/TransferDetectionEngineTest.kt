@@ -1,7 +1,7 @@
 package com.sciuro.core.transfer.engine
 
 import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.jdbc.JdbcDriver
+import app.cash.sqldelight.driver.sqlite.JdbcSqliteDriver
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
@@ -37,7 +37,7 @@ class TransferDetectionEngineTest {
 
     @BeforeTest
     fun setUp() {
-        val driver: SqlDriver = JdbcDriver("jdbc:sqlite::memory:")
+        val driver: SqlDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         SciuroDatabase.Schema.create(driver)
         database = SciuroDatabase(driver)
 

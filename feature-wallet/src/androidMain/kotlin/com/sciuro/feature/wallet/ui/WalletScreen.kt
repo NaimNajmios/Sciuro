@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.util.lerp
 import kotlin.math.absoluteValue
@@ -49,6 +50,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.sciuro.feature.wallet.R
 import androidx.core.graphics.drawable.toBitmap
 import com.najmi.sciuro.core.ui.components.HeroFigure
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -196,7 +198,7 @@ fun WalletScreen(
             ) {
                 Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                     Text(
-                        text = if (selectedAssetType == "Liquid Cash") "Total Liquidity" else "Total Investments",
+                        text = if (selectedAssetType == "Liquid Cash") stringResource(R.string.wallet_total_liquidity) else stringResource(R.string.wallet_total_investments),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.7f)
                     )
@@ -220,8 +222,8 @@ fun WalletScreen(
             if (selectedAssetType == "Liquid Cash") {
                 if (accounts.isEmpty()) {
                     com.najmi.sciuro.core.ui.components.EmptyStateView(
-                        message = "No accounts yet — add your first wallet to start tracking.",
-                        primaryCtaText = "Add Account",
+                        message = stringResource(R.string.wallet_empty_no_accounts),
+                        primaryCtaText = stringResource(R.string.wallet_add_account),
                         onPrimaryCtaClick = {
                             editingAccountId = null
                             newAccountName = ""
@@ -259,8 +261,8 @@ fun WalletScreen(
             } else {
                 if (investments.isEmpty()) {
                     com.najmi.sciuro.core.ui.components.EmptyStateView(
-                        message = "No investments yet — add your first investment to start tracking.",
-                        primaryCtaText = "Add Investment",
+                        message = stringResource(R.string.wallet_empty_no_investments),
+                        primaryCtaText = stringResource(R.string.wallet_add_investment),
                         onPrimaryCtaClick = {
                             editingInvestmentId = null
                             newAssetType = "Stock"
@@ -318,7 +320,7 @@ fun WalletScreen(
                 modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Recent Transactions", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 16.dp))
+                Text(stringResource(R.string.wallet_recent_transactions), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 16.dp))
 
                     if (selectedAssetType == "Liquid Cash" && accounts.isNotEmpty()) {
                         val selectedAccountId = accounts[accountPagerState.currentPage].id
@@ -327,7 +329,7 @@ fun WalletScreen(
 
                         if (txFilter == "Adjustments") {
                                 if (accountAdjustments.isEmpty()) {
-                                    com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No adjustments for this account.")
+                                    com.najmi.sciuro.core.ui.components.EmptyStateView(message = stringResource(R.string.wallet_empty_no_adjustments))
                                 } else {
                                     accountAdjustments.forEach { adj ->
                                         AdjustmentCard(
@@ -337,7 +339,7 @@ fun WalletScreen(
                                     }
                                 }
                             } else if (accountTx.isEmpty()) {
-                                com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No transactions for this account.")
+                                com.najmi.sciuro.core.ui.components.EmptyStateView(message = stringResource(R.string.wallet_empty_no_transactions))
                             } else {
                                 accountTx.take(20).forEach { tx ->
                                     Card(
@@ -368,12 +370,12 @@ fun WalletScreen(
                                                 )
                                                 Column {
                                                     Text(
-                                                        tx.merchant ?: "Unknown Merchant",
+                                                        tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
                                                         style = MaterialTheme.typography.titleMedium,
                                                         color = MaterialTheme.colorScheme.onSurface
                                                     )
                                                     Text(
-                                                        if (tx.is_reviewed == 1L) "Reviewed" else "Unreviewed",
+                                                        if (tx.is_reviewed == 1L) stringResource(R.string.wallet_reviewed) else stringResource(R.string.wallet_unreviewed),
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = if (tx.is_reviewed == 1L) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
                                                     )
@@ -389,9 +391,9 @@ fun WalletScreen(
                                 }
                             }
                         } else if (selectedAssetType == "Investments") {
-                        com.najmi.sciuro.core.ui.components.EmptyStateView(message = "Investment transactions are currently tracked manually.")
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(message = stringResource(R.string.wallet_empty_investment_tracked_manually))
                     } else {
-                        com.najmi.sciuro.core.ui.components.EmptyStateView(message = "No data available.")
+                        com.najmi.sciuro.core.ui.components.EmptyStateView(message = stringResource(R.string.wallet_empty_no_data))
                     }
                 }
             }
@@ -429,7 +431,7 @@ fun WalletScreen(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "Add")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.wallet_add_cd))
         }
     }
 
@@ -438,14 +440,14 @@ fun WalletScreen(
             onDismissRequest = { showAddAccountDialog = false }
         ) {
                 Text(
-                    if (editingAccountId == null) "Add Account" else "Edit Account",
+                    if (editingAccountId == null) stringResource(R.string.wallet_add_account) else stringResource(R.string.wallet_edit_account),
                     style = MaterialTheme.typography.headlineSmall
                 )
                 
                 SciuroTextField(
                     value = newAccountName,
                     onValueChange = { newAccountName = it },
-                    label = "Account Name (e.g. Maybank)"
+                    label = stringResource(R.string.wallet_account_name_hint)
                 )
 
                 var expanded by remember { mutableStateOf(false) }
@@ -459,8 +461,8 @@ fun WalletScreen(
                     SciuroTextField(
                         value = displayValue,
                         onValueChange = { newAccountPackage = it },
-                        label = "Associated App (Optional)",
-                        placeholder = "Search apps...",
+                        label = stringResource(R.string.wallet_associated_app_optional),
+                        placeholder = stringResource(R.string.wallet_search_apps),
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier.menuAnchor()
                     )
@@ -495,7 +497,7 @@ fun WalletScreen(
                 SciuroTextField(
                     value = newAccountBalance,
                     onValueChange = { newAccountBalance = it },
-                    label = "Initial Balance (RM)",
+                    label = stringResource(R.string.wallet_initial_balance_rm),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 
@@ -513,7 +515,7 @@ fun WalletScreen(
                 }
                 
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Account Color", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.wallet_account_color), style = MaterialTheme.typography.labelLarge)
                 androidx.compose.foundation.lazy.LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -560,12 +562,12 @@ fun WalletScreen(
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
-                            Text("Delete")
+                            Text(stringResource(R.string.wallet_delete))
                         }
                     }
                     
                     SciuroPrimaryButton(
-                        text = "Save",
+                        text = stringResource(R.string.wallet_save),
                         onClick = {
                             val balance = newAccountBalance.toDoubleOrNull() ?: 0.0
                             if (editingAccountId == null) {
@@ -588,7 +590,7 @@ fun WalletScreen(
                             }
                             showAddAccountDialog = false
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar(if (editingAccountId == null) "Account created" else "Account updated")
+                                snackbarHostState.showSnackbar(context.getString(if (editingAccountId == null) R.string.wallet_account_created else R.string.wallet_account_updated))
                             }
                         },
                         modifier = Modifier.weight(if (editingAccountId != null) 1f else 2f),
@@ -603,7 +605,7 @@ fun WalletScreen(
             onDismissRequest = { showAddInvestmentDialog = false }
         ) {
                 Text(
-                    if (editingInvestmentId == null) "Add Investment" else "Edit Investment",
+                    if (editingInvestmentId == null) stringResource(R.string.wallet_add_investment) else stringResource(R.string.wallet_edit_investment),
                     style = MaterialTheme.typography.headlineSmall
                 )
                 
@@ -625,15 +627,15 @@ fun WalletScreen(
                         SciuroTextField(
                             value = newAssetSymbol,
                             onValueChange = { newAssetSymbol = it.uppercase() },
-                            label = "Symbol",
-                            placeholder = "e.g. AAPL",
+                            label = stringResource(R.string.wallet_symbol),
+                            placeholder = stringResource(R.string.wallet_symbol_hint),
                             modifier = Modifier.weight(1f)
                         )
                         SciuroTextField(
                             value = newAssetName,
                             onValueChange = { newAssetName = it },
-                            label = "Name",
-                            placeholder = "e.g. Apple Inc.",
+                            label = stringResource(R.string.wallet_name),
+                            placeholder = stringResource(R.string.wallet_name_hint_apple),
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -641,13 +643,13 @@ fun WalletScreen(
                     SciuroTextField(
                         value = newAssetName,
                         onValueChange = { newAssetName = it },
-                        label = "Account Name",
-                        placeholder = "e.g. Maybank Gold Account"
+                        label = stringResource(R.string.wallet_account_name_label),
+                        placeholder = stringResource(R.string.wallet_name_hint_gold)
                     )
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val unitsLabel = if (newAssetType == "Gold") "Grams Held" else "Units Held"
+                    val unitsLabel = if (newAssetType == "Gold") stringResource(R.string.wallet_grams_held) else stringResource(R.string.wallet_units_held)
                     SciuroTextField(
                         value = newUnitsHeld,
                         onValueChange = { newUnitsHeld = it },
@@ -658,7 +660,7 @@ fun WalletScreen(
                     SciuroTextField(
                         value = newAvgBuyPrice,
                         onValueChange = { newAvgBuyPrice = it },
-                        label = "Avg Price (RM)",
+                        label = stringResource(R.string.wallet_avg_price_rm),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -671,10 +673,10 @@ fun WalletScreen(
                 ) {
                     val selectedAccount = accounts.find { it.id == newAssociatedAccountId }
                     SciuroTextField(
-                        value = selectedAccount?.name ?: "None",
+                        value = selectedAccount?.name ?: stringResource(R.string.wallet_none),
                         onValueChange = {},
                         readOnly = true,
-                        label = "Funding Account (Optional)",
+                        label = stringResource(R.string.wallet_funding_account_optional),
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
                         modifier = Modifier.menuAnchor()
                     )
@@ -684,7 +686,7 @@ fun WalletScreen(
                         onDismissRequest = { accountExpanded = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("None") },
+                            text = { Text(stringResource(R.string.wallet_none)) },
                             onClick = {
                                 newAssociatedAccountId = ""
                                 accountExpanded = false
@@ -716,12 +718,12 @@ fun WalletScreen(
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
-                            Text("Delete")
+                            Text(stringResource(R.string.wallet_delete))
                         }
                     }
                     
                     SciuroPrimaryButton(
-                        text = "Save",
+                        text = stringResource(R.string.wallet_save),
                         onClick = {
                             val units = newUnitsHeld.toDoubleOrNull() ?: 0.0
                             val price = newAvgBuyPrice.toDoubleOrNull() ?: 0.0
@@ -749,7 +751,7 @@ fun WalletScreen(
                             }
                             showAddInvestmentDialog = false
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar(if (editingInvestmentId == null) "Investment created" else "Investment updated")
+                                snackbarHostState.showSnackbar(context.getString(if (editingInvestmentId == null) R.string.wallet_investment_created else R.string.wallet_investment_updated))
                             }
                         },
                         modifier = Modifier.weight(if (editingInvestmentId != null) 1f else 2f),
@@ -763,19 +765,19 @@ fun WalletScreen(
         com.najmi.sciuro.core.ui.components.SciuroBottomSheet(
             onDismissRequest = { showEditTransactionDialog = false }
         ) {
-                Text("Edit Transaction", style = MaterialTheme.typography.headlineSmall)
+                Text(stringResource(R.string.wallet_edit_transaction), style = MaterialTheme.typography.headlineSmall)
                 
                 SciuroTextField(
                     value = editTxAmount,
                     onValueChange = { editTxAmount = it },
-                    label = "Amount (RM)",
+                    label = stringResource(R.string.wallet_amount_rm),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
                 SciuroTextField(
                     value = editTxMerchant,
                     onValueChange = { editTxMerchant = it },
-                    label = "Merchant / Note"
+                    label = stringResource(R.string.wallet_merchant_note)
                 )
                 
                 PillToggle(
@@ -796,10 +798,10 @@ fun WalletScreen(
                 ) {
                     val selAcc = accounts.find { it.id == editTxAccountId }
                     SciuroTextField(
-                        value = selAcc?.name ?: "Select Account",
+                        value = selAcc?.name ?: stringResource(R.string.wallet_select_account),
                         onValueChange = {},
                         readOnly = true,
-                        label = "Wallet Account",
+                        label = stringResource(R.string.wallet_wallet_account),
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
                         modifier = Modifier.menuAnchor()
                     )
@@ -819,7 +821,7 @@ fun WalletScreen(
                     }
                 }
                 
-                Text("Category", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.wallet_category), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 val expenseCats by viewModel.expenseCategories.collectAsState()
                 val incomeCats by viewModel.incomeCategories.collectAsState()
                 val relevantCategories = if (editTxDirection == "OUTFLOW") expenseCats else incomeCats
@@ -851,11 +853,11 @@ fun WalletScreen(
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.wallet_delete))
                     }
                     
                     SciuroPrimaryButton(
-                        text = "Save",
+                        text = stringResource(R.string.wallet_save),
                         onClick = {
                             val amt = editTxAmount.toDoubleOrNull() ?: 0.0
                             viewModel.editTransaction(
@@ -877,15 +879,15 @@ fun WalletScreen(
 
     if (showDeleteAccountDialog) {
         SciuroConfirmationDialog(
-            title = "Delete Account",
-            message = "Are you sure you want to delete this account? This will also remove any related transactions.",
-            confirmText = "Delete",
+            title = stringResource(R.string.wallet_delete_account_title),
+            message = stringResource(R.string.wallet_delete_account_message),
+            confirmText = stringResource(R.string.wallet_delete),
             isDestructive = true,
             onConfirm = {
                 viewModel.deleteAccount(editingAccountId!!)
                 showDeleteAccountDialog = false
                 showAddAccountDialog = false
-                coroutineScope.launch { snackbarHostState.showSnackbar("Account deleted") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_account_deleted)) }
             },
             onDismiss = { showDeleteAccountDialog = false }
         )
@@ -893,15 +895,15 @@ fun WalletScreen(
 
     if (showDeleteInvestmentDialog) {
         SciuroConfirmationDialog(
-            title = "Delete Investment",
-            message = "Are you sure you want to delete this investment asset? This action cannot be undone.",
-            confirmText = "Delete",
+            title = stringResource(R.string.wallet_delete_investment_title),
+            message = stringResource(R.string.wallet_delete_investment_message),
+            confirmText = stringResource(R.string.wallet_delete),
             isDestructive = true,
             onConfirm = {
                 viewModel.deleteInvestment(editingInvestmentId!!)
                 showDeleteInvestmentDialog = false
                 showAddInvestmentDialog = false
-                coroutineScope.launch { snackbarHostState.showSnackbar("Investment deleted") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_investment_deleted)) }
             },
             onDismiss = { showDeleteInvestmentDialog = false }
         )
@@ -914,4 +916,3 @@ fun WalletScreen(
         )
     }
 }
-

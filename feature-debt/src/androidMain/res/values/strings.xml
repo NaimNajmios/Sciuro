@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hero Panel -->
+    <string name="debt_title">Debts</string>
+    <string name="debt_empty_state">0 Debts</string>
+
+    <!-- Empty states -->
+    <string name="debt_empty_i_owe">No debts you owe — add a loan, credit card, or informal debt.</string>
+    <string name="debt_empty_owed">No one owes you money yet — add informal debts people owe you.</string>
+
+    <!-- CTA / Button -->
+    <string name="debt_add">Add Debt</string>
+    <string name="debt_record_payment">Record Payment</string>
+    <string name="debt_edit">Edit</string>
+    <string name="debt_delete">Delete</string>
+    <string name="debt_save">Save</string>
+    <string name="debt_create">Create Debt</string>
+    <string name="debt_mark_finished">Mark as Finished</string>
+    <string name="debt_apply_payment">Apply Payment</string>
+    <string name="debt_confirm_apply">Apply</string>
+
+    <!-- Form labels -->
+    <string name="debt_form_title_edit">Edit Debt</string>
+    <string name="debt_form_title_add">Add Debt</string>
+    <string name="debt_form_direction">Direction</string>
+    <string name="debt_form_debt_name">Debt Name</string>
+    <string name="debt_form_counterparty">Counterparty (who owes / is owed)</string>
+    <string name="debt_form_amount_rm">Amount (RM)</string>
+    <string name="debt_form_notes">Notes</string>
+    <string name="debt_amount_received_rm">Amount Received (RM)</string>
+
+    <!-- Confirmation dialogs -->
+    <string name="debt_mark_finished_title">Mark as Finished</string>
+    <string name="debt_mark_finished_message">Are you sure you want to mark this debt as finished?</string>
+    <string name="debt_save_changes_title">Save Changes</string>
+    <string name="debt_save_changes_message">Are you sure you want to save these changes?</string>
+    <string name="debt_confirm_save">Save</string>
+    <string name="debt_create_title">Create Debt</string>
+    <string name="debt_create_message">Are you sure you want to create this debt?</string>
+    <string name="debt_confirm_create">Create</string>
+    <string name="debt_delete_title">Delete Debt</string>
+    <string name="debt_delete_message">Are you sure you want to delete this debt? This action cannot be undone.</string>
+    <string name="debt_confirm_delete">Delete</string>
+    <string name="debt_apply_payment_title">Apply Payment</string>
+    <string name="debt_apply_payment_message">Are you sure you want to apply this payment?</string>
+    <string name="debt_fully_paid_title">Debt Fully Paid</string>
+    <string name="debt_fully_paid_message">This debt\'s balance has reached zero. Would you like to mark it as finished?</string>
+</resources>

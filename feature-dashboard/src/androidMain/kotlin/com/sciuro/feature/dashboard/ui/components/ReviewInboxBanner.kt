@@ -7,7 +7,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.sciuro.feature.dashboard.R
 
 @Composable
 fun ReviewInboxBanner(
@@ -27,12 +29,12 @@ fun ReviewInboxBanner(
         ) {
             Icon(
                 imageVector = Icons.Filled.Warning,
-                contentDescription = "Review Inbox Warning",
+                contentDescription = stringResource(R.string.dashboard_review_inbox_warning_cd),
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
             Column {
                 Text(
-                    "Review Inbox",
+                    stringResource(R.string.dashboard_review_inbox),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )

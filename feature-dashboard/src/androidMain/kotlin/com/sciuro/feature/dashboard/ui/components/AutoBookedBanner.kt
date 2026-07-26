@@ -7,8 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.ledger.db.Transaction_record
+import com.sciuro.feature.dashboard.R
 
 @Composable
 fun AutoBookedBanner(
@@ -32,7 +34,7 @@ fun AutoBookedBanner(
             ) {
                 Icon(
                     imageVector = Icons.Filled.CheckCircle,
-                    contentDescription = "Auto-booked Success",
+                    contentDescription = stringResource(R.string.dashboard_auto_booked_success_cd),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
@@ -69,7 +71,7 @@ fun AutoBookedBanner(
                             ),
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Text("Undo", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(R.string.dashboard_undo), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }

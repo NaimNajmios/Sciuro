@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.*
 import androidx.navigation.NavBackStackEntry
@@ -243,39 +244,63 @@ fun SciuroMainScreen() {
             bottomBar = {
             if (onboardingState.isOnboardingComplete) {
                 val isDarkTheme = isSystemInDarkTheme()
-                NavigationBar(
-                    containerColor = if (isDarkTheme) DarkSurfaceSheet else LightSurfaceSheet,
-                    tonalElevation = 0.dp
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+                val selectedRoute = currentDestination?.hierarchy?.any { it.route != null }?.let {
+                    currentDestination?.route
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .fillMaxWidth(),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                    color = if (isDarkTheme) DarkSurfaceSheet else LightSurfaceSheet,
+                    tonalElevation = if (isDarkTheme) 4.dp else 2.dp,
+                    shadowElevation = if (isDarkTheme) 8.dp else 4.dp
                 ) {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentDestination = navBackStackEntry?.destination
-                
-                items.forEach { item ->
-                    NavigationBarItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                    NavigationBar(
+                        containerColor = Color.Transparent,
+                        tonalElevation = 0.dp,
+                        modifier = Modifier.height(56.dp)
+                    ) {
+                    items.forEach { item ->
+                        val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        NavigationBarItem(
+                            icon = { Icon(item.icon, contentDescription = item.label) },
+                            label = {
+                                Text(
+                                    text = item.label,
+                                    color = if (isSelected) {
+                                        if (isDarkTheme) Color.Black else Color.White
+                                    } else {
+                                        if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF444444)
+                                    }
+                                )
+                            },
+                            selected = isSelected,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = if (isDarkTheme) Color.Black else Color.White,
+                                selectedTextColor = Color.Transparent,
+                                indicatorColor = if (isDarkTheme) Color.White else Color.Black,
+                                unselectedIconColor = if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF444444),
+                                unselectedTextColor = Color.Transparent
+                            )
                         )
-                    )
+                    }
+                }
                 }
             }
             }
-        }
     ) { innerPadding ->
         val lateralEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
             fadeIn(tween(SciuroMotion.TRANSITION_DURATION_MS)) +

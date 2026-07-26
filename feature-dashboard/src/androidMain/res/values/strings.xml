@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- DashboardScreen -->
+    <string name="dashboard_total_net_position">Total Net Position</string>
+    <string name="dashboard_empty_state_initial">Nothing gathered yet — once your bank notifications start coming in or you add a manual entry, this is where they\'ll show up.</string>
+    <string name="dashboard_no_matching_transactions">No transactions match the current filter.</string>
+    <string name="dashboard_no_transactions">No transactions yet.</string>
+    <string name="dashboard_transaction_rejected">Transaction rejected</string>
+    <string name="dashboard_add_transaction_cd">Add Transaction</string>
+    <string name="dashboard_transaction_approved">Transaction approved</string>
+    <string name="dashboard_transaction_saved">Transaction saved successfully</string>
+    <string name="dashboard_transaction_updated">Transaction updated</string>
+    <string name="dashboard_delete_transaction_title">Delete Transaction</string>
+    <string name="dashboard_delete_transaction_message">Are you sure you want to delete this transaction? This action cannot be undone.</string>
+    <string name="dashboard_delete">Delete</string>
+    <string name="dashboard_transaction_deleted">Transaction deleted</string>
+    <string name="dashboard_unknown_merchant">Unknown Merchant</string>
+    <string name="dashboard_action_created">Created</string>
+    <string name="dashboard_action_edited">Edited</string>
+    <string name="dashboard_action_recategorized">Recategorized</string>
+    <string name="dashboard_action_deleted">Deleted</string>
+    <string name="dashboard_source_auto">auto</string>
+    <string name="dashboard_source_you">you</string>
+    <string name="dashboard_source_ai">AI</string>
+
+    <!-- DashboardSummaryRow -->
+    <string name="dashboard_active_budgets">Active Budgets</string>
+    <string name="dashboard_runway">Runway</string>
+    <string name="dashboard_based_on_bills_only">based on bills only</string>
+
+    <!-- AutoBookedBanner -->
+    <string name="dashboard_auto_booked_success_cd">Auto-booked Success</string>
+    <string name="dashboard_undo">Undo</string>
+
+    <!-- DashboardDatePicker -->
+    <string name="dashboard_ok">OK</string>
+    <string name="dashboard_cancel">Cancel</string>
+
+    <!-- EditTransactionSheet -->
+    <string name="dashboard_edit_transaction">Edit Transaction</string>
+    <string name="dashboard_amount_label">Amount (RM)</string>
+    <string name="dashboard_merchant_label">Merchant / Note</string>
+    <string name="dashboard_select_account">Select Account</string>
+    <string name="dashboard_wallet_account">Wallet Account</string>
+    <string name="dashboard_category">Category</string>
+    <string name="dashboard_save">Save</string>
+
+    <!-- NetPositionBreakdownPanel -->
+    <string name="dashboard_net_position_breakdown">Net Position Breakdown</string>
+    <string name="dashboard_collapse_breakdown_cd">Collapse breakdown</string>
+    <string name="dashboard_expand_breakdown_cd">Expand breakdown</string>
+    <string name="dashboard_cash">Cash</string>
+    <string name="dashboard_investments">Investments</string>
+    <string name="dashboard_debt">Debt</string>
+
+    <!-- ApproveTransactionDialog -->
+    <string name="dashboard_approve_transaction">Approve Transaction</string>
+    <string name="dashboard_select_account_for_transaction">Select an account for this transaction:</string>
+    <string name="dashboard_approve">Approve</string>
+
+    <!-- ReviewInboxBanner -->
+    <string name="dashboard_review_inbox_warning_cd">Review Inbox Warning</string>
+    <string name="dashboard_review_inbox">Review Inbox</string>
+
+    <!-- AdjustmentBanner -->
+    <string name="dashboard_balance_adjustments">Balance Adjustments</string>
+    <string name="dashboard_view_in_wallet">View in Wallet</string>
+
+    <!-- TransactionHistoryHeader -->
+    <string name="dashboard_transaction_history">Transaction History</string>
+
+    <!-- TransactionList -->
+    <string name="dashboard_reviewed">Reviewed</string>
+    <string name="dashboard_swipe_instructions">Swipe right to approve, left to reject</string>
+    <string name="dashboard_approve_cd">Approve</string>
+    <string name="dashboard_reject_cd">Reject</string>
+</resources>

@@ -16,7 +16,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.R
 import com.najmi.sciuro.core.ui.theme.reducedMotion
 
 /**
@@ -36,12 +38,12 @@ fun SciuroMascot(
         contentAlignment = Alignment.Center
     ) {
         when (animationState) {
-            MascotState.IDLE -> MascotPlaceholder(Icons.Filled.Face, "Idle")
+            MascotState.IDLE -> MascotPlaceholder(Icons.Filled.Face, stringResource(R.string.mascot_content_idle))
             MascotState.THINKING -> ThinkingPlaceholder()
             MascotState.CELEBRATE -> CelebratePlaceholder()
-            MascotState.EMPTY -> MascotPlaceholder(Icons.Filled.Search, "Empty")
+            MascotState.EMPTY -> MascotPlaceholder(Icons.Filled.Search, stringResource(R.string.mascot_content_empty))
             MascotState.REFRESH -> RefreshPlaceholder(isPlaying)
-            MascotState.ERROR -> MascotPlaceholder(Icons.Filled.Warning, "Error", MaterialTheme.colorScheme.error)
+            MascotState.ERROR -> MascotPlaceholder(Icons.Filled.Warning, stringResource(R.string.mascot_content_error), MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -98,7 +100,7 @@ private fun CelebratePlaceholder() {
 
     Icon(
         imageVector = Icons.Filled.Star,
-        contentDescription = "Celebrate",
+        contentDescription = stringResource(R.string.mascot_content_celebrate),
         modifier = Modifier.size(64.dp).scale(if (noMotion) 1f else scale),
         tint = com.najmi.sciuro.core.ui.theme.SignalWarning
     )
@@ -120,7 +122,7 @@ private fun RefreshPlaceholder(isPlaying: Boolean) {
 
     Icon(
         imageVector = Icons.Filled.Refresh,
-        contentDescription = "Refresh",
+        contentDescription = stringResource(R.string.mascot_content_refresh),
         modifier = Modifier.size(64.dp).rotate(if (noMotion || !isPlaying) 0f else rotation),
         tint = MaterialTheme.colorScheme.primary
     )

@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.sciuro.core.ledger.db.Account
+import com.sciuro.feature.dashboard.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,10 +25,10 @@ fun ApproveTransactionDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Approve Transaction") },
+        title = { Text(stringResource(R.string.dashboard_approve_transaction)) },
         text = {
             Column {
-                Text("Select an account for this transaction:")
+                Text(stringResource(R.string.dashboard_select_account_for_transaction))
                 Spacer(modifier = Modifier.height(16.dp))
                 ExposedDropdownMenuBox(
                     expanded = accountExpanded,
@@ -34,10 +36,10 @@ fun ApproveTransactionDialog(
                 ) {
                     val selAcc = accounts.find { it.id == selectedAccountId }
                     SciuroTextField(
-                        value = selAcc?.name ?: "Select Account",
+                        value = selAcc?.name ?: stringResource(R.string.dashboard_select_account),
                         onValueChange = {},
                         readOnly = true,
-                        label = "Wallet Account",
+                        label = stringResource(R.string.dashboard_wallet_account),
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
                         modifier = Modifier.menuAnchor()
                     )
@@ -63,12 +65,12 @@ fun ApproveTransactionDialog(
                 onClick = onApprove,
                 enabled = selectedAccountId != null
             ) {
-                Text("Approve")
+                Text(stringResource(R.string.dashboard_approve))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.dashboard_cancel))
             }
         }
     )

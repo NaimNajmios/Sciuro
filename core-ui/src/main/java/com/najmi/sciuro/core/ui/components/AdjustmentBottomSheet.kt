@@ -8,7 +8,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.R
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 
 val AdjustmentReasonPresets = listOf(
@@ -43,7 +45,7 @@ fun AdjustmentBottomSheet(
 
     SciuroBottomSheet(onDismissRequest = onDismiss) {
         Text(
-            "Adjust Balance",
+            stringResource(R.string.shared_adjust_balance),
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -66,7 +68,7 @@ fun AdjustmentBottomSheet(
         SciuroTextField(
             value = amountStr,
             onValueChange = { amountStr = it },
-            label = "New Balance (RM)",
+            label = stringResource(R.string.adjustment_new_balance_label),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
 
@@ -75,10 +77,10 @@ fun AdjustmentBottomSheet(
             onExpandedChange = { reasonExpanded = !reasonExpanded }
         ) {
             SciuroTextField(
-                value = if (isCustom && customReason.isNotBlank()) customReason else reason.ifBlank { "Select reason..." },
+                value = if (isCustom && customReason.isNotBlank()) customReason else reason.ifBlank { stringResource(R.string.adjustment_select_reason) },
                 onValueChange = {},
                 readOnly = !isCustom,
-                label = "Reason",
+                label = stringResource(R.string.shared_reason),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = reasonExpanded) },
                 modifier = Modifier.menuAnchor()
             )
@@ -103,14 +105,14 @@ fun AdjustmentBottomSheet(
             SciuroTextField(
                 value = customReason,
                 onValueChange = { customReason = it },
-                label = "Custom Reason"
+                label = stringResource(R.string.adjustment_custom_reason)
             )
         }
 
         if (isLargeVariance) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                "Large variance detected. Add a note to help future reconciliation:",
+                stringResource(R.string.adjustment_large_variance_warning),
                 style = MaterialTheme.typography.bodySmall,
                 color = com.najmi.sciuro.core.ui.theme.SignalWarning
             )
@@ -118,7 +120,7 @@ fun AdjustmentBottomSheet(
             SciuroTextField(
                 value = remark,
                 onValueChange = { remark = it },
-                label = "Remark (optional)"
+                label = stringResource(R.string.adjustment_remark_optional)
             )
         }
 
@@ -132,11 +134,11 @@ fun AdjustmentBottomSheet(
                 onClick = onDismiss,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.shared_cancel))
             }
 
             SciuroPrimaryButton(
-                text = "Save Adjustment",
+                text = stringResource(R.string.adjustment_save),
                 onClick = {
                     if (delta != null && effectiveReason.isNotBlank()) {
                         onConfirm(delta, effectiveReason, remark.takeIf { it.isNotBlank() })

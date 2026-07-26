@@ -1,10 +1,11 @@
 package com.sciuro.core.investment.engine
 
 import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.jdbc.JdbcDriver
+import app.cash.sqldelight.driver.sqlite.JdbcSqliteDriver
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
+import com.sciuro.core.ledger.engine.TransactionMatchingEngine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
@@ -23,11 +24,12 @@ class InvestmentEngineTest {
 
     @BeforeTest
     fun setUp() {
-        driver = JdbcDriver("jdbc:sqlite::memory:")
+        driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         SciuroDatabase.Schema.create(driver)
         database = SciuroDatabase(driver)
         eventBus = DomainEventBus()
-        engine = InvestmentEngine(database, eventBus)
+        val matchingEngine = TransactionMatchingEngine(database)
+        engine = InvestmentEngine(database, eventBus, matchingEngine)
     }
 
     @AfterTest

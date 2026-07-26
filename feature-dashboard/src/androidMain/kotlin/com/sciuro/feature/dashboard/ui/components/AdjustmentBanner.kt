@@ -5,7 +5,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.sciuro.feature.dashboard.R
 
 @Composable
 fun AdjustmentBanner(
@@ -27,7 +29,7 @@ fun AdjustmentBanner(
         ) {
             Column {
                 Text(
-                    "Balance Adjustments",
+                    stringResource(R.string.dashboard_balance_adjustments),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
@@ -38,7 +40,7 @@ fun AdjustmentBanner(
                 )
             }
             Text(
-                "View in Wallet",
+                stringResource(R.string.dashboard_view_in_wallet),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )

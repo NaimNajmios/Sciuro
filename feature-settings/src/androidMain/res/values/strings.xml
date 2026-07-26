@@ -180,4 +180,19 @@
 
     <!-- Developer Settings Gate -->
     <string name="dev_gate_snackbar">Developer Options enabled</string>
+
+    <!-- Developer Tab Names -->
+    <string name="dev_tab_simulator">Simulator</string>
+    <string name="dev_tab_sources">Sources</string>
+    <string name="dev_tab_ingestion_log">Ingestion Log</string>
+    <string name="dev_tab_diagnostics">Diagnostics</string>
+    <string name="dev_tab_data_tools">Data Tools</string>
+    <string name="dev_tab_health">Health</string>
+    <string name="dev_tab_pipeline_trace">Pipeline Trace</string>
+
+    <!-- Misc -->
+    <string name="settings_hide">Hide</string>
+    <string name="settings_show">Show</string>
+    <string name="linked_accounts_existing_links">Existing Links</string>
+    <string name="settings_ok">OK</string>
 </resources>

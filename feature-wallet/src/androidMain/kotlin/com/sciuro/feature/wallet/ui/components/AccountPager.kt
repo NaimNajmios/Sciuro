@@ -24,9 +24,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.core.graphics.drawable.toBitmap
+import com.sciuro.feature.wallet.R
 import com.sciuro.feature.wallet.ui.AppInfo
 import com.sciuro.feature.wallet.model.WalletAccount
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
@@ -111,9 +113,9 @@ fun AccountCard(
                         )
                         Text(
                             when {
-                                account.isCashWallet -> "Cash Wallet"
-                                account.isEWallet -> "E-Wallet"
-                                else -> "Bank Account"
+                                account.isCashWallet -> stringResource(R.string.wallet_cash_wallet)
+                                account.isEWallet -> stringResource(R.string.wallet_e_wallet)
+                                else -> stringResource(R.string.wallet_bank_account)
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = contentCol.copy(alpha = 0.7f)
@@ -134,7 +136,7 @@ fun AccountCard(
                     if (account.qrImagePath != null) {
                         Icon(
                             imageVector = Icons.Filled.QrCodeScanner,
-                            contentDescription = "View QR Code",
+                            contentDescription = stringResource(R.string.wallet_view_qr_cd),
                             modifier = Modifier
                                 .size(28.dp)
                                 .clickable { onQrClick(account.qrImagePath) }

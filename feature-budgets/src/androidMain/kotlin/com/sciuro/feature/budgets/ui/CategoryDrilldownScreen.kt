@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -16,6 +17,7 @@ import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalWarning
 import com.sciuro.core.ledger.config.SettingsProvider
+import com.sciuro.feature.budgets.R
 import com.sciuro.feature.budgets.viewmodel.CategoryDrilldownViewModel
 import org.koin.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
@@ -31,7 +33,7 @@ fun CategoryDrilldownScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
-            title = "Category Spending",
+            title = stringResource(R.string.budget_category_spending_title),
             heroFigure = {
                 Text(
                     "RM %.0f".format(state.totalSpend),
@@ -47,7 +49,7 @@ fun CategoryDrilldownScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.budget_back),
                         tint = androidx.compose.ui.graphics.Color.White
                     )
                 }
@@ -62,7 +64,7 @@ fun CategoryDrilldownScreen(
 
                 if (state.categories.isEmpty()) {
                     EmptyStateView(
-                        message = "No outflow spending in the last 30 days."
+                        message = stringResource(R.string.budget_no_outflow)
                     )
                 } else {
                     state.categories.forEach { cat ->

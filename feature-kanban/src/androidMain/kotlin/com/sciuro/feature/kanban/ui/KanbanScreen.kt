@@ -12,7 +12,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.sciuro.feature.kanban.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
@@ -132,20 +134,35 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
 
                 HeroPanel(
                     title = when (selectedTab) {
-                        "Bills" -> "Bills & Subscriptions"
-                        "Debts" -> "Debts"
-                        else -> "Active Tasks"
+                        "Bills" -> stringResource(R.string.kanban_hero_title_bills)
+                        "Debts" -> stringResource(R.string.kanban_hero_title_debts)
+                        else -> stringResource(R.string.kanban_hero_title_tasks)
                     },
                     heroFigure = {
-                        Text(
-                            text = when (selectedTab) {
-                                "Bills" -> "${billOverdue + billDueSoon} Due"
-                                "Debts" -> "$activeDebtCount Active"
-                                else -> "${todoCount + inProgressCount}"
-                            },
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = Color.White
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = when (selectedTab) {
+                                    "Bills" -> "${billOverdue + billDueSoon}"
+                                    "Debts" -> "$activeDebtCount"
+                                    else -> "${todoCount + inProgressCount}"
+                                },
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = Color.White,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                            Text(
+                                text = when (selectedTab) {
+                                    "Bills" -> stringResource(R.string.kanban_hero_figure_due)
+                                    "Debts" -> stringResource(R.string.kanban_hero_figure_active)
+                                    else -> stringResource(R.string.kanban_hero_figure_total)
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
                     },
                     toggleOptions = tabs,
                     selectedToggle = selectedTab,
@@ -159,8 +176,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         ) {
                             when (selectedTab) {
                                 "Bills" -> {
-                                    HeroMetric(label = "Overdue", value = billOverdue.toString(), color = if (billOverdue > 0) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.7f))
-                                    HeroMetric(label = "Due Soon", value = billDueSoon.toString(), color = if (billDueSoon > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = stringResource(R.string.kanban_metric_overdue), value = billOverdue.toString(), color = if (billOverdue > 0) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = stringResource(R.string.kanban_metric_due_soon), value = billDueSoon.toString(), color = if (billDueSoon > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f))
                                 }
                                 "Debts" -> {
                                     val totalOwe = remember(debtTasks) { debtTasks.filter { it.direction == com.sciuro.core.debt.model.DebtDirection.I_OWE }.sumOf { it.remainingBalance } }
@@ -232,40 +249,50 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         }
     }
 
+    val snackbarTaskRejected = stringResource(R.string.kanban_snackbar_task_rejected)
+    val snackbarDebtDeleted = stringResource(R.string.kanban_snackbar_debt_deleted)
+    val snackbarDebtUpdated = stringResource(R.string.kanban_snackbar_debt_updated)
+    val snackbarTaskApproved = stringResource(R.string.kanban_snackbar_task_approved)
+    val snackbarBillMarkedPaid = stringResource(R.string.kanban_snackbar_bill_marked_paid)
+    val snackbarPaymentRecorded = stringResource(R.string.kanban_snackbar_payment_recorded)
+    val snackbarDebtMarkedFinished = stringResource(R.string.kanban_snackbar_debt_marked_finished)
+    val snackbarBillCreated = stringResource(R.string.kanban_snackbar_bill_created)
+    val snackbarDebtCreated = stringResource(R.string.kanban_snackbar_debt_created)
+
     KanbanDialogs(
         taskToReject = taskToReject,
         onRejectConfirmed = { task ->
             viewModel.updateTaskStatus(task.id, TaskStatus.REJECTED, null)
             taskToReject = null
-            coroutineScope.launch { snackbarHostState.showSnackbar("Task Rejected") }
+            coroutineScope.launch { snackbarHostState.showSnackbar(snackbarTaskRejected) }
         },
         onRejectDismiss = { taskToReject = null },
         debtToDelete = debtToDelete,
         onDeleteDebtConfirmed = { debt ->
             viewModel.deleteDebt(debt.id)
             debtToDelete = null
-            coroutineScope.launch { snackbarHostState.showSnackbar("Debt deleted") }
+            coroutineScope.launch { snackbarHostState.showSnackbar(snackbarDebtDeleted) }
         },
         onDeleteDebtDismiss = { debtToDelete = null },
         debtToEdit = debtToEdit,
         onEditDebtConfirmed = { debt, name, principalAmount, notes ->
             viewModel.updateDebt(debt.id, name, principalAmount, notes)
             debtToEdit = null
-            coroutineScope.launch { snackbarHostState.showSnackbar("Debt updated") }
+            coroutineScope.launch { snackbarHostState.showSnackbar(snackbarDebtUpdated) }
         },
         onEditDebtDismiss = { debtToEdit = null },
         taskToApprove = taskToApprove,
         onApproveConfirmed = { task, accountId, direction ->
             viewModel.updateTaskStatus(task.id, TaskStatus.DONE, accountId, direction)
             taskToApprove = null
-            coroutineScope.launch { snackbarHostState.showSnackbar("Task Approved") }
+            coroutineScope.launch { snackbarHostState.showSnackbar(snackbarTaskApproved) }
         },
         onApproveDismiss = { taskToApprove = null },
         paymentBill = paymentBill,
         onBillPaid = { bill ->
             viewModel.markBillAsPaid(bill.obligation)
             paymentBill = null
-            coroutineScope.launch { snackbarHostState.showSnackbar("Bill marked as paid") }
+            coroutineScope.launch { snackbarHostState.showSnackbar(snackbarBillMarkedPaid) }
         },
         onBillPaymentDismiss = { paymentBill = null },
         paymentDebt = paymentDebt,
@@ -278,7 +305,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
             if (debt.remainingBalance - amt <= 0) {
                 autoMarkFinishedDebtId = debt.id
             } else {
-                coroutineScope.launch { snackbarHostState.showSnackbar("Payment recorded") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(snackbarPaymentRecorded) }
             }
         },
         onDebtPaymentDismiss = { paymentDebt = null },
@@ -286,7 +313,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         onMarkFinishedConfirmed = { debtId ->
             viewModel.markDebtAsFinished(debtId)
             autoMarkFinishedDebtId = null
-            coroutineScope.launch { snackbarHostState.showSnackbar("Debt marked as finished") }
+            coroutineScope.launch { snackbarHostState.showSnackbar(snackbarDebtMarkedFinished) }
         },
         onMarkFinishedDismiss = { autoMarkFinishedDebtId = null },
         createBillAction = createBillAction,
@@ -313,7 +340,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                     createBillAction = {
                         viewModel.createObligation(name, amount, frequency, nextDueDate, categoryId, accountId)
                         showAddSheet = false
-                        coroutineScope.launch { snackbarHostState.showSnackbar("Bill created") }
+                        coroutineScope.launch { snackbarHostState.showSnackbar(snackbarBillCreated) }
                     }
                 }
             )
@@ -323,7 +350,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                     createDebtAction = {
                         viewModel.createDebt(name, type, direction, principalAmount, counterpartyName, notes)
                         showAddSheet = false
-                        coroutineScope.launch { snackbarHostState.showSnackbar("Debt created") }
+                        coroutineScope.launch { snackbarHostState.showSnackbar(snackbarDebtCreated) }
                     }
                 }
             )
@@ -332,9 +359,9 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
 
     createBillAction?.let { action ->
         SciuroConfirmationDialog(
-            title = "Create Bill",
-            message = "Are you sure you want to create this bill?",
-            confirmText = "Create",
+            title = stringResource(R.string.kanban_create_bill_title),
+            message = stringResource(R.string.kanban_create_bill_message),
+            confirmText = stringResource(R.string.kanban_confirm_create),
             onConfirm = {
                 action()
                 createBillAction = null
@@ -345,9 +372,9 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
 
     createDebtAction?.let { action ->
         SciuroConfirmationDialog(
-            title = "Create Debt",
-            message = "Are you sure you want to create this debt?",
-            confirmText = "Create",
+            title = stringResource(R.string.kanban_create_debt_title),
+            message = stringResource(R.string.kanban_create_debt_message),
+            confirmText = stringResource(R.string.kanban_confirm_create),
             onConfirm = {
                 action()
                 createDebtAction = null
@@ -378,7 +405,7 @@ private fun ReviewColumn(
         Spacer(modifier = Modifier.height(4.dp))
 
         if (tasks.isEmpty()) {
-            EmptyStateView(message = "No tasks in this list.")
+            EmptyStateView(message = stringResource(R.string.kanban_empty_tasks))
         } else {
             tasks.forEach { task ->
                 KanbanTaskCard(
@@ -404,18 +431,18 @@ private fun BillsColumn(
         val upcomingBills = bills.filter { it.status == BillStatus.UPCOMING }
 
         if (bills.isEmpty()) {
-            EmptyStateView(message = "No bills or subscriptions found.\nTap + to add one manually.")
+            EmptyStateView(message = stringResource(R.string.kanban_empty_bills))
         } else {
             if (overdueBills.isNotEmpty()) {
-                Text("Overdue", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Text(stringResource(R.string.kanban_section_overdue), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                 overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
             if (dueSoonBills.isNotEmpty()) {
-                Text("Due Soon", style = MaterialTheme.typography.titleMedium, color = com.najmi.sciuro.core.ui.theme.SignalWarning, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Text(stringResource(R.string.kanban_section_due_soon), style = MaterialTheme.typography.titleMedium, color = com.najmi.sciuro.core.ui.theme.SignalWarning, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                 dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
             if (upcomingBills.isNotEmpty()) {
-                Text("Upcoming", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Text(stringResource(R.string.kanban_section_upcoming), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                 upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
         }
@@ -446,12 +473,12 @@ private fun BillCard(
                     Text("RM ${"%.2f".format(bill.amount)}", style = MaterialTheme.typography.bodyMedium)
                 }
                 if (bill.status == BillStatus.OVERDUE) {
-                    Icon(Icons.Filled.Warning, contentDescription = "Overdue", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.kanban_section_overdue), tint = MaterialTheme.colorScheme.error)
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(onClick = { onMarkPaid(bill) }, modifier = Modifier.fillMaxWidth()) {
-                Text("Mark as Paid")
+                Text(stringResource(R.string.kanban_mark_as_paid))
             }
         }
     }
@@ -469,7 +496,7 @@ private fun DebtsColumn(
         val activeDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.ACTIVE }
 
         if (activeDebts.isEmpty()) {
-            EmptyStateView(message = "No active debts.\nTap + to add a new debt.")
+            EmptyStateView(message = stringResource(R.string.kanban_empty_debts))
         } else {
             val noMotion = reducedMotion()
             activeDebts.forEach { debt ->
@@ -497,14 +524,14 @@ private fun DebtsColumn(
                                 var expanded by remember { mutableStateOf(false) }
                                 Box {
                                     IconButton(onClick = { expanded = true }) {
-                                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "More Options")
+                                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = stringResource(R.string.kanban_more_options))
                                     }
                                     DropdownMenu(
                                         expanded = expanded,
                                         onDismissRequest = { expanded = false }
                                     ) {
                                         DropdownMenuItem(
-                                            text = { Text("Edit") },
+                                            text = { Text(stringResource(R.string.kanban_edit)) },
                                             onClick = {
                                                 expanded = false
                                                 onEditDebt(debt)
@@ -512,7 +539,7 @@ private fun DebtsColumn(
                                             leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) }
                                         )
                                         DropdownMenuItem(
-                                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                            text = { Text(stringResource(R.string.kanban_delete), color = MaterialTheme.colorScheme.error) },
                                             onClick = {
                                                 expanded = false
                                                 onDeleteDebt(debt)
@@ -541,7 +568,7 @@ private fun DebtsColumn(
                                 onClick = { onRecordPayment(debt) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("Record Payment")
+                                Text(stringResource(R.string.kanban_record_payment))
                             }
                         }
                     }
@@ -584,12 +611,12 @@ fun KanbanTaskCard(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Warning,
-                            contentDescription = "Unassigned Account",
+                            contentDescription = stringResource(R.string.kanban_unassigned_account),
                             tint = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            "Needs an account assignment",
+                            stringResource(R.string.kanban_needs_account_assignment),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -628,10 +655,10 @@ fun KanbanTaskCard(
                 onExpandedChange = { accountDropdownExpanded = it }
             ) {
                 SciuroTextField(
-                    value = selectedAccount?.name ?: "Select Account",
+                    value = selectedAccount?.name ?: stringResource(R.string.kanban_select_account),
                     onValueChange = {},
                     readOnly = true,
-                    label = "Wallet Account",
+                    label = stringResource(R.string.kanban_wallet_account),
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountDropdownExpanded) },
                     modifier = Modifier.menuAnchor()
                 )
@@ -659,13 +686,13 @@ fun KanbanTaskCard(
             ) {
                 OutlinedButton(
                     onClick = onReject,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).height(52.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Reject")
+                    Text(stringResource(R.string.kanban_reject))
                 }
                 SciuroPrimaryButton(
-                    text = "Approve",
+                    text = stringResource(R.string.kanban_approve),
                     onClick = { onApprove(selectedAccount?.id, selectedDirection) },
                     enabled = selectedAccount != null,
                     modifier = Modifier.weight(1f)
@@ -698,21 +725,21 @@ private fun AddBillSheet(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            Text("Add Bill / Subscription", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.kanban_add_bill_subscription), style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(12.dp))
 
-            SciuroTextField(value = name, onValueChange = { name = it }, label = "Name")
+            SciuroTextField(value = name, onValueChange = { name = it }, label = stringResource(R.string.kanban_label_name))
 
             Spacer(modifier = Modifier.height(8.dp))
             SciuroTextField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                label = "Amount (RM)",
+                label = stringResource(R.string.kanban_label_amount_rm),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Frequency", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.kanban_label_frequency), style = MaterialTheme.typography.labelLarge)
             val freqLabels = ObligationFrequency.entries.map { it.name.lowercase().replaceFirstChar { it.uppercaseChar() } }
             PillToggle(
                 options = freqLabels,
@@ -727,18 +754,18 @@ private fun AddBillSheet(
             )
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Next Due Date", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.kanban_label_next_due_date), style = MaterialTheme.typography.labelLarge)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = dueDate?.let { dateFormatter.format(Date(it)) } ?: "Select Date",
+                    text = dueDate?.let { dateFormatter.format(Date(it)) } ?: stringResource(R.string.kanban_select_date),
                     style = MaterialTheme.typography.bodyLarge
                 )
                 OutlinedButton(onClick = { showDatePicker = true }) {
-                    Text("Pick Date")
+                    Text(stringResource(R.string.kanban_pick_date))
                 }
             }
 
@@ -750,10 +777,10 @@ private fun AddBillSheet(
                         TextButton(onClick = {
                             dueDate = datePickerState.selectedDateMillis
                             showDatePicker = false
-                        }) { Text("OK") }
+                        }) { Text(stringResource(R.string.kanban_ok)) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                        TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.kanban_cancel)) }
                     }
                 ) {
                     DatePicker(state = datePickerState)
@@ -761,16 +788,16 @@ private fun AddBillSheet(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Account", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.kanban_label_account), style = MaterialTheme.typography.labelLarge)
             ExposedDropdownMenuBox(
                 expanded = accountDropdownExpanded,
                 onExpandedChange = { accountDropdownExpanded = it }
             ) {
                 SciuroTextField(
-                    value = selectedAccount?.name ?: "Select Account",
+                    value = selectedAccount?.name ?: stringResource(R.string.kanban_select_account),
                     onValueChange = {},
                     readOnly = true,
-                    label = "Wallet Account",
+                    label = stringResource(R.string.kanban_wallet_account),
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountDropdownExpanded) },
                     modifier = Modifier.menuAnchor()
                 )
@@ -791,7 +818,7 @@ private fun AddBillSheet(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Category", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.kanban_label_category), style = MaterialTheme.typography.labelLarge)
             if (expenseCategories.isNotEmpty()) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(expenseCategories) { cat ->
@@ -808,7 +835,7 @@ private fun AddBillSheet(
 
             val isFormValid = name.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0 && dueDate != null
             SciuroPrimaryButton(
-                text = "Create Bill",
+                text = stringResource(R.string.kanban_create_bill_button),
                 onClick = {
                     onCreate(
                         name,
@@ -842,10 +869,10 @@ private fun AddDebtSheet(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            Text("Add Debt", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.kanban_add_debt), style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text("Direction", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.kanban_label_direction), style = MaterialTheme.typography.labelLarge)
             val dirLabels = listOf("I Owe", "Owed to Me")
             PillToggle(
                 options = dirLabels,
@@ -864,27 +891,27 @@ private fun AddDebtSheet(
             )
 
             Spacer(modifier = Modifier.height(12.dp))
-            SciuroTextField(value = name, onValueChange = { name = it }, label = "Debt Name")
+            SciuroTextField(value = name, onValueChange = { name = it }, label = stringResource(R.string.kanban_label_debt_name))
 
             Spacer(modifier = Modifier.height(8.dp))
             SciuroTextField(
                 value = counterparty,
                 onValueChange = { counterparty = it },
-                label = "Counterparty (who owes / is owed)"
+                label = stringResource(R.string.kanban_label_counterparty)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
             SciuroTextField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                label = "Amount (RM)",
+                label = stringResource(R.string.kanban_label_amount_rm),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             SciuroPrimaryButton(
-                text = "Create Debt",
+                text = stringResource(R.string.kanban_create_debt_button),
                 onClick = {
                     onCreate(
                         name,
@@ -918,26 +945,26 @@ internal fun EditDebtSheet(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            Text("Edit Debt", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.kanban_edit_debt_title), style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(12.dp))
 
-            SciuroTextField(value = name, onValueChange = { name = it }, label = "Debt Name")
+            SciuroTextField(value = name, onValueChange = { name = it }, label = stringResource(R.string.kanban_label_debt_name))
 
             Spacer(modifier = Modifier.height(8.dp))
             SciuroTextField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                label = "Principal Amount (RM)",
+                label = stringResource(R.string.kanban_label_principal_amount),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            SciuroTextField(value = notes, onValueChange = { notes = it }, label = "Notes (Optional)")
+            SciuroTextField(value = notes, onValueChange = { notes = it }, label = stringResource(R.string.kanban_label_notes_optional))
 
             Spacer(modifier = Modifier.height(16.dp))
 
             SciuroPrimaryButton(
-                text = "Save Changes",
+                text = stringResource(R.string.kanban_save_changes),
                 onClick = {
                     onEdit(
                         name,

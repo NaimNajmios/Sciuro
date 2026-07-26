@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hero Panel -->
+    <string name="kanban_hero_title_bills">Bills &amp; Subscriptions</string>
+    <string name="kanban_hero_title_debts">Debts</string>
+    <string name="kanban_hero_title_tasks">Active Tasks</string>
+    <string name="kanban_hero_figure_due">Due</string>
+    <string name="kanban_hero_figure_active">Active</string>
+    <string name="kanban_hero_figure_total">Total</string>
+    <string name="kanban_metric_overdue">Overdue</string>
+    <string name="kanban_metric_due_soon">Due Soon</string>
+
+    <!-- Snackbar messages -->
+    <string name="kanban_snackbar_task_rejected">Task Rejected</string>
+    <string name="kanban_snackbar_debt_deleted">Debt deleted</string>
+    <string name="kanban_snackbar_debt_updated">Debt updated</string>
+    <string name="kanban_snackbar_task_approved">Task Approved</string>
+    <string name="kanban_snackbar_bill_marked_paid">Bill marked as paid</string>
+    <string name="kanban_snackbar_payment_recorded">Payment recorded</string>
+    <string name="kanban_snackbar_debt_marked_finished">Debt marked as finished</string>
+    <string name="kanban_snackbar_bill_created">Bill created</string>
+    <string name="kanban_snackbar_debt_created">Debt created</string>
+
+    <!-- Confirmation dialogs -->
+    <string name="kanban_create_bill_title">Create Bill</string>
+    <string name="kanban_create_bill_message">Are you sure you want to create this bill?</string>
+    <string name="kanban_create_debt_title">Create Debt</string>
+    <string name="kanban_create_debt_message">Are you sure you want to create this debt?</string>
+    <string name="kanban_confirm_create">Create</string>
+    <string name="kanban_reject_task_title">Reject Task</string>
+    <string name="kanban_confirm_reject_message">Are you sure you want to reject \'%s\'?</string>
+    <string name="kanban_confirm_reject">Reject</string>
+    <string name="kanban_delete_debt_title">Delete Debt</string>
+    <string name="kanban_confirm_delete_debt_message">Are you sure you want to delete \'%s\'?</string>
+    <string name="kanban_confirm_delete">Delete</string>
+    <string name="kanban_approve_task_title">Approve Task</string>
+    <string name="kanban_confirm_approve_message">Are you sure you want to approve \'%s\'?</string>
+    <string name="kanban_confirm_approve">Approve</string>
+    <string name="kanban_mark_debt_finished_title">Mark Debt as Finished</string>
+    <string name="kanban_mark_finished_message">This payment fully covers the remaining balance. Would you like to mark this debt as finished?</string>
+    <string name="kanban_mark_finished">Mark Finished</string>
+
+    <!-- Empty states -->
+    <string name="kanban_empty_tasks">No tasks in this list.</string>
+    <string name="kanban_empty_bills">No bills or subscriptions found.\nTap + to add one manually.</string>
+    <string name="kanban_empty_debts">No active debts.\nTap + to add a new debt.</string>
+
+    <!-- Bill section headers -->
+    <string name="kanban_section_overdue">Overdue</string>
+    <string name="kanban_section_due_soon">Due Soon</string>
+    <string name="kanban_section_upcoming">Upcoming</string>
+
+    <!-- Bill card -->
+    <string name="kanban_mark_as_paid">Mark as Paid</string>
+    <string name="kanban_mark_bill_paid_title">Mark Bill as Paid</string>
+    <string name="kanban_confirm_payment">Confirm Payment</string>
+
+    <!-- Debt card -->
+    <string name="kanban_more_options">More Options</string>
+    <string name="kanban_edit">Edit</string>
+    <string name="kanban_delete">Delete</string>
+    <string name="kanban_record_payment">Record Payment</string>
+    <string name="kanban_payment_amount_rm">Payment Amount (RM)</string>
+    <string name="kanban_apply_payment">Apply Payment</string>
+
+    <!-- Task card -->
+    <string name="kanban_unassigned_account">Unassigned Account</string>
+    <string name="kanban_needs_account_assignment">Needs an account assignment</string>
+    <string name="kanban_select_account">Select Account</string>
+    <string name="kanban_wallet_account">Wallet Account</string>
+    <string name="kanban_reject">Reject</string>
+    <string name="kanban_approve">Approve</string>
+
+    <!-- Add Bill sheet -->
+    <string name="kanban_add_bill_subscription">Add Bill / Subscription</string>
+    <string name="kanban_label_name">Name</string>
+    <string name="kanban_label_amount_rm">Amount (RM)</string>
+    <string name="kanban_label_frequency">Frequency</string>
+    <string name="kanban_label_next_due_date">Next Due Date</string>
+    <string name="kanban_select_date">Select Date</string>
+    <string name="kanban_pick_date">Pick Date</string>
+    <string name="kanban_ok">OK</string>
+    <string name="kanban_cancel">Cancel</string>
+    <string name="kanban_label_account">Account</string>
+    <string name="kanban_label_category">Category</string>
+    <string name="kanban_create_bill_button">Create Bill</string>
+
+    <!-- Add Debt sheet -->
+    <string name="kanban_add_debt">Add Debt</string>
+    <string name="kanban_label_direction">Direction</string>
+    <string name="kanban_label_debt_name">Debt Name</string>
+    <string name="kanban_label_counterparty">Counterparty (who owes / is owed)</string>
+    <string name="kanban_create_debt_button">Create Debt</string>
+
+    <!-- Edit Debt sheet -->
+    <string name="kanban_edit_debt_title">Edit Debt</string>
+    <string name="kanban_label_principal_amount">Principal Amount (RM)</string>
+    <string name="kanban_label_notes_optional">Notes (Optional)</string>
+    <string name="kanban_save_changes">Save Changes</string>
+</resources>

@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.sciuro.feature.debt.R
 import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -67,9 +69,9 @@ fun DebtOverviewScreen(
                 val totalOwedToMe = remember(debtsOwedToMe) { debtsOwedToMe.sumOf { it.remainingBalance } }
 
                 HeroPanel(
-                    title = "Debts",
+                    title = stringResource(R.string.debt_title),
                     heroFigure = if (allDebts.isEmpty()) {
-                        { Text("0 Debts", style = MaterialTheme.typography.headlineLarge, color = Color.White) }
+                        { Text(stringResource(R.string.debt_empty_state), style = MaterialTheme.typography.headlineLarge, color = Color.White) }
                     } else {
                         { HeroFigurePair(first = totalIOwe, second = totalOwedToMe) }
                     },
@@ -116,10 +118,10 @@ fun DebtOverviewScreen(
                         if (displayedDebts.isEmpty()) {
                             EmptyStateView(
                                 message = if (selectedTab == "I Owe")
-                                    "No debts you owe — add a loan, credit card, or informal debt."
+                                    stringResource(R.string.debt_empty_i_owe)
                                 else
-                                    "No one owes you money yet — add informal debts people owe you.",
-                                primaryCtaText = "Add Debt",
+                                    stringResource(R.string.debt_empty_owed),
+                                primaryCtaText = stringResource(R.string.debt_add),
                                 onPrimaryCtaClick = {
                                     formName = ""
                                     formType = DebtType.MONEY_OWED
@@ -197,7 +199,7 @@ fun DebtOverviewScreen(
                                                     },
                                                     modifier = Modifier.padding(end = 8.dp)
                                                 ) {
-                                                    Text("Record Payment")
+                                                    Text(stringResource(R.string.debt_record_payment))
                                                 }
                                             }
 
@@ -214,7 +216,7 @@ fun DebtOverviewScreen(
                                                     showFormSheet = true
                                                 }
                                             ) {
-                                                Text("Edit")
+                                                Text(stringResource(R.string.debt_edit))
                                             }
                                         }
                                     }
@@ -244,7 +246,7 @@ fun DebtOverviewScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Debt")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.debt_add))
             }
         }
     }
@@ -257,13 +259,13 @@ fun DebtOverviewScreen(
                     .fillMaxWidth()
             ) {
                 Text(
-                    if (isEditing) "Edit Debt" else "Add Debt",
+                    if (isEditing) stringResource(R.string.debt_form_title_edit) else stringResource(R.string.debt_form_title_add),
                     style = MaterialTheme.typography.headlineSmall
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Direction", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.debt_form_direction), style = MaterialTheme.typography.labelLarge)
                 val directionLabels = listOf("I Owe", "Owed to Me")
                 PillToggle(
                     options = directionLabels,
@@ -286,7 +288,7 @@ fun DebtOverviewScreen(
                 SciuroTextField(
                     value = formName,
                     onValueChange = { formName = it },
-                    label = "Debt Name"
+                    label = stringResource(R.string.debt_form_debt_name)
                 )
 
                 if (formDirection == DebtDirection.OWED_TO_ME || formType == DebtType.MONEY_OWED) {
@@ -294,7 +296,7 @@ fun DebtOverviewScreen(
                     SciuroTextField(
                         value = formCounterparty,
                         onValueChange = { formCounterparty = it },
-                        label = "Counterparty (who owes / is owed)"
+                        label = stringResource(R.string.debt_form_counterparty)
                     )
                 }
 
@@ -303,7 +305,7 @@ fun DebtOverviewScreen(
                 SciuroTextField(
                     value = formAmountText,
                     onValueChange = { formAmountText = it },
-                    label = "Amount (RM)",
+                    label = stringResource(R.string.debt_form_amount_rm),
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                         keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                     )
@@ -314,7 +316,7 @@ fun DebtOverviewScreen(
                     SciuroTextField(
                         value = formNotes,
                         onValueChange = { formNotes = it },
-                        label = "Notes"
+                        label = stringResource(R.string.debt_form_notes)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -330,11 +332,11 @@ fun DebtOverviewScreen(
                                 contentColor = MaterialTheme.colorScheme.error
                             )
                         ) {
-                            Text("Delete")
+                            Text(stringResource(R.string.debt_delete))
                         }
 
                         SciuroPrimaryButton(
-                            text = "Mark as Finished",
+                            text = stringResource(R.string.debt_mark_finished),
                             onClick = {
                                 showMarkFinishedConfirmation = true
                             },
@@ -346,7 +348,7 @@ fun DebtOverviewScreen(
                 }
 
                 SciuroPrimaryButton(
-                    text = if (isEditing) "Save" else "Create Debt",
+                    text = if (isEditing) stringResource(R.string.debt_save) else stringResource(R.string.debt_create),
                     onClick = {
                         val amt = formAmountText.toDoubleOrNull() ?: 0.0
                         if (amt > 0 && formName.isNotBlank()) {
@@ -366,9 +368,9 @@ fun DebtOverviewScreen(
     
     if (showMarkFinishedConfirmation) {
         SciuroConfirmationDialog(
-            title = "Mark as Finished",
-            message = "Are you sure you want to mark this debt as finished?",
-            confirmText = "Mark as Finished",
+            title = stringResource(R.string.debt_mark_finished_title),
+            message = stringResource(R.string.debt_mark_finished_message),
+            confirmText = stringResource(R.string.debt_mark_finished),
             onConfirm = {
                 editingDebt?.let { viewModel.markAsPaidOff(it.id) }
                 showMarkFinishedConfirmation = false
@@ -380,9 +382,9 @@ fun DebtOverviewScreen(
 
     if (showSaveConfirmation) {
         SciuroConfirmationDialog(
-            title = "Save Changes",
-            message = "Are you sure you want to save these changes?",
-            confirmText = "Save",
+            title = stringResource(R.string.debt_save_changes_title),
+            message = stringResource(R.string.debt_save_changes_message),
+            confirmText = stringResource(R.string.debt_confirm_save),
             onConfirm = {
                 val amt = formAmountText.toDoubleOrNull() ?: 0.0
                 editingDebt?.let {
@@ -404,9 +406,9 @@ fun DebtOverviewScreen(
 
     if (showCreateConfirmation) {
         SciuroConfirmationDialog(
-            title = "Create Debt",
-            message = "Are you sure you want to create this debt?",
-            confirmText = "Create",
+            title = stringResource(R.string.debt_create_title),
+            message = stringResource(R.string.debt_create_message),
+            confirmText = stringResource(R.string.debt_confirm_create),
             onConfirm = {
                 val amt = formAmountText.toDoubleOrNull() ?: 0.0
                 viewModel.createDebt(
@@ -426,9 +428,9 @@ fun DebtOverviewScreen(
 
     if (showDeleteConfirmation) {
         SciuroConfirmationDialog(
-            title = "Delete Debt",
-            message = "Are you sure you want to delete this debt? This action cannot be undone.",
-            confirmText = "Delete",
+            title = stringResource(R.string.debt_delete_title),
+            message = stringResource(R.string.debt_delete_message),
+            confirmText = stringResource(R.string.debt_confirm_delete),
             isDestructive = true,
             onConfirm = {
                 editingDebt?.let { viewModel.deleteDebt(it.id) }
@@ -441,19 +443,19 @@ fun DebtOverviewScreen(
 
     showRecordPayment?.let { debtId ->
         SciuroBottomSheet(onDismissRequest = { showRecordPayment = null }) {
-            Text("Record Payment", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.debt_record_payment), style = MaterialTheme.typography.headlineSmall)
 
             SciuroTextField(
                 value = paymentAmountText,
                 onValueChange = { paymentAmountText = it },
-                label = "Amount Received (RM)",
+                label = stringResource(R.string.debt_amount_received_rm),
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                 )
             )
 
             SciuroPrimaryButton(
-                text = "Apply Payment",
+                text = stringResource(R.string.debt_apply_payment),
                 onClick = {
                     val amt = paymentAmountText.toDoubleOrNull() ?: 0.0
                     if (amt > 0) {
@@ -468,9 +470,9 @@ fun DebtOverviewScreen(
 
     if (showApplyPaymentConfirmation) {
         SciuroConfirmationDialog(
-            title = "Apply Payment",
-            message = "Are you sure you want to apply this payment?",
-            confirmText = "Apply",
+            title = stringResource(R.string.debt_apply_payment_title),
+            message = stringResource(R.string.debt_apply_payment_message),
+            confirmText = stringResource(R.string.debt_confirm_apply),
             onConfirm = {
                 val amt = paymentAmountText.toDoubleOrNull() ?: 0.0
                 showRecordPayment?.let { debtId ->
@@ -490,9 +492,9 @@ fun DebtOverviewScreen(
 
     if (autoMarkFinishedDebtId != null) {
         SciuroConfirmationDialog(
-            title = "Debt Fully Paid",
-            message = "This debt's balance has reached zero. Would you like to mark it as finished?",
-            confirmText = "Mark as Finished",
+            title = stringResource(R.string.debt_fully_paid_title),
+            message = stringResource(R.string.debt_fully_paid_message),
+            confirmText = stringResource(R.string.debt_mark_finished),
             onConfirm = {
                 viewModel.markAsPaidOff(autoMarkFinishedDebtId!!)
                 autoMarkFinishedDebtId = null

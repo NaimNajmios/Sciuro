@@ -85,7 +85,7 @@ fun LinkedAccountsScreen(
                         if (state.linkedPairs.isNotEmpty()) {
                             item {
                                 Text(
-                                    "Existing Links",
+                                    stringResource(R.string.linked_accounts_existing_links),
                                     style = MaterialTheme.typography.titleMedium,
                                     modifier = Modifier.padding(vertical = 8.dp)
                                 )
@@ -168,7 +168,7 @@ fun LinkedAccountsScreen(
             modifier = Modifier.padding(16.dp),
             action = {
                 TextButton(onClick = { viewModel.clearMessage() }) {
-                    Text("OK")
+                    Text(stringResource(R.string.settings_ok))
                 }
             }
         ) {

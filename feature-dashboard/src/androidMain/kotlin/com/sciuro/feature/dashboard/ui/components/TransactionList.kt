@@ -27,10 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.TransactionCard
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.core.ledger.db.Transaction_record
+import com.sciuro.feature.dashboard.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,11 +50,11 @@ fun TransactionList(
         val catColor = cat?.color?.let { parseColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant
         val catIcon = mapCategoryIcon(tx.category_id)
         val isTransfer = tx.category_id == "cat_transfer"
-        val statusText = if (tx.is_reviewed == 1L) "Reviewed" else "Swipe right to approve, left to reject"
+        val statusText = if (tx.is_reviewed == 1L) stringResource(R.string.dashboard_reviewed) else stringResource(R.string.dashboard_swipe_instructions)
 
         val cardContent = @Composable {
             TransactionCard(
-                merchantName = tx.merchant ?: "Unknown Merchant",
+                merchantName = tx.merchant ?: stringResource(R.string.dashboard_unknown_merchant),
                 amount = "RM ${"%.2f".format(tx.amount)}",
                 direction = tx.direction,
                 statusText = statusText,
@@ -103,7 +105,7 @@ fun TransactionList(
                         contentAlignment = if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
                     ) {
                         if (icon != null) {
-                            Icon(icon, contentDescription = if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) "Approve" else "Reject", tint = Color.White, modifier = Modifier.padding(horizontal = 20.dp))
+                            Icon(icon, contentDescription = if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) stringResource(R.string.dashboard_approve_cd) else stringResource(R.string.dashboard_reject_cd), tint = Color.White, modifier = Modifier.padding(horizontal = 20.dp))
                         }
                     }
                 }

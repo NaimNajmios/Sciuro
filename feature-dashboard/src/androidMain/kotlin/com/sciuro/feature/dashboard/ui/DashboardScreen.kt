@@ -13,8 +13,10 @@ import org.koin.compose.koinInject
 import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import com.sciuro.feature.dashboard.R
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.HeroFigure
@@ -114,6 +116,12 @@ fun DashboardScreen(
     val coroutineScope = rememberCoroutineScope()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
+    val msgRejected = stringResource(R.string.dashboard_transaction_rejected)
+    val msgApproved = stringResource(R.string.dashboard_transaction_approved)
+    val msgSaved = stringResource(R.string.dashboard_transaction_saved)
+    val msgUpdated = stringResource(R.string.dashboard_transaction_updated)
+    val msgDeleted = stringResource(R.string.dashboard_transaction_deleted)
+
     val pullToRefreshState = rememberPullToRefreshState()
 
     if (pullToRefreshState.isRefreshing) {
@@ -141,7 +149,7 @@ fun DashboardScreen(
                 }
 
                 HeroPanel(
-                    title = "Total Net Position",
+                    title = stringResource(R.string.dashboard_total_net_position),
                     heroFigure = { HeroFigure(state.netPosition) },
                     toggleOptions = listOf("This Month", "All Time", "Custom"),
                     selectedToggle = selectedRange,
@@ -173,7 +181,7 @@ fun DashboardScreen(
                     ) {
                         if (state.unreviewedTransactionsCount == 0 && state.activeBudgetsCount == 0 && state.allTransactions.isEmpty()) {
                             com.najmi.sciuro.core.ui.components.EmptyStateView(
-                                message = "Nothing gathered yet — once your bank notifications start coming in or you add a manual entry, this is where they'll show up."
+                                message = stringResource(R.string.dashboard_empty_state_initial)
                             )
                         } else {
                             ReviewInboxBanner(unreviewedCount = state.unreviewedTransactionsCount)
@@ -201,7 +209,7 @@ fun DashboardScreen(
                             if (paginatedTransactions.isEmpty()) {
                                 val noMatching = state.allTransactions.isNotEmpty()
                                 com.najmi.sciuro.core.ui.components.EmptyStateView(
-                                    message = if (noMatching) "No transactions match the current filter." else "No transactions yet."
+                                    message = if (noMatching) stringResource(R.string.dashboard_no_matching_transactions) else stringResource(R.string.dashboard_no_transactions)
                                 )
                             } else {
                                 TransactionList(
@@ -217,7 +225,7 @@ fun DashboardScreen(
                                     },
                                     onSwipeReject = { tx ->
                                         viewModel.rejectTransaction(tx.id)
-                                        coroutineScope.launch { snackbarHostState.showSnackbar("Transaction rejected") }
+                                        coroutineScope.launch { snackbarHostState.showSnackbar(msgRejected) }
                                     }
                                 )
                             }
@@ -246,7 +254,7 @@ fun DashboardScreen(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "Add Transaction")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.dashboard_add_transaction_cd))
         }
     }
     
@@ -275,7 +283,7 @@ fun DashboardScreen(
             onApprove = {
                 viewModel.approveTransaction(pendingApprovalTxId!!, selectedAccountIdForApproval)
                 pendingApprovalTxId = null
-                coroutineScope.launch { snackbarHostState.showSnackbar("Transaction approved") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(msgApproved) }
             },
             onDismiss = { pendingApprovalTxId = null }
         )
@@ -303,7 +311,7 @@ fun DashboardScreen(
                 )
                 showAddTransactionDialog = false
                 coroutineScope.launch {
-                    snackbarHostState.showSnackbar("Transaction saved successfully")
+                    snackbarHostState.showSnackbar(msgSaved)
                 }
             }
         )
@@ -319,16 +327,16 @@ fun DashboardScreen(
         val categoryNames = categoryMap.mapValues { it.value.name }
         val auditEvents = auditLogs.map { log ->
             val actionLabel = when (log.action.name) {
-                "CREATE" -> "Created"
-                "UPDATE" -> "Edited"
-                "RECLASSIFY" -> "Recategorized"
-                "DELETE" -> "Deleted"
+                "CREATE" -> stringResource(R.string.dashboard_action_created)
+                "UPDATE" -> stringResource(R.string.dashboard_action_edited)
+                "RECLASSIFY" -> stringResource(R.string.dashboard_action_recategorized)
+                "DELETE" -> stringResource(R.string.dashboard_action_deleted)
                 else -> log.action.name
             }
             val sourceLabel = when (log.source.name) {
-                "SYSTEM_AUTO" -> "auto"
-                "USER_MANUAL" -> "you"
-                "LLM_INFERRED" -> "AI"
+                "SYSTEM_AUTO" -> stringResource(R.string.dashboard_source_auto)
+                "USER_MANUAL" -> stringResource(R.string.dashboard_source_you)
+                "LLM_INFERRED" -> stringResource(R.string.dashboard_source_ai)
                 else -> log.source.name
             }
             val detail = formatAuditLogDetail(
@@ -348,7 +356,7 @@ fun DashboardScreen(
         TransactionDetailSheet(
             showSheet = showDetailSheet,
             onDismiss = { showDetailSheet = false },
-            merchantName = tx.merchant ?: "Unknown Merchant",
+            merchantName = tx.merchant ?: stringResource(R.string.dashboard_unknown_merchant),
             amount = "RM ${"%.2f".format(tx.amount)}",
             direction = tx.direction,
             timestamp = formattedTimestamp,
@@ -402,7 +410,7 @@ fun DashboardScreen(
                     accountId = editTxAccountId
                 )
                 showEditTransactionDialog = false
-                coroutineScope.launch { snackbarHostState.showSnackbar("Transaction updated") }
+                coroutineScope.launch { snackbarHostState.showSnackbar(msgUpdated) }
             },
             onDelete = { showDeleteConfirmation = true },
             onDismiss = { showEditTransactionDialog = false }
@@ -411,16 +419,16 @@ fun DashboardScreen(
 
     if (showDeleteConfirmation) {
         SciuroConfirmationDialog(
-            title = "Delete Transaction",
-            message = "Are you sure you want to delete this transaction? This action cannot be undone.",
-            confirmText = "Delete",
+            title = stringResource(R.string.dashboard_delete_transaction_title),
+            message = stringResource(R.string.dashboard_delete_transaction_message),
+            confirmText = stringResource(R.string.dashboard_delete),
             isDestructive = true,
             onConfirm = {
                 viewModel.deleteTransaction(editingTxId!!)
                 showDeleteConfirmation = false
                 showEditTransactionDialog = false
                 coroutineScope.launch {
-                    snackbarHostState.showSnackbar("Transaction deleted")
+                    snackbarHostState.showSnackbar(msgDeleted)
                 }
             },
             onDismiss = { showDeleteConfirmation = false }

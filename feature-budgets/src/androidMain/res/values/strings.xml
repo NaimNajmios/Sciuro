@@ -1,0 +1,30 @@
+<resources>
+    <!-- Budgets Screen -->
+    <string name="budget_title">Budgets</string>
+    <string name="budget_no_active">No Active Budgets</string>
+    <string name="budget_view_categories">View Categories</string>
+    <string name="budget_empty_state">No budgets yet — set a limit for any category to start tracking.</string>
+    <string name="budget_create">Create Budget</string>
+    <string name="budget_edit">Edit Budget</string>
+    <string name="budget_weekly">Weekly</string>
+    <string name="budget_monthly">Monthly</string>
+    <string name="budget_yearly">Yearly</string>
+    <string name="budget_rollover">Rollover</string>
+    <string name="budget_add">Add Budget</string>
+    <string name="budget_category_label">Category</string>
+    <string name="budget_monthly_limit_label">Monthly Limit (RM)</string>
+    <string name="budget_amount_error">Enter a valid amount (1 – 100,000)</string>
+    <string name="budget_suggested">Suggested:</string>
+    <string name="budget_period_label">Period</string>
+    <string name="budget_delete">Delete</string>
+    <string name="budget_save">Save</string>
+    <string name="budget_updated">Budget updated</string>
+    <string name="budget_deleted">Budget deleted</string>
+    <string name="budget_delete_title">Delete Budget</string>
+    <string name="budget_delete_message">Are you sure you want to delete this budget? This action cannot be undone.</string>
+
+    <!-- Category Drilldown Screen -->
+    <string name="budget_category_spending_title">Category Spending</string>
+    <string name="budget_back">Back</string>
+    <string name="budget_no_outflow">No outflow spending in the last 30 days.</string>
+</resources>

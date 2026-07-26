@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
@@ -32,6 +33,7 @@ import com.najmi.sciuro.core.ui.theme.AccountColorGrey
 import com.najmi.sciuro.core.ui.theme.AccountColorBlack
 import com.najmi.sciuro.core.ui.theme.AccountColorBrown
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.sciuro.feature.wallet.R
 import com.sciuro.feature.wallet.ui.AppInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,14 +58,14 @@ fun AccountFormSheet(
 ) {
     SciuroBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Text(
-            if (editingAccountId == null) "Add Account" else "Edit Account",
+            if (editingAccountId == null) stringResource(R.string.wallet_add_account) else stringResource(R.string.wallet_edit_account),
             style = MaterialTheme.typography.headlineSmall
         )
 
         SciuroTextField(
             value = initialName,
             onValueChange = onNameChange,
-            label = "Account Name (e.g. Maybank)"
+            label = stringResource(R.string.wallet_account_name_hint)
         )
 
         var expanded by remember { mutableStateOf(false) }
@@ -77,8 +79,8 @@ fun AccountFormSheet(
             SciuroTextField(
                 value = displayValue,
                 onValueChange = onPackageChange,
-                label = "Associated App (Optional)",
-                placeholder = "Search apps...",
+                label = stringResource(R.string.wallet_associated_app_optional),
+                placeholder = stringResource(R.string.wallet_search_apps),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier.menuAnchor()
             )
@@ -113,7 +115,7 @@ fun AccountFormSheet(
         SciuroTextField(
             value = initialBalance,
             onValueChange = onBalanceChange,
-            label = "Initial Balance (RM)",
+            label = stringResource(R.string.wallet_initial_balance_rm),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
 
@@ -131,7 +133,7 @@ fun AccountFormSheet(
         }
 
         Spacer(modifier = Modifier.height(4.dp))
-        Text("Account Color", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.wallet_account_color), style = MaterialTheme.typography.labelLarge)
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -176,12 +178,12 @@ fun AccountFormSheet(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.wallet_delete))
                 }
             }
 
             SciuroPrimaryButton(
-                text = "Save",
+                text = stringResource(R.string.wallet_save),
                 onClick = onSave,
                 modifier = Modifier.weight(if (onDelete != null) 1f else 2f),
                 enabled = initialName.isNotBlank()

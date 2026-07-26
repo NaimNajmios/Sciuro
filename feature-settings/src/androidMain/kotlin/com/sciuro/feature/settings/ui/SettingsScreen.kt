@@ -456,11 +456,11 @@ fun SettingsScreen(
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                                         trailingIcon = {
                                             IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
-                                                Text(
-                                                    text = if (apiKeyVisible) "Hide" else "Show",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
+                                Text(
+                                    text = if (apiKeyVisible) stringResource(R.string.settings_hide) else stringResource(R.string.settings_show),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                                             }
                                         },
                                         modifier = Modifier.fillMaxWidth()
