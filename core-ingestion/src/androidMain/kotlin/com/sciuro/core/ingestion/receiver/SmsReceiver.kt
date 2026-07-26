@@ -35,12 +35,13 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
         for (message in messages) {
             val sender = message.originatingAddress ?: continue
             val body = message.messageBody ?: continue
+            val sessionId = UUID.randomUUID().toString()
 
             if (body.isBlank()) continue
             if (!allowlist.allows(sender)) {
                 receiverScope.launch {
-                    tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                        detail = mapOf("reason" to "allowlist_reject", "sender" to sender))
+                    tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                        detail = mapOf("reason" to "allowlist_reject", "sender" to sender), packageName = sender)
                 }
                 continue
             }
@@ -56,15 +57,15 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
             }
             if (!hasFinancialSignal) {
                 receiverScope.launch {
-                    tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                        detail = mapOf("reason" to "non_financial_sms", "sender" to sender))
+                    tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                        detail = mapOf("reason" to "non_financial_sms", "sender" to sender), packageName = sender)
                 }
                 continue
             }
 
             receiverScope.launch {
                 val rawEvent = RawEvent(
-                    id = UUID.randomUUID().toString(),
+                    id = sessionId,
                     sourceType = SourceType.SMS,
                     sourcePackageOrAddress = sender,
                     title = sender,
@@ -83,7 +84,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                 )
 
                 tracer.trace(rawEvent.id, null, TraceStage.CAPTURE, TraceOutcome.SUCCESS,
-                    detail = mapOf("source_type" to "SMS", "sender" to sender))
+                    detail = mapOf("source_type" to "SMS", "sender" to sender), packageName = sender)
 
                 smsSourceAdapter.emitSms(rawEvent)
             }

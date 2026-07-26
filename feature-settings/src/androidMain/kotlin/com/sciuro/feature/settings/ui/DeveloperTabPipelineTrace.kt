@@ -20,7 +20,8 @@ data class TraceEventSummary(
     val rawEventId: String?,
     val firstAt: Long?,
     val lastAt: Long?,
-    val stageCount: Long
+    val stageCount: Long,
+    val packageName: String?
 )
 
 data class TraceRow(
@@ -44,7 +45,7 @@ fun DeveloperTabPipelineTrace(
 
     LaunchedEffect(Unit) {
         events = database.pipelineTraceQueries.selectDistinctTraceEvents(100).executeAsList().map {
-            TraceEventSummary(it.raw_event_id, it.first_at, it.last_at, it.stage_count)
+            TraceEventSummary(it.raw_event_id, it.first_at, it.last_at, it.stage_count, it.package_name)
         }
     }
 
@@ -139,8 +140,12 @@ fun DeveloperTabPipelineTrace(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            event.rawEventId?.take(12) ?: stringResource(R.string.dev_trace_unknown_id),
-                            style = MaterialTheme.typography.bodySmall,
+                            event.packageName ?: stringResource(R.string.dev_trace_unknown_id),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            event.rawEventId?.take(8) ?: "",
+                            style = MaterialTheme.typography.labelSmall,
                             fontFamily = FontFamily.Monospace
                         )
                         Text(stringResource(R.string.dev_trace_stages, event.stageCount.toInt()), style = MaterialTheme.typography.labelSmall)

@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -27,7 +29,8 @@ fun PillToggle(
     onOptionSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
     isOnDarkSurface: Boolean = false,
-    fillWidth: Boolean = false
+    fillWidth: Boolean = false,
+    scrollable: Boolean = false
 ) {
     val containerColor = if (isOnDarkSurface) Color.White.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
     val activeColor = if (isOnDarkSurface) Color.White else MaterialTheme.colorScheme.primary
@@ -39,9 +42,10 @@ fun PillToggle(
             .clip(RoundedCornerShape(24.dp))
             .background(containerColor)
             .padding(4.dp)
+            .then(if (scrollable) Modifier.horizontalScroll(rememberScrollState()) else Modifier)
     ) {
         Row(
-            modifier = if (fillWidth) Modifier.fillMaxWidth() else Modifier.wrapContentSize(),
+            modifier = if (fillWidth && !scrollable) Modifier.fillMaxWidth() else Modifier.wrapContentSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             options.forEach { option ->
@@ -58,7 +62,7 @@ fun PillToggle(
                             ambientColor = activeColor,
                             spotColor = activeColor
                         ) else Modifier)
-                        .then(if (fillWidth) Modifier.weight(1f) else Modifier)
+                        .then(if (fillWidth && !scrollable) Modifier.weight(1f) else Modifier)
                         .defaultMinSize(minHeight = 32.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(if (isSelected) activeColor else Color.Transparent)
@@ -70,7 +74,9 @@ fun PillToggle(
                         text = option,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                        color = if (isSelected) activeTextColor else inactiveTextColor
+                        color = if (isSelected) activeTextColor else inactiveTextColor,
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
             }

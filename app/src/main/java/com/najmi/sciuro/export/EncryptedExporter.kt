@@ -2,6 +2,7 @@ package com.najmi.sciuro.export
 
 import android.content.Context
 import android.util.Base64
+import app.cash.sqldelight.db.SqlDriver
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -35,12 +36,13 @@ object EncryptedExporter {
         activity: FragmentActivity,
         context: Context,
         passphrase: String,
-        outputStream: OutputStream
+        outputStream: OutputStream,
+        sqlDriver: SqlDriver
     ): Result<String> {
         val authenticated = authenticateUser(activity)
         if (!authenticated) return Result.failure(SecurityException("Biometric authentication failed or was cancelled"))
 
-        return export(context, passphrase, outputStream)
+        return export(context, passphrase, outputStream, sqlDriver)
     }
 
     private suspend fun authenticateUser(activity: FragmentActivity): Boolean {
@@ -75,11 +77,16 @@ object EncryptedExporter {
         }
     }
 
-    suspend fun export(context: Context, passphrase: String, outputStream: OutputStream): Result<String> {
+    suspend fun export(context: Context, passphrase: String, outputStream: OutputStream, sqlDriver: SqlDriver): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
                 val dbPath = context.getDatabasePath("sciuro.db")
                 if (!dbPath.exists()) return@withContext Result.failure(Exception("Database file not found"))
+
+                try {
+                    sqlDriver.execute(null, "PRAGMA wal_checkpoint(TRUNCATE)", 0)
+                } catch (_: Exception) { }
+
                 val dbBytes = dbPath.readBytes()
                 if (dbBytes.isEmpty()) return@withContext Result.failure(Exception("Database is empty"))
 

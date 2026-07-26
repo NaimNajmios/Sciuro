@@ -1,0 +1,1 @@
+ALTER TABLE pipeline_trace ADD COLUMN package_name TEXT;

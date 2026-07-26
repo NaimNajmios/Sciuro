@@ -47,6 +47,7 @@ import org.koin.androidx.compose.koinViewModel
 import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
+import app.cash.sqldelight.db.SqlDriver
 import androidx.compose.ui.platform.LocalContext
 
 import android.os.Build
@@ -257,9 +258,9 @@ fun SciuroMainScreen() {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
 
-                    val selectedPillColor = if (isDarkTheme) Color.White else Color.Black
-                    val selectedContentColor = if (isDarkTheme) Color.Black else Color.White
-                    val unselectedContentColor = if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF444444)
+                    val selectedPillColor = MaterialTheme.colorScheme.primary
+                    val selectedContentColor = MaterialTheme.colorScheme.onPrimary
+                    val unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
 
                     Box(
                         modifier = Modifier
@@ -285,10 +286,14 @@ fun SciuroMainScreen() {
                             ) {
                                 items.forEach { item ->
                                     val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                                    val weight by animateFloatAsState(
+                                        targetValue = if (isSelected) 1.5f else 1f,
+                                        animationSpec = tween(SciuroMotion.TRANSITION_DURATION_MS)
+                                    )
 
                                     Box(
                                         modifier = Modifier
-                                            .weight(1f)
+                                            .weight(weight)
                                             .height(48.dp)
                                             .clip(RoundedCornerShape(100.dp))
                                             .background(
@@ -315,13 +320,18 @@ fun SciuroMainScreen() {
                                                 tint = if (isSelected) selectedContentColor else unselectedContentColor,
                                                 modifier = Modifier.size(24.dp)
                                             )
-                                            AnimatedVisibility(visible = isSelected) {
+                                            AnimatedVisibility(
+                                                visible = isSelected,
+                                                enter = fadeIn(tween(SciuroMotion.TRANSITION_DURATION_MS)) + expandHorizontally(tween(SciuroMotion.TRANSITION_DURATION_MS)),
+                                                exit = fadeOut(tween(SciuroMotion.TRANSITION_DURATION_MS)) + shrinkHorizontally(tween(SciuroMotion.TRANSITION_DURATION_MS))
+                                            ) {
                                                 Text(
                                                     text = item.label,
                                                     color = selectedContentColor,
-                                                    style = MaterialTheme.typography.labelSmall,
+                                                    style = MaterialTheme.typography.labelMedium,
                                                     maxLines = 1,
-                                                    modifier = Modifier.padding(start = 4.dp)
+                                                    softWrap = false,
+                                                    modifier = Modifier.padding(start = 6.dp)
                                                 )
                                             }
                                         }
@@ -342,10 +352,12 @@ fun SciuroMainScreen() {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
             }
             val drillInEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
+                scaleIn(initialScale = 0.92f, animationSpec = tween(SciuroMotion.TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)) +
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS, easing = FastOutSlowInEasing))
             }
             val drillInPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(SciuroMotion.TRANSITION_DURATION_MS))
+                scaleOut(targetScale = 0.92f, animationSpec = tween(SciuroMotion.TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)) +
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(SciuroMotion.TRANSITION_DURATION_MS, easing = FastOutSlowInEasing))
             }
 
             NavHost(
@@ -396,6 +408,7 @@ fun SciuroMainScreen() {
             composable("settings") { 
                 val context = LocalContext.current
                 val scope = rememberCoroutineScope()
+                val sqlDriver = koinInject<SqlDriver>()
                 com.sciuro.feature.settings.ui.SettingsScreen(
                     onNavigateToDeveloperSettings = { navController.navigate("developer_settings?initialTab=0") },
                     onNavigateToCategorySettings = { navController.navigate("category_settings") },
@@ -405,7 +418,7 @@ fun SciuroMainScreen() {
                             try {
                                 val tempFile = java.io.File(context.cacheDir, "sciuro_backup_${System.currentTimeMillis()}.scib")
                                 val outputStream = java.io.FileOutputStream(tempFile)
-                                val result = com.najmi.sciuro.export.EncryptedExporter.export(context, password, outputStream)
+                                val result = com.najmi.sciuro.export.EncryptedExporter.export(context, password, outputStream, sqlDriver)
                                 outputStream.close()
                                 if (result.isSuccess) {
                                     val uri = FileProvider.getUriForFile(
@@ -443,11 +456,15 @@ fun SciuroMainScreen() {
                             try {
                                 val inputStream = context.contentResolver.openInputStream(uri)
                                 if (inputStream != null) {
-                                    val result = com.najmi.sciuro.export.EncryptedImporter.import(context, password, inputStream)
+                                    val result = com.najmi.sciuro.export.EncryptedImporter.import(context, password, inputStream, sqlDriver)
                                     inputStream.close()
                                     withContext(Dispatchers.Main) {
                                         if (result.isSuccess) {
-                                            Toast.makeText(context, "Backup restored successfully", Toast.LENGTH_LONG).show()
+                                            val intent = Intent(context, MainActivity::class.java).apply {
+                                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                            }
+                                            context.startActivity(intent)
+                                            if (context is Activity) (context as Activity).finish()
                                         } else {
                                             val errorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
                                             Toast.makeText(context, "Import failed: $errorMsg", Toast.LENGTH_LONG).show()

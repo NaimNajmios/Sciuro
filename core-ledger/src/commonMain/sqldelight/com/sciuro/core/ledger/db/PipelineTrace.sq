@@ -7,15 +7,16 @@ CREATE TABLE pipeline_trace (
     duration_ms INTEGER,
     confidence REAL,
     detail_json TEXT,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    package_name TEXT
 );
 
 CREATE INDEX idx_trace_event ON pipeline_trace(raw_event_id);
 CREATE INDEX idx_trace_stage_time ON pipeline_trace(stage, created_at);
 
 insertTrace:
-INSERT INTO pipeline_trace(id, raw_event_id, transaction_id, stage, outcome, duration_ms, confidence, detail_json, created_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO pipeline_trace(id, raw_event_id, transaction_id, stage, outcome, duration_ms, confidence, detail_json, created_at, package_name)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 selectTraceByEvent:
 SELECT * FROM pipeline_trace
@@ -37,7 +38,7 @@ DELETE FROM pipeline_trace
 WHERE created_at < ?;
 
 selectDistinctTraceEvents:
-SELECT raw_event_id, MIN(created_at) AS first_at, MAX(created_at) AS last_at, COUNT(*) AS stage_count
+SELECT raw_event_id, MIN(created_at) AS first_at, MAX(created_at) AS last_at, COUNT(*) AS stage_count, MAX(package_name) AS package_name
 FROM pipeline_trace
 WHERE raw_event_id IS NOT NULL
 GROUP BY raw_event_id

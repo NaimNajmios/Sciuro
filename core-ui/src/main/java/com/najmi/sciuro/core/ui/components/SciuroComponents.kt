@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import com.najmi.sciuro.core.ui.util.bounceClick
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,8 +132,12 @@ fun SciuroPrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     Button(
-        onClick = onClick,
+        onClick = {
+            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+            onClick()
+        },
         modifier = modifier.fillMaxWidth().height(52.dp),
         enabled = enabled,
         shape = RoundedCornerShape(16.dp),
@@ -156,8 +161,7 @@ fun SciuroCard(
 ) {
     if (onClick != null) {
         Card(
-            onClick = onClick,
-            modifier = modifier,
+            modifier = modifier.bounceClick(onClick),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant

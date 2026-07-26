@@ -18,7 +18,8 @@ class SqlDelightPipelineTracer(
         outcome: TraceOutcome,
         durationMs: Long?,
         confidence: Float?,
-        detail: Map<String, String?>?
+        detail: Map<String, String?>?,
+        packageName: String?
     ) {
         database.pipelineTraceQueries.insertTrace(
             id = generateUuid(),
@@ -29,7 +30,8 @@ class SqlDelightPipelineTracer(
             duration_ms = durationMs,
             confidence = confidence?.toDouble(),
             detail_json = detail?.toString(),
-            created_at = currentTimeMillis()
+            created_at = currentTimeMillis(),
+            package_name = packageName
         )
     }
 }

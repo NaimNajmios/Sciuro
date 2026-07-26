@@ -2,6 +2,7 @@ package com.najmi.sciuro.export
 
 import android.content.Context
 import android.util.Base64
+import app.cash.sqldelight.db.SqlDriver
 import java.io.File
 import java.io.InputStream
 import javax.crypto.Cipher
@@ -19,7 +20,7 @@ object EncryptedImporter {
     private const val PBKDF2_ITERATIONS = 100_000
     private const val KEY_SIZE = 256
 
-    suspend fun import(context: Context, passphrase: String, inputStream: InputStream): Result<String> {
+    suspend fun import(context: Context, passphrase: String, inputStream: InputStream, sqlDriver: SqlDriver): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
                 val allBytes = inputStream.readBytes()
@@ -61,6 +62,9 @@ object EncryptedImporter {
                 val dbBytes = cipher.doFinal(ciphertext)
 
                 val dbPath = context.getDatabasePath("sciuro.db")
+
+                sqlDriver.close()
+
                 val backupFile = File("${dbPath.absolutePath}.pre_import_backup")
                 if (dbPath.exists()) {
                     dbPath.copyTo(backupFile, overwrite = true)
@@ -68,6 +72,10 @@ object EncryptedImporter {
 
                 dbPath.parentFile?.mkdirs()
                 dbPath.writeBytes(dbBytes)
+
+                File("${dbPath.absolutePath}-wal").delete()
+                File("${dbPath.absolutePath}-shm").delete()
+                File("${dbPath.absolutePath}-journal").delete()
 
                 Result.success("Restored successfully — previous database backed up to ${backupFile.name}")
             } catch (e: Exception) {

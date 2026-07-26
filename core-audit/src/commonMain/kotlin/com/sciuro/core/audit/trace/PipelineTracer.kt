@@ -8,6 +8,7 @@ interface PipelineTracer {
         outcome: TraceOutcome,
         durationMs: Long? = null,
         confidence: Float? = null,
-        detail: Map<String, String?>? = null
+        detail: Map<String, String?>? = null,
+        packageName: String? = null
     )
 }

@@ -23,6 +23,7 @@ import io.ktor.http.contentType
 import java.io.IOException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 import kotlin.math.abs
 
 class LlmFallbackParser(
@@ -35,8 +36,10 @@ class LlmFallbackParser(
 
     @Serializable
     private data class LlmResult(
-        val amount: Double,
-        val direction: TransactionDirection,
+        @SerialName("_reasoning") val reasoning: String? = null,
+        @SerialName("is_transaction") val isTransaction: Boolean = true,
+        val amount: Double? = null,
+        val direction: TransactionDirection? = null,
         val merchant: String? = null,
         val accountOrChannel: String? = null
     )
@@ -102,23 +105,60 @@ class LlmFallbackParser(
 
         val prompt = """
             Extract the financial transaction details from the following notification text.
-            You must accurately capture the entity on the other side of the transaction (the sender if money is received, or the receiver if money is spent).
-            Because this system uses a single "merchant" text field to describe that entity, you must format the "merchant" field as a comprehensive label.
             
-            Rules for the "merchant" field:
-            1. Identify if the transaction is "Personal" (e.g., transferring money to a friend's bank account, DuitNow to an individual) or "Business" (e.g., retail store, restaurant, Shopee, corporate payroll).
-            2. Identify the exact name of the sender (if INFLOW) or receiver (if OUTFLOW) from the text.
-            3. Combine them into this format: "EntityName (Type)". Examples: "Ahmad Ali (Personal)", "Starbucks Coffee (Business)", "Salary Deposit (Business)".
-            4. If the name is completely missing, default to "Unknown Entity (Personal/Business)".
+            Your goals:
+            1. Determine if this is a financial transaction. If it is not, return {"is_transaction": false}.
+            2. Accurately capture the entity on the other side of the transaction (the sender if money is received, or the receiver if money is spent).
+            3. Format the "merchant" field as a comprehensive label: "EntityName (Type)" where Type is "Personal" or "Business". If the name is completely missing, default to "Unknown Entity (Unknown)".
             
             Respond strictly in valid JSON format matching this schema:
             {
-                "amount": double, // The exact numerical amount
-                "direction": "INFLOW" or "OUTFLOW", // INFLOW if money is received, OUTFLOW if money is sent/spent
-                "merchant": "string", // The formatted label e.g. "John Doe (Personal)"
-                "accountOrChannel": "string or null" // The account name/number or channel if visible
+                "_reasoning": "Briefly explain who is sending and receiving, and why it is INFLOW or OUTFLOW. Omit if not a transaction.",
+                "is_transaction": boolean, // true if it's a transaction, false otherwise
+                "amount": double, // The exact numerical amount (only if is_transaction=true)
+                "direction": "INFLOW" or "OUTFLOW", // INFLOW if money received, OUTFLOW if money spent (only if is_transaction=true)
+                "merchant": "string", // The formatted label e.g. "John Doe (Personal)" (only if is_transaction=true)
+                "accountOrChannel": "string or null" // The account name/number or channel if visible, else null (only if is_transaction=true)
             }
             
+            --- FEW-SHOT EXAMPLES ---
+            
+            Example 1:
+            Title: "Payment Successful"
+            Text: "You have paid RM 15.50 to Starbucks Coffee via DuitNow."
+            Output:
+            {
+                "_reasoning": "The user paid money to Starbucks, so it is an OUTFLOW. Starbucks is a Business.",
+                "is_transaction": true,
+                "amount": 15.50,
+                "direction": "OUTFLOW",
+                "merchant": "Starbucks Coffee (Business)",
+                "accountOrChannel": "DuitNow"
+            }
+            
+            Example 2:
+            Title: "Transfer Received"
+            Text: "RM 50.00 transferred from Ahmad Ali."
+            Output:
+            {
+                "_reasoning": "The user received money from Ahmad Ali, so it is an INFLOW. Ahmad Ali is an individual, so it is Personal.",
+                "is_transaction": true,
+                "amount": 50.00,
+                "direction": "INFLOW",
+                "merchant": "Ahmad Ali (Personal)",
+                "accountOrChannel": null
+            }
+            
+            Example 3:
+            Title: "Promo!"
+            Text: "Get 50% off your next Grab ride."
+            Output:
+            {
+                "_reasoning": "This is a promotional message, not a record of a financial transaction.",
+                "is_transaction": false
+            }
+            
+            --- TARGET INVOCATION ---
             Title: ${event.title}
             Text: ${event.text}
         """.trimIndent()
@@ -126,7 +166,7 @@ class LlmFallbackParser(
         val request = ChatRequest(
             model = config.modelName,
             messages = listOf(
-                ChatMessage(role = "system", content = "You are a specialized financial data extraction tool. You only output valid JSON."),
+                ChatMessage(role = "system", content = "You are a specialized financial data extraction tool. You only output valid JSON. Do not include markdown formatting like ```json."),
                 ChatMessage(role = "user", content = prompt)
             ),
             response_format = ResponseFormat(type = "json_object"),
@@ -165,6 +205,11 @@ class LlmFallbackParser(
 
             lastDebugCapture = LlmFallbackDebugCapture(prompt, jsonString, config.modelName, elapsed)
 
+            if (!result.isTransaction || result.amount == null || result.direction == null) {
+                traceParse(event, "not_a_transaction", elapsed, mapOf("model" to config.modelName, "reasoning" to result.reasoning))
+                return null
+            }
+
             val validationPassed = validateAmount(result.amount, event.text, event.title) &&
                 !result.merchant.isNullOrBlank()
 
@@ -178,7 +223,7 @@ class LlmFallbackParser(
 
             traceParse(event, verdict, elapsed,
                 mapOf("model" to config.modelName, "merchant" to result.merchant,
-                    "direction" to result.direction.name, "validated" to "$validationPassed"))
+                    "direction" to result.direction.name, "validated" to "$validationPassed", "reasoning" to result.reasoning))
 
             val draft = StructuredDraft(
                 amount = result.amount,

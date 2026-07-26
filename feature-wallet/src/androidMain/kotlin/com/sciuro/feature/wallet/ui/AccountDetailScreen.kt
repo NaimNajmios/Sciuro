@@ -310,7 +310,8 @@ fun AccountDetailScreen(
                     selectedOption = state.selectedFilter,
                     onOptionSelected = { viewModel.setFilter(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    fillWidth = true
+                    fillWidth = true,
+                    scrollable = true
                 )
 
                 if (state.timeline.isEmpty()) {

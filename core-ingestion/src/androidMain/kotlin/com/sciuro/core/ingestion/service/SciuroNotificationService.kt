@@ -55,10 +55,11 @@ class SciuroNotificationService : NotificationListenerService() {
 
     private suspend fun processAndPersistNotification(sbn: StatusBarNotification) {
         val packageName = sbn.packageName
+        val sessionId = UUID.randomUUID().toString()
 
         if (!allowlist.allows(packageName)) {
-            tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                detail = mapOf("reason" to "allowlist_reject", "package" to packageName))
+            tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                detail = mapOf("reason" to "allowlist_reject", "package" to packageName), packageName = packageName)
             return
         }
 
@@ -67,22 +68,22 @@ class SciuroNotificationService : NotificationListenerService() {
         val text = notification.extras.getString(Notification.EXTRA_TEXT) ?: ""
 
         if (title.isBlank() && text.isBlank()) {
-            tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                detail = mapOf("reason" to "blank_content", "package" to packageName))
+            tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                detail = mapOf("reason" to "blank_content", "package" to packageName), packageName = packageName)
             return
         }
 
         if (allowlist.isDefaultAggregatorPackage(packageName)) {
             if (!isFinancialAggregatorNotification(title, text)) {
-                tracer.trace(null, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                    detail = mapOf("reason" to "non_financial_aggregator", "package" to packageName))
+                tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                    detail = mapOf("reason" to "non_financial_aggregator", "package" to packageName), packageName = packageName)
                 return
             }
         }
 
         val capturedAt = System.currentTimeMillis()
         val rawEvent = RawEvent(
-            id = UUID.randomUUID().toString(),
+            id = sessionId,
             sourceType = SourceType.NOTIFICATION,
             sourcePackageOrAddress = packageName,
             title = title,
@@ -101,7 +102,7 @@ class SciuroNotificationService : NotificationListenerService() {
         )
 
         tracer.trace(rawEvent.id, null, TraceStage.CAPTURE, TraceOutcome.SUCCESS,
-            detail = mapOf("source_type" to "NOTIFICATION", "package" to packageName))
+            detail = mapOf("source_type" to "NOTIFICATION", "package" to packageName), packageName = packageName)
 
         notificationSourceAdapter.emitNotification(rawEvent)
     }

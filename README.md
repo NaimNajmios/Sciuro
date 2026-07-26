@@ -101,7 +101,7 @@ Sciuro includes a full developer settings harness at `feature-settings` > `Devel
 | **Diagnostics** | Per-rule match/no-match analysis with extracted fields. Shows LLM debug info (prompt, response, latency) when LLM fallback is triggered. |
 | **Data Tools** | Clear Inbox (unreviewed transactions) with two-step confirmation dialog requiring "DELETE" text input. |
 | **Health** | Per-package parser match-rate monitoring. Track which financial apps provide reliable extraction. Pipeline metrics with LLM fallback counts and dead-letter counts. |
-| **Pipeline Trace** | Trace event viewer showing the 100 most recent pipeline events with stage-by-stage breakdown (SUCCESS/FAILURE/DROP), duration, confidence, and detail JSON. |
+| **Pipeline Trace** | Trace event viewer showing the 100 most recent pipeline events with stage-by-stage breakdown (SUCCESS/FAILURE/DROP), duration, confidence, and detail JSON. Sessions prominently display their package name (e.g. `com.whatsapp`) and capture early drops. |
 
 ### Developer Options Access
 

@@ -1,7 +1,6 @@
 package com.najmi.sciuro.core.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +24,7 @@ import com.najmi.sciuro.core.ui.R
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalIncome
+import com.najmi.sciuro.core.ui.util.bounceClick
 import com.najmi.sciuro.core.ui.theme.SignalWarning
 
 
@@ -51,7 +51,7 @@ fun TransactionCard(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .bounceClick(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
