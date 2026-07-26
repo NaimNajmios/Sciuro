@@ -44,7 +44,10 @@ fun DeveloperTabDiagnostics(
                 value = diagText,
                 onValueChange = { diagText = it },
                 label = stringResource(R.string.dev_diagnostics_text_label),
-                minLines = 3
+                singleLine = false,
+                minLines = 3,
+                maxLines = 8,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Text)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Button(

@@ -22,22 +22,8 @@ fun DeveloperTabHealth(
     viewModel: DeveloperSettingsViewModel,
     modifier: Modifier = Modifier
 ) {
-    val healthRepo = viewModel.parserHealthRepository
-    val database = viewModel.database
-    var healthData by remember { mutableStateOf<List<ParserHealthRow>>(emptyList()) }
-    var priorHealthData by remember { mutableStateOf<List<ParserHealthRow>>(emptyList()) }
-    val scope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        scope.launch {
-            val sevenDaysMs = 7L * 24 * 60 * 60 * 1000
-            val now = System.currentTimeMillis()
-            val sinceMs = now - sevenDaysMs
-            val priorStart = sinceMs - sevenDaysMs
-            healthData = healthRepo.getMatchRatesSince(sinceMs)
-            priorHealthData = healthRepo.getMatchRatesInWindow(priorStart, sinceMs)
-        }
-    }
+    val healthData by viewModel.healthData.collectAsState()
+    val priorHealthData by viewModel.priorHealthData.collectAsState()
 
     LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
         item {
@@ -91,15 +77,10 @@ fun DeveloperTabHealth(
         }
 
         item {
-            val sevenDaysMs = 7L * 24 * 60 * 60 * 1000
-            val sinceMs = System.currentTimeMillis() - sevenDaysMs
-
-            val outcomeCounts = remember {
-                database.pipelineTraceQueries.countTraceByOutcomeSince(sinceMs).executeAsList()
-            }
-
-            val llmTotal = outcomeCounts.filter { it.stage == "PARSE_LLM" }.sumOf { it.cnt }
-            val deadLetters = outcomeCounts.filter { it.stage == "STAGING" && it.outcome == "FAILURE" }.sumOf { it.cnt }
+            val metrics by viewModel.pipelineMetrics.collectAsState()
+            
+            val llmTotal = metrics?.llmCalls ?: 0L
+            val deadLetters = metrics?.deadLetters ?: 0L
 
             Card(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),

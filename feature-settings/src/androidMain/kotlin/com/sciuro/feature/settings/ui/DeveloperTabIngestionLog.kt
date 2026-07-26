@@ -60,10 +60,13 @@ fun DeveloperTabIngestionLog(
             }
         }
 
+        var selectedDeadLetter by remember { mutableStateOf<com.sciuro.core.ledger.db.Raw_event_staging?>(null) }
+
         items(deadLetterEvents) { event ->
             Card(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                onClick = { selectedDeadLetter = event }
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     val timeStr = remember(event.captured_at) {
@@ -91,5 +94,41 @@ fun DeveloperTabIngestionLog(
         }
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
+    }
+
+    selectedDeadLetter?.let { event ->
+        var editTitle by remember(event) { mutableStateOf(event.title) }
+        var editText by remember(event) { mutableStateOf(event.text) }
+
+        com.najmi.sciuro.core.ui.components.SciuroFormSheet(
+            title = "Edit Dead Letter",
+            onDismissRequest = { selectedDeadLetter = null }
+        ) {
+            com.najmi.sciuro.core.ui.components.SciuroTextField(
+                value = editTitle,
+                onValueChange = { editTitle = it },
+                label = "Title",
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            )
+            
+            com.najmi.sciuro.core.ui.components.SciuroTextField(
+                value = editText,
+                onValueChange = { editText = it },
+                label = "Payload (JSON/Text)",
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp).heightIn(min = 120.dp),
+                minLines = 4,
+                maxLines = 10
+            )
+
+            Button(
+                onClick = {
+                    viewModel.updateAndResendDeadLetter(event.id, editTitle, editText)
+                    selectedDeadLetter = null
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Update & Resend")
+            }
+        }
     }
 }

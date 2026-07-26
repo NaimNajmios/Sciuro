@@ -74,6 +74,11 @@ UPDATE raw_event_staging
 SET status = 'PENDING', attempt_count = 0, last_error = NULL
 WHERE id = ?;
 
+updateRawEventPayload:
+UPDATE raw_event_staging
+SET title = ?, text = ?
+WHERE id = ?;
+
 selectMatchRateByPackageRecent:
 SELECT
     source_package_or_address AS package_name,

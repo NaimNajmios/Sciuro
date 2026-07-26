@@ -63,7 +63,11 @@ fun DeveloperTabSimulator(
                     SciuroTextField(
                         value = customText,
                         onValueChange = { customText = it },
-                        label = stringResource(R.string.dev_simulator_text)
+                        label = stringResource(R.string.dev_simulator_text),
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 8,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Text)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(

@@ -16,45 +16,30 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-data class TraceEventSummary(
-    val rawEventId: String?,
-    val firstAt: Long?,
-    val lastAt: Long?,
-    val stageCount: Long,
-    val packageName: String?
-)
-
-data class TraceRow(
-    val stage: String,
-    val outcome: String,
-    val durationMs: Long?,
-    val confidence: Double?,
-    val detail: String?,
-    val createdAt: Long
-)
+import com.sciuro.feature.settings.viewmodel.TraceEventSummary
+import com.sciuro.feature.settings.viewmodel.TraceRow
+import kotlinx.coroutines.launch
+import com.najmi.sciuro.core.ui.components.SciuroTextField
 
 @Composable
 fun DeveloperTabPipelineTrace(
     viewModel: DeveloperSettingsViewModel,
     modifier: Modifier = Modifier
 ) {
-    val database = viewModel.database
-    var events by remember { mutableStateOf<List<TraceEventSummary>>(emptyList()) }
+    val events by viewModel.pipelineEvents.collectAsState()
     var selectedEventId by remember { mutableStateOf<String?>(null) }
     var selectedEventTraces by remember { mutableStateOf<List<TraceRow>>(emptyList()) }
-
-    LaunchedEffect(Unit) {
-        events = database.pipelineTraceQueries.selectDistinctTraceEvents(100).executeAsList().map {
-            TraceEventSummary(it.raw_event_id, it.first_at, it.last_at, it.stage_count, it.package_name)
-        }
-    }
+    val scope = rememberCoroutineScope()
+    
+    val traceFilterStatus by viewModel.traceFilterStatus.collectAsState()
+    val traceFilterPackage by viewModel.traceFilterPackage.collectAsState()
 
     fun loadTraces(eventId: String?) {
         if (eventId != null) {
-            selectedEventTraces = database.pipelineTraceQueries.selectTraceByEvent(eventId).executeAsList().map {
-                TraceRow(it.stage, it.outcome, it.duration_ms, it.confidence, it.detail_json, it.created_at)
+            scope.launch {
+                selectedEventTraces = viewModel.getTraceDetails(eventId)
+                selectedEventId = eventId
             }
-            selectedEventId = eventId
         }
     }
 
@@ -70,7 +55,7 @@ fun DeveloperTabPipelineTrace(
                 )
                 TextButton(onClick = { selectedEventId = null }) { Text(stringResource(R.string.dev_trace_back)) }
             }
-            LazyColumn {
+            LazyColumn(contentPadding = PaddingValues(bottom = 110.dp)) {
                 items(selectedEventTraces) { trace ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
@@ -111,11 +96,36 @@ fun DeveloperTabPipelineTrace(
         return
     }
 
-    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(bottom = 110.dp)
+    ) {
         item {
             Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.dev_trace_title), style = MaterialTheme.typography.titleSmall)
             Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                var pkgText by remember(traceFilterPackage) { mutableStateOf(traceFilterPackage) }
+                SciuroTextField(
+                    value = pkgText,
+                    onValueChange = { pkgText = it },
+                    label = "Package",
+                    modifier = Modifier.weight(1f)
+                )
+                Button(onClick = { viewModel.setTraceFilter(traceFilterStatus, pkgText) }, modifier = Modifier.padding(top = 8.dp)) {
+                    Text("Apply")
+                }
+            }
+            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("ALL", "SUCCESS", "FAILURE", "DROP").forEach { status ->
+                    FilterChip(
+                        selected = traceFilterStatus == status,
+                        onClick = { viewModel.setTraceFilter(status, traceFilterPackage) },
+                        label = { Text(status) }
+                    )
+                }
+            }
         }
 
         if (events.isEmpty()) {

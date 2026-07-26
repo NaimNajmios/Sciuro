@@ -90,7 +90,8 @@ fun SciuroTextField(
     isError: Boolean = false,
     supportingText: String? = null,
     enabled: Boolean = true,
-    minLines: Int = 1
+    minLines: Int = 1,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE
 ) {
     Surface(
         color = if (enabled) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
@@ -110,6 +111,7 @@ fun SciuroTextField(
             supportingText = supportingText?.let { { Text(it) } },
             enabled = enabled,
             minLines = minLines,
+            maxLines = maxLines,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = visualTransformation,

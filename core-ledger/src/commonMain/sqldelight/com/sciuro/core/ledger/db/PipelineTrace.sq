@@ -45,6 +45,16 @@ GROUP BY raw_event_id
 ORDER BY last_at DESC
 LIMIT ?;
 
+selectFilteredTraceEvents:
+SELECT raw_event_id, MIN(created_at) AS first_at, MAX(created_at) AS last_at, COUNT(*) AS stage_count, MAX(package_name) AS package_name
+FROM pipeline_trace
+WHERE raw_event_id IS NOT NULL
+  AND (:packageName IS NULL OR package_name LIKE '%' || :packageName || '%')
+  AND (:outcome IS NULL OR raw_event_id IN (SELECT raw_event_id FROM pipeline_trace WHERE outcome = :outcome AND raw_event_id IS NOT NULL))
+GROUP BY raw_event_id
+ORDER BY last_at DESC
+LIMIT ?;
+
 countTraceByOutcomeSince:
 SELECT stage, outcome, COUNT(*) AS cnt
 FROM pipeline_trace
