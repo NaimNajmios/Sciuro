@@ -1,7 +1,7 @@
 package com.sciuro.core.obligations.engine
 
 import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.sqlite.JdbcSqliteDriver
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.model.AuditLog

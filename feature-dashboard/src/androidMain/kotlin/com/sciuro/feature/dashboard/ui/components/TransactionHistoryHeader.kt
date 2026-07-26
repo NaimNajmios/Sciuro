@@ -31,6 +31,7 @@ fun TransactionHistoryHeader(
             Text(
                 stringResource(R.string.dashboard_transaction_history),
                 style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
         }

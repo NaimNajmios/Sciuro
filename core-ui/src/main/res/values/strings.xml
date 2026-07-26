@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Shared / Common -->
+    <!-- Shared -->
     <string name="shared_adjust_balance">Adjust Balance</string>
     <string name="shared_cancel">Cancel</string>
     <string name="shared_delete">Delete</string>
@@ -12,13 +12,13 @@
 
     <!-- Adjustment Bottom Sheet -->
     <string name="adjustment_new_balance_label">New Balance (RM)</string>
-    <string name="adjustment_select_reason">Select reason…</string>
+    <string name="adjustment_select_reason">Select reason\u2026</string>
     <string name="adjustment_custom_reason">Custom Reason</string>
     <string name="adjustment_large_variance_warning">Large variance detected. Add a note to help future reconciliation:</string>
     <string name="adjustment_remark_optional">Remark (optional)</string>
     <string name="adjustment_save">Save Adjustment</string>
 
-    <!-- Transaction Directions & Types -->
+    <!-- Transaction -->
     <string name="tx_expense">Expense</string>
     <string name="tx_income">Income</string>
     <string name="tx_transfer">Transfer</string>
@@ -39,7 +39,7 @@
     <string name="fast_tx_source_account">Source Account</string>
     <string name="fast_tx_destination_account">Destination Account</string>
 
-    <!-- Mascot Content Descriptions -->
+    <!-- Mascot -->
     <string name="mascot_content_idle">Idle</string>
     <string name="mascot_content_empty">Empty</string>
     <string name="mascot_content_error">Error</string>

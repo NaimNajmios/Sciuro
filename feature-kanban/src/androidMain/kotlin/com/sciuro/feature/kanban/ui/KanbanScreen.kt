@@ -244,7 +244,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add ${selectedTab}")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.kanban_add_tab_cd, selectedTab))
             }
         }
     }

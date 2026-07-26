@@ -245,81 +245,84 @@ fun SciuroMainScreen() {
     }
     
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
+        val showNav = onboardingState.isOnboardingComplete
+
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
-            if (onboardingState.isOnboardingComplete) {
-                val isDarkTheme = isSystemInDarkTheme()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+                if (showNav) {
+                    val isDarkTheme = isSystemInDarkTheme()
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentDestination = navBackStackEntry?.destination
 
-                val barColor = if (isDarkTheme) DarkSurfaceSheet else LightSurfaceSheet
-                val selectedPillColor = if (isDarkTheme) Color.White else Color.Black
-                val selectedContentColor = if (isDarkTheme) Color.Black else Color.White
-                val unselectedContentColor = if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF444444)
+                    val selectedPillColor = if (isDarkTheme) Color.White else Color.Black
+                    val selectedContentColor = if (isDarkTheme) Color.Black else Color.White
+                    val unselectedContentColor = if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF444444)
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 12.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(28.dp),
-                        color = barColor,
-                        shadowElevation = 12.dp
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Transparent)
+                            .windowInsetsPadding(WindowInsets.navigationBars)
                     ) {
-                        Row(
+                        Surface(
                             modifier = Modifier
+                                .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
                                 .fillMaxWidth()
-                                .height(56.dp)
-                                .padding(horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                                .shadow(elevation = 8.dp, shape = RoundedCornerShape(100.dp)),
+                            shape = RoundedCornerShape(100.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant
                         ) {
-                            items.forEach { item ->
-                                val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(64.dp)
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                items.forEach { item ->
+                                    val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
 
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(42.dp)
-                                        .clip(RoundedCornerShape(21.dp))
-                                        .background(
-                                            if (isSelected) selectedPillColor else Color.Transparent
-                                        )
-                                        .clickable {
-                                            navController.navigate(item.route) {
-                                                popUpTo(navController.graph.findStartDestination().id) {
-                                                    saveState = true
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp)
+                                            .clip(RoundedCornerShape(100.dp))
+                                            .background(
+                                                if (isSelected) selectedPillColor else Color.Transparent
+                                            )
+                                            .clickable {
+                                                navController.navigate(item.route) {
+                                                    popUpTo(navController.graph.findStartDestination().id) {
+                                                        saveState = true
+                                                    }
+                                                    launchSingleTop = true
+                                                    restoreState = true
                                                 }
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
+                                            },
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            imageVector = item.icon,
-                                            contentDescription = item.label,
-                                            tint = if (isSelected) selectedContentColor else unselectedContentColor,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = item.label,
-                                            color = if (isSelected) selectedContentColor else unselectedContentColor,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            maxLines = 1
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = item.icon,
+                                                contentDescription = item.label,
+                                                tint = if (isSelected) selectedContentColor else unselectedContentColor,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = item.label,
+                                                color = if (isSelected) selectedContentColor else unselectedContentColor,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                maxLines = 1
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -327,30 +330,29 @@ fun SciuroMainScreen() {
                     }
                 }
             }
+        ) { innerPadding ->
+            val lateralEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+                fadeIn(tween(SciuroMotion.TRANSITION_DURATION_MS)) +
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
             }
-    ) { innerPadding ->
-        val lateralEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-            fadeIn(tween(SciuroMotion.TRANSITION_DURATION_MS)) +
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
-        }
-        val lateralExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-            fadeOut(tween(SciuroMotion.TRANSITION_DURATION_MS)) +
-            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
-        }
-        val drillInEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
-        }
-        val drillInPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(SciuroMotion.TRANSITION_DURATION_MS))
-        }
+            val lateralExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+                fadeOut(tween(SciuroMotion.TRANSITION_DURATION_MS)) +
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
+            }
+            val drillInEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
+            }
+            val drillInPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(SciuroMotion.TRANSITION_DURATION_MS))
+            }
 
-        NavHost(
-            navController, 
-            startDestination = startDest, 
-            Modifier.padding(innerPadding),
-            enterTransition = lateralEnter,
-            exitTransition = lateralExit
-        ) {
+            NavHost(
+                navController, 
+                startDestination = startDest, 
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                enterTransition = lateralEnter,
+                exitTransition = lateralExit
+            ) {
             composable("onboarding") {
                 com.sciuro.feature.wallet.ui.OnboardingScreen(
                     viewModel = onboardingViewModel

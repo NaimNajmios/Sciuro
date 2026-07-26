@@ -320,7 +320,7 @@ fun WalletScreen(
                 modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(stringResource(R.string.wallet_recent_transactions), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 16.dp))
+                Text(stringResource(R.string.wallet_recent_transactions), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 16.dp))
 
                     if (selectedAssetType == "Liquid Cash" && accounts.isNotEmpty()) {
                         val selectedAccountId = accounts[accountPagerState.currentPage].id
@@ -352,7 +352,7 @@ fun WalletScreen(
                                             editTxCategoryId = tx.category_id
                                             showEditTransactionDialog = true
                                         },
-                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), contentColor = MaterialTheme.colorScheme.onSurface)
                                     ) {
                                         Row(
                                             modifier = Modifier.padding(16.dp).fillMaxWidth(),

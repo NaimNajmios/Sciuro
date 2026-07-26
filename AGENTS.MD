@@ -14,9 +14,6 @@
 
 # Run all tests
 ./gradlew allTests --console=plain
-
-# Run detekt (only when needed — not required for every change)
-./gradlew detekt --console=plain
 ```
 
 **Gradle output:** Never pipe through `tail`/`Select-Object`. Redirect to file, then read: `./gradlew assembleDebug > build_log.txt 2>&1` then `Get-Content build_log.txt -Tail 20`.
@@ -77,4 +74,3 @@ Work tracked in `development_documentation/phase-<id>-<slug>/`.
 - Schema changes documented, `PROBLEMS.md` records migration edge cases.
 - UI changes: before/after in commit body or phase doc.
 - No hardcoded colors, no inline version strings, no `printStackTrace()` / raw `Log.e` in production code.
-- Detekt clean (run when ready to merge, not required for every iteration).

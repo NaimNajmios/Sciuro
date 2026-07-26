@@ -24,16 +24,17 @@ fun DashboardSummaryRow(
     ) {
         SciuroCard(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(stringResource(R.string.dashboard_active_budgets), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.dashboard_active_budgets), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("$activeBudgetsCount", style = MaterialTheme.typography.headlineSmall)
+                Text("$activeBudgetsCount", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
             }
         }
         SciuroCard(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     stringResource(R.string.dashboard_runway),
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

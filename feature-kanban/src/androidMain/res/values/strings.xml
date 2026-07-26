@@ -97,4 +97,7 @@
     <string name="kanban_label_principal_amount">Principal Amount (RM)</string>
     <string name="kanban_label_notes_optional">Notes (Optional)</string>
     <string name="kanban_save_changes">Save Changes</string>
+
+    <!-- Accessibility -->
+    <string name="kanban_add_tab_cd">Add %1$s</string>
 </resources>
