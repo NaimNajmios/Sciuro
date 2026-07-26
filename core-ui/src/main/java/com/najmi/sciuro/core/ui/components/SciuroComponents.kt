@@ -9,12 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SciuroBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    windowInsets: WindowInsets = BottomSheetDefaults.windowInsets,
     content: @Composable ColumnScope.() -> Unit
 ) {
     ModalBottomSheet(
@@ -26,7 +29,8 @@ fun SciuroBottomSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
         },
-        scrimColor = Color.Black.copy(alpha = 0.5f)
+        scrimColor = Color.Black.copy(alpha = 0.5f),
+        windowInsets = windowInsets
     ) {
         Column(
             modifier = modifier
@@ -42,6 +46,33 @@ fun SciuroBottomSheet(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SciuroFormSheet(
+    title: String,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    SciuroBottomSheet(
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        windowInsets = WindowInsets.ime.union(BottomSheetDefaults.windowInsets)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Text(title, style = MaterialTheme.typography.headlineSmall)
+            IconButton(onClick = onDismissRequest) {
+                Icon(Icons.Filled.Close, contentDescription = "Close")
+            }
+        }
+        content()
+    }
+}
+
 @Composable
 fun SciuroTextField(
     value: String,
@@ -52,6 +83,7 @@ fun SciuroTextField(
     singleLine: Boolean = true,
     trailingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
+    keyboardActions: androidx.compose.foundation.text.KeyboardActions = androidx.compose.foundation.text.KeyboardActions.Default,
     visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
     placeholder: String? = null,
     isError: Boolean = false,
@@ -78,6 +110,7 @@ fun SciuroTextField(
             enabled = enabled,
             minLines = minLines,
             keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
             visualTransformation = visualTransformation,
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(

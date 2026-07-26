@@ -45,6 +45,7 @@ import com.sciuro.feature.wallet.viewmodel.TimelineItem
 import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.najmi.sciuro.core.ui.components.SciuroFormSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
@@ -247,6 +248,44 @@ fun AccountDetailScreen(
                                 showDeleteDialog = true
                             }
                         )
+                    }
+                }
+            }
+        }
+        
+        if (account.account_number != null || account.account_holder_name != null || account.bank_institution_code != null) {
+            com.najmi.sciuro.core.ui.components.SciuroCard(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(top = 16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Account Details",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    
+                    val accName = account.account_holder_name
+                    val accNum = account.account_number
+                    val accBank = account.bank_institution_code
+                    
+                    if (!accName.isNullOrBlank()) {
+                        Row {
+                            Text("Name: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(accName, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                        }
+                    }
+                    if (!accNum.isNullOrBlank()) {
+                        Row {
+                            Text("Account: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(accNum, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                        }
+                    }
+                    if (!accBank.isNullOrBlank()) {
+                        Row {
+                            Text("Bank Code: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(accBank, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                        }
                     }
                 }
             }
@@ -627,13 +666,10 @@ private fun EditAccountDetailsSheet(
     var accountHolderName by remember { mutableStateOf(currentAccountHolderName ?: "") }
     var bankInstitutionCode by remember { mutableStateOf(currentBankInstitutionCode ?: "") }
 
-    SciuroBottomSheet(onDismissRequest = onDismiss) {
-        Text(
-            stringResource(R.string.wallet_edit_account_details),
-            style = MaterialTheme.typography.headlineSmall
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
+    SciuroFormSheet(
+        title = stringResource(R.string.wallet_edit_account_details),
+        onDismissRequest = onDismiss
+    ) {
 
         SciuroTextField(
             value = accountNumber,

@@ -102,6 +102,8 @@ fun FastTransactionSheet(
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
         )
 
+        val haptic = LocalHapticFeedback.current
+        
         // Description / Label (Text Field Removed to prevent keyboard conflict)
         SciuroTextField(
             value = merchant,
@@ -112,7 +114,10 @@ fun FastTransactionSheet(
             items(presetLabels) { label ->
                 FilterChip(
                     selected = merchant == label,
-                    onClick = { merchant = label },
+                    onClick = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        merchant = label 
+                    },
                     label = { Text(label) }
                 )
             }
@@ -128,6 +133,7 @@ fun FastTransactionSheet(
                         FilterChip(
                             selected = categoryId == cat.id,
                             onClick = { 
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 categoryId = cat.id
                                 showCategoryError = false 
                             },
@@ -144,7 +150,10 @@ fun FastTransactionSheet(
             items(accounts) { acc ->
                 FilterChip(
                     selected = accountId == acc.id,
-                    onClick = { accountId = acc.id },
+                    onClick = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        accountId = acc.id 
+                    },
                     label = { Text(acc.name) }
                 )
             }
@@ -157,7 +166,10 @@ fun FastTransactionSheet(
                     items(accounts.filter { it.id != accountId }) { acc ->
                         FilterChip(
                             selected = destinationAccountId == acc.id,
-                            onClick = { destinationAccountId = acc.id },
+                            onClick = { 
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                destinationAccountId = acc.id 
+                            },
                             label = { Text(acc.name) }
                         )
                     }
@@ -261,19 +273,19 @@ fun Numpad(
 
 @Composable
 fun NumpadButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
-    Surface(
+    FilledTonalButton(
+        onClick = onClick,
         modifier = modifier.height(64.dp),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        onClick = onClick
+        contentPadding = PaddingValues(0.dp),
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (icon != null) {
-                Icon(icon, contentDescription = text, modifier = Modifier.size(28.dp))
-            } else {
-                Text(text, style = MaterialTheme.typography.headlineMedium)
-            }
+        if (icon != null) {
+            Icon(icon, contentDescription = text, modifier = Modifier.size(28.dp))
+        } else {
+            Text(text, style = MaterialTheme.typography.headlineMedium)
         }
     }
 }
-

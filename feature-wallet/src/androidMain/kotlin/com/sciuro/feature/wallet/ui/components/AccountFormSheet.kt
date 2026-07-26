@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.najmi.sciuro.core.ui.components.PillToggle
@@ -32,11 +34,11 @@ import com.najmi.sciuro.core.ui.theme.AccountColorOrange
 import com.najmi.sciuro.core.ui.theme.AccountColorGrey
 import com.najmi.sciuro.core.ui.theme.AccountColorBlack
 import com.najmi.sciuro.core.ui.theme.AccountColorBrown
-import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.najmi.sciuro.core.ui.components.SciuroFormSheet
 import com.sciuro.feature.wallet.R
 import com.sciuro.feature.wallet.ui.AppInfo
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AccountFormSheet(
     editingAccountId: String?,
@@ -56,16 +58,17 @@ fun AccountFormSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    SciuroBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
-        Text(
-            if (editingAccountId == null) stringResource(R.string.wallet_add_account) else stringResource(R.string.wallet_edit_account),
-            style = MaterialTheme.typography.headlineSmall
-        )
+    SciuroFormSheet(
+        title = if (editingAccountId == null) stringResource(R.string.wallet_add_account) else stringResource(R.string.wallet_edit_account),
+        onDismissRequest = onDismiss, 
+        modifier = modifier
+    ) {
 
         SciuroTextField(
             value = initialName,
             onValueChange = onNameChange,
-            label = stringResource(R.string.wallet_account_name_hint)
+            label = stringResource(R.string.wallet_account_name_hint),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
 
         var expanded by remember { mutableStateOf(false) }
@@ -116,7 +119,8 @@ fun AccountFormSheet(
             value = initialBalance,
             onValueChange = onBalanceChange,
             label = stringResource(R.string.wallet_initial_balance_rm),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { if (initialName.isNotBlank()) onSave() })
         )
 
         Row(
@@ -134,9 +138,10 @@ fun AccountFormSheet(
 
         Spacer(modifier = Modifier.height(4.dp))
         Text(stringResource(R.string.wallet_account_color), style = MaterialTheme.typography.labelLarge)
-        LazyRow(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             val presetColors = listOf(
                 "#4CAF50" to AccountColorGreen,
@@ -148,15 +153,14 @@ fun AccountFormSheet(
                 "#1A1A1A" to AccountColorBlack,
                 "#795548" to AccountColorBrown
             )
-            items(presetColors.size) { i ->
-                val (hex, color) = presetColors[i]
+            presetColors.forEach { (hex, color) ->
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(color)
                         .clickable { onColorChange(hex) }
-                        .padding(2.dp)
+                        .padding(4.dp)
                 ) {
                     if (initialColor == hex) {
                         Box(modifier = Modifier.fillMaxSize().clip(CircleShape).background(Color.White.copy(alpha = 0.3f)))
@@ -168,26 +172,22 @@ fun AccountFormSheet(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (onDelete != null) {
-                OutlinedButton(
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text(stringResource(R.string.wallet_delete))
-                }
-            }
+        Spacer(modifier = Modifier.height(8.dp))
 
-            SciuroPrimaryButton(
-                text = stringResource(R.string.wallet_save),
-                onClick = onSave,
-                modifier = Modifier.weight(if (onDelete != null) 1f else 2f),
-                enabled = initialName.isNotBlank()
-            )
+        SciuroPrimaryButton(
+            text = stringResource(R.string.wallet_save),
+            onClick = onSave,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = initialName.isNotBlank()
+        )
+
+        if (onDelete != null) {
+            TextButton(
+                onClick = onDelete,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.wallet_delete), color = MaterialTheme.colorScheme.error)
+            }
         }
     }
 }

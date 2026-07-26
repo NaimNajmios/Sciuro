@@ -1,24 +1,26 @@
 package com.sciuro.feature.dashboard.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.PillToggle
-import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
+import com.najmi.sciuro.core.ui.components.SciuroFormSheet
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.sciuro.core.ledger.db.Account
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.feature.dashboard.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditTransactionSheet(
     amount: String,
@@ -38,20 +40,32 @@ fun EditTransactionSheet(
     onDelete: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    SciuroBottomSheet(onDismissRequest = onDismiss) {
-        Text(stringResource(R.string.dashboard_edit_transaction), style = MaterialTheme.typography.headlineSmall)
-        
+    val focusRequester = remember { FocusRequester() }
+    
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    SciuroFormSheet(
+        title = stringResource(R.string.dashboard_edit_transaction),
+        onDismissRequest = onDismiss
+    ) {
         SciuroTextField(
             value = amount,
             onValueChange = onAmountChange,
             label = stringResource(R.string.dashboard_amount_label),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+            modifier = Modifier.focusRequester(focusRequester)
         )
         
         SciuroTextField(
             value = merchant,
             onValueChange = onMerchantChange,
-            label = stringResource(R.string.dashboard_merchant_label)
+            label = stringResource(R.string.dashboard_merchant_label),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                if (amount.isNotBlank() && accountId != null) onSave()
+            })
         )
         
         PillToggle(
@@ -65,43 +79,29 @@ fun EditTransactionSheet(
             modifier = Modifier.fillMaxWidth()
         )
         
-        var accountExpanded by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-            expanded = accountExpanded,
-            onExpandedChange = { accountExpanded = it }
+        Text(stringResource(R.string.dashboard_wallet_account), style = MaterialTheme.typography.labelLarge)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val selAcc = accounts.find { it.id == accountId }
-            SciuroTextField(
-                value = selAcc?.name ?: stringResource(R.string.dashboard_select_account),
-                onValueChange = {},
-                readOnly = true,
-                label = stringResource(R.string.dashboard_wallet_account),
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                modifier = Modifier.menuAnchor()
-            )
-            ExposedDropdownMenu(
-                expanded = accountExpanded,
-                onDismissRequest = { accountExpanded = false }
-            ) {
-                accounts.forEach { acc ->
-                    DropdownMenuItem(
-                        text = { Text(acc.name) },
-                        onClick = {
-                            onAccountIdChange(acc.id)
-                            accountExpanded = false
-                        }
-                    )
-                }
+            accounts.forEach { acc ->
+                FilterChip(
+                    selected = accountId == acc.id,
+                    onClick = { onAccountIdChange(acc.id) },
+                    label = { Text(acc.name) }
+                )
             }
         }
         
-        Text(stringResource(R.string.dashboard_category), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        LazyRow(
+        Text(stringResource(R.string.dashboard_category), style = MaterialTheme.typography.labelLarge)
+        FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             val relevantCategories = if (direction == "OUTFLOW") expenseCategories else incomeCategories
-            items(relevantCategories) { cat ->
+            relevantCategories.forEach { cat ->
                 FilterChip(
                     selected = categoryId == cat.id,
                     onClick = { onCategoryIdChange(cat.id) },
@@ -112,24 +112,18 @@ fun EditTransactionSheet(
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        Row(
+        SciuroPrimaryButton(
+            text = stringResource(R.string.dashboard_save),
+            onClick = onSave,
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            enabled = amount.isNotBlank() && accountId != null
+        )
+
+        TextButton(
+            onClick = onDelete,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedButton(
-                onClick = onDelete,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text(stringResource(R.string.dashboard_delete))
-            }
-            
-            SciuroPrimaryButton(
-                text = stringResource(R.string.dashboard_save),
-                onClick = onSave,
-                modifier = Modifier.weight(1f),
-                enabled = amount.isNotBlank() && accountId != null
-            )
+            Text(stringResource(R.string.dashboard_delete), color = MaterialTheme.colorScheme.error)
         }
     }
 }
