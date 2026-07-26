@@ -34,7 +34,9 @@ object IngestionDefaults {
     val aggregatorPackages = setOf(
         "com.google.android.gm",
         "com.microsoft.office.outlook",
-        "com.samsung.android.email.provider"
+        "com.samsung.android.email.provider",
+        "com.google.android.apps.messaging",
+        "com.samsung.android.messaging"
     )
 
     val defaultAllowedPackages = directBankPackages + aggregatorPackages

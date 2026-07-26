@@ -7,6 +7,7 @@ import com.sciuro.core.audit.trace.PipelineTracer
 import com.sciuro.core.audit.trace.TraceOutcome
 import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
+import com.sciuro.core.ingestion.engine.AggregatorHeuristicFilter
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
@@ -74,7 +75,7 @@ class SciuroNotificationService : NotificationListenerService() {
         }
 
         if (allowlist.isDefaultAggregatorPackage(packageName)) {
-            if (!isFinancialAggregatorNotification(title, text)) {
+            if (!AggregatorHeuristicFilter.isFinancial(title, text)) {
                 tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
                     detail = mapOf("reason" to "non_financial_aggregator", "package" to packageName), packageName = packageName)
                 return
@@ -107,25 +108,4 @@ class SciuroNotificationService : NotificationListenerService() {
         notificationSourceAdapter.emitNotification(rawEvent)
     }
 
-    /**
-     * Very lightweight heuristic to drop obvious spam or non-financial emails.
-     * We look for common keywords found in banking email subjects/titles.
-     */
-    private fun isFinancialAggregatorNotification(title: String, text: String): Boolean {
-        val lowerTitle = title.lowercase()
-        val lowerText = text.lowercase()
-
-        val combinedText = "$lowerTitle $lowerText"
-
-        val hasBankingKeywords = combinedText.contains("m2u") ||
-                                 combinedText.contains("cimb notification") ||
-                                 combinedText.contains("transaction") ||
-                                 combinedText.contains("funds received") ||
-                                 combinedText.contains("transfer") ||
-                                 combinedText.contains("receipt")
-
-        val hasCurrencySymbol = combinedText.contains("rm")
-
-        return hasBankingKeywords || hasCurrencySymbol
-    }
 }

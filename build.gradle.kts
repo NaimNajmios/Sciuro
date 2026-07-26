@@ -19,11 +19,11 @@ allprojects {
 
     plugins.withId("org.jetbrains.kotlin.multiplatform") {
         configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
-            source = proj.files(
+            source.setFrom(proj.files(
                 "${proj.projectDir}/src/commonMain/kotlin",
                 "${proj.projectDir}/src/androidMain/kotlin",
                 "${proj.projectDir}/src/jvmMain/kotlin"
-            )
+            ))
         }
     }
 }

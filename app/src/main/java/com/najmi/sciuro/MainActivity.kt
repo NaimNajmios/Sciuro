@@ -254,7 +254,6 @@ fun SciuroMainScreen() {
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
                 if (showNav) {
-                    val isDarkTheme = isSystemInDarkTheme()
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
 
