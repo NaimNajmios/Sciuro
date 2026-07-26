@@ -40,6 +40,13 @@ class RegexExtractorsTest {
     }
 
     @Test
+    fun `extractMerchant ignores self-referencing account phrases`() {
+        assertNull(extractMerchant("deducted from your account ending 1234"))
+        assertNull(extractMerchant("masuk dari akaun anda berakhir 1234"))
+        assertNull(extractMerchant("transferred from account no 1234"))
+    }
+
+    @Test
     fun `extractAccountNumber parses English AC pattern`() {
         assertEquals("1234567890", extractAccountNumber("transferred to A/C 1234567890"))
         assertEquals("9876543210", extractAccountNumber("to A/C: 9876543210"))

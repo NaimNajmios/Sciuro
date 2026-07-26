@@ -16,9 +16,25 @@ fun extractAmount(text: String): Double? {
     return amountStr?.toDoubleOrNull()
 }
 
+private val merchantBlacklist = listOf(
+    "your account",
+    "akaun anda",
+    "account ending",
+    "akaun berakhir",
+    "account no"
+)
+
 fun extractMerchant(text: String): String? {
-    return outflowMerchantRegex.find(text)?.groupValues?.get(1)?.trim()
+    val extracted = outflowMerchantRegex.find(text)?.groupValues?.get(1)?.trim()
         ?: inflowMerchantRegex.find(text)?.groupValues?.get(1)?.trim()
+        
+    if (extracted != null) {
+        val lowerExtracted = extracted.lowercase()
+        if (merchantBlacklist.any { lowerExtracted.contains(it) }) {
+            return null
+        }
+    }
+    return extracted
 }
 
 fun extractAccountNumber(text: String): String? {

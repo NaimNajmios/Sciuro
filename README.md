@@ -38,7 +38,7 @@ The project is fully functional and has completed **Phase K1 (UI Polish & Access
 Sciuro is built using a strict modular Kotlin Multiplatform structure:
 * **Core Modules** (`core-*`): Reusable domain layers and intelligence engines:
   - `:core-ledger`, `:core-audit`: Foundational persistence and traceability.
-  - `:core-ingestion`, `:core-parsing`, `:core-llm`: Notification extraction and LLM fallback parsing. Includes a `PiiScrubber` utility to automatically redact sensitive account/NRIC data prior to LLM processing.
+  - `:core-ingestion`, `:core-parsing`, `:core-llm`: Notification extraction and LLM fallback parsing. Includes a `PiiScrubber` utility to automatically redact sensitive account/NRIC data prior to LLM processing. Implements intelligent fallback mechanics to filter out self-referential phrases (e.g. "your account") from regex-extracted merchants.
   - `:core-classifier`: The central Orchestrator that triages parsed data and triggers transfer detection. It features a fully concurrent coroutine-based ingestion pipeline for high-throughput batch processing.
   - `:core-obligations`, `:core-transfer`, `:core-debt`, `:core-investment`, `:core-budget`: Specialized intelligence engines that track assets, liabilities, recurring expenses, budget thresholds, and identity-based transfer matching.
 * **Feature Modules** (`feature-*`): User-facing capabilities: `:feature-dashboard`, `:feature-wallet`, `:feature-budgets`, `:feature-debt`, `:feature-kanban`, `:feature-settings`.

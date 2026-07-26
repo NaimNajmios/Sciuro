@@ -111,6 +111,7 @@ class LlmFallbackParser(
             1. Determine if this is a financial transaction. If it is not, return {"is_transaction": false}.
             2. Accurately capture the entity on the other side of the transaction (the sender if money is received, or the receiver if money is spent).
             3. Format the "merchant" field as a comprehensive label: "EntityName (Type)" where Type is "Personal" or "Business". If the name is completely missing, default to "Unknown Entity (Unknown)".
+            4. Do not extract self-referential phrases (e.g. "your account", "akaun anda", "account ending 1234") as the merchant. If no true merchant is mentioned, default to "Unknown Entity (Unknown)".
             
             Respond strictly in valid JSON format matching this schema:
             {
@@ -157,6 +158,19 @@ class LlmFallbackParser(
             {
                 "_reasoning": "This is a promotional message, not a record of a financial transaction.",
                 "is_transaction": false
+            }
+
+            Example 4:
+            Title: "Debit Alert"
+            Text: "RM 2.00 deducted from your account ending 1234."
+            Output:
+            {
+                "_reasoning": "The user's account was debited, so it is an OUTFLOW. The text only mentions the user's account and does not state who received the money.",
+                "is_transaction": true,
+                "amount": 2.00,
+                "direction": "OUTFLOW",
+                "merchant": "Unknown Entity (Unknown)",
+                "accountOrChannel": "1234"
             }
             
             --- TARGET INVOCATION ---
