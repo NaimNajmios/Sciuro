@@ -6,6 +6,7 @@ import com.sciuro.core.parsing.model.TransactionDirection
 import com.sciuro.core.parsing.rule.ParserRule
 import com.sciuro.core.parsing.util.ConfidenceScorer
 import com.sciuro.core.parsing.util.extractAccountNumber
+import com.sciuro.core.parsing.util.detectDirection
 import com.sciuro.core.parsing.util.extractAmount
 import com.sciuro.core.parsing.util.extractMerchant
 import com.sciuro.core.parsing.util.matchesAggregatorForward
@@ -31,23 +32,7 @@ class BsnParserRule(
         
         val amount = extractAmount(text) ?: extractAmount(event.title) ?: return null
         
-        val isOutflow = text.contains("Transaction of", ignoreCase = true) ||
-                        text.contains("Transaksi sebanyak", ignoreCase = true) ||
-                        text.contains("ditolak", ignoreCase = true) ||
-                        (text.contains("DuitNow to", ignoreCase = true) &&
-                            text.contains("successful", ignoreCase = true) &&
-                            !text.contains("unsuccessful", ignoreCase = true))
-
-        val isInflow = text.contains("credited", ignoreCase = true) ||
-                       text.contains("received", ignoreCase = true) ||
-                       text.contains("masuk", ignoreCase = true) ||
-                       text.contains("dikreditkan", ignoreCase = true)
-
-        val direction = when {
-            isOutflow -> TransactionDirection.OUTFLOW
-            isInflow -> TransactionDirection.INFLOW
-            else -> null
-        }
+        val direction = detectDirection(text, event.title)
         val merchant = extractBsnDuitNowMerchant(text) ?: extractMerchant(text)
         val counterpartyAccount = extractAccountNumber(text)
 

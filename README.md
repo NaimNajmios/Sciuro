@@ -38,8 +38,8 @@ The project is fully functional and has completed **Phase K1 (UI Polish & Access
 Sciuro is built using a strict modular Kotlin Multiplatform structure:
 * **Core Modules** (`core-*`): Reusable domain layers and intelligence engines:
   - `:core-ledger`, `:core-audit`: Foundational persistence and traceability.
-  - `:core-ingestion`, `:core-parsing`, `:core-llm`: Notification extraction and LLM fallback parsing.
-  - `:core-classifier`: The central Orchestrator that triages parsed data and triggers transfer detection.
+  - `:core-ingestion`, `:core-parsing`, `:core-llm`: Notification extraction and LLM fallback parsing. Includes a `PiiScrubber` utility to automatically redact sensitive account/NRIC data prior to LLM processing.
+  - `:core-classifier`: The central Orchestrator that triages parsed data and triggers transfer detection. It features a fully concurrent coroutine-based ingestion pipeline for high-throughput batch processing.
   - `:core-obligations`, `:core-transfer`, `:core-debt`, `:core-investment`, `:core-budget`: Specialized intelligence engines that track assets, liabilities, recurring expenses, budget thresholds, and identity-based transfer matching.
 * **Feature Modules** (`feature-*`): User-facing capabilities: `:feature-dashboard`, `:feature-wallet`, `:feature-budgets`, `:feature-debt`, `:feature-kanban`, `:feature-settings`.
 
@@ -95,7 +95,7 @@ Sciuro includes a full developer settings harness at `feature-settings` > `Devel
 
 | Tab | Description |
 |---|---|
-| **Simulator** | Manual pipeline: enter package/title/text and run through all parser rules. Includes a dynamic package+template picker sourced from `FixtureLibrary` (34 fixtures across 7 rules). Determinate batch progress bar shows `"12/47: com.dbs.card"` with fractional progress indicator. |
+| **Simulator** | Manual pipeline: enter package/title/text and run through all parser rules. Includes a dynamic package+template picker sourced from `FixtureLibrary` (over 100 realistic Malaysian bank and e-wallet fixtures across 7 rules). Determinate batch progress bar shows `"12/47: com.dbs.card"` with fractional progress indicator. |
 | **Sources** | Editable allowlist view of notification packages grouped by Bank / E-Wallet / Aggregator / Custom. Add/remove packages dynamically — changes take effect immediately for the notification listener. |
 | **Ingestion Log** | Dead-letter event viewer with pending/dead-letter counts, per-event error display. Tapping a dead letter opens a form to structurally edit the raw JSON payload and requeue it. |
 | **Diagnostics** | Per-rule match/no-match analysis with extracted fields. Shows LLM debug info (prompt, response, latency) when LLM fallback is triggered. |
@@ -133,7 +133,7 @@ SMS-based financial notifications can be captured via the `SmsReceiver` (registe
 
 **Key classes:**
 - `SimulationEngine` (`core-parsing`) — runs the full parser pipeline and captures per-rule results, LLM latency, and debug info in a `SimulationResult`.
-- `FixtureLibrary` (`core-parsing`) — shared fixture data (31 cases) used by both tests and the simulator UI.
+- `FixtureLibrary` (`core-parsing`) — shared fixture data (over 100 cases) used by both tests and the simulator UI.
 - `SimulationResult` / `RuleMatchResult` / `LlmDebugInfo` — data classes for diagnostic output.
 
 ## Development Setup

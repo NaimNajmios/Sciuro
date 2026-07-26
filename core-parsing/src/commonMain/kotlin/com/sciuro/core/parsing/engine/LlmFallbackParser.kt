@@ -12,6 +12,7 @@ import com.sciuro.core.parsing.llm.ResponseFormat
 import com.sciuro.core.parsing.model.StructuredDraft
 import com.sciuro.core.parsing.model.TransactionDirection
 import com.sciuro.core.parsing.util.extractAmount
+import com.sciuro.core.parsing.util.PiiScrubber
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpRequestTimeoutException

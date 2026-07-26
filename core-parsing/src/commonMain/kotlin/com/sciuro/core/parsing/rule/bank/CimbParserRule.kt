@@ -6,6 +6,7 @@ import com.sciuro.core.parsing.model.TransactionDirection
 import com.sciuro.core.parsing.rule.ParserRule
 import com.sciuro.core.parsing.util.ConfidenceScorer
 import com.sciuro.core.parsing.util.extractAccountNumber
+import com.sciuro.core.parsing.util.detectDirection
 import com.sciuro.core.parsing.util.extractAmount
 import com.sciuro.core.parsing.util.extractMerchant
 import com.sciuro.core.parsing.util.matchesAggregatorForward
@@ -26,22 +27,7 @@ class CimbParserRule(
         
         val amount = extractAmount(text) ?: extractAmount(title) ?: return null
         
-        val isOutflow = text.contains("deducted", ignoreCase = true) ||
-                        text.contains("ditolak", ignoreCase = true) ||
-                        text.contains("payment to", ignoreCase = true) ||
-                        text.contains("bayaran kepada", ignoreCase = true) ||
-                        text.contains("transferred to", ignoreCase = true)
-
-        val isInflow = text.contains("credited", ignoreCase = true) ||
-                       text.contains("received", ignoreCase = true) ||
-                       text.contains("masuk", ignoreCase = true) ||
-                       text.contains("dikreditkan", ignoreCase = true)
-
-        val direction = when {
-            isOutflow -> TransactionDirection.OUTFLOW
-            isInflow -> TransactionDirection.INFLOW
-            else -> null
-        }
+        val direction = detectDirection(text, event.title)
 
         val merchant = extractMerchant(text)
         val counterpartyAccount = extractAccountNumber(text)

@@ -26,6 +26,8 @@ fun DeveloperTabIngestionLog(
     val pendingCount by viewModel.pendingCount.collectAsState()
     val deadLetterCount by viewModel.deadLetterCount.collectAsState()
 
+    var selectedDeadLetter by remember { mutableStateOf<com.sciuro.core.ledger.db.Raw_event_staging?>(null) }
+
     LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
@@ -60,7 +62,7 @@ fun DeveloperTabIngestionLog(
             }
         }
 
-        var selectedDeadLetter by remember { mutableStateOf<com.sciuro.core.ledger.db.Raw_event_staging?>(null) }
+        
 
         items(deadLetterEvents) { event ->
             Card(

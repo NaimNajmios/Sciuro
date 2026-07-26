@@ -127,7 +127,7 @@ class DeveloperSettingsViewModel(
                 val status = if (_traceFilterStatus.value == "ALL") null else _traceFilterStatus.value
                 val pkg = _traceFilterPackage.value.ifBlank { null }
                 val events = database.pipelineTraceQueries
-                    .selectFilteredTraceEvents(packageName = pkg, outcome = status, limit = 100L)
+                    .selectFilteredTraceEvents(pkg, status, 100L)
                     .executeAsList()
                     .map {
                         TraceEventSummary(it.raw_event_id, it.first_at, it.last_at, it.stage_count, it.package_name)

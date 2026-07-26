@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
 
 class SciuroIngestionOrchestrator(
     private val ingestionSource: MultiplexIngestionSource,
@@ -38,7 +39,7 @@ class SciuroIngestionOrchestrator(
         }
     }
 
-    private suspend fun recoverStrandedEvents() {
+    private suspend fun recoverStrandedEvents() = coroutineScope {
         val staleThreshold = currentTimeMillis() - PROCESSING_STALE_MS
         val strandedEvents = rawEventRepository.getStrandedEvents(staleThreshold)
         for (staging in strandedEvents) {
@@ -50,16 +51,20 @@ class SciuroIngestionOrchestrator(
                 text = staging.text,
                 timestamp = staging.timestamp
             )
-            processOneEvent(rawEvent)
+            launch {
+                processOneEvent(rawEvent)
+            }
         }
     }
 
-    private suspend fun collectEventsWithRetry() {
+    private suspend fun collectEventsWithRetry() = coroutineScope {
         var attempt = 0
         while (true) {
             try {
                 ingestionSource.observeEvents().collect { rawEvent ->
-                    processOneEvent(rawEvent)
+                    launch {
+                        processOneEvent(rawEvent)
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
