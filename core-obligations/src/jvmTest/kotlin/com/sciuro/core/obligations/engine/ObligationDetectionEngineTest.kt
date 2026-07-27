@@ -13,6 +13,7 @@ import com.sciuro.core.ledger.config.LlmParsingConfig
 import com.sciuro.core.obligations.repository.ObligationRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -186,7 +187,7 @@ class ObligationDetectionEngineTest {
         engine.runDetection()
 
         val events = mutableListOf<DomainEvent>()
-        eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect }
+        withTimeout(5000) { eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect } }
 
         assertTrue(events.any { it is DomainEvent.ObligationCreated })
         assertTrue(events.any { it is DomainEvent.RecurringObligationConfirmed })
@@ -203,7 +204,7 @@ class ObligationDetectionEngineTest {
         engine.runDetection()
 
         val events = mutableListOf<DomainEvent>()
-        eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect }
+        withTimeout(5000) { eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect } }
 
         assertTrue(events.any { it is DomainEvent.ObligationCreated })
         assertTrue(events.any { it is DomainEvent.RecurringObligationProposed })

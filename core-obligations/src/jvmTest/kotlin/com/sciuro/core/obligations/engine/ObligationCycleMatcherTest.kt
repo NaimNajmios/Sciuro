@@ -9,7 +9,9 @@ import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.obligations.repository.ObligationRepository
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -77,12 +79,18 @@ class ObligationCycleMatcherTest {
         )
 
         val events = mutableListOf<DomainEvent>()
-        eventBus.events.collect { events.add(it); return@collect }
+        val job = launch {
+            withTimeout(5000) {
+                eventBus.events.collect { events.add(it); return@collect }
+            }
+        }
 
         matcher.onTransactionBooked(
             transactionId = "tx_1", amount = 15.0, direction = "OUTFLOW",
             categoryId = null, merchant = "netflix"
         )
+
+        job.join()
 
         assertEquals(2, events.size)
         val settledEvent = events.last()
@@ -101,12 +109,18 @@ class ObligationCycleMatcherTest {
         )
 
         val events = mutableListOf<DomainEvent>()
-        eventBus.events.collect { events.add(it); return@collect }
+        val job = launch {
+            withTimeout(5000) {
+                eventBus.events.collect { events.add(it); return@collect }
+            }
+        }
 
         matcher.onTransactionBooked(
             transactionId = "tx_1", amount = 25.0, direction = "OUTFLOW",
             categoryId = null, merchant = "netflix"
         )
+
+        job.join()
 
         val driftEvent = events.firstOrNull { it is DomainEvent.ObligationAmountDrifted }
         assertNotNull(driftEvent, "Should publish ObligationAmountDrifted when amount changes from 15 to 25")
@@ -229,12 +243,18 @@ class ObligationCycleMatcherTest {
         )
 
         val events = mutableListOf<DomainEvent>()
-        eventBus.events.collect { events.add(it); return@collect }
+        val job = launch {
+            withTimeout(5000) {
+                eventBus.events.collect { events.add(it); return@collect }
+            }
+        }
 
         matcher.onTransactionBooked(
             transactionId = "tx_1", amount = 16.0, direction = "OUTFLOW",
             categoryId = null, merchant = "netflix"
         )
+
+        job.join()
 
         val driftEvent = events.firstOrNull { it is DomainEvent.ObligationAmountDrifted }
         assertEquals(null, driftEvent,

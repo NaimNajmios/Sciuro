@@ -114,14 +114,15 @@ fun DeveloperSettingsScreen(
                 }
             }
 
+            val tabModifier = Modifier.weight(1f)
             when (selectedTab) {
-                0 -> DeveloperTabSimulator(viewModel, simulationResult)
-                1 -> DeveloperTabSources(viewModel)
-                2 -> DeveloperTabIngestionLog(viewModel)
-                3 -> DeveloperTabDiagnostics(viewModel, simulationResult)
-                4 -> DeveloperTabDataTools(viewModel)
-                5 -> DeveloperTabHealth(viewModel)
-                6 -> DeveloperTabPipelineTrace(viewModel)
+                0 -> DeveloperTabSimulator(viewModel, simulationResult, modifier = tabModifier)
+                1 -> DeveloperTabSources(viewModel, modifier = tabModifier)
+                2 -> DeveloperTabIngestionLog(viewModel, modifier = tabModifier)
+                3 -> DeveloperTabDiagnostics(viewModel, simulationResult, modifier = tabModifier)
+                4 -> DeveloperTabDataTools(viewModel, modifier = tabModifier)
+                5 -> DeveloperTabHealth(viewModel, modifier = tabModifier)
+                6 -> DeveloperTabPipelineTrace(viewModel, modifier = tabModifier)
             }
         }
     }

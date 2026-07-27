@@ -117,7 +117,7 @@ Three new `FixtureLibrary` entries reproducing the exact captured payloads:
 
 ## Known gaps
 
-- JVM target `:core-transfer:jvmTest` fails on JDK 21 due to `:core-audit:compileKotlinJvm` ("Unknown Kotlin JVM target: 21"). This is a pre-existing environment issue (Kotlin 1.9.0 does not support JDK 21 as a compilation target). Android-side unit tests (`:core-transfer:testDebugUnitTest`) use the Android device platform and do not hit this.
-- The dedup and tight-match tests are Android-side only for this reason; full JVM integration test suite requires either a JDK downgrade or Kotlin version bump.
+- JVM target `:core-transfer:jvmTest` was previously blocked but has been fixed. The root cause was not JDK 21 (that was a misdiagnosis — `jvmTarget = 1.8` works fine on JDK 21). Instead the jvmTest code had stale constructors (`TransactionRepository` missing `eventBus` arg, `Transaction` missing `referenceId`) and `runBlocking` return-type issue triggering JUnit 4 validation. Fix applied in subsequent test-maintenance phase.
+- The dedup and tight-match tests were jvmTest-only for this reason; they now pass.
 - N4b `LinkedAccountsScreen` Compose UI is not covered by automated Compose UI tests (no Compose testing framework set up in this project per previous phase notes). Manual dogfood is the established verification pattern.
 - The `findLikelyDuplicate` query filters on `(direction, amount, timestamp)` but uses `ABS()` which prevents index-only scans. The `idx_tx_dedup` index on `(account_id, amount, timestamp)` is a best-effort hint — SQLite may still require a table scan for the ABS() computation. For a personal-finance workload (<1k transactions per year per user), this is not a performance concern.

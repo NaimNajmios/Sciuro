@@ -79,8 +79,8 @@ Deferred: Lottie mascot assets, pull-to-refresh, shared-element transitions (vis
 - [PASS] `./gradlew detekt` — passes
 - [PASS] `./gradlew assembleDebug` — succeeds
 - [PASS] `./gradlew testDebugUnitTest` — 318 tasks, all succeed
-- [SKIP] `./gradlew allTests` — pre-existing JVM 21 target issue (unrelated to this phase)
-- [SKIP] `./gradlew :core-transfer:jvmTest` — same pre-existing JVM 21 issue
+- [SKIP] `./gradlew allTests` — `:core-obligations:jvmTest` had 4 pre-existing assertion failures (unrelated to this phase). Subsequent test-maintenance phase fixed `:core-transfer:jvmTest` (15/15 pass) and stoppered hanging tests with `withTimeout`.
+- [SKIP] `./gradlew :core-transfer:jvmTest` — was previously blocked by stale jvmTest code (not JDK 21). Fixed in subsequent phase; now 15/15 pass.
 
 ---
 

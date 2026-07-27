@@ -76,6 +76,6 @@ All changes are internal — no user-facing behavior changes (except the new Res
 - [PASS] `:app:compileDebugKotlinAndroid` — clean compile (post catalog fix)
 
 ## Known pre-existing issues (not addressed)
-- `:core-transfer:jvmTest` fails on JDK 21 (Kotlin 1.9.0 limitation)
+- `:core-transfer:jvmTest` previously documented as "fails on JDK 21" — this was a misdiagnosis. Real root cause was production API drift vs stale jvmTest code (missing `eventBus` arg on `TransactionRepository`, missing `referenceId` on `Transaction`, no public `driver` property). Fixed in subsequent test-maintenance phase. See `phase-transfer-1-to-2/TEST_NOTES.md`.
 - `:core-ingestion:testDebugUnitTest` fails — `EmailSourceAdapterTest.kt` references non-existent email adapter
 - Feature modules: `PullToRefreshContainer`, `rememberSharedContentState` unresolved (Material3 compose BOM API drift)

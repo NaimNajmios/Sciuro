@@ -6,6 +6,7 @@ import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -138,7 +139,7 @@ class BudgetLimitSuggesterTest {
         val result = suggester.suggestAndPublish("cat_food")
         assertTrue(result != null && result > 0)
 
-        val event = eventBus.events.first() as DomainEvent.BudgetLimitSuggested
+        val event = withTimeout(5000) { eventBus.events.first() } as DomainEvent.BudgetLimitSuggested
         assertEquals("cat_food", event.categoryId)
         assertEquals(result, event.suggestedAmount, 0.001)
     }

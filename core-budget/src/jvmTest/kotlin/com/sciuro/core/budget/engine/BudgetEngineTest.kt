@@ -6,6 +6,7 @@ import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -197,7 +198,7 @@ class BudgetEngineTest {
 
         engine.processBudgets()
 
-        val event = eventBus.events.first() as DomainEvent.BudgetThresholdCrossed
+        val event = withTimeout(5000) { eventBus.events.first() } as DomainEvent.BudgetThresholdCrossed
         assertEquals("cat_food", event.categoryId)
         assertTrue(event.percentUsed >= 0.8)
     }

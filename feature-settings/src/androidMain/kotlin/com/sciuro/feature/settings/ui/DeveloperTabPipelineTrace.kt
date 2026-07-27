@@ -98,7 +98,7 @@ fun DeveloperTabPipelineTrace(
     }
 
     Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
+        modifier = modifier.padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.Top
     ) {
         Spacer(modifier = Modifier.height(12.dp))

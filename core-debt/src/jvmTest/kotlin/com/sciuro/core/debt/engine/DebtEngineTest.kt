@@ -9,6 +9,7 @@ import com.sciuro.core.debt.repository.DebtPaymentLinkRepository
 import com.sciuro.core.ledger.db.SciuroDatabase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -127,7 +128,7 @@ class DebtEngineTest {
         val updated = database.debtQueries.selectAllDebts().executeAsList().first { it.id == "debt_bal" }
         assertEquals(6000.0, updated.remaining_balance, 0.001)
 
-        val event = eventBus.events.first() as DomainEvent.DebtBalanceUpdated
+        val event = withTimeout(5000) { eventBus.events.first() } as DomainEvent.DebtBalanceUpdated
         assertEquals("debt_bal", event.debtId)
         assertEquals(6000.0, event.newBalance, 0.001)
         assertEquals("AUTO_MATCH", event.method)
@@ -144,7 +145,7 @@ class DebtEngineTest {
         assertEquals(0.0, updated.remaining_balance, 0.001)
 
         val events = mutableListOf<DomainEvent>()
-        eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect }
+        withTimeout(5000) { eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect } }
         assertTrue(events.any { it is DomainEvent.DebtBalanceUpdated })
         assertTrue(events.any { it is DomainEvent.DebtFullyPaidOff })
     }

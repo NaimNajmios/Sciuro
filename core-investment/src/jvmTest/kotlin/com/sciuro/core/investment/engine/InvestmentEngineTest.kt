@@ -8,6 +8,7 @@ import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.engine.TransactionMatchingEngine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -88,7 +89,7 @@ class InvestmentEngineTest {
 
         engine.processInvestments()
 
-        val event = eventBus.events.first() as DomainEvent.InvestmentTransactionRecorded
+        val event = withTimeout(5000) { eventBus.events.first() } as DomainEvent.InvestmentTransactionRecorded
         assertEquals("inv_4", event.accountId)
         assertEquals("BUY", event.action)
         assertEquals(2.5, event.unitAmount, 0.001)
