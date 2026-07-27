@@ -16,7 +16,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-import com.sciuro.feature.settings.viewmodel.TraceEventSummary
 import com.sciuro.feature.settings.viewmodel.TraceRow
 import kotlinx.coroutines.launch
 import com.najmi.sciuro.core.ui.components.SciuroTextField
@@ -45,109 +44,108 @@ fun DeveloperTabPipelineTrace(
     }
 
     if (selectedEventId != null) {
-        Column(modifier = modifier.padding(horizontal = 16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    stringResource(R.string.dev_trace_event_label, selectedEventId!!.take(8)),
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextButton(onClick = { selectedEventId = null }) { Text(stringResource(R.string.dev_trace_back)) }
+        LazyColumn(
+            modifier = modifier.padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(bottom = 110.dp)
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        stringResource(R.string.dev_trace_event_label, selectedEventId!!.take(8)),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    TextButton(onClick = { selectedEventId = null }) { Text(stringResource(R.string.dev_trace_back)) }
+                }
             }
-            LazyColumn(contentPadding = PaddingValues(bottom = 110.dp)) {
-                items(selectedEventTraces) { trace ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = when (trace.outcome) {
-                                "SUCCESS" -> MaterialTheme.colorScheme.surfaceVariant
-                                "FAILURE", "DROP" -> MaterialTheme.colorScheme.errorContainer
-                                else -> MaterialTheme.colorScheme.surfaceVariant
-                            }
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
-                            val timeStr = remember(trace.createdAt) {
-                                SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date(trace.createdAt))
-                            }
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("${trace.stage} \u2192 ${trace.outcome}", style = MaterialTheme.typography.labelSmall)
-                                Text(timeStr, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
-                            }
-                            if (trace.durationMs != null) {
-                                Text("${trace.durationMs}ms", style = MaterialTheme.typography.labelSmall)
-                            }
-                            if (trace.confidence != null) {
-                                Text("conf: ${"%.2f".format(trace.confidence)}", style = MaterialTheme.typography.labelSmall)
-                            }
-                            if (!trace.detail.isNullOrBlank()) {
-                                Text(trace.detail.take(200), style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+            items(selectedEventTraces) { trace ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = when (trace.outcome) {
+                            "SUCCESS" -> MaterialTheme.colorScheme.surfaceVariant
+                            "FAILURE", "DROP" -> MaterialTheme.colorScheme.errorContainer
+                            else -> MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        val timeStr = remember(trace.createdAt) {
+                            SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date(trace.createdAt))
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("${trace.stage} \u2192 ${trace.outcome}", style = MaterialTheme.typography.labelSmall)
+                            Text(timeStr, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+                        }
+                        if (trace.durationMs != null) {
+                            Text("${trace.durationMs}ms", style = MaterialTheme.typography.labelSmall)
+                        }
+                        if (trace.confidence != null) {
+                            Text("conf: ${"%.2f".format(trace.confidence)}", style = MaterialTheme.typography.labelSmall)
+                        }
+                        if (!trace.detail.isNullOrBlank()) {
+                            Text(trace.detail.take(200), style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
-                if (selectedEventTraces.isEmpty()) {
-                    item { Text(stringResource(R.string.dev_trace_no_traces), modifier = Modifier.padding(16.dp)) }
-                }
+            }
+            if (selectedEventTraces.isEmpty()) {
+                item { Text(stringResource(R.string.dev_trace_no_traces), modifier = Modifier.padding(16.dp)) }
             }
         }
         return
     }
 
-    Column(
+    LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.Top
+        contentPadding = PaddingValues(top = 12.dp, bottom = 110.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(stringResource(R.string.dev_trace_title), style = MaterialTheme.typography.titleSmall)
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            var pkgText by remember(traceFilterPackage) { mutableStateOf(traceFilterPackage) }
-            SciuroTextField(
-                value = pkgText,
-                onValueChange = { pkgText = it },
-                label = "Package",
-                modifier = Modifier.weight(1f)
-            )
-            Button(onClick = { viewModel.setTraceFilter(traceFilterStatus, pkgText) }, modifier = Modifier.padding(top = 8.dp)) {
-                Text("Apply")
-            }
-        }
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("ALL", "SUCCESS", "FAILURE", "DROP").forEach { status ->
-                FilterChip(
-                    selected = traceFilterStatus == status,
-                    onClick = { viewModel.setTraceFilter(status, traceFilterPackage) },
-                    label = { Text(status) }
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            FilterChip(
-                selected = showOnlyAllowlisted,
-                onClick = { viewModel.setShowOnlyAllowlisted(!showOnlyAllowlisted) },
-                label = { Text("Allowlisted") }
-            )
-        }
+        item {
+            Text(stringResource(R.string.dev_trace_title), style = MaterialTheme.typography.titleSmall)
+            Spacer(modifier = Modifier.height(8.dp))
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 110.dp),
-            verticalArrangement = Arrangement.Top
-        ) {
-            if (events.isEmpty()) {
-                item {
-                    Text(
-                        stringResource(R.string.dev_trace_no_data),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 24.dp)
-                    )
+            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                var pkgText by remember(traceFilterPackage) { mutableStateOf(traceFilterPackage) }
+                SciuroTextField(
+                    value = pkgText,
+                    onValueChange = { pkgText = it },
+                    label = "Package",
+                    modifier = Modifier.weight(1f)
+                )
+                Button(onClick = { viewModel.setTraceFilter(traceFilterStatus, pkgText) }, modifier = Modifier.padding(top = 8.dp)) {
+                    Text("Apply")
                 }
             }
+            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("ALL", "SUCCESS", "FAILURE", "DROP").forEach { status ->
+                    FilterChip(
+                        selected = traceFilterStatus == status,
+                        onClick = { viewModel.setTraceFilter(status, traceFilterPackage) },
+                        label = { Text(status) }
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                FilterChip(
+                    selected = showOnlyAllowlisted,
+                    onClick = { viewModel.setShowOnlyAllowlisted(!showOnlyAllowlisted) },
+                    label = { Text("Allowlisted") }
+                )
+            }
+        }
+
+        if (events.isEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.dev_trace_no_data),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
+            }
+        }
 
         items(events) { event ->
             SciuroCard(
@@ -183,4 +181,4 @@ fun DeveloperTabPipelineTrace(
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
-}}
+}
