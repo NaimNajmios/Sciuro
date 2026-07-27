@@ -136,7 +136,8 @@ class TransactionRepository(
                     transactionId = transactionId,
                     oldCategoryId = oldTx.category_id ?: "",
                     newCategoryId = learnedCategoryId,
-                    merchant = oldTx.merchant
+                    merchant = oldTx.merchant,
+                    accountId = targetAccountId
                 )
             )
         }

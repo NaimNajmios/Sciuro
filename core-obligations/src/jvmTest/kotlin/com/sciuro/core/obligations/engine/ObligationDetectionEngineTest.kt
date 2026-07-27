@@ -30,13 +30,15 @@ class ObligationDetectionEngineTest {
     private lateinit var settingsProvider: TestSettingsProvider
 
     private class TestSettingsProvider(
-        var autoConfirmEnabled: Boolean = false,
-        var autoConfirmThreshold: Int = 3
+        autoConfirmEnabled: Boolean = false,
+        autoConfirmThreshold: Int = 3
     ) : SettingsProvider {
+        var autoConfirmEnabled: Boolean = autoConfirmEnabled
+        private var _autoConfirmThreshold: Int = autoConfirmThreshold
         override fun isObligationAutoConfirmEnabled(): Boolean = autoConfirmEnabled
         override fun setObligationAutoConfirmEnabled(enabled: Boolean) { autoConfirmEnabled = enabled }
-        override fun getAutoConfirmThreshold(): Int = autoConfirmThreshold
-        override fun setAutoConfirmThreshold(threshold: Int) { autoConfirmThreshold = threshold }
+        override fun getAutoConfirmThreshold(): Int = _autoConfirmThreshold
+        override fun setAutoConfirmThreshold(threshold: Int) { _autoConfirmThreshold = threshold }
         override fun getSilentAutoConfirmThreshold(): Float = 0.8f
         override fun setSilentAutoConfirmThreshold(threshold: Float) {}
         override fun isTransactionAutoConfirmEnabled(): Boolean = false
@@ -67,12 +69,10 @@ class ObligationDetectionEngineTest {
         override fun setQuietHoursStart(hour: Int) {}
         override fun getQuietHoursEnd(): Int = 7
         override fun setQuietHoursEnd(hour: Int) {}
-        override fun isTrustValidatedLlmEnabled(): Boolean = false
-        override fun setTrustValidatedLlmEnabled(enabled: Boolean) {}
-        override fun isTransactionAutoConfirmEnabled(): Boolean = false
-        override fun setTransactionAutoConfirmEnabled(enabled: Boolean) {}
-        override fun getSilentAutoConfirmThreshold(): Float = 0.0f
-        override fun setSilentAutoConfirmThreshold(threshold: Float) {}
+        override fun hasSeenBatteryPrompt(): Boolean = false
+        override fun setHasSeenBatteryPrompt(hasSeen: Boolean) {}
+        override fun isDeveloperOptionsVisible(): Boolean = false
+        override fun setDeveloperOptionsVisible(visible: Boolean) {}
         override fun getLlmConfig(): LlmParsingConfig = LlmParsingConfig()
     }
 
@@ -172,7 +172,7 @@ class ObligationDetectionEngineTest {
     @Test
     fun `runDetection publishes RecurringObligationConfirmed when auto-confirm enabled and trusted`() = runBlocking {
         settingsProvider.autoConfirmEnabled = true
-        settingsProvider.autoConfirmThreshold = 1
+        settingsProvider.setAutoConfirmThreshold(1)
 
         database.merchantCategoryRuleQueries.upsertMerchantRule(
             merchant_key = "netflix", category_id = "cat_entertainment",

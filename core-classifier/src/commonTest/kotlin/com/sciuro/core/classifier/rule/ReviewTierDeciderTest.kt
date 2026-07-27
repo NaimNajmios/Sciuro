@@ -21,6 +21,7 @@ class ReviewTierDeciderTest {
         override val debtQueries get() = throw UnsupportedOperationException()
         override val debtPaymentLinkQueries get() = throw UnsupportedOperationException()
         override val investmentQueries get() = throw UnsupportedOperationException()
+        override val merchantAccountRuleQueries get() = throw UnsupportedOperationException()
         override val merchantCategoryRuleQueries get() = throw UnsupportedOperationException()
         override val obligationQueries get() = throw UnsupportedOperationException()
         override val pipelineTraceQueries get() = throw UnsupportedOperationException()

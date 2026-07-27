@@ -8,7 +8,7 @@ sealed interface DomainEvent {
     data class BudgetThresholdCrossed(val categoryId: String, val percentUsed: Double) : DomainEvent
 
     data class TransactionCategorized(val transactionId: String, val categoryId: String, val confidence: Double, val source: String, val merchant: String? = null) : DomainEvent
-    data class TransactionRecategorized(val transactionId: String, val oldCategoryId: String, val newCategoryId: String, val merchant: String? = null) : DomainEvent
+    data class TransactionRecategorized(val transactionId: String, val oldCategoryId: String, val newCategoryId: String, val merchant: String? = null, val accountId: String? = null) : DomainEvent
     data class TransferMatched(val transferLinkId: String, val sourceTxId: String, val destTxId: String, val matchMethod: String) : DomainEvent
     data class TransferUnmatchedFlagged(val transactionId: String, val candidateRecipient: String) : DomainEvent
     data class CashCredited(val cashAccountId: String, val amount: Double, val sourceEvent: String) : DomainEvent
@@ -25,5 +25,6 @@ sealed interface DomainEvent {
     data class NewFinanceAppDetected(val packageName: String) : DomainEvent
     data class MerchantRuleLearned(val merchant: String, val categoryId: String) : DomainEvent
     data class RecipientRuleLearned(val accountRef: String, val classification: String) : DomainEvent
+    data class MerchantAccountRuleLearned(val merchant: String, val accountId: String) : DomainEvent
     data class TransactionModified(val transactionId: String) : DomainEvent
 }

@@ -1,22 +1,75 @@
 package com.sciuro.core.classifier.rule
 
+import com.sciuro.core.audit.model.TransactionIntent
 import com.sciuro.core.ledger.db.SciuroDatabase
 
 class CategoryResolver(
     private val database: SciuroDatabase
 ) {
-    suspend fun resolve(merchant: String?): String? {
+    suspend fun resolve(merchant: String?, amount: Double, direction: String): CategorySuggestion? {
         if (merchant == null) return null
-        val normalizedKey = merchant.lowercase().trim()
 
+        if (direction == "OUTFLOW") {
+            val debtMatch = database.debtQueries.selectDebtsByDirectionAndActive("I_OWE")
+                .executeAsList()
+                .firstOrNull { merchant.contains(it.name, ignoreCase = true) || it.name.contains(merchant, ignoreCase = true) }
+            if (debtMatch != null) {
+                return CategorySuggestion(
+                    categoryId = "cat_debt_payment",
+                    confidence = 0.95f,
+                    reason = "debt_match:${debtMatch.name}",
+                    autoConfirmable = true,
+                    intent = TransactionIntent.DebtPayment(
+                        debtId = debtMatch.id,
+                        debtName = debtMatch.name,
+                        remainingBalance = debtMatch.remaining_balance,
+                        counterpartyName = debtMatch.counterparty_name
+                    )
+                )
+            }
+        }
+
+        if (direction == "INFLOW") {
+            val collectibleMatch = database.debtQueries.selectDebtsByDirectionAndActive("OWED_TO_ME")
+                .executeAsList()
+                .firstOrNull { it.counterparty_name != null && merchant.contains(it.counterparty_name!!, ignoreCase = true) }
+            if (collectibleMatch != null) {
+                return CategorySuggestion(
+                    categoryId = "cat_inc_1",
+                    confidence = 0.90f,
+                    reason = "debt_collection:${collectibleMatch.name}",
+                    intent = TransactionIntent.DebtCollection(
+                        debtId = collectibleMatch.id,
+                        counterparty = collectibleMatch.counterparty_name ?: collectibleMatch.name
+                    )
+                )
+            }
+        }
+
+        val normalizedKey = merchant.lowercase().trim()
         val learnedRule = database.merchantCategoryRuleQueries
             .selectMerchantRuleByKey(normalizedKey)
             .executeAsOneOrNull()
         if (learnedRule != null) {
-            return learnedRule.category_id
+            return CategorySuggestion(
+                categoryId = learnedRule.category_id,
+                confidence = 0.90f,
+                reason = "learned_rule",
+                autoConfirmable = true
+            )
         }
 
-        return guessFromStaticHeuristic(merchant)
+        val heuristicId = guessFromStaticHeuristic(merchant)
+        if (heuristicId != null) {
+            return CategorySuggestion(
+                categoryId = heuristicId,
+                confidence = 0.70f,
+                reason = "static_heuristic",
+                autoConfirmable = false
+            )
+        }
+
+        return null
     }
 
     companion object {

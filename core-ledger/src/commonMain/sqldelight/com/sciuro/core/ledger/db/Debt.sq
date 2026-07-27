@@ -45,3 +45,6 @@ SELECT * FROM debt_record;
 
 selectDebtsByDirection:
 SELECT * FROM debt_record WHERE direction = ?;
+
+selectDebtsByDirectionAndActive:
+SELECT * FROM debt_record WHERE direction = ? AND status = 'ACTIVE';

@@ -40,3 +40,11 @@ updateNextDueDate:
 UPDATE obligation
 SET next_due_date = ?, updated_at = ?
 WHERE id = ?;
+
+findObligationByMerchantAndAmount:
+SELECT * FROM obligation 
+WHERE is_active = 1 
+  AND :merchant IS NOT NULL
+  AND name LIKE '%' || :merchant || '%'
+  AND ABS(amount - :amount) <= :tolerance
+LIMIT 1;

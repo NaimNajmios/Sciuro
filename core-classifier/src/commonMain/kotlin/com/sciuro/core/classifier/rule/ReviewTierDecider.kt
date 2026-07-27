@@ -1,6 +1,7 @@
 package com.sciuro.core.classifier.rule
 
 import com.sciuro.core.audit.model.ReviewTier
+import com.sciuro.core.audit.model.TransactionIntent
 import com.sciuro.core.ledger.db.SciuroDatabase
 
 class ReviewTierDecider(
@@ -13,10 +14,17 @@ class ReviewTierDecider(
         confidence: Float,
         categoryId: String?,
         accountId: String?,
-        merchant: String?
+        merchant: String?,
+        intent: TransactionIntent? = null
     ): ReviewTier {
         val hasCategory = categoryId != null
         val hasAccount = accountId != null
+
+        val knownIntentWithData = intent != null && intent !is TransactionIntent.Unknown
+
+        if (knownIntentWithData && hasCategory) {
+            return ReviewTier.AUTO_SILENT
+        }
 
         if (confidence >= 1.0f) {
             return ReviewTier.AUTO_SILENT

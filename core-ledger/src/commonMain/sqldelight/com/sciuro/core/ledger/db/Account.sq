@@ -68,3 +68,20 @@ SELECT * FROM account_pair_confirmation;
 selectPairedAccount:
 SELECT * FROM account_pair_confirmation
 WHERE account_id_a = ? OR account_id_b = ?;
+
+selectAccountByBankCode:
+SELECT * FROM account WHERE bank_institution_code = ? AND status != 'DELETED' LIMIT 1;
+
+selectMostCommonAccountForMerchant:
+SELECT account_id, COUNT(*)
+FROM transaction_record
+WHERE merchant = ? AND account_id IS NOT NULL
+GROUP BY account_id
+ORDER BY COUNT(*) DESC
+LIMIT 1;
+
+selectAccountByHolderNameFuzzy:
+SELECT * FROM account
+WHERE account_holder_name IS NOT NULL
+  AND account_holder_name LIKE '%' || :name || '%'
+  AND status != 'DELETED' LIMIT 1;

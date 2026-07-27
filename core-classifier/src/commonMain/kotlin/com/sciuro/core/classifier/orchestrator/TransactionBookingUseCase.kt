@@ -1,16 +1,18 @@
 package com.sciuro.core.classifier.orchestrator
 
 import com.sciuro.core.audit.model.AuditSource
+import com.sciuro.core.audit.model.TransactionIntent
 import com.sciuro.core.audit.trace.PipelineTracer
 import com.sciuro.core.audit.trace.TraceOutcome
 import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.audit.util.generateUuid
+import com.sciuro.core.classifier.rule.AccountMatcher
 import com.sciuro.core.classifier.rule.CategoryResolver
 import com.sciuro.core.classifier.rule.ReviewTierDecider
 import com.sciuro.core.ingestion.model.RawEvent
+import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.model.Transaction
-import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.parsing.engine.SciuroParserPipeline
@@ -19,7 +21,8 @@ import com.sciuro.core.parsing.model.StructuredDraft
 data class BookingResult(
     val transaction: Transaction,
     val draft: StructuredDraft,
-    val rawEventId: String
+    val rawEventId: String,
+    val intent: TransactionIntent? = null
 )
 
 interface TransactionBookingUseCase {
@@ -27,12 +30,13 @@ interface TransactionBookingUseCase {
 }
 
 open class DefaultTransactionBookingUseCase(
+    private val database: SciuroDatabase,
     private val parserPipeline: SciuroParserPipeline,
     private val transactionRepository: TransactionRepository,
-    private val accountRepository: AccountRepository,
     private val rawEventRepository: RawEventRepository,
     private val categoryResolver: CategoryResolver,
     private val reviewTierDecider: ReviewTierDecider,
+    private val accountMatcher: AccountMatcher,
     private val tracer: PipelineTracer,
     private val confidenceThreshold: Float
 ) : TransactionBookingUseCase {
@@ -86,15 +90,45 @@ open class DefaultTransactionBookingUseCase(
             return null
         }
 
-        val categoryId = categoryResolver.resolve(draft.merchant)
+        var categoryId: String? = null
+        var intent: TransactionIntent? = null
+
+        if (draft.merchant != null && directionName == "OUTFLOW") {
+            val obligationMatch = database.obligationQueries
+                .findObligationByMerchantAndAmount(
+                    merchant = draft.merchant,
+                    amount = draft.amount,
+                    tolerance = draft.amount * 0.05
+                )
+                .executeAsOneOrNull()
+            if (obligationMatch != null) {
+                categoryId = obligationMatch.category_id
+                intent = TransactionIntent.SubscriptionPayment(
+                    obligationId = obligationMatch.id,
+                    obligationName = obligationMatch.name,
+                    nextDueDate = obligationMatch.next_due_date
+                )
+            }
+        }
+
+        if (categoryId == null) {
+            val suggestion = categoryResolver.resolve(draft.merchant, draft.amount, directionName)
+            if (suggestion != null) {
+                categoryId = suggestion.categoryId
+                if (intent == null) {
+                    intent = suggestion.intent
+                }
+            }
+        }
         tracer.trace(rawEvent.id, null, TraceStage.CATEGORIZE,
             if (categoryId != null) TraceOutcome.SUCCESS else TraceOutcome.SKIP,
-            detail = mapOf("category_id" to categoryId, "merchant" to draft.merchant))
+            detail = mapOf("category_id" to categoryId, "merchant" to draft.merchant, "intent" to intent?.toString()))
 
-        val accountId = matchAccount(rawEvent, draft)
+        val accountMatch = accountMatcher.match(rawEvent, draft)
+        val accountId = accountMatch?.accountId
         tracer.trace(rawEvent.id, null, TraceStage.ACCOUNT_MATCH,
             if (accountId != null) TraceOutcome.SUCCESS else TraceOutcome.SKIP,
-            detail = mapOf("account_id" to accountId, "package" to rawEvent.sourcePackageOrAddress, "account_channel" to draft.accountOrChannel))
+            detail = mapOf("account_id" to accountId, "package" to rawEvent.sourcePackageOrAddress, "account_channel" to draft.accountOrChannel, "match_reason" to (accountMatch?.reason ?: "none")))
 
         val extractionMethod = if (draft.confidenceScore >= confidenceThreshold) "REGEX" else "LLM_FALLBACK"
 
@@ -102,7 +136,8 @@ open class DefaultTransactionBookingUseCase(
             confidence = draft.confidenceScore,
             categoryId = categoryId,
             accountId = accountId,
-            merchant = draft.merchant
+            merchant = draft.merchant,
+            intent = intent
         )
         val nowAuto = currentTimeMillis()
         val isReviewed = tier != com.sciuro.core.audit.model.ReviewTier.MANUAL
@@ -130,21 +165,7 @@ open class DefaultTransactionBookingUseCase(
             confidence = draft.confidenceScore,
             detail = mapOf("is_reviewed" to "${transaction.isReviewed}", "review_tier" to tier.label, "extraction_method" to extractionMethod))
 
-        return BookingResult(transaction = transaction, draft = draft, rawEventId = rawEvent.id)
-    }
-
-    private suspend fun matchAccount(rawEvent: RawEvent, draft: StructuredDraft): String? {
-        var matchedAccount = accountRepository.getAccountByPackageName(rawEvent.sourcePackageOrAddress)
-        if (matchedAccount == null) {
-            val accChannel = draft.accountOrChannel
-            if (!accChannel.isNullOrBlank()) {
-                val suffixOnly = accChannel.takeLast(4).filter { it.isDigit() }
-                if (suffixOnly.isNotEmpty()) {
-                    matchedAccount = accountRepository.getAccountByNumberSuffix(suffixOnly)
-                }
-            }
-        }
-        return matchedAccount?.id
+        return BookingResult(transaction = transaction, draft = draft, rawEventId = rawEvent.id, intent = intent)
     }
 
     companion object {

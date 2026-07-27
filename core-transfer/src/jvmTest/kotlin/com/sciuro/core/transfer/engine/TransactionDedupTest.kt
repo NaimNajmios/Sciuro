@@ -11,7 +11,7 @@ import kotlin.test.assertNull
 class TransactionDedupTest {
 
     @Test
-    fun `findLikelyDuplicate returns transaction when same amount direction and within window`() = runBlocking {
+    fun `findLikelyDuplicate returns transaction when same amount direction and within window`() = runBlocking<Unit> {
         val database = TestDatabase.create()
         val fakeAuditRepo = FakeAuditRepository()
         val accountRepo = com.sciuro.core.ledger.repository.AccountRepository(fakeAuditRepo, database)
@@ -23,7 +23,7 @@ class TransactionDedupTest {
         val tx = Transaction(
             id = "tx_1", accountId = "acc_a", categoryId = null,
             amount = 5.40, direction = "INFLOW", merchant = null,
-            timestamp = 1000L, isReviewed = false
+            timestamp = 1000L, referenceId = null, isReviewed = false
         )
         txRepo.bookTransaction(tx, source = AuditSource.SYSTEM_AUTO)
 
@@ -46,7 +46,7 @@ class TransactionDedupTest {
         val tx = Transaction(
             id = "tx_1", accountId = "acc_a", categoryId = null,
             amount = 5.40, direction = "INFLOW", merchant = null,
-            timestamp = 1000L, isReviewed = false
+            timestamp = 1000L, referenceId = null, isReviewed = false
         )
         txRepo.bookTransaction(tx, source = AuditSource.SYSTEM_AUTO)
 
@@ -69,7 +69,7 @@ class TransactionDedupTest {
         val tx = Transaction(
             id = "tx_1", accountId = "acc_a", categoryId = null,
             amount = 5.40, direction = "INFLOW", merchant = null,
-            timestamp = 1000L, isReviewed = false
+            timestamp = 1000L, referenceId = null, isReviewed = false
         )
         txRepo.bookTransaction(tx, source = AuditSource.SYSTEM_AUTO)
 
@@ -92,7 +92,7 @@ class TransactionDedupTest {
         val tx = Transaction(
             id = "tx_1", accountId = "acc_a", categoryId = null,
             amount = 5.40, direction = "INFLOW", merchant = null,
-            timestamp = 1000L, isReviewed = false
+            timestamp = 1000L, referenceId = null, isReviewed = false
         )
         txRepo.bookTransaction(tx, source = AuditSource.SYSTEM_AUTO)
 

@@ -25,11 +25,6 @@ fun SciuroBottomSheet(
         onDismissRequest = onDismissRequest,
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        dragHandle = {
-            BottomSheetDefaults.DragHandle(
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-            )
-        },
         scrimColor = Color.Black.copy(alpha = 0.5f),
         windowInsets = windowInsets
     ) {
@@ -65,7 +60,7 @@ fun SciuroFormSheet(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
-            Text(title, style = MaterialTheme.typography.headlineSmall)
+            Text(title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
             IconButton(onClick = onDismissRequest) {
                 Icon(Icons.Filled.Close, contentDescription = "Close")
             }

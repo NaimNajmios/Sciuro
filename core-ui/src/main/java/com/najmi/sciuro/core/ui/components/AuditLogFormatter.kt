@@ -24,8 +24,10 @@ fun formatAuditLogDetail(
     }
 }
 
-private fun resolveCategory(categoryId: String?, names: Map<String, String>): String? {
-    if (categoryId == null) return null
+private fun resolveCategory(categoryId: String?, names: Map<String, String>): String {
+    if (categoryId.isNullOrBlank() || categoryId.equals("null", ignoreCase = true)) {
+        return "Uncategorized"
+    }
     return names[categoryId] ?: categoryId
         .removePrefix("cat_")
         .replaceFirstChar { it.uppercase() }
@@ -51,14 +53,14 @@ private fun formatCreate(
     return when (source) {
         "SYSTEM_AUTO" -> {
             val parts = mutableListOf("Auto-parsed")
-            if (categoryStr != null) parts.add("as $categoryStr")
+            if (categoryStr != "Uncategorized") parts.add("as $categoryStr")
             if (merchant != "Unknown") parts.add("at $merchant")
             parts.add("($direction $amountStr)")
             parts.joinToString(" ")
         }
         "LLM_INFERRED" -> {
             val parts = mutableListOf("AI-assisted")
-            if (categoryStr != null) parts.add("as $categoryStr")
+            if (categoryStr != "Uncategorized") parts.add("as $categoryStr")
             if (merchant != "Unknown") parts.add("at $merchant")
             parts.add("($direction $amountStr)")
             parts.joinToString(" ")
@@ -82,12 +84,10 @@ private fun formatReclassify(
     val oldCategoryId = beforeValues["category_id"]
     val oldCategoryStr = resolveCategory(oldCategoryId, categoryNames)
 
-    return if (oldCategoryStr != null && newCategoryStr != null && oldCategoryStr != newCategoryStr) {
+    return if (oldCategoryStr != newCategoryStr) {
         "Recategorized: $oldCategoryStr → $newCategoryStr"
-    } else if (newCategoryStr != null) {
-        "Recategorized to $newCategoryStr"
     } else {
-        "Recategorized"
+        "Recategorized to $newCategoryStr"
     }
 }
 
@@ -120,14 +120,14 @@ private fun formatUpdate(
         val formattedNew = if (key == "amount") {
             "RM ${"%.2f".format(newVal.toDoubleOrNull() ?: 0.0)}"
         } else if (key == "category_id") {
-            resolveCategory(newVal, categoryNames) ?: newVal
+            resolveCategory(newVal, categoryNames)
         } else newVal
 
         if (oldVal != null && oldVal != newVal) {
             val formattedOld = if (key == "amount") {
                 "RM ${"%.2f".format(oldVal.toDoubleOrNull() ?: 0.0)}"
             } else if (key == "category_id") {
-                resolveCategory(oldVal, categoryNames) ?: oldVal
+                resolveCategory(oldVal, categoryNames)
             } else oldVal
             changes.add("$displayKey $formattedOld → $formattedNew")
         } else if (oldVal == null) {

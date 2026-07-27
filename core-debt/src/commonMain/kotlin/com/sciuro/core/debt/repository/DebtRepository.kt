@@ -148,4 +148,18 @@ class DebtRepository(
             .mapToList(Dispatchers.Default)
             .map { list -> list.map { mapDebt(it) } }
     }
+
+    suspend fun findActiveDebtByMerchantName(merchant: String, direction: String): Debt? {
+        return database.debtQueries.selectDebtsByDirectionAndActive(direction)
+            .executeAsList()
+            .map { mapDebt(it) }
+            .firstOrNull { merchant.contains(it.name, ignoreCase = true) }
+    }
+
+    suspend fun findActiveDebtByCounterparty(counterparty: String, direction: String): Debt? {
+        return database.debtQueries.selectDebtsByDirectionAndActive(direction)
+            .executeAsList()
+            .map { mapDebt(it) }
+            .firstOrNull { it.counterpartyName != null && counterparty.contains(it.counterpartyName!!, ignoreCase = true) }
+    }
 }

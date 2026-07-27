@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.EntityType
+import com.sciuro.core.audit.model.TransactionIntent
 import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.budget.repository.BudgetRepository
 import com.sciuro.core.ledger.db.Raw_event_staging
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flatMapLatest
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.core.debt.model.DebtDirection
+import com.sciuro.core.debt.model.DebtStatus
 import com.sciuro.core.debt.repository.DebtRepository
 import com.sciuro.core.investment.repository.InvestmentRepository
 import com.sciuro.core.obligations.engine.IncomeRecurrencePatternDetector
@@ -207,6 +209,85 @@ class DashboardViewModel(
         .observeRecentlyAutoConfirmed(currentTimeMillis() - 24L * 60L * 60L * 1000L)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val reviewSuggestions: StateFlow<List<ReviewSuggestion>> = transactionRepository
+        .observeUnreviewedTransactions()
+        .map { txs -> computeSuggestions(txs) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private suspend fun computeSuggestions(txs: List<com.sciuro.core.ledger.db.Transaction_record>): List<ReviewSuggestion> {
+        if (txs.isEmpty()) return emptyList()
+
+        val activeDebtsIowe = debtRepository.observeDebts().first()
+            .filter { it.direction == DebtDirection.I_OWE && it.status == DebtStatus.ACTIVE }
+        val activeDebtsOwedToMe = debtRepository.observeDebts().first()
+            .filter { it.direction == DebtDirection.OWED_TO_ME && it.status == DebtStatus.ACTIVE }
+        val activeObligations = obligationRepository.observeActiveObligations().first()
+
+        return txs.map { tx ->
+            val suggestion = if (tx.direction == "OUTFLOW") {
+                val obligationMatch = activeObligations.firstOrNull {
+                    tx.merchant != null && (it.name.contains(tx.merchant!!, ignoreCase = true) || tx.merchant!!.contains(it.name, ignoreCase = true)) &&
+                    kotlin.math.abs(it.amount - tx.amount) < tx.amount * 0.05
+                }
+                if (obligationMatch != null) {
+                    ReviewSuggestion(
+                        transactionId = tx.id,
+                        merchant = tx.merchant,
+                        amount = tx.amount,
+                        direction = tx.direction,
+                        suggestedCategoryId = obligationMatch.categoryId,
+                        suggestedAccountId = obligationMatch.accountId,
+                        intent = TransactionIntent.SubscriptionPayment(obligationMatch.id, obligationMatch.name, obligationMatch.nextDueDate),
+                        reason = "obligation_match"
+                    )
+                } else {
+                    val debtMatch = activeDebtsIowe.firstOrNull {
+                        tx.merchant != null && (it.name.contains(tx.merchant!!, ignoreCase = true) || tx.merchant!!.contains(it.name, ignoreCase = true))
+                    }
+                    if (debtMatch != null) {
+                        ReviewSuggestion(
+                            transactionId = tx.id,
+                            merchant = tx.merchant,
+                            amount = tx.amount,
+                            direction = tx.direction,
+                            suggestedCategoryId = "cat_debt_payment",
+                            suggestedAccountId = debtMatch.associatedAccountId,
+                            intent = TransactionIntent.DebtPayment(debtMatch.id, debtMatch.name, debtMatch.remainingBalance, debtMatch.counterpartyName),
+                            reason = "debt_match"
+                        )
+                    } else null
+                }
+            } else {
+                val collectibleMatch = activeDebtsOwedToMe.firstOrNull {
+                    it.counterpartyName != null && tx.merchant != null && tx.merchant!!.contains(it.counterpartyName!!, ignoreCase = true)
+                }
+                if (collectibleMatch != null) {
+                    ReviewSuggestion(
+                        transactionId = tx.id,
+                        merchant = tx.merchant,
+                        amount = tx.amount,
+                        direction = tx.direction,
+                        suggestedCategoryId = null,
+                        suggestedAccountId = null,
+                        intent = TransactionIntent.DebtCollection(collectibleMatch.id, collectibleMatch.counterpartyName ?: collectibleMatch.name),
+                        reason = "debt_collection"
+                    )
+                } else null
+            }
+
+            suggestion ?: ReviewSuggestion(
+                transactionId = tx.id,
+                merchant = tx.merchant,
+                amount = tx.amount,
+                direction = tx.direction,
+                suggestedCategoryId = null,
+                suggestedAccountId = null,
+                intent = TransactionIntent.Unknown,
+                reason = "unknown"
+            )
+        }
+    }
+
     // Removed ensureDefaultAccountExists() as it's now handled by the Onboarding flow.
 
     fun bookManualTransaction(
@@ -275,6 +356,12 @@ class DashboardViewModel(
             } else {
                 transactionRepository.approveTransaction(transactionId)
             }
+        }
+    }
+
+    fun confirmReviewSuggestion(transactionId: String, categoryId: String?, accountId: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            transactionRepository.reviewTransaction(transactionId, categoryId, accountId)
         }
     }
 

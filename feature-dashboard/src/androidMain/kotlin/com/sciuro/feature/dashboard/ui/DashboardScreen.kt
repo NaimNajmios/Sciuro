@@ -47,6 +47,7 @@ fun DashboardScreen(
     val state by viewModel.state.collectAsState()
     val autoBookedCount by viewModel.autoBookedTransactionsCount.collectAsState()
     val autoBookedTxs by viewModel.autoBookedTransactions.collectAsState()
+    val reviewSuggestions by viewModel.reviewSuggestions.collectAsState()
     var selectedRange by remember { mutableStateOf("All Time") }
     val typeFilter by viewModel.typeFilter.collectAsState()
     val filterOptions = listOf("All", "Income", "Expense")
@@ -188,7 +189,18 @@ fun DashboardScreen(
                             )
                         } else {
                             if (state.unreviewedTransactionsCount > 0) {
-                                ReviewInboxBanner(unreviewedCount = state.unreviewedTransactionsCount)
+                                ReviewInboxBanner(
+                                    unreviewedCount = state.unreviewedTransactionsCount,
+                                    suggestions = reviewSuggestions,
+                                    onConfirm = { txId, catId, accId ->
+                                        viewModel.confirmReviewSuggestion(txId, catId, accId)
+                                        coroutineScope.launch { snackbarHostState.showSnackbar(msgApproved) }
+                                    },
+                                    onReject = { txId ->
+                                        viewModel.rejectTransaction(txId)
+                                        coroutineScope.launch { snackbarHostState.showSnackbar(msgRejected) }
+                                    }
+                                )
                             }
                             
                             AutoBookedBanner(

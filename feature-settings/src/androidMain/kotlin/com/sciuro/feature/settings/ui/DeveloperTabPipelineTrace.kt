@@ -97,54 +97,57 @@ fun DeveloperTabPipelineTrace(
         return
     }
 
-    LazyColumn(
-        modifier = modifier.padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(bottom = 110.dp)
+    Column(
+        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.Top
     ) {
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(stringResource(R.string.dev_trace_title), style = MaterialTheme.typography.titleSmall)
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                var pkgText by remember(traceFilterPackage) { mutableStateOf(traceFilterPackage) }
-                SciuroTextField(
-                    value = pkgText,
-                    onValueChange = { pkgText = it },
-                    label = "Package",
-                    modifier = Modifier.weight(1f)
-                )
-                Button(onClick = { viewModel.setTraceFilter(traceFilterStatus, pkgText) }, modifier = Modifier.padding(top = 8.dp)) {
-                    Text("Apply")
-                }
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(stringResource(R.string.dev_trace_title), style = MaterialTheme.typography.titleSmall)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            var pkgText by remember(traceFilterPackage) { mutableStateOf(traceFilterPackage) }
+            SciuroTextField(
+                value = pkgText,
+                onValueChange = { pkgText = it },
+                label = "Package",
+                modifier = Modifier.weight(1f)
+            )
+            Button(onClick = { viewModel.setTraceFilter(traceFilterStatus, pkgText) }, modifier = Modifier.padding(top = 8.dp)) {
+                Text("Apply")
             }
-            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("ALL", "SUCCESS", "FAILURE", "DROP").forEach { status ->
-                    FilterChip(
-                        selected = traceFilterStatus == status,
-                        onClick = { viewModel.setTraceFilter(status, traceFilterPackage) },
-                        label = { Text(status) }
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
+        }
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("ALL", "SUCCESS", "FAILURE", "DROP").forEach { status ->
                 FilterChip(
-                    selected = showOnlyAllowlisted,
-                    onClick = { viewModel.setShowOnlyAllowlisted(!showOnlyAllowlisted) },
-                    label = { Text("Allowlisted") }
+                    selected = traceFilterStatus == status,
+                    onClick = { viewModel.setTraceFilter(status, traceFilterPackage) },
+                    label = { Text(status) }
                 )
             }
+            Spacer(modifier = Modifier.weight(1f))
+            FilterChip(
+                selected = showOnlyAllowlisted,
+                onClick = { viewModel.setShowOnlyAllowlisted(!showOnlyAllowlisted) },
+                label = { Text("Allowlisted") }
+            )
         }
 
-        if (events.isEmpty()) {
-            item {
-                Text(
-                    stringResource(R.string.dev_trace_no_data),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 24.dp)
-                )
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 110.dp),
+            verticalArrangement = Arrangement.Top
+        ) {
+            if (events.isEmpty()) {
+                item {
+                    Text(
+                        stringResource(R.string.dev_trace_no_data),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+                }
             }
-        }
 
         items(events) { event ->
             SciuroCard(
@@ -180,4 +183,4 @@ fun DeveloperTabPipelineTrace(
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
-}
+}}

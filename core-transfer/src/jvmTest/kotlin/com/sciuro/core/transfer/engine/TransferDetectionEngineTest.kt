@@ -23,11 +23,13 @@ import kotlin.test.assertNull
 
 class TransferDetectionEngineTest {
 
+    private lateinit var driver: SqlDriver
     private lateinit var database: SciuroDatabase
     private lateinit var accountRepository: AccountRepository
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var transferRepository: TransferRepository
     private lateinit var engine: TransferDetectionEngine
+    private lateinit var eventBus: DomainEventBus
 
     private val fakeAuditRepository = object : AuditRepository {
         override suspend fun logMutation(log: AuditLog) {}
@@ -37,19 +39,20 @@ class TransferDetectionEngineTest {
 
     @BeforeTest
     fun setUp() {
-        val driver: SqlDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         SciuroDatabase.Schema.create(driver)
         database = SciuroDatabase(driver)
 
+        eventBus = DomainEventBus()
         accountRepository = AccountRepository(fakeAuditRepository, database)
-        transactionRepository = TransactionRepository(fakeAuditRepository, database, accountRepository)
+        transactionRepository = TransactionRepository(fakeAuditRepository, database, accountRepository, eventBus)
         transferRepository = TransferRepository(fakeAuditRepository, database, transactionRepository)
         engine = TransferDetectionEngine(database, transferRepository, DomainEventBus())
     }
 
     @AfterTest
     fun tearDown() {
-        (database.driver as? java.io.Closeable)?.close()
+        (driver as? java.io.Closeable)?.close()
     }
 
     @Test
@@ -60,9 +63,10 @@ class TransferDetectionEngineTest {
         )
 
         val inflowTxId = bookInflowTransaction(accountId = myAccountId, amount = 100.0, timestamp = 1000L)
+        val outflowTxId = bookOutflowTransaction(accountId = myAccountId, amount = 100.0, timestamp = 2000L)
 
         engine.onTransactionBooked(
-            newTxId = "outflow_1",
+            newTxId = outflowTxId,
             newTxAccountId = myAccountId,
             newTxAmount = 100.0,
             newTxDirection = "OUTFLOW",
@@ -76,16 +80,17 @@ class TransferDetectionEngineTest {
     }
 
     @Test
-    fun `Tier 1 links regardless of time gap between transactions`() = runBlocking {
+    fun `Tier 1 links regardless of time gap between transactions`() = runBlocking<Unit> {
         val myAccountId = "acc_1"
         accountRepository.createAccount(
             Account(id = myAccountId, name = "CIMB Savings", type = "Bank", accountNumber = "601234567890")
         )
 
         val inflowTxId = bookInflowTransaction(accountId = myAccountId, amount = 250.0, timestamp = 1000L)
+        val outflowTxId = bookOutflowTransaction(accountId = myAccountId, amount = 250.0, timestamp = 3_600_000L)
 
         engine.onTransactionBooked(
-            newTxId = "outflow_1",
+            newTxId = outflowTxId,
             newTxAccountId = myAccountId,
             newTxAmount = 250.0,
             newTxDirection = "OUTFLOW",
@@ -120,16 +125,17 @@ class TransferDetectionEngineTest {
     }
 
     @Test
-    fun `Tier 1 handles masked account numbers with asterisks`() = runBlocking {
+    fun `Tier 1 handles masked account numbers with asterisks`() = runBlocking<Unit> {
         val myAccountId = "acc_1"
         accountRepository.createAccount(
             Account(id = myAccountId, name = "CIMB Savings", type = "Bank", accountNumber = "9876543210")
         )
 
         val inflowTxId = bookInflowTransaction(accountId = myAccountId, amount = 50.0, timestamp = 1000L)
+        val outflowTxId = bookOutflowTransaction(accountId = myAccountId, amount = 50.0, timestamp = 2000L)
 
         engine.onTransactionBooked(
-            newTxId = "outflow_1",
+            newTxId = outflowTxId,
             newTxAccountId = myAccountId,
             newTxAmount = 50.0,
             newTxDirection = "OUTFLOW",
@@ -164,7 +170,7 @@ class TransferDetectionEngineTest {
     }
 
     @Test
-    fun `Tier 1 matches cross-account self-transfer`() = runBlocking {
+    fun `Tier 1 matches cross-account self-transfer`() = runBlocking<Unit> {
         val accountA = "acc_savings"
         val accountB = "acc_current"
         accountRepository.createAccount(
@@ -175,9 +181,10 @@ class TransferDetectionEngineTest {
         )
 
         val inflowTxId = bookInflowTransaction(accountId = accountB, amount = 500.0, timestamp = 1000L)
+        val outflowTxId = bookOutflowTransaction(accountId = accountA, amount = 500.0, timestamp = 2000L)
 
         engine.onTransactionBooked(
-            newTxId = "outflow_1",
+            newTxId = outflowTxId,
             newTxAccountId = accountA,
             newTxAmount = 500.0,
             newTxDirection = "OUTFLOW",
@@ -190,7 +197,7 @@ class TransferDetectionEngineTest {
     }
 
     @Test
-    fun `Tier 2 heuristic links when pair was previously confirmed`() = runBlocking {
+    fun `Tier 2 heuristic links when pair was previously confirmed`() = runBlocking<Unit> {
         val accountA = "acc_a"
         val accountB = "acc_b"
         accountRepository.createAccount(Account(id = accountA, name = "A", type = "Bank"))
@@ -199,9 +206,10 @@ class TransferDetectionEngineTest {
         database.accountQueries.insertAccountPairConfirmation(accountA, accountB, currentTimeMillis())
 
         val inflowTxId = bookInflowTransaction(accountId = accountB, amount = 75.0, timestamp = 1000L)
+        val outflowTxId = bookOutflowTransaction(accountId = accountA, amount = 75.0, timestamp = 1060_000L)
 
         engine.onTransactionBooked(
-            newTxId = "outflow_1",
+            newTxId = outflowTxId,
             newTxAccountId = accountA,
             newTxAmount = 75.0,
             newTxDirection = "OUTFLOW",
@@ -267,9 +275,10 @@ class TransferDetectionEngineTest {
         accountRepository.createAccount(Account(id = accountB, name = "Maybank", type = "Bank", accountNumber = "444455556666"))
 
         val inflowTxId = bookInflowTransaction(accountId = accountB, amount = 5.40, timestamp = 1000L)
+        val outflowTxId = bookOutflowTransaction(accountId = accountA, amount = 5.40, timestamp = 2000L)
 
         engine.onTransactionBooked(
-            newTxId = "outflow_1",
+            newTxId = outflowTxId,
             newTxAccountId = accountA,
             newTxAmount = 5.40,
             newTxDirection = "OUTFLOW",
@@ -316,6 +325,27 @@ class TransferDetectionEngineTest {
             categoryId = null,
             amount = amount,
             direction = "INFLOW",
+            merchant = null,
+            timestamp = timestamp,
+            referenceId = null,
+            isReviewed = true
+        )
+        transactionRepository.bookTransaction(tx, source = AuditSource.SYSTEM_AUTO)
+        return txId
+    }
+
+    private suspend fun bookOutflowTransaction(
+        accountId: String,
+        amount: Double,
+        timestamp: Long
+    ): String {
+        val txId = "tx_${accountId}_$timestamp"
+        val tx = com.sciuro.core.ledger.model.Transaction(
+            id = txId,
+            accountId = accountId,
+            categoryId = null,
+            amount = amount,
+            direction = "OUTFLOW",
             merchant = null,
             timestamp = timestamp,
             referenceId = null,
