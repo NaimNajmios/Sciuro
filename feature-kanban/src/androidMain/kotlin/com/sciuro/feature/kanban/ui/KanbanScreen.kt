@@ -26,6 +26,7 @@ import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.theme.reducedMotion
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
@@ -737,11 +738,10 @@ private fun AddBillSheet(
             SciuroTextField(value = name, onValueChange = { name = it }, label = stringResource(R.string.kanban_label_name))
 
             Spacer(modifier = Modifier.height(8.dp))
-            SciuroTextField(
+            SciuroAmountField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                label = stringResource(R.string.kanban_label_amount_rm),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                label = stringResource(R.string.kanban_label_amount_rm)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -845,7 +845,7 @@ private fun AddBillSheet(
                 onClick = {
                     onCreate(
                         name,
-                        amountText.toDouble(),
+                        amountText.toDoubleOrNull() ?: 0.0,
                         frequency,
                         dueDate!!,
                         categoryId,
@@ -907,11 +907,10 @@ private fun AddDebtSheet(
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            SciuroTextField(
+            SciuroAmountField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                label = stringResource(R.string.kanban_label_amount_rm),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                label = stringResource(R.string.kanban_label_amount_rm)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -923,7 +922,7 @@ private fun AddDebtSheet(
                         name,
                         DebtType.MONEY_OWED,
                         direction,
-                        amountText.toDouble(),
+                        amountText.toDoubleOrNull() ?: 0.0,
                         counterparty.ifBlank { null },
                         null
                     )
@@ -957,11 +956,10 @@ internal fun EditDebtSheet(
             SciuroTextField(value = name, onValueChange = { name = it }, label = stringResource(R.string.kanban_label_debt_name))
 
             Spacer(modifier = Modifier.height(8.dp))
-            SciuroTextField(
+            SciuroAmountField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                label = stringResource(R.string.kanban_label_principal_amount),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                label = stringResource(R.string.kanban_label_principal_amount)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -974,7 +972,7 @@ internal fun EditDebtSheet(
                 onClick = {
                     onEdit(
                         name,
-                        amountText.toDouble(),
+                        amountText.toDoubleOrNull() ?: 0.0,
                         notes.ifBlank { null }
                     )
                 },

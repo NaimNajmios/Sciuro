@@ -6,13 +6,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardOptions
 import com.sciuro.feature.wallet.R
 import com.sciuro.feature.wallet.viewmodel.OnboardingViewModel
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
-import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,11 +54,10 @@ fun OnboardingScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
             
-            SciuroTextField(
+            SciuroAmountField(
                 value = initialBalanceStr,
                 onValueChange = { initialBalanceStr = it },
-                label = stringResource(R.string.wallet_initial_balance_myr),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                label = stringResource(R.string.wallet_initial_balance_myr)
             )
             
             Spacer(modifier = Modifier.height(32.dp))

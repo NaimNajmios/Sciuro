@@ -187,7 +187,9 @@ fun DashboardScreen(
                                 message = stringResource(R.string.dashboard_empty_state_initial)
                             )
                         } else {
-                            ReviewInboxBanner(unreviewedCount = state.unreviewedTransactionsCount)
+                            if (state.unreviewedTransactionsCount > 0) {
+                                ReviewInboxBanner(unreviewedCount = state.unreviewedTransactionsCount)
+                            }
                             
                             AutoBookedBanner(
                                 autoBookedCount = autoBookedCount,

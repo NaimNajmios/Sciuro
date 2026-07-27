@@ -65,11 +65,10 @@ fun AdjustmentBottomSheet(
             )
         }
 
-        SciuroTextField(
+        SciuroAmountField(
             value = amountStr,
             onValueChange = { amountStr = it },
-            label = stringResource(R.string.adjustment_new_balance_label),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            label = stringResource(R.string.adjustment_new_balance_label)
         )
 
         ExposedDropdownMenuBox(

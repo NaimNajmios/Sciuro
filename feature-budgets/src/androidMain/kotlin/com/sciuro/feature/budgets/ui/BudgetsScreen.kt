@@ -26,6 +26,7 @@ import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
@@ -318,15 +319,12 @@ fun BudgetsScreen(
 
             val parsedAmount = amountText.toDoubleOrNull()
             val isAmountError = amountText.isNotEmpty() && (parsedAmount == null || parsedAmount <= 0 || parsedAmount > 100_000)
-            SciuroTextField(
+            SciuroAmountField(
                 value = amountText,
                 onValueChange = { amountText = it },
                 label = stringResource(R.string.budget_monthly_limit_label),
                 isError = isAmountError,
-                supportingText = if (isAmountError) stringResource(R.string.budget_amount_error) else null,
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                )
+                supportingText = if (isAmountError) stringResource(R.string.budget_amount_error) else null
             )
 
             if (!isEditing && suggestedAmount != null && suggestedAmount!! > 0.0) {

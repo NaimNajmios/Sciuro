@@ -62,6 +62,7 @@ import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.theme.AccountColorGreen
 import com.najmi.sciuro.core.ui.theme.AccountColorBlue
 import com.najmi.sciuro.core.ui.theme.AccountColorRed
@@ -500,11 +501,10 @@ fun WalletScreen(
                     }
                 }
                 
-                SciuroTextField(
+                SciuroAmountField(
                     value = newAccountBalance,
                     onValueChange = { newAccountBalance = it },
-                    label = stringResource(R.string.wallet_initial_balance_rm),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    label = stringResource(R.string.wallet_initial_balance_rm)
                 )
                 
                 Row(
@@ -663,11 +663,10 @@ fun WalletScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
-                    SciuroTextField(
+                    SciuroAmountField(
                         value = newAvgBuyPrice,
                         onValueChange = { newAvgBuyPrice = it },
                         label = stringResource(R.string.wallet_avg_price_rm),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -773,11 +772,10 @@ fun WalletScreen(
         ) {
                 Text(stringResource(R.string.wallet_edit_transaction), style = MaterialTheme.typography.headlineSmall)
                 
-                SciuroTextField(
+                SciuroAmountField(
                     value = editTxAmount,
                     onValueChange = { editTxAmount = it },
-                    label = stringResource(R.string.wallet_amount_rm),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    label = stringResource(R.string.wallet_amount_rm)
                 )
 
                 SciuroTextField(

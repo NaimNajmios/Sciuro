@@ -16,6 +16,7 @@ import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroFormSheet
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.sciuro.core.ledger.db.Account
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.feature.dashboard.R
@@ -50,11 +51,11 @@ fun EditTransactionSheet(
         title = stringResource(R.string.dashboard_edit_transaction),
         onDismissRequest = onDismiss
     ) {
-        SciuroTextField(
+        SciuroAmountField(
             value = amount,
             onValueChange = onAmountChange,
             label = stringResource(R.string.dashboard_amount_label),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+            imeAction = ImeAction.Next,
             modifier = Modifier.focusRequester(focusRequester)
         )
         

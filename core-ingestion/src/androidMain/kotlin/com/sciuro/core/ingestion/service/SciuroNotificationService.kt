@@ -8,6 +8,7 @@ import com.sciuro.core.audit.trace.TraceOutcome
 import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
 import com.sciuro.core.ingestion.engine.AggregatorHeuristicFilter
+import com.sciuro.core.ingestion.engine.NotificationTextResolver
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ingestion.source.notification.NotificationSourceAdapter
@@ -116,7 +117,7 @@ class SciuroNotificationService : NotificationListenerService() {
             val bigText = notification.extras.getString(Notification.EXTRA_BIG_TEXT) ?: ""
             val textLines = notification.extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
                 ?.joinToString("\n") { it.toString() } ?: ""
-            return bigText.ifBlank { textLines.ifBlank { shortText } }
+            return NotificationTextResolver.resolveTextFallback(shortText, bigText, textLines)
         }
     }
 }

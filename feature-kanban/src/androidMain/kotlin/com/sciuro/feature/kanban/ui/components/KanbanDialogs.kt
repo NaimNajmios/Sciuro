@@ -13,6 +13,7 @@ import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.sciuro.feature.kanban.model.BillTask
 import com.sciuro.feature.kanban.model.DebtTask
 import com.sciuro.feature.kanban.model.KanbanTask
@@ -117,11 +118,10 @@ fun KanbanDialogs(
             Text(stringResource(R.string.kanban_record_payment), style = MaterialTheme.typography.headlineSmall)
             Text("${debt.name} — RM ${"%.2f".format(debt.remainingBalance)} remaining", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(12.dp))
-            SciuroTextField(
+            SciuroAmountField(
                 value = paymentAmountText,
                 onValueChange = onPaymentAmountChange,
-                label = stringResource(R.string.kanban_payment_amount_rm),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                label = stringResource(R.string.kanban_payment_amount_rm)
             )
             Spacer(modifier = Modifier.height(12.dp))
             SciuroPrimaryButton(

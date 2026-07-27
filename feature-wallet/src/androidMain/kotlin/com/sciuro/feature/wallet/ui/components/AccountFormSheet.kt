@@ -26,6 +26,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.theme.AccountColorGreen
 import com.najmi.sciuro.core.ui.theme.AccountColorBlue
 import com.najmi.sciuro.core.ui.theme.AccountColorRed
@@ -115,11 +116,11 @@ fun AccountFormSheet(
             }
         }
 
-        SciuroTextField(
+        SciuroAmountField(
             value = initialBalance,
             onValueChange = onBalanceChange,
             label = stringResource(R.string.wallet_initial_balance_rm),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+            imeAction = ImeAction.Done,
             keyboardActions = KeyboardActions(onDone = { if (initialName.isNotBlank()) onSave() })
         )
 

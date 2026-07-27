@@ -22,6 +22,7 @@ import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.model.DebtType
@@ -302,13 +303,10 @@ fun DebtOverviewScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                SciuroTextField(
+                SciuroAmountField(
                     value = formAmountText,
                     onValueChange = { formAmountText = it },
-                    label = stringResource(R.string.debt_form_amount_rm),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                    )
+                    label = stringResource(R.string.debt_form_amount_rm)
                 )
 
                 if (isEditing) {
@@ -445,13 +443,10 @@ fun DebtOverviewScreen(
         SciuroBottomSheet(onDismissRequest = { showRecordPayment = null }) {
             Text(stringResource(R.string.debt_record_payment), style = MaterialTheme.typography.headlineSmall)
 
-            SciuroTextField(
+            SciuroAmountField(
                 value = paymentAmountText,
                 onValueChange = { paymentAmountText = it },
-                label = stringResource(R.string.debt_amount_received_rm),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                )
+                label = stringResource(R.string.debt_amount_received_rm)
             )
 
             SciuroPrimaryButton(

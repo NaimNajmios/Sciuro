@@ -10,6 +10,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import com.najmi.sciuro.core.ui.components.SciuroFormSheet
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.PillToggle
 import androidx.compose.ui.text.input.KeyboardType
@@ -57,11 +58,11 @@ fun AddTransactionDialog(
                 }
             }
             
-            SciuroTextField(
+            SciuroAmountField(
                 value = amount,
                 onValueChange = { amount = it },
                 label = stringResource(R.string.wallet_amount_rm),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+                imeAction = ImeAction.Next,
                 modifier = Modifier.focusRequester(focusRequester)
             )
             

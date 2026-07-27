@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.najmi.sciuro.core.ui.R
+import com.najmi.sciuro.core.ui.util.formatDecimalFirstInput
 
 data class FastTxOption(val id: String, val name: String)
 
@@ -38,7 +39,7 @@ fun FastTransactionSheet(
     onDismissRequest: () -> Unit,
     onSubmit: (amount: Double, direction: String, merchant: String, categoryId: String?, accountId: String?, destinationAccountId: String?) -> Unit
 ) {
-    var amountStr by remember { mutableStateOf("0") }
+    var amountStr by remember { mutableStateOf("0.00") }
     var direction by remember { mutableStateOf("OUTFLOW") }
     var categoryId by remember { mutableStateOf<String?>(null) }
     var accountId by remember { mutableStateOf<String?>(accounts.firstOrNull()?.id) }
@@ -68,9 +69,8 @@ fun FastTransactionSheet(
 
     SciuroBottomSheet(onDismissRequest = onDismissRequest) {
         // Amount Display
-        val displayAmount = if (amountStr.contains('.')) amountStr else amountStr
         Text(
-            text = "RM $displayAmount",
+            text = "RM $amountStr",
             style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
             color = if (direction == "OUTFLOW") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp).graphicsLayer { translationX = shakeOffset.value },
@@ -184,21 +184,13 @@ fun FastTransactionSheet(
         // Numpad
         Numpad(
             onNumberClick = { num ->
-                if (amountStr == "0") {
-                    amountStr = num
-                } else if (!amountStr.contains('.') || amountStr.substringAfter('.').length < 2) {
-                    amountStr += num
-                }
+                amountStr = formatDecimalFirstInput(amountStr + num)
             },
-            onDecimalClick = {
-                if (!amountStr.contains('.')) amountStr += "."
-            },
+            onDecimalClick = { },
             onBackspaceClick = {
-                if (amountStr.length > 1) {
-                    amountStr = amountStr.dropLast(1)
-                } else {
-                    amountStr = "0"
-                }
+                val digits = amountStr.filter { it.isDigit() }
+                val truncated = digits.dropLast(1)
+                amountStr = formatDecimalFirstInput(truncated)
             },
             onSaveClick = {
                 val amt = amountStr.toDoubleOrNull() ?: 0.0
