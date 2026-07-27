@@ -75,6 +75,46 @@ Fixes a stack of three root-cause gaps causing notification-based transactions t
 
 - [PASS] NO-SOURCE on root project (pre-existing configuration limitation — detekt is not configured per-module). No new warnings from manual code review.
 
+## Follow-up: Notification capture-layer defect fix (bigText/textLines fallback)
+
+After the N1 phase shipped, two real-world capture traces revealed a gap:
+- Maybank2u Scan & Pay notifications (`CAPTURE → DROP {reason=blank_content}`) — the app posts with `EXTRA_TEXT` empty and the real content only in `EXTRA_BIG_TEXT`.
+- Gmail forwards (`PARSE_LLM → FAILURE`, reasoning "lacks sufficient information") — the LLM was only seeing the truncated `EXTRA_TEXT` preview, never the full body in `EXTRA_TEXT_LINES`.
+
+### Fix
+
+`SciuroNotificationService.resolveText()` now reads all three extras fields with the priority chain `bigText > textLines > shortText`, ensuring the richest available content is always captured. The pure fallback logic was extracted to `NotificationTextResolver.resolveTextFallback()` in `commonMain` for testability.
+
+### Diagnostic improvement
+
+On the `blank_content` drop path, the trace now records `extras_present` (joined set of extras key names), e.g.:
+```
+{"reason":"blank_content","package":"com.maybank2u.life","extras_present":"android.title,android.bigText"}
+```
+This makes the fix immediately legible from the trace alone — no source read needed.
+
+### Regression fixtures
+
+Three new `FixtureLibrary` entries reproducing the exact captured payloads:
+
+| Fixture | Package | Content type |
+|---------|---------|-------------|
+| Maybank2u Scan & Pay outflow (bigText-only) | `com.maybank2u.life` | `EXTRA_BIG_TEXT` only |
+| Maybank2u Scan & Pay inflow (bigText-only) | `com.maybank2u.life` | `EXTRA_BIG_TEXT` only |
+| Gmail Maybank forward (truncated preview) | `com.google.android.gm` | `EXTRA_TEXT_LINES` > `EXTRA_TEXT` |
+
+### Test results — 27 July 2026
+
+| Test | Result |
+|------|--------|
+| `NotificationTextResolverTest` (6 cases, commonTest) — all branches of fallback chain | PASS |
+| `:core-ingestion:commonTest` — no regressions | PASS |
+| `runAllFixtures()` — Maybank2u outflow/inflow + Gmail fixtures now produce non-blank text | PASS |
+
+### Adjacent: SmsReceiver consolidation
+
+`SmsReceiver.kt` previously had its own local `hasFinancialSignal` block (7 keywords, lowercase substring match) instead of calling the shared `AggregatorHeuristicFilter.isFinancial()` (22 keywords, word-boundary regex). Consolidated to use the shared filter, ensuring consistent financial signal detection across both notification and SMS channels.
+
 ## Known gaps
 
 - JVM target `:core-transfer:jvmTest` fails on JDK 21 due to `:core-audit:compileKotlinJvm` ("Unknown Kotlin JVM target: 21"). This is a pre-existing environment issue (Kotlin 1.9.0 does not support JDK 21 as a compilation target). Android-side unit tests (`:core-transfer:testDebugUnitTest`) use the Android device platform and do not hit this.
