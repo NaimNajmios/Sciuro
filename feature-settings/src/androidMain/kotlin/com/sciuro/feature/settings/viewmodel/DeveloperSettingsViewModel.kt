@@ -109,6 +109,9 @@ class DeveloperSettingsViewModel(
     private val _traceFilterPackage = MutableStateFlow("")
     val traceFilterPackage: StateFlow<String> = _traceFilterPackage.asStateFlow()
 
+    private val _showOnlyAllowlisted = MutableStateFlow(true)
+    val showOnlyAllowlisted: StateFlow<Boolean> = _showOnlyAllowlisted.asStateFlow()
+
     init {
         refreshCounts()
         loadHealthData()
@@ -121,18 +124,24 @@ class DeveloperSettingsViewModel(
         loadPipelineEvents()
     }
 
+    fun setShowOnlyAllowlisted(show: Boolean) {
+        _showOnlyAllowlisted.value = show
+        loadPipelineEvents()
+    }
+
     private fun loadPipelineEvents() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val status = if (_traceFilterStatus.value == "ALL") null else _traceFilterStatus.value
                 val pkg = _traceFilterPackage.value.ifBlank { null }
+                val allowed = if (_showOnlyAllowlisted.value) ingestionAllowlist.effectivePackages.value else null
                 val events = database.pipelineTraceQueries
                     .selectFilteredTraceEvents(pkg, status, 100L)
                     .executeAsList()
                     .map {
                         TraceEventSummary(it.raw_event_id, it.first_at, it.last_at, it.stage_count, it.package_name)
                     }
-                _pipelineEvents.value = events
+                _pipelineEvents.value = if (allowed != null) events.filter { it.packageName in allowed } else events
             } catch (e: Exception) {
                 _uiError.value = "Failed to load trace events: ${e.message}"
             }

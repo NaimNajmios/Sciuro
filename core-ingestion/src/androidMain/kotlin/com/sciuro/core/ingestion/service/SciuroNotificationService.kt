@@ -66,11 +66,13 @@ class SciuroNotificationService : NotificationListenerService() {
 
         val notification = sbn.notification
         val title = notification.extras.getString(Notification.EXTRA_TITLE) ?: ""
-        val text = notification.extras.getString(Notification.EXTRA_TEXT) ?: ""
+        val text = resolveText(notification)
 
         if (title.isBlank() && text.isBlank()) {
+            val presentKeys = notification.extras.keySet().joinToString(",")
             tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                detail = mapOf("reason" to "blank_content", "package" to packageName), packageName = packageName)
+                detail = mapOf("reason" to "blank_content", "package" to packageName, "extras_present" to presentKeys),
+                packageName = packageName)
             return
         }
 
@@ -108,4 +110,13 @@ class SciuroNotificationService : NotificationListenerService() {
         notificationSourceAdapter.emitNotification(rawEvent)
     }
 
+    companion object {
+        fun resolveText(notification: Notification): String {
+            val shortText = notification.extras.getString(Notification.EXTRA_TEXT) ?: ""
+            val bigText = notification.extras.getString(Notification.EXTRA_BIG_TEXT) ?: ""
+            val textLines = notification.extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+                ?.joinToString("\n") { it.toString() } ?: ""
+            return bigText.ifBlank { textLines.ifBlank { shortText } }
+        }
+    }
 }

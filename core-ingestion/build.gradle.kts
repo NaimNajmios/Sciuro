@@ -39,4 +39,12 @@ android {
     defaultConfig {
         minSdk = 24
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+}
+
+dependencies {
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
 }

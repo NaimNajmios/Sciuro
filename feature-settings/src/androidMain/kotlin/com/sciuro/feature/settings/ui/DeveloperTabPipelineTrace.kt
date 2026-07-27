@@ -33,6 +33,7 @@ fun DeveloperTabPipelineTrace(
     
     val traceFilterStatus by viewModel.traceFilterStatus.collectAsState()
     val traceFilterPackage by viewModel.traceFilterPackage.collectAsState()
+    val showOnlyAllowlisted by viewModel.showOnlyAllowlisted.collectAsState()
 
     fun loadTraces(eventId: String?) {
         if (eventId != null) {
@@ -125,6 +126,12 @@ fun DeveloperTabPipelineTrace(
                         label = { Text(status) }
                     )
                 }
+                Spacer(modifier = Modifier.weight(1f))
+                FilterChip(
+                    selected = showOnlyAllowlisted,
+                    onClick = { viewModel.setShowOnlyAllowlisted(!showOnlyAllowlisted) },
+                    label = { Text("Allowlisted") }
+                )
             }
         }
 

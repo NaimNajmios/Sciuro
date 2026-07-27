@@ -58,6 +58,12 @@ Replaced all `println`/`printStackTrace` pipeline logging with structured DB-bac
 - [PASS] SciuroNotificationService + SmsReceiver trace calls in coroutine scope
 - [PASS] Migration `10.sqm` — 1 new table + 4 new indexes
 
+### H1.10 — Pipeline Trace allowlist filter (subsequent enhancement)
+- Added `showOnlyAllowlisted` StateFlow (default `true`) to `DeveloperSettingsViewModel`
+- `loadPipelineEvents()` filters results by `ingestionAllowlist.effectivePackages` when enabled
+- Added "Allowlisted" FilterChip (ON by default) to `DeveloperTabPipelineTrace` filter row
+- Prevents trace view flooding from high-frequency non-financial apps (WhatsApp, Telegram, etc.)
+
 ## Known limitations
 - DomainEventBus publishes are not traced (deferred to Phase H2)
 - Engine trace points are stage-level only; don't capture match/no-match verdict detail

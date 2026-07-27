@@ -574,7 +574,34 @@ object FixtureLibrary {
             expectedAmount = 50.00, expectedDirection = TransactionDirection.OUTFLOW, expectedCounterpartyAccount = "1234", expectedConfident = false),
         Fixture("BigPay - Top‑up", "com.bigpay.app", "Notification",
             "RM 200.00 topped up to BigPay.",
-            expectedAmount = 200.00, expectedDirection = TransactionDirection.INFLOW, expectedConfident = false),
+            expectedAmount = 200.00, expectedDirection = TransactionDirection.INFLOW,
+            expectedConfident = false),
+
+        // ── CAPTURE-LAYER REGRESSION: bigText-only content ──
+        Fixture(
+            description = "Maybank2u Scan & Pay outflow (bigText-only content)",
+            packageName = "com.maybank2u.life",
+            title = "Maybank2u: Scan & Pay",
+            text = "Successful payment of RM 1.00 to SITI FIKRIYAH BINTI I.R A. REF: QR82244072.",
+            expectedAmount = 1.00, expectedDirection = TransactionDirection.OUTFLOW,
+            expectedMerchant = "SITI FIKRIYAH BINTI I.R A.", expectedConfident = true
+        ),
+        Fixture(
+            description = "Maybank2u Scan & Pay inflow (bigText-only content)",
+            packageName = "com.maybank2u.life",
+            title = "Maybank2u: Scan & Pay",
+            text = "You've received RM 0.20 from SITI FIKRIYAH BINTI I.R ABDUL KHAWI. REF: 485956734Q.",
+            expectedAmount = 0.20, expectedDirection = TransactionDirection.INFLOW,
+            expectedMerchant = "SITI FIKRIYAH BINTI I.R ABDUL KHAWI", expectedConfident = true
+        ),
+        Fixture(
+            description = "Gmail Maybank forward, full body (previously only the truncated preview reached extraction)",
+            packageName = "com.google.android.gm",
+            title = "You've received money in your Maybank account",
+            text = "Hi MUHAMMAD NAIM NAJMI BIN HAZRE, You have received RM 25.00 in your account ***3943 on 26 Jul 2026 20:10:56.",
+            expectedAmount = 25.00, expectedDirection = TransactionDirection.INFLOW,
+            expectedConfident = true
+        ),
     )
 
     fun fixturesForPackage(packageName: String): List<Fixture> =

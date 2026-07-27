@@ -8,6 +8,7 @@ import com.sciuro.core.audit.trace.PipelineTracer
 import com.sciuro.core.audit.trace.TraceOutcome
 import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
+import com.sciuro.core.ingestion.engine.AggregatorHeuristicFilter
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ingestion.source.sms.SmsSourceAdapter
@@ -46,15 +47,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                 continue
             }
 
-            val hasFinancialSignal = body.lowercase().let { lower ->
-                lower.contains("rm") ||
-                lower.contains("transaction") ||
-                lower.contains("transfer") ||
-                lower.contains("credited") ||
-                lower.contains("debited") ||
-                lower.contains("payment") ||
-                lower.contains("receipt")
-            }
+            val hasFinancialSignal = AggregatorHeuristicFilter.isFinancial(sender, body)
             if (!hasFinancialSignal) {
                 receiverScope.launch {
                     tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
