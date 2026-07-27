@@ -327,6 +327,7 @@ fun SciuroMainScreen() {
             }
         ) { innerPadding ->
             SciuroNavGraph(
+                navController = navController,
                 startDestination = startDest,
                 onboardingViewModel = onboardingViewModel,
                 modifier = Modifier

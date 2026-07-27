@@ -18,7 +18,7 @@ class ReviewTierDecider(
         val hasCategory = categoryId != null
         val hasAccount = accountId != null
 
-        if (confidence >= 1.0f && hasCategory && hasAccount) {
+        if (confidence >= 1.0f) {
             return ReviewTier.AUTO_SILENT
         }
 

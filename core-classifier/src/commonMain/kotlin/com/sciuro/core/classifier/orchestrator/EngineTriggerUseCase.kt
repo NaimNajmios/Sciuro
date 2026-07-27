@@ -14,7 +14,11 @@ import com.sciuro.core.obligations.engine.ObligationDetectionEngine
 import com.sciuro.core.parsing.model.StructuredDraft
 import com.sciuro.core.transfer.engine.TransferDetectionEngine
 
-class EngineTriggerUseCase(
+interface EngineTriggerUseCase {
+    suspend fun triggerAll(transaction: Transaction, draft: StructuredDraft, rawEventId: String)
+}
+
+open class DefaultEngineTriggerUseCase(
     private val transferDetectionEngine: TransferDetectionEngine,
     private val obligationCycleMatcher: ObligationCycleMatcher,
     private val budgetEngine: BudgetEngine,
@@ -23,7 +27,7 @@ class EngineTriggerUseCase(
     private val obligationDetectionEngine: ObligationDetectionEngine,
     private val bnplRiskDetector: BnplRiskDetector,
     private val tracer: PipelineTracer
-) {
+) : EngineTriggerUseCase {
     companion object {
         private const val ENGINE_DEBOUNCE_MS = 15_000L
     }
@@ -33,7 +37,7 @@ class EngineTriggerUseCase(
     private var lastInvestmentRunMs = 0L
     private var lastObligationRunMs = 0L
 
-    suspend fun triggerAll(
+    override suspend fun triggerAll(
         transaction: Transaction,
         draft: StructuredDraft,
         rawEventId: String

@@ -15,6 +15,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 class SciuroIngestionOrchestrator(
     private val ingestionSource: MultiplexIngestionSource,
@@ -28,7 +30,10 @@ class SciuroIngestionOrchestrator(
     companion object {
         private const val PROCESSING_STALE_MS = 60_000L
         private const val MAX_BACKOFF_MS = 60_000L
+        private const val MAX_CONCURRENT_RECOVERY = 8
     }
+
+    private val recoverySemaphore = Semaphore(MAX_CONCURRENT_RECOVERY)
 
     fun startListening(scope: CoroutineScope) {
         if (job?.isActive == true) return
@@ -52,7 +57,9 @@ class SciuroIngestionOrchestrator(
                 timestamp = staging.timestamp
             )
             launch {
-                processOneEvent(rawEvent)
+                recoverySemaphore.withPermit {
+                    processOneEvent(rawEvent)
+                }
             }
         }
     }

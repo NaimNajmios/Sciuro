@@ -47,12 +47,11 @@ import java.io.FileOutputStream
 
 @Composable
 fun SciuroNavGraph(
+    navController: NavHostController,
     startDestination: String,
     onboardingViewModel: com.sciuro.feature.wallet.viewmodel.OnboardingViewModel,
     modifier: Modifier = Modifier
 ) {
-    val navController = rememberNavController()
-
     NavHost(
         navController = navController,
         startDestination = startDestination,

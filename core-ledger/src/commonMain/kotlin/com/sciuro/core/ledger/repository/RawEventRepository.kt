@@ -7,10 +7,10 @@ import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 
-class RawEventRepository(
+open class RawEventRepository(
     private val database: SciuroDatabase
 ) {
-    suspend fun persistRawEvent(
+    open suspend fun persistRawEvent(
         id: String,
         sourceType: String,
         sourcePackageOrAddress: String,
@@ -30,59 +30,59 @@ class RawEventRepository(
         )
     }
 
-    suspend fun markProcessing(id: String, error: String? = null) {
+    open suspend fun markProcessing(id: String, error: String? = null) {
         database.rawEventStagingQueries.markProcessing(error, id)
     }
 
-    suspend fun markProcessed(id: String) {
+    open suspend fun markProcessed(id: String) {
         database.rawEventStagingQueries.markProcessed(System.currentTimeMillis(), id)
     }
 
-    suspend fun markDeadLetter(id: String, error: String) {
+    open suspend fun markDeadLetter(id: String, error: String) {
         database.rawEventStagingQueries.markDeadLetter(error, id)
     }
 
-    fun observePendingEvents(): Flow<List<Raw_event_staging>> {
+    open fun observePendingEvents(): Flow<List<Raw_event_staging>> {
         return database.rawEventStagingQueries.selectPendingEvents()
             .asFlow()
             .mapToList(Dispatchers.Default)
     }
 
-    fun observeDeadLetterEvents(): Flow<List<Raw_event_staging>> {
+    open fun observeDeadLetterEvents(): Flow<List<Raw_event_staging>> {
         return database.rawEventStagingQueries.selectDeadLetterEvents()
             .asFlow()
             .mapToList(Dispatchers.Default)
     }
 
-    suspend fun getLastCapturedAt(): Long? {
+    open suspend fun getLastCapturedAt(): Long? {
         return database.rawEventStagingQueries.selectLastCapturedAt().executeAsOneOrNull()?.last_captured_at
     }
 
-    suspend fun countPending(): Long {
+    open suspend fun countPending(): Long {
         return database.rawEventStagingQueries.countPending().executeAsOne()
     }
 
-    suspend fun getRawEventById(id: String): Raw_event_staging? {
+    open suspend fun getRawEventById(id: String): Raw_event_staging? {
         return database.rawEventStagingQueries.selectRawEventById(id).executeAsOneOrNull()
     }
 
-    suspend fun countDeadLetter(): Long {
+    open suspend fun countDeadLetter(): Long {
         return database.rawEventStagingQueries.countDeadLetter().executeAsOne()
     }
 
-    suspend fun getStrandedEvents(staleProcessedBeforeMs: Long): List<Raw_event_staging> {
+    open suspend fun getStrandedEvents(staleProcessedBeforeMs: Long): List<Raw_event_staging> {
         return database.rawEventStagingQueries.selectStrandedEvents(staleProcessedBeforeMs).executeAsList()
     }
 
-    suspend fun countStrandedEvents(staleProcessedBeforeMs: Long): Long {
+    open suspend fun countStrandedEvents(staleProcessedBeforeMs: Long): Long {
         return database.rawEventStagingQueries.selectStrandedEventsCount(staleProcessedBeforeMs).executeAsOne()
     }
 
-    suspend fun requeueRawEvent(id: String) {
+    open suspend fun requeueRawEvent(id: String) {
         database.rawEventStagingQueries.requeueRawEvent(id)
     }
 
-    suspend fun purgeOldTraces(beforeMs: Long) {
+    open suspend fun purgeOldTraces(beforeMs: Long) {
         database.pipelineTraceQueries.deleteTraceOlderThan(beforeMs)
     }
 }

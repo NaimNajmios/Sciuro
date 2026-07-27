@@ -26,6 +26,11 @@ class MutableIngestionAllowlist(
     fun isUserAddedPackage(packageName: String): Boolean =
         packageName in settingsProvider.getIngestionAllowlistAdditions()
 
+    fun isDefaultBankSmsSender(sender: String): Boolean {
+        val lower = sender.lowercase()
+        return IngestionDefaults.bankSmsSenderKeywords.any { keyword -> lower.contains(keyword) }
+    }
+
     fun addPackage(packageName: String) {
         val additions = settingsProvider.getIngestionAllowlistAdditions().toMutableSet()
         val removals = settingsProvider.getIngestionAllowlistRemovals().toMutableSet()

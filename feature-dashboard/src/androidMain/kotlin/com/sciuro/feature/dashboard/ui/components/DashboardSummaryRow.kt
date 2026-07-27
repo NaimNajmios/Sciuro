@@ -19,17 +19,17 @@ fun DashboardSummaryRow(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(bottom = 16.dp),
+        modifier = modifier.fillMaxWidth().height(IntrinsicSize.Max).padding(bottom = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        SciuroCard(modifier = Modifier.weight(1f)) {
+        SciuroCard(modifier = Modifier.weight(1f).fillMaxHeight()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(stringResource(R.string.dashboard_active_budgets), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("$activeBudgetsCount", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
             }
         }
-        SciuroCard(modifier = Modifier.weight(1f)) {
+        SciuroCard(modifier = Modifier.weight(1f).fillMaxHeight()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     stringResource(R.string.dashboard_runway),

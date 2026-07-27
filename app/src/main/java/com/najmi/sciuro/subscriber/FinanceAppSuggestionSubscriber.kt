@@ -27,8 +27,12 @@ class FinanceAppSuggestionSubscriber(
         scope.launch {
             eventBus.events.collect { event ->
                 if (event is DomainEvent.NewFinanceAppDetected) {
-                    val displayName = IngestionDefaults.knownFinanceAppSignatures[event.packageName]
-                        ?: event.packageName
+                    val displayName = try {
+                        val pm = context.packageManager
+                        pm.getApplicationLabel(pm.getApplicationInfo(event.packageName, 0)).toString()
+                    } catch (e: Exception) {
+                        event.packageName
+                    }
                     showSuggestionNotification(displayName, event.packageName)
                 }
             }

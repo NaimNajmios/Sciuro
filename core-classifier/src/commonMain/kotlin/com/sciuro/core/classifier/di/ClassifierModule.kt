@@ -21,8 +21,8 @@ val classifierModule = module {
             autoConfirmEnabled = settings.isTransactionAutoConfirmEnabled()
         )
     }
-    single {
-        TransactionBookingUseCase(
+    single<TransactionBookingUseCase> {
+        com.sciuro.core.classifier.orchestrator.DefaultTransactionBookingUseCase(
             parserPipeline = get(),
             transactionRepository = get(),
             accountRepository = get(),
@@ -33,8 +33,8 @@ val classifierModule = module {
             confidenceThreshold = com.sciuro.core.parsing.model.DEFAULT_CONFIDENCE_THRESHOLD
         )
     }
-    single {
-        EngineTriggerUseCase(
+    single<EngineTriggerUseCase> {
+        com.sciuro.core.classifier.orchestrator.DefaultEngineTriggerUseCase(
             transferDetectionEngine = get(),
             obligationCycleMatcher = get(),
             budgetEngine = get(),

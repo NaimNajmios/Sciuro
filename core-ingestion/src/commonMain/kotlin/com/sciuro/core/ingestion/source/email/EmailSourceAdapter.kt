@@ -15,6 +15,9 @@ class EmailSourceAdapter : IngestionSource {
     override fun observeEvents(): Flow<RawEvent> = _events
 
     suspend fun emitEmail(event: RawEvent) {
+        if (_events.subscriptionCount.value == 0) {
+            println("[EmailSourceAdapter] No collector attached — dropping event: ${event.id}")
+        }
         _events.emit(event)
     }
 }

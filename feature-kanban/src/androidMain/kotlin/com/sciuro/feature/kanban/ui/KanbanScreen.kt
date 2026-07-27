@@ -234,10 +234,14 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
             }
         }
 
-        PullToRefreshContainer(
-            state = pullToRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
+        if (pullToRefreshState.isRefreshing) {
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+            )
+        }
 
         if (selectedTab != "Review") {
             FloatingActionButton(

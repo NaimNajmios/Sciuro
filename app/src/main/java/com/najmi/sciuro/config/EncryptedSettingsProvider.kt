@@ -157,7 +157,7 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     }
 
     override fun isTransactionAutoConfirmEnabled(): Boolean {
-        return sharedPreferences.getBoolean("auto_confirm_transactions", false)
+        return sharedPreferences.getBoolean("auto_confirm_transactions", true)
     }
 
     override fun setTransactionAutoConfirmEnabled(enabled: Boolean) {

@@ -21,7 +21,7 @@ class FinanceAppCheckWorker(
     override suspend fun doWork(): Result {
         val packageName = inputData.getString("package_name") ?: return Result.success()
 
-        val knownApps = IngestionDefaults.knownFinanceAppSignatures
+        val knownApps = IngestionDefaults.directBankPackages
         if (packageName !in knownApps) return Result.success()
 
         val pm = applicationContext.packageManager

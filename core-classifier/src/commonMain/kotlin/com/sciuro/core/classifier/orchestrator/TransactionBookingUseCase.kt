@@ -22,7 +22,11 @@ data class BookingResult(
     val rawEventId: String
 )
 
-class TransactionBookingUseCase(
+interface TransactionBookingUseCase {
+    suspend fun book(rawEvent: RawEvent): BookingResult?
+}
+
+open class DefaultTransactionBookingUseCase(
     private val parserPipeline: SciuroParserPipeline,
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
@@ -31,8 +35,8 @@ class TransactionBookingUseCase(
     private val reviewTierDecider: ReviewTierDecider,
     private val tracer: PipelineTracer,
     private val confidenceThreshold: Float
-) {
-    suspend fun book(rawEvent: RawEvent): BookingResult? {
+) : TransactionBookingUseCase {
+    override suspend fun book(rawEvent: RawEvent): BookingResult? {
         rawEventRepository.markProcessing(rawEvent.id)
 
         val staging = rawEventRepository.getRawEventById(rawEvent.id)

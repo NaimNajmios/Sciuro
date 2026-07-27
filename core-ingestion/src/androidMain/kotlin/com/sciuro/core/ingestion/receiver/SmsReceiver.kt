@@ -58,17 +58,21 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
         val sessionId = UUID.randomUUID().toString()
 
         if (body.isBlank()) return
-        if (!allowlist.allows(sender)) {
-            tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                detail = mapOf("reason" to "allowlist_reject", "sender" to sender), packageName = sender)
-            return
-        }
 
-        val hasFinancialSignal = AggregatorHeuristicFilter.isFinancial(sender, body)
-        if (!hasFinancialSignal) {
-            tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                detail = mapOf("reason" to "non_financial_sms", "sender" to sender), packageName = sender)
-            return
+        val isKnownBankSms = allowlist.isDefaultBankSmsSender(sender)
+
+        if (!isKnownBankSms) {
+            if (!allowlist.allows(sender)) {
+                tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                    detail = mapOf("reason" to "allowlist_reject", "sender" to sender), packageName = sender)
+                return
+            }
+            val hasFinancialSignal = AggregatorHeuristicFilter.isFinancial(sender, body)
+            if (!hasFinancialSignal) {
+                tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                    detail = mapOf("reason" to "non_financial_sms", "sender" to sender), packageName = sender)
+                return
+            }
         }
 
         val rawEvent = RawEvent(
