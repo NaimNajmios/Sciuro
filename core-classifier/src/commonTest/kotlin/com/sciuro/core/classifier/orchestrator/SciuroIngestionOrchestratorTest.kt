@@ -129,13 +129,33 @@ private class FakeIngestionSource(
     }
 }
 
+private val dummyDb = object : com.sciuro.core.ledger.db.SciuroDatabase {
+    override val accountQueries get() = throw UnsupportedOperationException()
+    override val auditLogQueries get() = throw UnsupportedOperationException()
+    override val budgetQueries get() = throw UnsupportedOperationException()
+    override val cashAdjustmentQueries get() = throw UnsupportedOperationException()
+    override val categoryQueries get() = throw UnsupportedOperationException()
+    override val debtQueries get() = throw UnsupportedOperationException()
+    override val debtPaymentLinkQueries get() = throw UnsupportedOperationException()
+    override val investmentQueries get() = throw UnsupportedOperationException()
+    override val merchantCategoryRuleQueries get() = throw UnsupportedOperationException()
+    override val obligationQueries get() = throw UnsupportedOperationException()
+    override val pipelineTraceQueries get() = throw UnsupportedOperationException()
+    override val rawEventStagingQueries get() = throw UnsupportedOperationException()
+    override val transactionCorroborationQueries get() = throw UnsupportedOperationException()
+    override val transactionRecordQueries get() = throw UnsupportedOperationException()
+    override val transferLinkQueries get() = throw UnsupportedOperationException()
+    override fun transaction(noEnclosing: Boolean, body: app.cash.sqldelight.TransactionWithoutReturn.() -> Unit) {}
+    override fun <R> transactionWithResult(noEnclosing: Boolean, bodyWithReturn: app.cash.sqldelight.TransactionWithReturn<R>.() -> R): R = throw UnsupportedOperationException()
+}
+
 private class FakeRawEventRepository(
     private val strandedCount: Int = 0
-) : RawEventRepository(null as com.sciuro.core.ledger.db.SciuroDatabase) {
+) : RawEventRepository(dummyDb) {
     var processedCount = 0
     var deadLetterCount = 0
 
-    override suspend fun getStrandedEvents(staleThreshold: Long): List<com.sciuro.core.ledger.db.Raw_event_staging> {
+    override suspend fun getStrandedEvents(staleProcessedBeforeMs: Long): List<com.sciuro.core.ledger.db.Raw_event_staging> {
         if (strandedCount == 0) return emptyList()
         return (1..strandedCount).map { i ->
             com.sciuro.core.ledger.db.Raw_event_staging(
@@ -161,11 +181,11 @@ private class FakeRawEventRepository(
 
     override suspend fun markProcessing(id: String, error: String?) {}
     override suspend fun markProcessed(id: String) { processedCount++ }
-    override suspend fun markDeadLetter(id: String, reason: String) { deadLetterCount++ }
+    override suspend fun markDeadLetter(id: String, error: String) { deadLetterCount++ }
     override suspend fun requeueRawEvent(id: String) {}
     override suspend fun getRawEventById(id: String): com.sciuro.core.ledger.db.Raw_event_staging? = null
-    override suspend fun countStrandedEvents(staleThreshold: Long): Long = strandedCount.toLong()
-    override suspend fun purgeOldTraces(before: Long) {}
+    override suspend fun countStrandedEvents(staleProcessedBeforeMs: Long): Long = strandedCount.toLong()
+    override suspend fun purgeOldTraces(beforeMs: Long) {}
 }
 
 private class FakeBookingUseCase(
@@ -225,13 +245,13 @@ private class FakeEngineTriggerUseCase : EngineTriggerUseCase {
 
 private class FakePipelineTracer : PipelineTracer {
     data class TraceEntry(
-        val sessionId: String,
-        val entityId: String?,
+        val rawEventId: String,
+        val transactionId: String?,
         val stage: TraceStage,
         val outcome: TraceOutcome,
         val durationMs: Long? = null,
         val confidence: Float? = null,
-        val detail: Map<String, String>? = null,
+        val detail: Map<String, String?>? = null,
         val packageName: String? = null
     )
 
@@ -247,6 +267,6 @@ private class FakePipelineTracer : PipelineTracer {
         detail: Map<String, String?>?,
         packageName: String?
     ) {
-        traces.add(TraceEntry(rawEventId ?: "", transactionId, stage, outcome, durationMs, confidence, detail as Map<String, String>?, packageName))
+        traces.add(TraceEntry(rawEventId ?: "", transactionId, stage, outcome, durationMs, confidence, detail, packageName))
     }
 }
