@@ -1,0 +1,1 @@
+ALTER TABLE obligation ADD COLUMN last_paid_date INTEGER;

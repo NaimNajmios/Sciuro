@@ -30,15 +30,17 @@ class ObligationCycleMatcher(
         }
 
         val newDueDate = computeNextDueDate(match.next_due_date, match.frequency)
-        obligationRepository.advanceNextDueDate(match.id, newDueDate)
+        obligationRepository.recordPayment(match.id, newDueDate)
         eventBus.publish(DomainEvent.ObligationCycleSettled(match.id, transactionId))
     }
 
-    private fun computeNextDueDate(currentDueDate: Long, frequency: String): Long {
-        return when (frequency) {
-            "WEEKLY" -> currentDueDate + 7L * 24L * 60L * 60L * 1000L
-            "YEARLY" -> currentDueDate + 365L * 24L * 60L * 60L * 1000L
-            else -> currentDueDate + 30L * 24L * 60L * 60L * 1000L
+    companion object {
+        fun computeNextDueDate(currentDueDate: Long, frequency: String): Long {
+            return when (frequency) {
+                "WEEKLY" -> currentDueDate + 7L * 24L * 60L * 60L * 1000L
+                "YEARLY" -> currentDueDate + 365L * 24L * 60L * 60L * 1000L
+                else -> currentDueDate + 30L * 24L * 60L * 60L * 1000L
+            }
         }
     }
 }

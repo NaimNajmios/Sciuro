@@ -45,8 +45,12 @@ import com.sciuro.core.debt.model.DebtType
 import com.sciuro.core.obligations.model.ObligationFrequency
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.feature.kanban.ui.components.KanbanDialogs
+import com.sciuro.feature.kanban.ui.components.BillDetailSheet
+import com.sciuro.feature.kanban.ui.components.DebtDetailSheet
 import org.koin.androidx.compose.koinViewModel
 import kotlinx.coroutines.delay
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.alpha
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -66,6 +70,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val bills by viewModel.bills.collectAsState()
     val debtTasks by viewModel.debtTasks.collectAsState()
     val expenseCategories by viewModel.expenseCategories.collectAsState()
+    val showCompletedDebts by viewModel.showCompletedDebts.collectAsState()
 
     var selectedTab by remember { mutableStateOf("Review") }
     val tabs = listOf("Review", "Bills", "Debts")
@@ -95,6 +100,10 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     var taskToApprove by remember { mutableStateOf<Triple<KanbanTask, String?, String>?>(null) }
     var debtToDelete by remember { mutableStateOf<DebtTask?>(null) }
     var debtToEdit by remember { mutableStateOf<DebtTask?>(null) }
+    var billToDelete by remember { mutableStateOf<BillTask?>(null) }
+    var billToEdit by remember { mutableStateOf<BillTask?>(null) }
+    var billToView by remember { mutableStateOf<BillTask?>(null) }
+    var debtToView by remember { mutableStateOf<DebtTask?>(null) }
     var createBillAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var createDebtAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -210,14 +219,16 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         "Bills" -> BillsColumn(
                             bills = bills,
                             recentlySettledIds = recentlySettledIds,
-                            onMarkPaid = { paymentBill = it }
+                            onMarkPaid = { paymentBill = it },
+                            onClickBill = { billToView = it }
                         )
                         "Debts" -> DebtsColumn(
                             debtTasks = debtTasks,
+                            showCompletedDebts = showCompletedDebts,
+                            onToggleCompleted = { viewModel.toggleShowCompletedDebts() },
                             recentlySettledIds = recentlySettledIds,
                             onRecordPayment = { paymentDebt = it },
-                            onEditDebt = { debtToEdit = it },
-                            onDeleteDebt = { debtToDelete = it }
+                            onClickDebt = { debtToView = it }
                         )
                         else -> ReviewColumn(
                             tasks = filteredTasks,
@@ -269,6 +280,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val snackbarDebtMarkedFinished = stringResource(R.string.kanban_snackbar_debt_marked_finished)
     val snackbarBillCreated = stringResource(R.string.kanban_snackbar_bill_created)
     val snackbarDebtCreated = stringResource(R.string.kanban_snackbar_debt_created)
+    val snackbarBillDeleted = "Bill deleted"
+    val snackbarBillUpdated = "Bill updated"
 
     KanbanDialogs(
         taskToReject = taskToReject,
@@ -340,6 +353,64 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
         },
         onCreateDebtDismiss = { createDebtAction = null }
     )
+
+    if (billToDelete != null) {
+        SciuroConfirmationDialog(
+            title = "Delete Bill",
+            message = "Are you sure you want to delete this bill?",
+            confirmText = "Delete",
+            onConfirm = {
+                viewModel.deleteObligation(billToDelete!!.id)
+                billToDelete = null
+                coroutineScope.launch { snackbarHostState.showSnackbar(snackbarBillDeleted) }
+            },
+            onDismiss = { billToDelete = null }
+        )
+    }
+
+    if (billToEdit != null) {
+        EditBillSheet(
+            bill = billToEdit!!,
+            accounts = accounts,
+            expenseCategories = expenseCategories,
+            onDismiss = { billToEdit = null },
+            onEdit = { name, amount, frequency, nextDueDate, categoryId, accountId ->
+                viewModel.updateObligation(billToEdit!!.id, name, amount, frequency, nextDueDate, categoryId, accountId)
+                billToEdit = null
+                coroutineScope.launch { snackbarHostState.showSnackbar(snackbarBillUpdated) }
+            }
+        )
+    }
+
+    if (billToView != null) {
+        BillDetailSheet(
+            bill = billToView!!,
+            onDismiss = { billToView = null },
+            onEditClick = {
+                billToEdit = billToView
+                billToView = null
+            },
+            onDeleteClick = {
+                billToDelete = billToView
+                billToView = null
+            }
+        )
+    }
+
+    if (debtToView != null) {
+        DebtDetailSheet(
+            debt = debtToView!!,
+            onDismiss = { debtToView = null },
+            onEditClick = {
+                debtToEdit = debtToView
+                debtToView = null
+            },
+            onDeleteClick = {
+                debtToDelete = debtToView
+                debtToView = null
+            }
+        )
+    }
 
     if (showAddSheet) {
         when (selectedTab) {
@@ -434,27 +505,33 @@ private fun ReviewColumn(
 private fun BillsColumn(
     bills: List<BillTask>,
     recentlySettledIds: List<String>,
-    onMarkPaid: (BillTask) -> Unit
+    onMarkPaid: (BillTask) -> Unit,
+    onClickBill: (BillTask) -> Unit
 ) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val overdueBills = bills.filter { it.status == BillStatus.OVERDUE }
         val dueSoonBills = bills.filter { it.status == BillStatus.DUE_SOON }
         val upcomingBills = bills.filter { it.status == BillStatus.UPCOMING }
+        val settledBills = bills.filter { it.status == BillStatus.SETTLED }
 
         if (bills.isEmpty()) {
             EmptyStateView(message = stringResource(R.string.kanban_empty_bills))
         } else {
             if (overdueBills.isNotEmpty()) {
                 Text(stringResource(R.string.kanban_section_overdue), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-                overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
+                overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
             if (dueSoonBills.isNotEmpty()) {
                 Text(stringResource(R.string.kanban_section_due_soon), style = MaterialTheme.typography.titleMedium, color = com.najmi.sciuro.core.ui.theme.SignalWarning, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-                dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
+                dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
             if (upcomingBills.isNotEmpty()) {
                 Text(stringResource(R.string.kanban_section_upcoming), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-                upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
+                upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
+            }
+            if (settledBills.isNotEmpty()) {
+                Text("Settled", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                settledBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
             }
         }
     }
@@ -464,6 +541,7 @@ private fun BillsColumn(
 private fun BillCard(
     bill: BillTask,
     onMarkPaid: (BillTask) -> Unit,
+    onClick: () -> Unit,
     isRecentlySettled: Boolean = false
 ) {
     val noMotion = reducedMotion()
@@ -472,22 +550,37 @@ private fun BillCard(
         animationSpec = spring(),
         label = "billSettle"
     )
-    SciuroCard(modifier = Modifier.fillMaxWidth().graphicsLayer(scaleX = scale, scaleY = scale)) {
+    val dateFormatter = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
+    val formattedDate = dateFormatter.format(Date(bill.obligation.nextDueDate))
+
+    SciuroCard(
+        modifier = Modifier.fillMaxWidth().graphicsLayer(scaleX = scale, scaleY = scale),
+        onClick = onClick
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                verticalAlignment = androidx.compose.ui.Alignment.Top
             ) {
                 Column {
                     Text(bill.name, style = MaterialTheme.typography.titleMedium)
-                    Text("RM ${"%.2f".format(bill.amount)}", style = MaterialTheme.typography.bodyMedium)
+                    Text("RM ${"%.2f".format(bill.amount)} • Due $formattedDate", style = MaterialTheme.typography.bodyMedium)
                 }
-                if (bill.status == BillStatus.OVERDUE) {
-                    Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.kanban_section_overdue), tint = MaterialTheme.colorScheme.error)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (bill.status == BillStatus.OVERDUE) {
+                        Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.kanban_section_overdue), tint = MaterialTheme.colorScheme.error)
+                    } else if (bill.status == BillStatus.SETTLED) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text("PAID", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                    }
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             OutlinedButton(onClick = { onMarkPaid(bill) }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.kanban_mark_as_paid))
             }
@@ -498,15 +591,34 @@ private fun BillCard(
 @Composable
 private fun DebtsColumn(
     debtTasks: List<DebtTask>,
+    showCompletedDebts: Boolean,
+    onToggleCompleted: () -> Unit,
     recentlySettledIds: List<String>,
     onRecordPayment: (DebtTask) -> Unit,
-    onEditDebt: (DebtTask) -> Unit,
-    onDeleteDebt: (DebtTask) -> Unit
+    onClickDebt: (DebtTask) -> Unit
 ) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val activeDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.ACTIVE }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Debts", style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Show Completed", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = showCompletedDebts,
+                    onCheckedChange = { onToggleCompleted() },
+                    modifier = Modifier.scale(0.8f)
+                )
+            }
+        }
 
-        if (activeDebts.isEmpty()) {
+        val activeDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.ACTIVE }
+        val completedDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.PAID_OFF }
+
+        if (activeDebts.isEmpty() && completedDebts.isEmpty()) {
             EmptyStateView(message = stringResource(R.string.kanban_empty_debts))
         } else {
             val noMotion = reducedMotion()
@@ -516,7 +628,10 @@ private fun DebtsColumn(
                     animationSpec = spring(),
                     label = "debtSettle"
                 )
-                SciuroCard(modifier = Modifier.fillMaxWidth().graphicsLayer(scaleX = scale, scaleY = scale)) {
+                SciuroCard(
+                    modifier = Modifier.fillMaxWidth().graphicsLayer(scaleX = scale, scaleY = scale),
+                    onClick = { onClickDebt(debt) }
+                ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -532,33 +647,6 @@ private fun DebtsColumn(
                             }
                             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                                 Text("RM ${"%.2f".format(debt.remainingBalance)}", style = MaterialTheme.typography.titleMedium)
-                                var expanded by remember { mutableStateOf(false) }
-                                Box {
-                                    IconButton(onClick = { expanded = true }) {
-                                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = stringResource(R.string.kanban_more_options))
-                                    }
-                                    DropdownMenu(
-                                        expanded = expanded,
-                                        onDismissRequest = { expanded = false }
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text(stringResource(R.string.kanban_edit)) },
-                                            onClick = {
-                                                expanded = false
-                                                onEditDebt(debt)
-                                            },
-                                            leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) }
-                                        )
-                                        DropdownMenuItem(
-                                            text = { Text(stringResource(R.string.kanban_delete), color = MaterialTheme.colorScheme.error) },
-                                            onClick = {
-                                                expanded = false
-                                                onDeleteDebt(debt)
-                                            },
-                                            leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
-                                        )
-                                    }
-                                }
                             }
                         }
 
@@ -580,6 +668,39 @@ private fun DebtsColumn(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(stringResource(R.string.kanban_record_payment))
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (showCompletedDebts && completedDebts.isNotEmpty()) {
+                Text("Completed", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                completedDebts.forEach { debt ->
+                    SciuroCard(modifier = Modifier.fillMaxWidth().alpha(0.5f)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        debt.name, 
+                                        style = MaterialTheme.typography.titleMedium,
+                                        textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                    if (debt.counterpartyName != null) {
+                                        Text(debt.counterpartyName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                                    }
+                                }
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = MaterialTheme.shapes.small
+                                ) {
+                                    Text("PAID OFF", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                }
                             }
                         }
                     }
@@ -981,6 +1102,157 @@ internal fun EditDebtSheet(
                     )
                 },
                 enabled = name.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditBillSheet(
+    bill: BillTask,
+    accounts: List<Account>,
+    expenseCategories: List<Category>,
+    onDismiss: () -> Unit,
+    onEdit: (name: String, amount: Double, frequency: ObligationFrequency, nextDueDate: Long, categoryId: String?, accountId: String?) -> Unit
+) {
+    var name by remember { mutableStateOf(bill.name) }
+    var amountText by remember { mutableStateOf(bill.amount.toString()) }
+    var frequency by remember { mutableStateOf(bill.obligation.frequency) }
+    var dueDate by remember { mutableStateOf<Long?>(bill.obligation.nextDueDate) }
+    var categoryId by remember { mutableStateOf<String?>(bill.obligation.categoryId) }
+    var selectedAccount by remember { mutableStateOf<Account?>(accounts.find { it.id == bill.obligation.accountId }) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var accountDropdownExpanded by remember { mutableStateOf(false) }
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+
+    SciuroBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Text("Edit Bill", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SciuroTextField(value = name, onValueChange = { name = it }, label = stringResource(R.string.kanban_label_name))
+
+            Spacer(modifier = Modifier.height(8.dp))
+            SciuroAmountField(
+                value = amountText,
+                onValueChange = { amountText = it },
+                label = stringResource(R.string.kanban_label_amount_rm)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(stringResource(R.string.kanban_label_frequency), style = MaterialTheme.typography.labelLarge)
+            val freqLabels = ObligationFrequency.entries.map { it.name.lowercase().replaceFirstChar { it.uppercaseChar() } }
+            PillToggle(
+                options = freqLabels,
+                selectedOption = frequency.name.lowercase().replaceFirstChar { it.uppercaseChar() },
+                onOptionSelected = { label ->
+                    frequency = ObligationFrequency.entries.first {
+                        it.name.lowercase().replaceFirstChar { it.uppercaseChar() } == label
+                    }
+                },
+                fillWidth = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(stringResource(R.string.kanban_label_next_due_date), style = MaterialTheme.typography.labelLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = dueDate?.let { dateFormatter.format(Date(it)) } ?: stringResource(R.string.kanban_select_date),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                OutlinedButton(onClick = { showDatePicker = true }) {
+                    Text(stringResource(R.string.kanban_pick_date))
+                }
+            }
+
+            if (showDatePicker) {
+                val datePickerState = rememberDatePickerState(initialSelectedDateMillis = dueDate)
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            dueDate = datePickerState.selectedDateMillis
+                            showDatePicker = false
+                        }) { Text(stringResource(R.string.kanban_ok)) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.kanban_cancel)) }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(stringResource(R.string.kanban_label_account), style = MaterialTheme.typography.labelLarge)
+            ExposedDropdownMenuBox(
+                expanded = accountDropdownExpanded,
+                onExpandedChange = { accountDropdownExpanded = it }
+            ) {
+                SciuroTextField(
+                    value = selectedAccount?.name ?: stringResource(R.string.kanban_select_account),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = stringResource(R.string.kanban_wallet_account),
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountDropdownExpanded) },
+                    modifier = Modifier.menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = accountDropdownExpanded,
+                    onDismissRequest = { accountDropdownExpanded = false }
+                ) {
+                    accounts.forEach { account ->
+                        DropdownMenuItem(
+                            text = { Text(account.name) },
+                            onClick = {
+                                selectedAccount = account
+                                accountDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(stringResource(R.string.kanban_label_category), style = MaterialTheme.typography.labelLarge)
+            if (expenseCategories.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(expenseCategories) { cat ->
+                        FilterChip(
+                            selected = categoryId == cat.id,
+                            onClick = { categoryId = if (categoryId == cat.id) null else cat.id },
+                            label = { Text(cat.name) }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val isFormValid = name.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0 && dueDate != null
+            SciuroPrimaryButton(
+                text = "Save Changes",
+                onClick = {
+                    onEdit(
+                        name,
+                        amountText.toDoubleOrNull() ?: 0.0,
+                        frequency,
+                        dueDate!!,
+                        categoryId,
+                        selectedAccount?.id
+                    )
+                },
+                enabled = isFormValid,
                 modifier = Modifier.fillMaxWidth()
             )
         }

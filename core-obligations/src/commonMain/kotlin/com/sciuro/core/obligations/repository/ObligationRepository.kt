@@ -29,7 +29,8 @@ class ObligationRepository(
             nextDueDate = it.next_due_date,
             categoryId = it.category_id,
             accountId = it.account_id,
-            isActive = it.is_active == 1L
+            isActive = it.is_active == 1L,
+            lastPaidDate = it.last_paid_date
         )
     }
 
@@ -53,7 +54,8 @@ class ObligationRepository(
                 account_id = obligation.accountId,
                 is_active = if (obligation.isActive) 1L else 0L,
                 created_at = now,
-                updated_at = now
+                updated_at = now,
+                last_paid_date = obligation.lastPaidDate
             )
             obligation
         }
@@ -110,6 +112,10 @@ class ObligationRepository(
 
     suspend fun advanceNextDueDate(id: String, newDueDate: Long) {
         database.obligationQueries.updateNextDueDate(newDueDate, currentTimeMillis(), id)
+    }
+
+    suspend fun recordPayment(id: String, newDueDate: Long) {
+        database.obligationQueries.recordPayment(newDueDate, currentTimeMillis(), currentTimeMillis(), id)
     }
 
     fun observeActiveObligations(): Flow<List<Obligation>> {

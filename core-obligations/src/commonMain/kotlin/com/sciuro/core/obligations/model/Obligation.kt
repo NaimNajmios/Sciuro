@@ -12,5 +12,6 @@ data class Obligation(
     val nextDueDate: Long,
     val categoryId: String?,
     val accountId: String?,
-    val isActive: Boolean
+    val isActive: Boolean,
+    val lastPaidDate: Long? = null
 )

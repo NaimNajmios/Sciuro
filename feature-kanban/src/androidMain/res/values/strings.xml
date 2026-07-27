@@ -98,6 +98,13 @@
     <string name="kanban_label_notes_optional">Notes (Optional)</string>
     <string name="kanban_save_changes">Save Changes</string>
 
+    <!-- Details sheets -->
+    <string name="kanban_bill_details_title">Bill Details</string>
+    <string name="kanban_debt_details_title">Debt Details</string>
+    
+    <!-- Edit sheets -->
+    <string name="kanban_edit_bill_title">Edit Bill</string>
+
     <!-- Accessibility -->
     <string name="kanban_add_tab_cd">Add %1$s</string>
 </resources>

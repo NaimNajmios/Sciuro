@@ -161,7 +161,7 @@ class ObligationDetectionEngineTest {
             id = "oblig_existing", name = "Gym Membership", amount = 50.0,
             frequency = "MONTHLY", next_due_date = 100000L,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         engine.runDetection()

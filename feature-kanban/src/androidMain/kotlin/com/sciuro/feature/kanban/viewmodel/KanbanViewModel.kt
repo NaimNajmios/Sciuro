@@ -111,8 +111,20 @@ class KanbanViewModel(
             initialValue = emptyList()
         )
 
+    private val _showCompletedDebts = MutableStateFlow(false)
+    val showCompletedDebts: StateFlow<Boolean> = _showCompletedDebts.asStateFlow()
+
+    fun toggleShowCompletedDebts() {
+        _showCompletedDebts.value = !_showCompletedDebts.value
+    }
+
     val debtTasks: StateFlow<List<DebtTask>> = debtRepository.observeDebts()
-        .map { debts -> debts.filter { it.status == DebtStatus.ACTIVE }.map { DebtTask.fromDebt(it) } }
+        .combine(_showCompletedDebts) { debts, showCompleted ->
+            debts.filter { 
+                if (showCompleted) it.status == DebtStatus.ACTIVE || it.status == DebtStatus.PAID_OFF 
+                else it.status == DebtStatus.ACTIVE 
+            }.map { DebtTask.fromDebt(it) }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -164,6 +176,41 @@ class KanbanViewModel(
     fun markDebtAsFinished(debtId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             debtRepository.markAsPaidOff(debtId)
+        }
+    }
+
+    fun updateObligation(
+        id: String,
+        name: String,
+        amount: Double,
+        frequency: ObligationFrequency,
+        nextDueDate: Long,
+        categoryId: String?,
+        accountId: String?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentBills = bills.value
+            val existing = currentBills.find { it.id == id }
+            if (existing != null) {
+                obligationRepository.updateObligation(
+                    Obligation(
+                        id = id,
+                        name = name,
+                        amount = amount,
+                        frequency = frequency,
+                        nextDueDate = nextDueDate,
+                        categoryId = categoryId,
+                        accountId = accountId,
+                        isActive = true
+                    )
+                )
+            }
+        }
+    }
+
+    fun deleteObligation(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            obligationRepository.deleteObligation(id)
         }
     }
 

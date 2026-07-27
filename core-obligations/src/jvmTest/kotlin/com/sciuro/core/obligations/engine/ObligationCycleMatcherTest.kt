@@ -55,7 +55,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Netflix Subscription", amount = 15.0,
             frequency = "MONTHLY", next_due_date = initialDueDate,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         matcher.onTransactionBooked(
@@ -75,7 +75,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Netflix Subscription", amount = 15.0,
             frequency = "MONTHLY", next_due_date = 100000000L,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         val events = mutableListOf<DomainEvent>()
@@ -105,7 +105,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Netflix Subscription", amount = 15.0,
             frequency = "MONTHLY", next_due_date = 100000000L,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         val events = mutableListOf<DomainEvent>()
@@ -137,7 +137,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Netflix Subscription", amount = 15.0,
             frequency = "MONTHLY", next_due_date = initialDueDate,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         matcher.onTransactionBooked(
@@ -156,7 +156,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Netflix Subscription", amount = 15.0,
             frequency = "MONTHLY", next_due_date = 100000000L,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         val initialDueDate = 100000000L
@@ -177,7 +177,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Rent", amount = 1200.0,
             frequency = "MONTHLY", next_due_date = initialDueDate,
             category_id = "cat_rent", account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         matcher.onTransactionBooked(
@@ -198,7 +198,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Weekly Cleaner", amount = 50.0,
             frequency = "WEEKLY", next_due_date = initialDueDate,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         matcher.onTransactionBooked(
@@ -219,7 +219,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Annual Insurance", amount = 500.0,
             frequency = "YEARLY", next_due_date = initialDueDate,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         matcher.onTransactionBooked(
@@ -239,7 +239,7 @@ class ObligationCycleMatcherTest {
             id = "oblig_1", name = "Netflix Subscription", amount = 15.0,
             frequency = "MONTHLY", next_due_date = 100000000L,
             category_id = null, account_id = null, is_active = 1L,
-            created_at = 0L, updated_at = 0L
+            created_at = 0L, updated_at = 0L, last_paid_date = null
         )
 
         val events = mutableListOf<DomainEvent>()
