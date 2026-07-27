@@ -25,4 +25,5 @@ sealed interface DomainEvent {
     data class NewFinanceAppDetected(val packageName: String) : DomainEvent
     data class MerchantRuleLearned(val merchant: String, val categoryId: String) : DomainEvent
     data class RecipientRuleLearned(val accountRef: String, val classification: String) : DomainEvent
+    data class TransactionModified(val transactionId: String) : DomainEvent
 }

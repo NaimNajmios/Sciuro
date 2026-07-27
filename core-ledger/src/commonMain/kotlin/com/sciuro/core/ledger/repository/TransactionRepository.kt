@@ -28,7 +28,7 @@ class TransactionRepository(
         source: AuditSource = AuditSource.SYSTEM_AUTO,
         confidence: Float? = null
     ): Transaction {
-        return withAudit(
+        val result = withAudit(
             entityType = EntityType.TRANSACTION,
             entityId = transaction.id,
             action = AuditAction.CREATE,
@@ -67,6 +67,8 @@ class TransactionRepository(
             
             transaction
         }
+        eventBus.publish(DomainEvent.TransactionModified(result.id))
+        return result
     }
     
     suspend fun reviewTransaction(transactionId: String, newCategoryId: String?, newAccountId: String? = null, newDirection: String? = null) {
@@ -121,6 +123,7 @@ class TransactionRepository(
                 )
             }
         }
+        eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
     suspend fun approveTransaction(transactionId: String) {
@@ -148,6 +151,7 @@ class TransactionRepository(
                 )
             )
         }
+        eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
     suspend fun rejectTransaction(transactionId: String) {
@@ -167,6 +171,7 @@ class TransactionRepository(
             }
             database.transactionRecordQueries.deleteTransaction(transactionId)
         }
+        eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
     suspend fun deleteTransaction(transactionId: String) {
@@ -186,6 +191,7 @@ class TransactionRepository(
             }
             database.transactionRecordQueries.deleteTransaction(transactionId)
         }
+        eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
     suspend fun editTransaction(
@@ -241,6 +247,7 @@ class TransactionRepository(
                 )
             }
         }
+        eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
     fun observeUnreviewedTransactions(): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
@@ -319,6 +326,7 @@ class TransactionRepository(
 
             database.transactionRecordQueries.undoAutoConfirm(currentTimeMillis(), transactionId)
         }
+        eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
     suspend fun getAllTransactionsOnce(): List<com.sciuro.core.ledger.db.Transaction_record> {

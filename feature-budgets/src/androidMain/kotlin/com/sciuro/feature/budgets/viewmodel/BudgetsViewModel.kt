@@ -2,6 +2,7 @@ package com.sciuro.feature.budgets.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sciuro.core.budget.engine.BudgetEngine
 import com.sciuro.core.budget.model.Budget
 import com.sciuro.core.budget.model.BudgetPeriod
 import com.sciuro.core.budget.repository.BudgetRepository
@@ -19,7 +20,8 @@ import java.util.UUID
 
 class BudgetsViewModel(
     private val budgetRepository: BudgetRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val budgetEngine: BudgetEngine
 ) : ViewModel() {
 
     val expenseCategories: StateFlow<List<Category>> = categoryRepository
@@ -62,12 +64,14 @@ class BudgetsViewModel(
                     period = period
                 )
             )
+            budgetEngine.processBudgets()
         }
     }
 
     suspend fun updateBudget(id: String, allocatedAmount: Double, period: BudgetPeriod) {
         withContext(Dispatchers.IO) {
             budgetRepository.updateBudget(id, allocatedAmount, period.name)
+            budgetEngine.processBudgets()
         }
     }
 

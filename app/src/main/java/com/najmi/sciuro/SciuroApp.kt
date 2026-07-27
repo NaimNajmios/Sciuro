@@ -9,6 +9,7 @@ import com.sciuro.core.ledger.di.ledgerModule
 import com.sciuro.core.ledger.di.databaseModule
 import com.sciuro.core.ledger.di.platformDatabaseModule
 import com.sciuro.core.budget.di.budgetModule
+import com.sciuro.core.budget.engine.BudgetReconciler
 import com.sciuro.core.debt.di.debtModule
 import com.sciuro.core.investment.di.investmentModule
 import com.sciuro.core.investment.di.platformInvestmentModule
@@ -63,6 +64,7 @@ class SciuroApp : Application(), KoinComponent {
     private val financeAppSuggestionSubscriber: com.najmi.sciuro.subscriber.FinanceAppSuggestionSubscriber by inject()
     private val notificationSuppressionEngine: com.najmi.sciuro.engine.NotificationSuppressionEngine by inject()
     private val universalEventSubscriber: com.najmi.sciuro.engine.UniversalEventSubscriber by inject()
+    private val budgetReconciler: BudgetReconciler by inject()
     
     override fun onCreate() {
         super.onCreate()
@@ -111,6 +113,7 @@ class SciuroApp : Application(), KoinComponent {
         financeAppSuggestionSubscriber.start()
         notificationSuppressionEngine.start()
         universalEventSubscriber.start()
+        budgetReconciler.start(appScope)
 
         val reconciliationRequest = PeriodicWorkRequestBuilder<IngestionReconciliationWorker>(
             15, TimeUnit.MINUTES
