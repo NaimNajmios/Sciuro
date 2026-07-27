@@ -33,3 +33,17 @@ SELECT * FROM budget_record;
 
 selectBudgetById:
 SELECT * FROM budget_record WHERE id = ?;
+
+selectSpendByCategory:
+SELECT COALESCE(SUM(amount), 0.0) AS total_spent FROM transaction_record
+WHERE category_id = ?
+AND direction = 'OUTFLOW'
+AND timestamp >= ?
+AND timestamp < ?;
+
+selectTransactionAmountsByCategorySince:
+SELECT amount FROM transaction_record
+WHERE category_id = ?
+AND direction = 'OUTFLOW'
+AND timestamp >= ?
+ORDER BY timestamp DESC;

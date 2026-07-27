@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,30 +23,19 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.*
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import com.najmi.sciuro.core.ui.theme.SciuroTheme
 import com.najmi.sciuro.core.ui.theme.SciuroMotion
-import com.najmi.sciuro.core.ui.theme.DarkSurfaceSheet
-import com.najmi.sciuro.core.ui.theme.LightSurfaceSheet
-import com.sciuro.feature.dashboard.ui.DashboardScreen
-import com.sciuro.feature.wallet.ui.WalletScreen
-import com.sciuro.feature.kanban.ui.KanbanScreen
-import com.sciuro.feature.budgets.ui.BudgetsScreen
-import com.sciuro.feature.debt.ui.DebtOverviewScreen
+import com.najmi.sciuro.navigation.SciuroNavGraph
+import com.najmi.sciuro.navigation.SciuroRoute
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
-import org.koin.androidx.compose.koinViewModel
 import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
-import app.cash.sqldelight.db.SqlDriver
 import androidx.compose.ui.platform.LocalContext
 
 import android.os.Build
@@ -62,11 +50,7 @@ import com.najmi.sciuro.worker.ReviewReminderWorker
 import java.util.concurrent.TimeUnit
 import com.sciuro.core.ledger.config.SettingsProvider
 import org.koin.compose.koinInject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import android.widget.Toast
-import androidx.core.content.FileProvider
-import kotlinx.coroutines.withContext
 
 sealed class NavItem(
     val route: String,
@@ -216,12 +200,12 @@ fun SciuroMainScreen() {
         return
     }
     
-    val startDest = if (onboardingState.isOnboardingComplete) "dashboard" else "onboarding"
+    val startDest = if (onboardingState.isOnboardingComplete) SciuroRoute.Dashboard.route else SciuroRoute.Onboarding.route
     
     LaunchedEffect(onboardingState.isOnboardingComplete) {
-        if (onboardingState.isOnboardingComplete && navController.currentDestination?.route == "onboarding") {
-            navController.navigate("dashboard") {
-                popUpTo("onboarding") { inclusive = true }
+        if (onboardingState.isOnboardingComplete && navController.currentDestination?.route == SciuroRoute.Onboarding.route) {
+            navController.navigate(SciuroRoute.Dashboard.route) {
+                popUpTo(SciuroRoute.Onboarding.route) { inclusive = true }
             }
         }
     }
@@ -237,8 +221,8 @@ fun SciuroMainScreen() {
                 "diagnostics" to 3, "data_tools" to 4, "health" to 5, "pipeline_trace" to 6
             )
             val tab = tabMap[intentDeveloperTab] ?: 0
-            navController.navigate("developer_settings?initialTab=$tab") {
-                popUpTo("dashboard") { inclusive = false }
+            navController.navigate(SciuroRoute.DeveloperSettings.createRoute(tab)) {
+                popUpTo(SciuroRoute.Dashboard.route) { inclusive = false }
             }
             activity?.intent?.removeExtra("open_tab")
             activity?.intent?.removeExtra("developer_tab")
@@ -342,180 +326,13 @@ fun SciuroMainScreen() {
                 }
             }
         ) { innerPadding ->
-            val lateralEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                fadeIn(tween(SciuroMotion.TRANSITION_DURATION_MS)) +
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
-            }
-            val lateralExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                fadeOut(tween(SciuroMotion.TRANSITION_DURATION_MS)) +
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS))
-            }
-            val drillInEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                scaleIn(initialScale = 0.92f, animationSpec = tween(SciuroMotion.TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)) +
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(SciuroMotion.TRANSITION_DURATION_MS, easing = FastOutSlowInEasing))
-            }
-            val drillInPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                scaleOut(targetScale = 0.92f, animationSpec = tween(SciuroMotion.TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)) +
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(SciuroMotion.TRANSITION_DURATION_MS, easing = FastOutSlowInEasing))
-            }
-
-            NavHost(
-                navController, 
-                startDestination = startDest, 
-                modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding()),
-                enterTransition = lateralEnter,
-                exitTransition = lateralExit
-            ) {
-            composable("onboarding") {
-                com.sciuro.feature.wallet.ui.OnboardingScreen(
-                    viewModel = onboardingViewModel
-                )
-            }
-            composable("dashboard") { DashboardScreen() }
-            composable("wallet") { 
-                WalletScreen(onAccountClick = { accountId ->
-                    navController.navigate("account_detail/$accountId")
-                }) 
-            }
-            composable(
-                "account_detail/{accountId}",
-                arguments = listOf(androidx.navigation.navArgument("accountId") { type = androidx.navigation.NavType.StringType }),
-                enterTransition = drillInEnter,
-                popExitTransition = drillInPopExit
-            ) { backStackEntry ->
-                val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
-                com.sciuro.feature.wallet.ui.AccountDetailScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-            composable("budgets") {
-                com.sciuro.feature.budgets.ui.BudgetsScreen(
-                    onNavigateToCategoryDrilldown = { navController.navigate("category_drilldown") }
-                )
-            }
-            composable(
-                "category_drilldown",
-                enterTransition = drillInEnter,
-                popExitTransition = drillInPopExit
-            ) {
-                com.sciuro.feature.budgets.ui.CategoryDrilldownScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-            composable("debt_overview") { DebtOverviewScreen() }
-            composable("kanban") { KanbanScreen() }
-            composable("settings") { 
-                val context = LocalContext.current
-                val scope = rememberCoroutineScope()
-                val sqlDriver = koinInject<SqlDriver>()
-                com.sciuro.feature.settings.ui.SettingsScreen(
-                    onNavigateToDeveloperSettings = { navController.navigate("developer_settings?initialTab=0") },
-                    onNavigateToCategorySettings = { navController.navigate("category_settings") },
-                    onNavigateToLinkedAccounts = { navController.navigate("linked_accounts") },
-                    onExportBackup = { password ->
-                        scope.launch(Dispatchers.IO) {
-                            try {
-                                val tempFile = java.io.File(context.cacheDir, "sciuro_backup_${System.currentTimeMillis()}.scib")
-                                val outputStream = java.io.FileOutputStream(tempFile)
-                                val result = com.najmi.sciuro.export.EncryptedExporter.export(context, password, outputStream, sqlDriver)
-                                outputStream.close()
-                                if (result.isSuccess) {
-                                    val uri = FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        tempFile
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        try {
-                                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                                type = "application/octet-stream"
-                                                putExtra(Intent.EXTRA_STREAM, uri)
-                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            }
-                                            context.startActivity(Intent.createChooser(shareIntent, "Share Backup"))
-                                        } catch (_: Exception) {
-                                            Toast.makeText(context, "No app available to share the backup", Toast.LENGTH_LONG).show()
-                                        }
-                                    }
-                                } else {
-                                    val errorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
-                                    withContext(Dispatchers.Main) {
-                                        Toast.makeText(context, "Export failed: $errorMsg", Toast.LENGTH_LONG).show()
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }
-                    },
-                    onImportBackup = { uri, password ->
-                        scope.launch(Dispatchers.IO) {
-                            try {
-                                val inputStream = context.contentResolver.openInputStream(uri)
-                                if (inputStream != null) {
-                                    val result = com.najmi.sciuro.export.EncryptedImporter.import(context, password, inputStream, sqlDriver)
-                                    inputStream.close()
-                                    withContext(Dispatchers.Main) {
-                                        if (result.isSuccess) {
-                                            val intent = Intent(context, MainActivity::class.java).apply {
-                                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                            }
-                                            context.startActivity(intent)
-                                            if (context is Activity) (context as Activity).finish()
-                                        } else {
-                                            val errorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
-                                            Toast.makeText(context, "Import failed: $errorMsg", Toast.LENGTH_LONG).show()
-                                        }
-                                    }
-                                } else {
-                                    withContext(Dispatchers.Main) {
-                                        Toast.makeText(context, "Import failed: Could not read file", Toast.LENGTH_LONG).show()
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Import failed: ${e.message}", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }
-                    }
-                ) 
-            }
-            composable(
-                "category_settings",
-                enterTransition = drillInEnter,
-                popExitTransition = drillInPopExit
-            ) { 
-                com.sciuro.feature.settings.ui.CategorySettingsScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                ) 
-            }
-            composable(
-                "developer_settings?initialTab={initialTab}",
-                arguments = listOf(navArgument("initialTab") { defaultValue = "0" }),
-                enterTransition = drillInEnter,
-                popExitTransition = drillInPopExit
-            ) { backStackEntry ->
-                val initialTab = backStackEntry.arguments?.getString("initialTab")?.toIntOrNull() ?: 0
-                com.sciuro.feature.settings.ui.DeveloperSettingsScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    initialTab = initialTab
-                )
-            }
-            composable(
-                "linked_accounts",
-                enterTransition = drillInEnter,
-                popExitTransition = drillInPopExit
-            ) {
-                val linkedAccountsViewModel: com.sciuro.feature.settings.viewmodel.LinkedAccountsViewModel = koinViewModel()
-                com.sciuro.feature.settings.ui.LinkedAccountsScreen(
-                    viewModel = linkedAccountsViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-        }
-    }
+            SciuroNavGraph(
+                startDestination = startDest,
+                onboardingViewModel = onboardingViewModel,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = innerPadding.calculateTopPadding())
+            )
     }
     }
 }

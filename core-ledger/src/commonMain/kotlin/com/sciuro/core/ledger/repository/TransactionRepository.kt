@@ -3,11 +3,13 @@ package com.sciuro.core.ledger.repository
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.model.AuditAction
+import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
+import com.sciuro.core.audit.util.generateUuid
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.model.Transaction
 
@@ -19,7 +21,7 @@ import kotlinx.coroutines.flow.Flow
 class TransactionRepository(
     auditRepository: AuditRepository,
     private val database: SciuroDatabase,
-    private val accountRepository: AccountRepository, // for atomic balance updates
+    private val accountRepository: AccountRepository,
     private val eventBus: DomainEventBus
 ) : AuditableRepository(auditRepository) {
 
@@ -28,18 +30,9 @@ class TransactionRepository(
         source: AuditSource = AuditSource.SYSTEM_AUTO,
         confidence: Float? = null
     ): Transaction {
-        val result = withAudit(
-            entityType = EntityType.TRANSACTION,
-            entityId = transaction.id,
-            action = AuditAction.CREATE,
-            beforeState = null,
-            afterState = transaction.toString(),
-            source = source,
-            confidence = confidence
-        ) {
-            val now = currentTimeMillis()
-            
-            // 1. Insert transaction
+        val now = currentTimeMillis()
+
+        database.transaction {
             database.transactionRecordQueries.insertTransaction(
                 id = transaction.id,
                 account_id = transaction.accountId,
@@ -58,47 +51,57 @@ class TransactionRepository(
                 created_at = now,
                 updated_at = now
             )
-            
-            // 2. Adjust account balance
+
             if (transaction.accountId != null) {
                 val balanceDelta = if (transaction.direction == "INFLOW") transaction.amount else -transaction.amount
-                accountRepository.updateBalance(transaction.accountId, balanceDelta)
+                database.accountQueries.updateBalance(
+                    balance = balanceDelta,
+                    updated_at = now,
+                    id = transaction.accountId
+                )
             }
-            
-            transaction
         }
-        eventBus.publish(DomainEvent.TransactionModified(result.id))
-        return result
+
+        auditRepository.logMutation(
+            AuditLog(
+                id = generateUuid(),
+                entityType = EntityType.TRANSACTION,
+                entityId = transaction.id,
+                action = AuditAction.CREATE,
+                beforeState = null,
+                afterState = transaction.toString(),
+                source = source,
+                confidence = confidence,
+                timestamp = now
+            )
+        )
+
+        eventBus.publish(DomainEvent.TransactionModified(transaction.id))
+        return transaction
     }
-    
-    suspend fun reviewTransaction(transactionId: String, newCategoryId: String?, newAccountId: String? = null, newDirection: String? = null) {
+
+    suspend fun reviewTransaction(
+        transactionId: String,
+        newCategoryId: String?,
+        newAccountId: String? = null,
+        newDirection: String? = null
+    ) {
         val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
-        
-        withAudit(
-            entityType = EntityType.TRANSACTION,
-            entityId = transactionId,
-            action = AuditAction.RECLASSIFY,
-            beforeState = "is_reviewed=0, category_id=${oldTx.category_id}, account=${oldTx.account_id}",
-            afterState = "is_reviewed=1, category_id=$newCategoryId, account=$newAccountId",
-            source = AuditSource.USER_MANUAL
-        ) {
-            val now = currentTimeMillis()
-            
-            // Reverse old balance if it was assigned
+        val now = currentTimeMillis()
+        val targetAccountId = newAccountId ?: oldTx.account_id
+        val finalDirection = newDirection ?: oldTx.direction
+
+        database.transaction {
             if (oldTx.account_id != null) {
                 val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
-                accountRepository.updateBalance(oldTx.account_id, oldBalanceDelta)
+                database.accountQueries.updateBalance(balance = oldBalanceDelta, updated_at = now, id = oldTx.account_id)
             }
-            
-            val targetAccountId = newAccountId ?: oldTx.account_id
-            val finalDirection = newDirection ?: oldTx.direction
-            
-            // Apply new balance if there's a target account
+
             if (targetAccountId != null) {
                 val newBalanceDelta = if (finalDirection == "INFLOW") oldTx.amount else -oldTx.amount
-                accountRepository.updateBalance(targetAccountId, newBalanceDelta)
+                database.accountQueries.updateBalance(balance = newBalanceDelta, updated_at = now, id = targetAccountId)
             }
-            
+
             database.transactionRecordQueries.updateTransactionDetails(
                 amount = oldTx.amount,
                 direction = finalDirection,
@@ -108,37 +111,57 @@ class TransactionRepository(
                 updated_at = now,
                 id = transactionId
             )
-            
-            database.transactionRecordQueries.markAsReviewed(now, transactionId)
 
-            val learnedCategoryId = newCategoryId ?: oldTx.category_id
-            if (learnedCategoryId != null && oldTx.category_id != learnedCategoryId) {
-                eventBus.publish(
-                    DomainEvent.TransactionRecategorized(
-                        transactionId = transactionId,
-                        oldCategoryId = oldTx.category_id ?: "",
-                        newCategoryId = learnedCategoryId,
-                        merchant = oldTx.merchant
-                    )
+            database.transactionRecordQueries.markAsReviewed(now, transactionId)
+        }
+
+        auditRepository.logMutation(
+            AuditLog(
+                id = generateUuid(),
+                entityType = EntityType.TRANSACTION,
+                entityId = transactionId,
+                action = AuditAction.RECLASSIFY,
+                beforeState = "is_reviewed=0, category_id=${oldTx.category_id}, account=${oldTx.account_id}",
+                afterState = "is_reviewed=1, category_id=$newCategoryId, account=$newAccountId",
+                source = AuditSource.USER_MANUAL,
+                confidence = null,
+                timestamp = now
+            )
+        )
+
+        val learnedCategoryId = newCategoryId ?: oldTx.category_id
+        if (learnedCategoryId != null && oldTx.category_id != learnedCategoryId) {
+            eventBus.publish(
+                DomainEvent.TransactionRecategorized(
+                    transactionId = transactionId,
+                    oldCategoryId = oldTx.category_id ?: "",
+                    newCategoryId = learnedCategoryId,
+                    merchant = oldTx.merchant
                 )
-            }
+            )
         }
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
     suspend fun approveTransaction(transactionId: String) {
         val tx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+        val now = currentTimeMillis()
 
-        withAudit(
-            entityType = EntityType.TRANSACTION,
-            entityId = transactionId,
-            action = AuditAction.UPDATE,
-            beforeState = "is_reviewed=0",
-            afterState = "is_reviewed=1",
-            source = AuditSource.USER_MANUAL
-        ) {
-            database.transactionRecordQueries.markAsReviewed(currentTimeMillis(), transactionId)
-        }
+        database.transactionRecordQueries.markAsReviewed(now, transactionId)
+
+        auditRepository.logMutation(
+            AuditLog(
+                id = generateUuid(),
+                entityType = EntityType.TRANSACTION,
+                entityId = transactionId,
+                action = AuditAction.UPDATE,
+                beforeState = "is_reviewed=0",
+                afterState = "is_reviewed=1",
+                source = AuditSource.USER_MANUAL,
+                confidence = null,
+                timestamp = now
+            )
+        )
 
         if (tx.category_id != null) {
             eventBus.publish(
@@ -156,41 +179,59 @@ class TransactionRepository(
 
     suspend fun rejectTransaction(transactionId: String) {
         val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
-        
-        withAudit(
-            entityType = EntityType.TRANSACTION,
-            entityId = transactionId,
-            action = AuditAction.DELETE,
-            beforeState = "Reject Transaction",
-            afterState = null,
-            source = AuditSource.USER_MANUAL
-        ) {
+        val now = currentTimeMillis()
+
+        database.transaction {
             if (oldTx.account_id != null) {
                 val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
-                accountRepository.updateBalance(oldTx.account_id, oldBalanceDelta)
+                database.accountQueries.updateBalance(balance = oldBalanceDelta, updated_at = now, id = oldTx.account_id)
             }
             database.transactionRecordQueries.deleteTransaction(transactionId)
         }
+
+        auditRepository.logMutation(
+            AuditLog(
+                id = generateUuid(),
+                entityType = EntityType.TRANSACTION,
+                entityId = transactionId,
+                action = AuditAction.DELETE,
+                beforeState = "Reject Transaction",
+                afterState = null,
+                source = AuditSource.USER_MANUAL,
+                confidence = null,
+                timestamp = now
+            )
+        )
+
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
     suspend fun deleteTransaction(transactionId: String) {
         val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
-        
-        withAudit(
-            entityType = EntityType.TRANSACTION,
-            entityId = transactionId,
-            action = AuditAction.DELETE,
-            beforeState = oldTx.toString(),
-            afterState = null,
-            source = AuditSource.USER_MANUAL
-        ) {
+        val now = currentTimeMillis()
+
+        database.transaction {
             if (oldTx.account_id != null) {
                 val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
-                accountRepository.updateBalance(oldTx.account_id, oldBalanceDelta)
+                database.accountQueries.updateBalance(balance = oldBalanceDelta, updated_at = now, id = oldTx.account_id)
             }
             database.transactionRecordQueries.deleteTransaction(transactionId)
         }
+
+        auditRepository.logMutation(
+            AuditLog(
+                id = generateUuid(),
+                entityType = EntityType.TRANSACTION,
+                entityId = transactionId,
+                action = AuditAction.DELETE,
+                beforeState = oldTx.toString(),
+                afterState = null,
+                source = AuditSource.USER_MANUAL,
+                confidence = null,
+                timestamp = now
+            )
+        )
+
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 
@@ -203,29 +244,19 @@ class TransactionRepository(
         newAccountId: String?
     ) {
         val oldTx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
-        
-        withAudit(
-            entityType = EntityType.TRANSACTION,
-            entityId = transactionId,
-            action = AuditAction.UPDATE,
-            beforeState = oldTx.toString(),
-            afterState = "amount=$newAmount, merchant=$newMerchant, category=$newCategoryId, account=$newAccountId",
-            source = AuditSource.USER_MANUAL
-        ) {
-            val now = currentTimeMillis()
-            
-            // Revert old balance
+        val now = currentTimeMillis()
+
+        database.transaction {
             if (oldTx.account_id != null) {
                 val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
-                accountRepository.updateBalance(oldTx.account_id, oldBalanceDelta)
+                database.accountQueries.updateBalance(balance = oldBalanceDelta, updated_at = now, id = oldTx.account_id)
             }
-            
-            // Apply new balance
+
             if (newAccountId != null) {
                 val newBalanceDelta = if (newDirection == "INFLOW") newAmount else -newAmount
-                accountRepository.updateBalance(newAccountId, newBalanceDelta)
+                database.accountQueries.updateBalance(balance = newBalanceDelta, updated_at = now, id = newAccountId)
             }
-            
+
             database.transactionRecordQueries.updateTransactionDetails(
                 amount = newAmount,
                 direction = newDirection,
@@ -235,17 +266,31 @@ class TransactionRepository(
                 updated_at = now,
                 id = transactionId
             )
+        }
 
-            if (newCategoryId != null && oldTx.category_id != newCategoryId) {
-                eventBus.publish(
-                    DomainEvent.TransactionRecategorized(
-                        transactionId = transactionId,
-                        oldCategoryId = oldTx.category_id ?: "",
-                        newCategoryId = newCategoryId,
-                        merchant = newMerchant.ifEmpty { oldTx.merchant }
-                    )
+        auditRepository.logMutation(
+            AuditLog(
+                id = generateUuid(),
+                entityType = EntityType.TRANSACTION,
+                entityId = transactionId,
+                action = AuditAction.UPDATE,
+                beforeState = oldTx.toString(),
+                afterState = "amount=$newAmount, merchant=$newMerchant, category=$newCategoryId, account=$newAccountId",
+                source = AuditSource.USER_MANUAL,
+                confidence = null,
+                timestamp = now
+            )
+        )
+
+        if (newCategoryId != null && oldTx.category_id != newCategoryId) {
+            eventBus.publish(
+                DomainEvent.TransactionRecategorized(
+                    transactionId = transactionId,
+                    oldCategoryId = oldTx.category_id ?: "",
+                    newCategoryId = newCategoryId,
+                    merchant = newMerchant.ifEmpty { oldTx.merchant }
                 )
-            }
+            )
         }
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
@@ -310,22 +355,31 @@ class TransactionRepository(
 
     suspend fun undoAutoConfirm(transactionId: String) {
         val tx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+        val now = currentTimeMillis()
 
-        withAudit(
-            entityType = EntityType.TRANSACTION,
-            entityId = transactionId,
-            action = AuditAction.UPDATE,
-            beforeState = "review_tier=${tx.review_tier}, is_reviewed=${tx.is_reviewed}",
-            afterState = "review_tier=MANUAL, is_reviewed=0",
-            source = AuditSource.USER_MANUAL
-        ) {
+        database.transaction {
             if (tx.account_id != null) {
                 val balanceDelta = if (tx.direction == "INFLOW") -tx.amount else tx.amount
-                accountRepository.updateBalance(tx.account_id, balanceDelta)
+                database.accountQueries.updateBalance(balance = balanceDelta, updated_at = now, id = tx.account_id)
             }
 
-            database.transactionRecordQueries.undoAutoConfirm(currentTimeMillis(), transactionId)
+            database.transactionRecordQueries.undoAutoConfirm(now, transactionId)
         }
+
+        auditRepository.logMutation(
+            AuditLog(
+                id = generateUuid(),
+                entityType = EntityType.TRANSACTION,
+                entityId = transactionId,
+                action = AuditAction.UPDATE,
+                beforeState = "review_tier=${tx.review_tier}, is_reviewed=${tx.is_reviewed}",
+                afterState = "review_tier=MANUAL, is_reviewed=0",
+                source = AuditSource.USER_MANUAL,
+                confidence = null,
+                timestamp = now
+            )
+        )
+
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
 

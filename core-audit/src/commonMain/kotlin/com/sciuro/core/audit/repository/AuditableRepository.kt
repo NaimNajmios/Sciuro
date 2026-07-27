@@ -8,7 +8,7 @@ import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.audit.util.generateUuid
 
 abstract class AuditableRepository(
-    private val auditRepository: AuditRepository
+    protected val auditRepository: AuditRepository
 ) {
     
     protected suspend fun <T> withAudit(

@@ -16,14 +16,13 @@ class BudgetLimitSuggester(
 
     suspend fun suggestLimit(categoryId: String): Double? {
         val lookbackStart = currentTimeMillis() - (LOOKBACK_DAYS * 24L * 60 * 60 * 1000)
-        val transactions = database.transactionRecordQueries
-            .selectAllTransactions()
-            .executeAsList()
-            .filter { it.category_id == categoryId && it.timestamp >= lookbackStart }
+        val amounts = database.budgetQueries.selectTransactionAmountsByCategorySince(
+            category_id = categoryId,
+            timestamp = lookbackStart
+        ).executeAsList().sorted()
 
-        if (transactions.size < 3) return null
+        if (amounts.size < 3) return null
 
-        val amounts = transactions.map { it.amount }.sorted()
         val trimCount = (amounts.size * TRIM_FRACTION).toInt().coerceAtLeast(1)
 
         if (amounts.size <= 2 * trimCount) return null

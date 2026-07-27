@@ -64,3 +64,7 @@ DELETE FROM account_pair_confirmation WHERE account_id_a = ? AND account_id_b = 
 
 selectAllAccountPairConfirmations:
 SELECT * FROM account_pair_confirmation;
+
+selectPairedAccount:
+SELECT * FROM account_pair_confirmation
+WHERE account_id_a = ? OR account_id_b = ?;

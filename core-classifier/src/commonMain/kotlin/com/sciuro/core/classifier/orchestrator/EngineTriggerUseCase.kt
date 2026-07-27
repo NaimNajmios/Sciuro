@@ -3,6 +3,7 @@ package com.sciuro.core.classifier.orchestrator
 import com.sciuro.core.audit.trace.PipelineTracer
 import com.sciuro.core.audit.trace.TraceOutcome
 import com.sciuro.core.audit.trace.TraceStage
+import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.budget.engine.BudgetEngine
 import com.sciuro.core.debt.engine.BnplRiskDetector
 import com.sciuro.core.debt.engine.DebtEngine
@@ -23,6 +24,15 @@ class EngineTriggerUseCase(
     private val bnplRiskDetector: BnplRiskDetector,
     private val tracer: PipelineTracer
 ) {
+    companion object {
+        private const val ENGINE_DEBOUNCE_MS = 15_000L
+    }
+
+    private var lastBudgetRunMs = 0L
+    private var lastDebtRunMs = 0L
+    private var lastInvestmentRunMs = 0L
+    private var lastObligationRunMs = 0L
+
     suspend fun triggerAll(
         transaction: Transaction,
         draft: StructuredDraft,
@@ -49,21 +59,35 @@ class EngineTriggerUseCase(
         tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
             detail = mapOf("engine" to "obligation_cycle"))
 
-        budgetEngine.processBudgets()
-        tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
-            detail = mapOf("engine" to "budget"))
+        val now = currentTimeMillis()
 
-        debtEngine.processDebtPayments()
-        tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
-            detail = mapOf("engine" to "debt"))
+        if (now - lastBudgetRunMs > ENGINE_DEBOUNCE_MS) {
+            budgetEngine.processBudgets()
+            lastBudgetRunMs = now
+            tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
+                detail = mapOf("engine" to "budget"))
+        }
 
-        investmentEngine.processInvestments()
-        tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
-            detail = mapOf("engine" to "investment"))
+        if (now - lastDebtRunMs > ENGINE_DEBOUNCE_MS) {
+            debtEngine.processDebtPayments()
+            lastDebtRunMs = now
+            tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
+                detail = mapOf("engine" to "debt"))
+        }
 
-        obligationDetectionEngine.runDetection()
-        tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
-            detail = mapOf("engine" to "obligation_detect"))
+        if (now - lastInvestmentRunMs > ENGINE_DEBOUNCE_MS) {
+            investmentEngine.processInvestments()
+            lastInvestmentRunMs = now
+            tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
+                detail = mapOf("engine" to "investment"))
+        }
+
+        if (now - lastObligationRunMs > ENGINE_DEBOUNCE_MS) {
+            obligationDetectionEngine.runDetection()
+            lastObligationRunMs = now
+            tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,
+                detail = mapOf("engine" to "obligation_detect"))
+        }
 
         bnplRiskDetector.evaluate()
         tracer.trace(rawEventId, transaction.id, TraceStage.ENGINE, TraceOutcome.SUCCESS,

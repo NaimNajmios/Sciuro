@@ -20,7 +20,6 @@ class BudgetEngine(
 ) {
     suspend fun processBudgets() {
         val allBudgets = database.budgetQueries.selectAllBudgets().executeAsList()
-        val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
         val transferTxIds = matchingEngine.getIneligibleTransactionIds()
 
         val now = currentTimeMillis()
@@ -36,12 +35,12 @@ class BudgetEngine(
                 else -> monthStartMs
             }
 
-            val spentThisPeriod = allTransactions.filter { tx ->
-                tx.category_id == budget.category_id &&
-                tx.direction == "OUTFLOW" &&
-                tx.id !in transferTxIds &&
-                tx.timestamp >= periodStartMs
-            }.sumOf { it.amount }
+            val spentRow = database.budgetQueries.selectSpendByCategory(
+                category_id = budget.category_id,
+                timestamp = periodStartMs,
+                timestamp_ = now + 1
+            ).executeAsOne()
+            val spentThisPeriod = spentRow.total_spent ?: 0.0
 
             val effectiveAllocation = if (budget.rollover == 1L) {
                 val prevPeriodStart = when (budget.period) {
@@ -53,12 +52,12 @@ class BudgetEngine(
                             .atStartOfDayIn(tz).toEpochMilliseconds()
                     }
                 }
-                val spentPrevPeriod = allTransactions.filter { tx ->
-                    tx.category_id == budget.category_id &&
-                    tx.direction == "OUTFLOW" &&
-                    tx.id !in transferTxIds &&
-                    tx.timestamp in prevPeriodStart..<periodStartMs
-                }.sumOf { it.amount }
+                val prevSpentRow = database.budgetQueries.selectSpendByCategory(
+                    category_id = budget.category_id,
+                    timestamp = prevPeriodStart,
+                    timestamp_ = periodStartMs
+                ).executeAsOne()
+                val spentPrevPeriod = prevSpentRow.total_spent ?: 0.0
                 val unusedPrev = maxOf(0.0, budget.allocated_amount - spentPrevPeriod)
                 budget.allocated_amount + unusedPrev
             } else {

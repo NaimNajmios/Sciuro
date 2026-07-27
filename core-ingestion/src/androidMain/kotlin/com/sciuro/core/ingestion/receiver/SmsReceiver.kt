@@ -16,6 +16,9 @@ import com.sciuro.core.ledger.repository.RawEventRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -27,60 +30,69 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val rawEventRepository: RawEventRepository by inject()
     private val allowlist: MutableIngestionAllowlist by inject()
     private val tracer: PipelineTracer by inject()
-    private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
 
-        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-        for (message in messages) {
-            val sender = message.originatingAddress ?: continue
-            val body = message.messageBody ?: continue
-            val sessionId = UUID.randomUUID().toString()
+        val pendingResult = goAsync()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-            if (body.isBlank()) continue
-            if (!allowlist.allows(sender)) {
-                receiverScope.launch {
-                    tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                        detail = mapOf("reason" to "allowlist_reject", "sender" to sender), packageName = sender)
+        scope.launch {
+            try {
+                coroutineScope {
+                    val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
+                    for (message in messages) {
+                        launch { processMessage(message) }
+                    }
                 }
-                continue
-            }
-
-            val hasFinancialSignal = AggregatorHeuristicFilter.isFinancial(sender, body)
-            if (!hasFinancialSignal) {
-                receiverScope.launch {
-                    tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
-                        detail = mapOf("reason" to "non_financial_sms", "sender" to sender), packageName = sender)
-                }
-                continue
-            }
-
-            receiverScope.launch {
-                val rawEvent = RawEvent(
-                    id = sessionId,
-                    sourceType = SourceType.SMS,
-                    sourcePackageOrAddress = sender,
-                    title = sender,
-                    text = body,
-                    timestamp = System.currentTimeMillis()
-                )
-
-                rawEventRepository.persistRawEvent(
-                    id = rawEvent.id,
-                    sourceType = rawEvent.sourceType.name,
-                    sourcePackageOrAddress = rawEvent.sourcePackageOrAddress,
-                    title = rawEvent.title,
-                    text = rawEvent.text,
-                    timestamp = rawEvent.timestamp,
-                    capturedAt = System.currentTimeMillis()
-                )
-
-                tracer.trace(rawEvent.id, null, TraceStage.CAPTURE, TraceOutcome.SUCCESS,
-                    detail = mapOf("source_type" to "SMS", "sender" to sender), packageName = sender)
-
-                smsSourceAdapter.emitSms(rawEvent)
+            } finally {
+                scope.cancel()
+                pendingResult.finish()
             }
         }
+    }
+
+    private suspend fun processMessage(message: android.telephony.SmsMessage) {
+        val sender = message.originatingAddress ?: return
+        val body = message.messageBody ?: return
+        val sessionId = UUID.randomUUID().toString()
+
+        if (body.isBlank()) return
+        if (!allowlist.allows(sender)) {
+            tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                detail = mapOf("reason" to "allowlist_reject", "sender" to sender), packageName = sender)
+            return
+        }
+
+        val hasFinancialSignal = AggregatorHeuristicFilter.isFinancial(sender, body)
+        if (!hasFinancialSignal) {
+            tracer.trace(sessionId, null, TraceStage.CAPTURE, TraceOutcome.DROP,
+                detail = mapOf("reason" to "non_financial_sms", "sender" to sender), packageName = sender)
+            return
+        }
+
+        val rawEvent = RawEvent(
+            id = sessionId,
+            sourceType = SourceType.SMS,
+            sourcePackageOrAddress = sender,
+            title = sender,
+            text = body,
+            timestamp = System.currentTimeMillis()
+        )
+
+        rawEventRepository.persistRawEvent(
+            id = rawEvent.id,
+            sourceType = rawEvent.sourceType.name,
+            sourcePackageOrAddress = rawEvent.sourcePackageOrAddress,
+            title = rawEvent.title,
+            text = rawEvent.text,
+            timestamp = rawEvent.timestamp,
+            capturedAt = System.currentTimeMillis()
+        )
+
+        tracer.trace(rawEvent.id, null, TraceStage.CAPTURE, TraceOutcome.SUCCESS,
+            detail = mapOf("source_type" to "SMS", "sender" to sender), packageName = sender)
+
+        smsSourceAdapter.emitSms(rawEvent)
     }
 }

@@ -48,6 +48,7 @@ Platform-specific drivers (Android SQLDelight driver, Ktor Android engine) go in
 - **Composables:** Stateless. State lives in ViewModel. Pass data + callbacks down. Don't call Koin from Composables outside `@Preview`. `@Preview` must be static, no DI params, wrapped in `SciuroTheme { ... }`.
 - **UI primitives:** Use `core-ui` components only — `SciuroBottomSheet`, `SciuroTextField`, `SciuroDialog`, `HeroPanel`, `SheetList`. Don't create new ones in feature modules.
 - **Full-screen swiping pattern:** `Box(fillMaxSize) { LazyColumn { item { HeroPanel(...) } ; item { SheetList(offset(-24.dp).fillParentMaxHeight()) { Column { ... } } } } ; FAB(BottomEnd) }`. Content inside `SheetList` uses `Column` + `forEach` — never nested `LazyColumn`.
+- **Multi-statement mutations:** Wrap data-critical operations (insert + balance update, balance reversal + delete) in `database.transaction { }` blocks for atomicity. Call `database.accountQueries.updateBalance()` directly inside the transaction (with named parameters) rather than going through `AccountRepository.updateBalance()` (which has its own `withAudit` wrapper that would be excluded from the transaction). Write audit logs via `auditRepository.logMutation()` outside the transaction (best-effort, not data-critical).
 - **Colors:** Only `SCI`-prefixed tokens from `SciuroTheme` (e.g. `SignalIncome`, `SignalDanger`, `AccountColorGreen`). Never `Color(0xFF...)` inline. No hardcoded colors.
 - **Strings:** In `app/src/main/res/values/strings.xml`. Not hardcoded in Composables. Not in a Kotlin `object`.
 

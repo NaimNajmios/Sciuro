@@ -26,6 +26,25 @@ class TransferDetectionEngine(
         newTxTimestamp: Long,
         counterpartyAccountNumber: String?
     ) {
+        // Tier 0: Check confirmed account pairs before any other matching
+        if (newTxAccountId != null) {
+            val pairedAccountId = findConfirmedPairedAccount(newTxAccountId)
+            if (pairedAccountId != null) {
+                val partnerTx = findUnlinkedMatchingLeg(
+                    newTxId = newTxId,
+                    otherAccountId = pairedAccountId,
+                    amount = newTxAmount,
+                    direction = newTxDirection,
+                    timestamp = newTxTimestamp
+                )
+                if (partnerTx != null) {
+                    linkAsTransfer(newTxId, partnerTx.id, newTxAmount)
+                    return
+                }
+            }
+        }
+
+        // Tier 1: Suffix matching when counterparty account number is present
         if (counterpartyAccountNumber != null) {
             val ownAccounts = database.accountQueries.selectAllAccounts().executeAsList()
             val matchingOwnAccount = ownAccounts.firstOrNull { ownAccount ->
@@ -49,6 +68,7 @@ class TransferDetectionEngine(
             return
         }
 
+        // Tier 1.5: Tight match within 15-second window
         val tightMatch = findTightUnconfirmedMatch(
             newTxId = newTxId,
             amount = newTxAmount,
@@ -60,6 +80,7 @@ class TransferDetectionEngine(
             return
         }
 
+        // Tier 2: Heuristic match within 2-minute window (requires confirmed pair)
         val match = findHeuristicMatch(
             newTxId = newTxId,
             amount = newTxAmount,
@@ -147,6 +168,15 @@ class TransferDetectionEngine(
         val sorted = listOf(accountIdA, accountIdB).sorted()
         return database.accountQueries.selectAccountPairConfirmation(sorted[0], sorted[1])
             .executeAsOneOrNull() != null
+    }
+
+    private suspend fun findConfirmedPairedAccount(accountId: String): String? {
+        val rows = database.accountQueries.selectPairedAccount(accountId, accountId).executeAsList()
+        for (row in rows) {
+            if (row.account_id_a == accountId) return row.account_id_b
+            if (row.account_id_b == accountId) return row.account_id_a
+        }
+        return null
     }
 
     private suspend fun linkAsTransfer(txIdA: String, txIdB: String, amount: Double) {
