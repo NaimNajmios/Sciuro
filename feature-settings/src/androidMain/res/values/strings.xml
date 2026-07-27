@@ -171,12 +171,18 @@
     <!-- Developer Tab: Pipeline Trace -->
     <string name="dev_trace_title">Recent pipeline events</string>
     <string name="dev_trace_no_data">No trace data yet. Process a notification to see traces.</string>
-    <string name="dev_trace_event_label">Event %s…</string>
+    <string name="dev_trace_event_label">Event %s\u2026</string>
     <string name="dev_trace_back">Back</string>
     <string name="dev_trace_no_traces">No traces for this event.</string>
     <string name="dev_trace_stages">%d stages</string>
     <string name="dev_trace_detail_label">Detail:</string>
     <string name="dev_trace_unknown_id">?</string>
+    <string name="dev_trace_allowlisted_only">Allowlisted only</string>
+    <string name="dev_trace_summary_title">Event Summary</string>
+    <string name="dev_trace_summary_stages">%d stages</string>
+    <string name="dev_trace_summary_duration">%dms total</string>
+    <string name="dev_trace_summary_passed">%d passed</string>
+    <string name="dev_trace_summary_failed">%d failed</string>
 
     <!-- Developer Settings Gate -->
     <string name="dev_gate_snackbar">Developer Options enabled</string>
