@@ -225,7 +225,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         "Debts" ->   DebtsColumn(
                             debtTasks = debtTasks,
                             showCompletedDebts = showCompletedDebts,
-                            onToggleCompleted = { viewModel.toggleShowCompletedDebts() },
+                            onToggleCompleted =     { viewModel.toggleShowCompletedDebts() },
                             recentlySettledIds = recentlySettledIds,
                             onRecordPayment = { paymentDebt = it },
                             onClickDebt = { debtToView = it }

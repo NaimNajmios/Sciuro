@@ -66,7 +66,14 @@ fun SettingsScreen(
     var showBackupConfig by remember { mutableStateOf(false) }
     var showLargeTxnConfig by remember { mutableStateOf(false) }
     var showDebtDueConfig by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var importFileUri by remember { mutableStateOf<Uri?>(null) }
     val snackbarHostState = LocalSnackbarHostState.current
+    val importFilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        importFileUri = uri
+    }
     val devGateSnackbarText = stringResource(R.string.dev_gate_snackbar)
     val scope = rememberCoroutineScope()
 
@@ -137,8 +144,9 @@ fun SettingsScreen(
                 }
 
                 item {
-                    val isBatteryExempt = remember {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    var isBatteryExempt by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        isBatteryExempt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
                             pm.isIgnoringBatteryOptimizations(context.packageName)
                         } else {
@@ -637,15 +645,6 @@ fun SettingsScreen(
                 }
 
                 item {
-                    var showExportDialog by remember { mutableStateOf(false) }
-                    var importFileUri by remember { mutableStateOf<Uri?>(null) }
-
-                    val importFilePickerLauncher = rememberLauncherForActivityResult(
-                        contract = ActivityResultContracts.OpenDocument()
-                    ) { uri ->
-                        importFileUri = uri
-                    }
-
                     SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
@@ -672,23 +671,6 @@ fun SettingsScreen(
                                 }
                             }
                         }
-                    }
-                    if (showExportDialog) {
-                        BackupPasswordDialog(
-                            title = stringResource(R.string.settings_backup_export_title),
-                            onConfirm = { showExportDialog = false; onExportBackup(it) },
-                            onDismiss = { showExportDialog = false }
-                        )
-                    }
-                    importFileUri?.let { uri ->
-                        BackupPasswordDialog(
-                            title = stringResource(R.string.settings_backup_import_title),
-                            onConfirm = { password ->
-                                importFileUri = null
-                                onImportBackup(uri, password)
-                            },
-                            onDismiss = { importFileUri = null }
-                        )
                     }
                 }
 
@@ -910,6 +892,24 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showExportDialog) {
+        BackupPasswordDialog(
+            title = stringResource(R.string.settings_backup_export_title),
+            onConfirm = { showExportDialog = false; onExportBackup(it) },
+            onDismiss = { showExportDialog = false }
+        )
+    }
+    importFileUri?.let { uri ->
+        BackupPasswordDialog(
+            title = stringResource(R.string.settings_backup_import_title),
+            onConfirm = { password ->
+                importFileUri = null
+                onImportBackup(uri, password)
+            },
+            onDismiss = { importFileUri = null }
+        )
     }
 }
 

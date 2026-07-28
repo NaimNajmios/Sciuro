@@ -31,7 +31,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, and **Phase N2 (User-Configurable Notification Preferences)** addressing cross-cutting architectural concerns.
+The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, and **Phase J2 (Developer Options & Settings Redesign)** addressing cross-cutting architectural concerns.
 
 **Phase R1 highlights:**
 - **Atomic database transactions:** All transaction mutations now wrap insert + balance update in SQLDelight `database.transaction { }`, preventing orphaned transactions on crash.
@@ -41,6 +41,14 @@ The project is fully functional and has completed **Phase K1 (UI Polish & Access
 - **Tier 0 transfer detection:** Confirmed account pairs checked before suffix matching.
 - **Navigation extraction:** Sealed `SciuroRoute` class + extracted `SciuroNavGraph` composable; `MainActivity` reduced from 522 to ~340 lines.
 - **ProGuard rules:** Comprehensive rules for SQLCipher, SQLDelight, Koin, Ktor, kotlinx.serialization.
+
+**Phase J2 highlights:**
+- **PillToggle navigation:** Replaced `ScrollableTabRow` with `PillToggle(scrollable=true)` for 7 developer tab navigation — matches the app's segmented control pattern used in Dashboard, Budgets, and Debt screens.
+- **SciuroCard consolidation:** All 7 developer tabs now use `SciuroCard` and `RoundedCornerShape(16.dp)` consistently for card elements, eliminating raw `Card` usage with mismatched shapes.
+- **Source editing:** New `renamePackage()` method on `MutableIngestionAllowlist` with edit pencil icon and `SciuroFormSheet` bottom sheet — full CRUD for notification sources.
+- **Settings full-screen swiping:** `SettingsScreen` restructured from nested `Column`+`LazyColumn` to `Box`+`LazyColumn` following the project's standard pattern. `HeroPanel` scrolls with content, `SheetList` uses `fillParentMaxHeight()` with no nested `LazyColumn`.
+- **NotificationsSection extraction:** 330-line notification preferences section extracted into a dedicated composable, reducing `SettingsScreen` from 994 to ~526 lines.
+- **Lifecycle fixes:** `importFilePickerLauncher` moved from inside a `LazyColumn` item to top-level composable scope. Battery exemption state refreshed on screen re-entry instead of captured once in a `remember {}` block.
 
 Two follow-up capture-layer defect fixes in the notification ingestion pipeline resolved three real-world gaps: (1) Maybank2u Scan & Pay and Gmail forwards were being dropped because `SciuroNotificationService` only read `EXTRA_TEXT` (the collapsed preview) while the actual content lived in `EXTRA_BIG_TEXT` or `EXTRA_TEXT_LINES`. (2) Maybank2u Scan & Pay notifications that post with all three standard fields blank and the real content in a custom extra key `full_desc` are now rescued by a two-tier fallback (known package→key mappings, then generic financial-keyword-gated scan). (3) The merchant-name regex was fixed to not truncate abbreviation periods (e.g. "I.R" → "I") by requiring the terminating period to be followed by whitespace or end-of-string. Text extraction reads all three standard fields with a `bigText > textLines > shortText` priority chain, then falls back to custom extra scanning if still blank. The `blank_content` drop path logs which extras keys were present to make future diagnostic reads instant. The `SmsReceiver` was consolidated to use the shared `AggregatorHeuristicFilter` (previously it had its own independently-maintained keyword check). Core domain modules are wired into the ingestion orchestrator and reactive UI. A Domain Event Bus with 23 event types provides cross-module event-driven communication — all published events now have notification subscribers. The Kanban screen unifies transaction review, bill tracking, and debt overview. Live investment pricing (gold spot, Malaysian stocks) is available via `YahooFinancePriceProvider`. Encrypted export/import is accessible from Settings > Data Backup. BNPL/pay-later risk detection, obligation amount drift tracking, cash recount domain events, and credit card statement tracking are all active. A category spending drilldown screen provides per-category budget analysis with unified threshold from Settings and back navigation. Budget cards display category icons, period badges, daily allowance, and days remaining. The budget module has been polished with snackbar feedback, inline validation, direct-action create/save flows, and consistent theme token usage. The design system is fully standardized — `SciuroTextField` is the single text-input surface across all 8 modules (35 call sites migrated), with built-in inline validation, placeholder, and error state support. Accessibility is hardened: reduced-motion gates on all infinite animations, 44dp min touch targets, semantic labels on hero panels, confidence indicators, and swipe actions, and `PillToggle` now emits proper `Role.Tab` semantics with selection state for screen readers. All UI strings are extracted to `strings.xml` resources (~200+ strings across 7 modules), eliminating hardcoded text from Composables. `BudgetLimitSuggester` has 8 JVM unit tests covering trimmed mean, outlier trimming, lookback filtering, and event publication. The Developer Options harness now features 7 tabs with full error handling, two-step delete confirmation, determinate batch progress, Koin dependency cleanup, and a gated activation pattern. `@Preview` composables exist for all 7 feature screens. All core modules — including the multi-source ingestion engine, automated budget tracking with full CRUD, Kanban workflow, and UI feature modules — are fully integrated and tested.
 
@@ -73,12 +81,12 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 | Account Detail | Account balance | — | — | Adjust Balance + QR icon |
 | Debt Overview | I Owe / Owed to Me totals | — | — | Direction breakdown row |
 | Kanban | Active tasks / Bills due / Active debts (tab-aware) | — | — | Tab-aware: status breakdown / bill urgency / debt totals |
-| Developer Settings | Time since last capture | — | — | Pipeline pending/dead counts (7 tabs: Simulator, Sources, Ingestion Log, Diagnostics, Data Tools, Health, Pipeline Trace) |
-| Settings (×2) | "Config" / "More" | — | — | — |
+| Developer Settings | Time since last capture | — | PillToggle (7 tabs: Simulator, Sources, Ingestion Log, Diagnostics, Data Tools, Health, Pipeline Trace) | Pipeline pending/dead counts |
+| Settings | "Sciuro" | — | — | — |
 
 ### Full-Screen Swiping Architecture
 
-All scrollable screens (Dashboard, Kanban, Budgets, Wallet) follow a consistent full-screen swiping pattern. The root layout uses a `Box` containing a single `LazyColumn` with two `item { }` blocks:
+All scrollable screens (Dashboard, Kanban, Budgets, Wallet, Settings) follow a consistent full-screen swiping pattern. The root layout uses a `Box` containing a single `LazyColumn` with two `item { }` blocks:
 
 ```
 Box(fillMaxSize) {
@@ -102,17 +110,17 @@ Box(fillMaxSize) {
 
 ## Developer Tools
 
-Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with seven tabs. Developer Options are hidden by default in the Settings screen and revealed via a hidden activation (tap the "Developer Options" section header 7 times).
+Sciuro includes a full developer settings harness at `feature-settings` > `DeveloperSettingsScreen` with seven tabs. Navigation uses a `PillToggle` segmented control (horizontally scrollable for 7 tabs) instead of Material `ScrollableTabRow`. Developer Options are hidden by default in the Settings screen and revealed via a hidden activation (tap the "Developer Options" section header 7 times).
 
 | Tab | Description |
 |---|---|
-| **Simulator** | Manual pipeline: enter package/title/text and run through all parser rules. Includes a dynamic package+template picker sourced from `FixtureLibrary` (over 100 realistic Malaysian bank and e-wallet fixtures across 7 rules). Determinate batch progress bar shows `"12/47: com.dbs.card"` with fractional progress indicator. |
-| **Sources** | Editable allowlist view of notification packages grouped by Bank / E-Wallet / Aggregator / Custom. Add/remove packages dynamically — changes take effect immediately for the notification listener. |
-| **Ingestion Log** | Dead-letter event viewer with pending/dead-letter counts, per-event error display. Tapping a dead letter opens a form to structurally edit the raw JSON payload and requeue it. |
-| **Diagnostics** | Per-rule match/no-match analysis with extracted fields. Shows LLM debug info (prompt, response, latency) when LLM fallback is triggered. |
-| **Data Tools** | Clear Inbox (unreviewed transactions) with two-step confirmation dialog requiring "DELETE" text input. |
-| **Health** | Per-package parser match-rate monitoring. Track which financial apps provide reliable extraction. Pipeline metrics with LLM fallback counts and dead-letter counts. |
-| **Pipeline Trace** | Trace event viewer showing the 100 most recent pipeline events with stage-by-stage breakdown (SUCCESS/FAILURE/DROP), duration, confidence, and detail JSON. Sessions prominently display their package name (e.g. `com.whatsapp`) and capture early drops. Filterable by package name, outcome status, and an "Allowlisted" toggle that hides non-allowlisted app events by default. |
+| **Simulator** | Manual pipeline: enter package/title/text and run through all parser rules. Includes a dynamic package+template picker sourced from `FixtureLibrary` (over 100 realistic Malaysian bank and e-wallet fixtures across 7 rules). Determinate batch progress bar shows `"12/47: com.dbs.card"` with fractional progress indicator. Batch Test Runner in `SciuroCard`. Simulation result shown with colored indicator strip (green=success, red=error) inside `SciuroCard`. |
+| **Sources** | Editable allowlist view of notification packages grouped by Bank / E-Wallet / Aggregator / Custom in `SciuroCard` sections. Add, remove, and **rename** packages dynamically — each source row has an edit (pencil) and delete (trash) icon. Rename opens a bottom sheet with the current name pre-filled. Changes take effect immediately for the notification listener. |
+| **Ingestion Log** | Dead-letter event viewer with pending/dead-letter counts in a unified `SciuroCard` summary, per-event error display, and manual refresh button. Tapping a dead letter opens a form to structurally edit the raw JSON payload and requeue it. |
+| **Diagnostics** | Per-rule match/no-match analysis with extracted fields. Input form wrapped in `SciuroCard`. All semantic-colored cards (rule matches, LLM candidate, errors) use consistent `RoundedCornerShape(16.dp)`. Shows LLM debug info (prompt, response, latency) when LLM fallback is triggered. |
+| **Data Tools** | Database info panel showing Pending and Dead Letter counts. Clear Inbox (unreviewed transactions) with two-step confirmation dialog requiring "DELETE" text input. |
+| **Health** | Per-package parser match-rate monitoring in a `SciuroCard` with summary row (packages, processed, average match rate). Pipeline metrics card with LLM fallback counts and dead-letter counts. |
+| **Pipeline Trace** | Trace event viewer showing the 100 most recent pipeline events with stage-by-stage breakdown (SUCCESS/FAILURE/DROP), duration, confidence, and detail JSON. Filter section (package, outcome, allowlisted toggle) wrapped in `SciuroCard`. Sessions prominently display their package name (e.g. `com.whatsapp`) and capture early drops. Detail cards use `RoundedCornerShape(12.dp)`. |
 
 ### Developer Options Access
 
