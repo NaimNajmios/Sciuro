@@ -51,6 +51,21 @@ class MutableIngestionAllowlist(
         _effectivePackages.value = computeEffective()
     }
 
+    fun renamePackage(oldName: String, newName: String) {
+        val additions = settingsProvider.getIngestionAllowlistAdditions().toMutableSet()
+        val removals = settingsProvider.getIngestionAllowlistRemovals().toMutableSet()
+        additions.remove(oldName)
+        removals.remove(oldName)
+        if (oldName in defaultAllowedPackages) {
+            removals.add(oldName)
+        }
+        additions.add(newName)
+        removals.remove(newName)
+        settingsProvider.setIngestionAllowlistAdditions(additions)
+        settingsProvider.setIngestionAllowlistRemovals(removals)
+        _effectivePackages.value = computeEffective()
+    }
+
     private fun computeEffective(): Set<String> {
         val defaults = defaultAllowedPackages
         val additions = settingsProvider.getIngestionAllowlistAdditions()

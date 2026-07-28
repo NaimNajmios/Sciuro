@@ -9,8 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
 import com.najmi.sciuro.core.ui.theme.SignalDanger
+import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.feature.settings.R
 import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
 import kotlinx.coroutines.launch
@@ -104,25 +106,25 @@ fun DeveloperSettingsScreen(
                 }
             )
 
-            ScrollableTabRow(selectedTabIndex = selectedTab) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { Text(title) }
-                    )
-                }
-            }
+            SheetList(modifier = Modifier.offset(y = (-24).dp).weight(1f)) {
+                PillToggle(
+                    options = tabs,
+                    selectedOption = tabs.getOrElse(selectedTab) { tabs[0] },
+                    onOptionSelected = { option -> selectedTab = tabs.indexOf(option) },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    scrollable = true
+                )
 
-            val tabModifier = Modifier.weight(1f)
-            when (selectedTab) {
-                0 -> DeveloperTabSimulator(viewModel, simulationResult, modifier = tabModifier)
-                1 -> DeveloperTabSources(viewModel, modifier = tabModifier)
-                2 -> DeveloperTabIngestionLog(viewModel, modifier = tabModifier)
-                3 -> DeveloperTabDiagnostics(viewModel, simulationResult, modifier = tabModifier)
-                4 -> DeveloperTabDataTools(viewModel, modifier = tabModifier)
-                5 -> DeveloperTabHealth(viewModel, modifier = tabModifier)
-                6 -> DeveloperTabPipelineTrace(viewModel, modifier = tabModifier)
+                val tabModifier = Modifier.weight(1f)
+                when (selectedTab) {
+                    0 -> DeveloperTabSimulator(viewModel, simulationResult, modifier = tabModifier)
+                    1 -> DeveloperTabSources(viewModel, modifier = tabModifier)
+                    2 -> DeveloperTabIngestionLog(viewModel, modifier = tabModifier)
+                    3 -> DeveloperTabDiagnostics(viewModel, simulationResult, modifier = tabModifier)
+                    4 -> DeveloperTabDataTools(viewModel, modifier = tabModifier)
+                    5 -> DeveloperTabHealth(viewModel, modifier = tabModifier)
+                    6 -> DeveloperTabPipelineTrace(viewModel, modifier = tabModifier)
+                }
             }
         }
     }

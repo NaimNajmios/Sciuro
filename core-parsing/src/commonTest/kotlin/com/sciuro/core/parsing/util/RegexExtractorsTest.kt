@@ -40,6 +40,12 @@ class RegexExtractorsTest {
     }
 
     @Test
+    fun `extractMerchant preserves abbreviation periods in merchant names`() {
+        assertEquals("SITI FIKRIYAH BINTI I.R A", extractMerchant("Successful payment of RM 1.00 to SITI FIKRIYAH BINTI I.R A. REF: QR82244072."))
+        assertEquals("SITI FIKRIYAH BINTI I.R ABDUL KHAWI", extractMerchant("You've received RM 0.20 from SITI FIKRIYAH BINTI I.R ABDUL KHAWI. REF: 485956734Q."))
+    }
+
+    @Test
     fun `extractMerchant ignores self-referencing account phrases`() {
         assertNull(extractMerchant("deducted from your account ending 1234"))
         assertNull(extractMerchant("masuk dari akaun anda berakhir 1234"))

@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- **Custom-extras fallback for non-standard notification content**: `SciuroNotificationService.resolveText()` now falls back to scanning custom notification extras when standard fields (`EXTRA_TEXT`, `EXTRA_BIG_TEXT`, `EXTRA_TEXT_LINES`) are all blank. Two-tier approach: (1) known package→key mappings (`com.maybank2u.life` → `full_desc`), (2) generic scan of all non-excluded string extras gated by `AggregatorHeuristicFilter.isFinancial()`. Keeps `Bundle` inspection in `androidMain` (`SciuroNotificationService`) and scanning logic in `commonMain` (`NotificationTextResolver.resolveCustomExtrasFallback`) for KMP testability. Added 4 `commonTest` cases. (See phase-N1-notification-coverage TEST_NOTES.md for fixture data.)
+- **Merchant regex truncates names containing abbreviation periods**: Both `outflowMerchantRegex` and `inflowMerchantRegex` in `RegexExtractors.kt` used bare `\.` as terminator, causing names with initials (e.g. "SITI FIKRIYAH BINTI I.R A") to be truncated at the abbreviation period. Changed to `\.(?=\s|$)` — period only terminates when followed by whitespace or end-of-string. Added regression fixture and test for both outflow and inflow cases.
 ### Added
 - **Phase R1 — Reliability & Performance Hardening**: Cross-cutting architectural improvements across all layers.
   - **Atomic DB transactions** (`core-ledger`): `TransactionRepository.bookTransaction()`, `reviewTransaction()`, `editTransaction()`, `rejectTransaction()`, `deleteTransaction()`, and `undoAutoConfirm()` now wrap insert + balance update in `database.transaction { }` blocks. Each previously executed in separate auto-committed statements, risking orphaned transactions on crash. Made `AuditableRepository.auditRepository` `protected` to support direct `auditRepository.logMutation()` calls from subclass.

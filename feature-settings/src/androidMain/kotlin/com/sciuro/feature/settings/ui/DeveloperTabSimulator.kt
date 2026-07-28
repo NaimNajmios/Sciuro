@@ -1,11 +1,14 @@
 package com.sciuro.feature.settings.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sciuro.core.parsing.engine.SimulationResult
@@ -39,7 +42,10 @@ fun DeveloperTabSimulator(
     }
     var selectedTemplate by remember { mutableStateOf<FixtureLibrary.Fixture?>(null) }
 
-    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(bottom = 120.dp)
+    ) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -166,15 +172,42 @@ fun DeveloperTabSimulator(
                     }
                 }
             }
+        }
 
-            simulationResult?.let { result ->
-                SimulationResultCard(result)
+        simulationResult?.let { result ->
+            item {
+                val resultColor = if (result.error != null) MaterialTheme.colorScheme.errorContainer
+                else MaterialTheme.colorScheme.secondaryContainer
+
+                SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                            .background(resultColor)
+                    )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(stringResource(R.string.dev_simulator_result_title), style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(stringResource(R.string.dev_simulator_matched_rule, result.matchedRule ?: "None"))
+                        result.finalDraft?.let { draft ->
+                            Text(stringResource(R.string.dev_simulator_amount, "%.2f".format(draft.amount)))
+                            Text(stringResource(R.string.dev_simulator_direction, draft.direction ?: stringResource(R.string.dev_simulator_unknown)))
+                            Text(stringResource(R.string.dev_simulator_merchant, draft.merchant ?: stringResource(R.string.dev_simulator_na)))
+                            Text(stringResource(R.string.dev_simulator_account, draft.accountOrChannel ?: stringResource(R.string.dev_simulator_na)))
+                            Text(stringResource(R.string.dev_simulator_confidence, "%.0f".format(draft.confidenceScore * 100)))
+                        } ?: Text(stringResource(R.string.dev_simulator_no_draft), color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.dev_simulator_llm_fallback, if (result.usedLlmFallback) stringResource(R.string.dev_simulator_yes) else stringResource(R.string.dev_simulator_no)))
+                        result.llmLatencyMs?.let { Text(stringResource(R.string.dev_simulator_llm_latency, it)) }
+                        result.error?.let { Text(stringResource(R.string.dev_simulator_error, it), color = MaterialTheme.colorScheme.error) }
+                    }
+                }
             }
+        }
 
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-            ) {
+        item {
+            SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(stringResource(R.string.dev_simulator_batch_title), style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -186,7 +219,6 @@ fun DeveloperTabSimulator(
                     Spacer(modifier = Modifier.height(12.dp))
                     var forceLlm by remember { mutableStateOf(false) }
 
-                    Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -220,32 +252,7 @@ fun DeveloperTabSimulator(
                 }
             }
         }
-    }
-}
 
-@Composable
-fun SimulationResultCard(result: SimulationResult) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (result.error != null) MaterialTheme.colorScheme.errorContainer
-            else MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.dev_simulator_result_title), style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(stringResource(R.string.dev_simulator_matched_rule, result.matchedRule ?: "None"))
-            result.finalDraft?.let { draft ->
-                Text(stringResource(R.string.dev_simulator_amount, "%.2f".format(draft.amount)))
-                Text(stringResource(R.string.dev_simulator_direction, draft.direction ?: stringResource(R.string.dev_simulator_unknown)))
-                Text(stringResource(R.string.dev_simulator_merchant, draft.merchant ?: stringResource(R.string.dev_simulator_na)))
-                Text(stringResource(R.string.dev_simulator_account, draft.accountOrChannel ?: stringResource(R.string.dev_simulator_na)))
-                Text(stringResource(R.string.dev_simulator_confidence, "%.0f".format(draft.confidenceScore * 100)))
-            } ?: Text(stringResource(R.string.dev_simulator_no_draft), color = MaterialTheme.colorScheme.error)
-            Text(stringResource(R.string.dev_simulator_llm_fallback, if (result.usedLlmFallback) stringResource(R.string.dev_simulator_yes) else stringResource(R.string.dev_simulator_no)))
-            result.llmLatencyMs?.let { Text(stringResource(R.string.dev_simulator_llm_latency, it)) }
-            result.error?.let { Text(stringResource(R.string.dev_simulator_error, it), color = MaterialTheme.colorScheme.error) }
-        }
+        item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }

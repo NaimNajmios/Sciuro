@@ -115,6 +115,56 @@ Three new `FixtureLibrary` entries reproducing the exact captured payloads:
 
 `SmsReceiver.kt` previously had its own local `hasFinancialSignal` block (7 keywords, lowercase substring match) instead of calling the shared `AggregatorHeuristicFilter.isFinancial()` (22 keywords, word-boundary regex). Consolidated to use the shared filter, ensuring consistent financial signal detection across both notification and SMS channels.
 
+## Follow-up: Custom-extras fallback for non-standard notification content
+
+After the bigText/textLines fix shipped, a Pipeline Trace for Maybank2u "Scan & Pay" notifications still showed `CAPTURE → DROP {reason=blank_content}`. The trace's `extras_present` field showed `"android.title,android.subText"` — useful but still blank for `EXTRA_TEXT`, `EXTRA_BIG_TEXT`, and `EXTRA_TEXT_LINES`. The notification's real content lived in a custom extra key `full_desc` that no existing code path ever read.
+
+### Fix
+
+Two-tier fallback added in `NotificationTextResolver.resolveCustomExtrasFallback()`:
+
+- **Tier 1 (known keys):** Package-specific map `KNOWN_CONTENT_KEYS` — currently `"com.maybank2u.life" → "full_desc"`. Returns immediately when the known key is present and non-blank.
+- **Tier 2 (generic scan):** Scans all non-excluded string extras from any app, gates each through `AggregatorHeuristicFilter.isFinancial()` (21 financial keywords in EN + BM), and returns the longest match. This catches any app that uses custom notification extras for financial content.
+
+The `Bundle`-reading logic lives in `SciuroNotificationService.resolveFromExtras()` (androidMain) which converts `Bundle` to `Map<String, String>` and delegates to the commonMain function — keeping the scanning logic testable in `commonTest` without Robolectric.
+
+### Regression test fixtures
+
+Two new `FixtureLibrary` entries reproducing the exact captured Scan & Pay payloads (content as it would appear in the `full_desc` extra):
+
+| Fixture | Package | Expected merchant |
+|---------|---------|-------------------|
+| Maybank2u Scan & Pay outflow | `com.maybank2u.life` | `"SITI FIKRIYAH BINTI I.R A"` |
+| Maybank2u Scan & Pay inflow | `com.maybank2u.life` | `"SITI FIKRIYAH BINTI I.R ABDUL KHAWI"` |
+
+### Test results — 28 July 2026
+
+| Test | Result |
+|------|--------|
+| `NotificationTextResolverTest` (10 cases, +4 new) — known key priority, longest-financial scan, blank on no match, noise key exclusion | PASS |
+| `:core-parsing:testDebugUnitTest` — all existing + 2 new fixture regression tests | PASS |
+| `runAllFixtures()` — Maybank2u outflow/inflow fixtures produce non-blank text and full merchant names | PASS |
+
+## Follow-up: Merchant regex terminates on abbreviation periods
+
+While analysing the Maybank2u Scan & Pay fixtures, the merchant name `"SITI FIKRIYAH BINTI I.R A"` was being truncated to `"SITI FIKRIYAH BINTI I"` because both `outflowMerchantRegex` and `inflowMerchantRegex` used a bare `\.` as a sentence-ending terminator — indistinguishable from the period in an abbreviation like "I.R".
+
+### Fix
+
+Changed `\.` to `\.(?=\s|$)` in both regexes. The lookahead requires the period to be followed by whitespace or end-of-string before acting as a terminator. A mid-name abbreviation period (e.g. "I.R A") is now correctly consumed as part of the merchant name; a sentence-ending period ("TENAGA NASIONAL.") still terminates correctly because the period is followed by a space or end-of-string.
+
+### Files changed
+
+- `core-parsing/.../util/RegexExtractors.kt` — `outflowMerchantRegex` (line 7) and `inflowMerchantRegex` (line 9): `\.` → `\.(?=\s|$)`
+
+### Test results — 28 July 2026
+
+| Test | Result |
+|------|--------|
+| `RegexExtractorsTest` — new regression test: `extractMerchant preserves abbreviation periods in merchant names` | PASS |
+| Both Maybank2u Scan & Pay fixtures: `expectedMerchant` is full name, not truncated | PASS |
+| All 16 existing `RegexExtractorsTest` cases — no regressions | PASS |
+
 ## Known gaps
 
 - JVM target `:core-transfer:jvmTest` was previously blocked but has been fixed. The root cause was not JDK 21 (that was a misdiagnosis — `jvmTarget = 1.8` works fine on JDK 21). Instead the jvmTest code had stale constructors (`TransactionRepository` missing `eventBus` arg, `Transaction` missing `referenceId`) and `runBlocking` return-type issue triggering JUnit 4 validation. Fix applied in subsequent test-maintenance phase.

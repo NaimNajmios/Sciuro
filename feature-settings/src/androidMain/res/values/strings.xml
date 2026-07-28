@@ -116,6 +116,9 @@
     <string name="dev_sources_remove_title">Remove source</string>
     <string name="dev_sources_remove_confirm">Remove \"%s\" from the ingestion allowlist?</string>
     <string name="dev_sources_remove_action">Remove</string>
+    <string name="dev_sources_edit_title">Edit Source</string>
+    <string name="dev_sources_edit_label">Package Name</string>
+    <string name="dev_sources_edit_action">Save</string>
 
     <!-- Developer Tab: Ingestion Log -->
     <string name="dev_ingestion_pending">Pending</string>

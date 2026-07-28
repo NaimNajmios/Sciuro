@@ -6,15 +6,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sciuro.feature.settings.R
 import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
+import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 
 @Composable
 fun DeveloperTabSources(
@@ -24,6 +28,7 @@ fun DeveloperTabSources(
     val allowlist = viewModel.ingestionAllowlist
     var customPackage by remember { mutableStateOf("") }
     var pendingRemovePackage by remember { mutableStateOf<String?>(null) }
+    var pendingEditPackage by remember { mutableStateOf<String?>(null) }
     val effectivePackages by allowlist.effectivePackages.collectAsState()
 
     val removeDialog = pendingRemovePackage
@@ -44,7 +49,39 @@ fun DeveloperTabSources(
         )
     }
 
-    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+    val editPackage = pendingEditPackage
+    if (editPackage != null) {
+        var editValue by remember(editPackage) { mutableStateOf(editPackage) }
+
+        com.najmi.sciuro.core.ui.components.SciuroFormSheet(
+            title = stringResource(R.string.dev_sources_edit_title),
+            onDismissRequest = { pendingEditPackage = null }
+        ) {
+            SciuroTextField(
+                value = editValue,
+                onValueChange = { editValue = it },
+                label = stringResource(R.string.dev_sources_edit_label),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            SciuroPrimaryButton(
+                text = stringResource(R.string.dev_sources_edit_action),
+                onClick = {
+                    val trimmed = editValue.trim()
+                    if (trimmed.isNotBlank() && trimmed != editPackage) {
+                        allowlist.renamePackage(editPackage, trimmed)
+                    }
+                    pendingEditPackage = null
+                },
+                enabled = editValue.isNotBlank()
+            )
+        }
+    }
+
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(bottom = 120.dp)
+    ) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
             Text(stringResource(R.string.dev_sources_title), style = MaterialTheme.typography.titleMedium)
@@ -63,52 +100,73 @@ fun DeveloperTabSources(
 
         if (bankPackages.isNotEmpty()) {
             item {
-                Text(stringResource(R.string.dev_sources_banks), style = MaterialTheme.typography.titleSmall)
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-            items(bankPackages) { pkg ->
-                SourceRow(
-                    pkg = pkg,
-                    isRemovable = true,
-                    onRemove = { pendingRemovePackage = pkg }
-                )
+                SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            stringResource(R.string.dev_sources_banks),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        bankPackages.forEach { pkg ->
+                            SourceRow(
+                                pkg = pkg,
+                                onEdit = { pendingEditPackage = pkg },
+                                onRemove = { pendingRemovePackage = pkg }
+                            )
+                        }
+                    }
+                }
             }
         }
 
         if (aggPackages.isNotEmpty()) {
             item {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(stringResource(R.string.dev_sources_aggregators), style = MaterialTheme.typography.titleSmall)
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-            items(aggPackages) { pkg ->
-                SourceRow(
-                    pkg = pkg,
-                    isRemovable = true,
-                    onRemove = { pendingRemovePackage = pkg }
-                )
+                SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            stringResource(R.string.dev_sources_aggregators),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        aggPackages.forEach { pkg ->
+                            SourceRow(
+                                pkg = pkg,
+                                onEdit = { pendingEditPackage = pkg },
+                                onRemove = { pendingRemovePackage = pkg }
+                            )
+                        }
+                    }
+                }
             }
         }
 
         if (customPackages.isNotEmpty()) {
             item {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(stringResource(R.string.dev_sources_custom), style = MaterialTheme.typography.titleSmall)
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-            items(customPackages) { pkg ->
-                SourceRow(
-                    pkg = pkg,
-                    isRemovable = true,
-                    onRemove = { pendingRemovePackage = pkg }
-                )
+                SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            stringResource(R.string.dev_sources_custom),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        customPackages.forEach { pkg ->
+                            SourceRow(
+                                pkg = pkg,
+                                onEdit = { pendingEditPackage = pkg },
+                                onRemove = { pendingRemovePackage = pkg }
+                            )
+                        }
+                    }
+                }
             }
         }
 
         item {
-            Spacer(modifier = Modifier.height(16.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SciuroTextField(
@@ -131,7 +189,6 @@ fun DeveloperTabSources(
                     Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.dev_sources_add_action))
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -139,33 +196,36 @@ fun DeveloperTabSources(
 @Composable
 private fun SourceRow(
     pkg: String,
-    isRemovable: Boolean,
+    onEdit: () -> Unit,
     onRemove: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-        tonalElevation = 1.dp
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                pkg,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyMedium
+        Text(
+            pkg,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+            Icon(
+                Icons.Filled.Edit,
+                contentDescription = stringResource(R.string.dev_sources_edit_action),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
             )
-            if (isRemovable) {
-                IconButton(onClick = onRemove) {
-                    Icon(
-                        Icons.Filled.Delete,
-                        contentDescription = stringResource(R.string.dev_sources_remove_action),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+        }
+        IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = stringResource(R.string.dev_sources_remove_action),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }

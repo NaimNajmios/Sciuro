@@ -67,7 +67,7 @@ class SciuroNotificationService : NotificationListenerService() {
 
         val notification = sbn.notification
         val title = notification.extras.getString(Notification.EXTRA_TITLE) ?: ""
-        val text = resolveText(notification)
+        val text = resolveText(notification, packageName)
 
         if (title.isBlank() && text.isBlank()) {
             val presentKeys = notification.extras.keySet().joinToString(",")
@@ -112,12 +112,22 @@ class SciuroNotificationService : NotificationListenerService() {
     }
 
     companion object {
-        fun resolveText(notification: Notification): String {
+        fun resolveText(notification: Notification, packageName: String): String {
             val shortText = notification.extras.getString(Notification.EXTRA_TEXT) ?: ""
             val bigText = notification.extras.getString(Notification.EXTRA_BIG_TEXT) ?: ""
             val textLines = notification.extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
                 ?.joinToString("\n") { it.toString() } ?: ""
-            return NotificationTextResolver.resolveTextFallback(shortText, bigText, textLines)
+            val standard = NotificationTextResolver.resolveTextFallback(shortText, bigText, textLines)
+            if (standard.isNotBlank()) return standard
+            return resolveFromExtras(notification.extras, packageName)
+        }
+
+        private fun resolveFromExtras(extras: android.os.Bundle, packageName: String): String {
+            val extrasMap = mutableMapOf<String, String>()
+            for (key in extras.keySet()) {
+                extras.getString(key)?.let { extrasMap[key] = it }
+            }
+            return NotificationTextResolver.resolveCustomExtrasFallback(packageName, extrasMap)
         }
     }
 }

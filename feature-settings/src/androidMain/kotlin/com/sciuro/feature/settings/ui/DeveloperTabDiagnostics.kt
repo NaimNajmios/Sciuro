@@ -2,6 +2,8 @@ package com.sciuro.feature.settings.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -23,50 +25,56 @@ fun DeveloperTabDiagnostics(
     var diagText by remember { mutableStateOf("") }
     var diagPackage by remember { mutableStateOf("") }
 
-    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(bottom = 120.dp)
+    ) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            Text(stringResource(R.string.dev_diagnostics_title), style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            SciuroTextField(
-                value = diagPackage,
-                onValueChange = { diagPackage = it },
-                label = stringResource(R.string.dev_diagnostics_package_label)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            SciuroTextField(
-                value = diagTitle,
-                onValueChange = { diagTitle = it },
-                label = stringResource(R.string.dev_diagnostics_title_label)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            SciuroTextField(
-                value = diagText,
-                onValueChange = { diagText = it },
-                label = stringResource(R.string.dev_diagnostics_text_label),
-                singleLine = false,
-                minLines = 3,
-                maxLines = 8,
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Text)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    viewModel.simulateNotification(diagTitle, diagText, diagPackage)
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.dev_diagnostics_run))
+
+            SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(stringResource(R.string.dev_diagnostics_title), style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SciuroTextField(
+                        value = diagPackage,
+                        onValueChange = { diagPackage = it },
+                        label = stringResource(R.string.dev_diagnostics_package_label)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SciuroTextField(
+                        value = diagTitle,
+                        onValueChange = { diagTitle = it },
+                        label = stringResource(R.string.dev_diagnostics_title_label)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SciuroTextField(
+                        value = diagText,
+                        onValueChange = { diagText = it },
+                        label = stringResource(R.string.dev_diagnostics_text_label),
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 8,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Text)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            viewModel.simulateNotification(diagTitle, diagText, diagPackage)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.dev_diagnostics_run))
+                    }
+                }
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
         simulationResult?.let { result ->
             item {
-                SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(stringResource(R.string.dev_diagnostics_rule_results), style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
@@ -75,6 +83,7 @@ fun DeveloperTabDiagnostics(
                 val ruleResult = result.allRuleResults[index]
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (ruleResult.matches) MaterialTheme.colorScheme.tertiaryContainer
                         else MaterialTheme.colorScheme.surfaceVariant
@@ -98,8 +107,7 @@ fun DeveloperTabDiagnostics(
 
             result.llmDebugInfo?.let { debug ->
                 item {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(stringResource(R.string.dev_diagnostics_llm_debug), style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -124,7 +132,8 @@ fun DeveloperTabDiagnostics(
             result.llmPackageMarker?.let { marker ->
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -145,7 +154,8 @@ fun DeveloperTabDiagnostics(
             result.error?.let { err ->
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                     ) {
                         Text(stringResource(R.string.dev_diagnostics_error, err), modifier = Modifier.padding(16.dp))

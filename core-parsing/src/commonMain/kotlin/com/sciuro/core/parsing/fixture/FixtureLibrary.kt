@@ -602,6 +602,28 @@ object FixtureLibrary {
             expectedAmount = 25.00, expectedDirection = TransactionDirection.INFLOW,
             expectedConfident = true
         ),
+
+        // ── Maybank2u Scan & Pay (custom full_desc extra) ──
+        Fixture(
+            description = "Maybank2u Scan & Pay outflow, content in custom full_desc extra",
+            packageName = "com.maybank2u.life",
+            title = "Maybank2u: Scan & Pay",
+            text = "Successful payment of RM 1.00 to SITI FIKRIYAH BINTI I.R A. REF: QR82244072.",
+            expectedAmount = 1.00,
+            expectedDirection = TransactionDirection.OUTFLOW,
+            expectedMerchant = "SITI FIKRIYAH BINTI I.R A",
+            expectedConfident = true
+        ),
+        Fixture(
+            description = "Maybank2u Scan & Pay inflow, content in custom full_desc extra",
+            packageName = "com.maybank2u.life",
+            title = "Maybank2u: Scan & Pay",
+            text = "You've received RM 0.20 from SITI FIKRIYAH BINTI I.R ABDUL KHAWI. REF: 485956734Q.",
+            expectedAmount = 0.20,
+            expectedDirection = TransactionDirection.INFLOW,
+            expectedMerchant = "SITI FIKRIYAH BINTI I.R ABDUL KHAWI",
+            expectedConfident = true
+        ),
     )
 
     fun fixturesForPackage(packageName: String): List<Fixture> =
