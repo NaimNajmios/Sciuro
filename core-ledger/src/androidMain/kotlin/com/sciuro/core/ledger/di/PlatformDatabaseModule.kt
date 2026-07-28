@@ -1,6 +1,7 @@
 package com.sciuro.core.ledger.di
 
 import android.content.Context
+import android.util.Log
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.sciuro.core.ledger.db.SciuroDatabase
@@ -9,35 +10,48 @@ import org.koin.dsl.module
 import com.sciuro.core.ledger.security.DatabaseKeyManager
 import net.sqlcipher.database.SupportFactory
 import net.sqlcipher.database.SQLiteDatabase
+import java.io.File
+
+private const val TAG = "SciuroDB"
 
 val platformDatabaseModule = module {
-    single<SqlDriver> { 
+    single<SqlDriver> {
         val context = get<Context>()
-        
-        // Initialize SQLiteDatabase for SQLCipher (required for Android 9+)
+
         SQLiteDatabase.loadLibs(context)
-        
+
+        val dbFile = context.getDatabasePath("sciuro.db")
+
+        // Phase 1: Key-loss detection before touching passphrase storage
+        if (dbFile.exists() && !DatabaseKeyManager.passphraseExists(context)) {
+            val quarantined = File(dbFile.parentFile, "sciuro.db.quarantined.${System.currentTimeMillis()}")
+            dbFile.renameTo(quarantined)
+            Log.w(TAG, "Database exists but no stored passphrase found (key-loss). Quarantined to $quarantined")
+        }
+
         val passphrase = DatabaseKeyManager.getOrGeneratePassphrase(context)
         val factory = SupportFactory(passphrase)
-        
-        val dbFile = context.getDatabasePath("sciuro.db")
-        if (dbFile.exists()) {
+
+        // Phase 2: Verify existing DB opens with its passphrase
+        if (dbFile.exists() && DatabaseKeyManager.passphraseExists(context)) {
             try {
-                // Attempt to open it with SQLCipher. If it's an unencrypted DB, 
-                // this will throw "file is not a database".
                 val db = SQLiteDatabase.openDatabase(
-                    dbFile.absolutePath, 
-                    String(passphrase), 
-                    null, 
+                    dbFile.absolutePath,
+                    String(passphrase),
+                    null,
                     SQLiteDatabase.OPEN_READONLY
                 )
                 db.close()
             } catch (e: Exception) {
-                // It failed to open with the key, so drop the existing unencrypted database.
-                context.deleteDatabase("sciuro.db")
+                val quarantined = File(dbFile.parentFile, "sciuro.db.quarantined.${System.currentTimeMillis()}")
+                dbFile.renameTo(quarantined)
+                Log.w(TAG, "Failed to open database with stored passphrase (corruption? version mismatch?). Quarantined to $quarantined", e)
+                File("${dbFile.absolutePath}-wal").delete()
+                File("${dbFile.absolutePath}-shm").delete()
+                File("${dbFile.absolutePath}-journal").delete()
             }
         }
-        
+
         AndroidSqliteDriver(
             schema = SciuroDatabase.Schema,
             context = context,

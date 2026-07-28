@@ -16,7 +16,7 @@
 ./gradlew allTests --console=plain
 ```
 
-**Gradle output:** Never pipe through `tail`/`Select-Object`. Redirect to file, then read: `./gradlew assembleDebug > build_log.txt 2>&1` then `Get-Content build_log.txt -Tail 20`.
+**Gradle output:** Never use `tail` (not available on Windows). Pipe through `2>&1` then `Select-Object -Last 20` instead: `./gradlew assembleDebug 2>&1 | Select-Object -Last 20`. This avoids leaving stale `.txt` files.
 
 ## Module Architecture
 

@@ -3,6 +3,7 @@ package com.najmi.sciuro.export
 import android.content.Context
 import android.util.Base64
 import app.cash.sqldelight.db.SqlDriver
+import com.sciuro.core.ledger.security.DatabaseKeyManager
 import java.io.File
 import java.io.InputStream
 import javax.crypto.Cipher
@@ -43,7 +44,7 @@ object EncryptedImporter {
                 if (magic != "SCIB") return@withContext Result.failure(Exception("Not a Sciuro backup file"))
 
                 val version = header.getInt("version")
-                if (version != 1) return@withContext Result.failure(Exception("Unsupported backup version: $version"))
+                if (version !in 1..2) return@withContext Result.failure(Exception("Unsupported backup version: $version"))
 
                 val salt = Base64.decode(header.getString("salt"), Base64.NO_WRAP)
                 val iv = Base64.decode(header.getString("iv"), Base64.NO_WRAP)
@@ -59,7 +60,25 @@ object EncryptedImporter {
                 val cipher = Cipher.getInstance("AES/GCM/NoPadding")
                 cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_LENGTH, iv))
 
-                val dbBytes = cipher.doFinal(ciphertext)
+                val decrypted = cipher.doFinal(ciphertext)
+
+                val dbBytes: ByteArray
+                if (version >= 2) {
+                    val keyLen = ((decrypted[0].toInt() and 0xFF) shl 24) or
+                        ((decrypted[1].toInt() and 0xFF) shl 16) or
+                        ((decrypted[2].toInt() and 0xFF) shl 8) or
+                        (decrypted[3].toInt() and 0xFF)
+
+                    if (keyLen > 0 && keyLen <= decrypted.size - 4) {
+                        val recoveredKey = decrypted.copyOfRange(4, 4 + keyLen)
+                        DatabaseKeyManager.storePassphrase(context, recoveredKey)
+                        dbBytes = decrypted.copyOfRange(4 + keyLen, decrypted.size)
+                    } else {
+                        dbBytes = decrypted
+                    }
+                } else {
+                    dbBytes = decrypted
+                }
 
                 val dbPath = context.getDatabasePath("sciuro.db")
 

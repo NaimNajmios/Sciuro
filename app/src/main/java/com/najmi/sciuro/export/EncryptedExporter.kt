@@ -7,6 +7,7 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.sciuro.core.ledger.security.DatabaseKeyManager
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.security.SecureRandom
@@ -90,6 +91,24 @@ object EncryptedExporter {
                 val dbBytes = dbPath.readBytes()
                 if (dbBytes.isEmpty()) return@withContext Result.failure(Exception("Database is empty"))
 
+                val dbKey = DatabaseKeyManager.getStoredPassphrase(context)
+
+                val plaintext = ByteArrayOutputStream().apply {
+                    if (dbKey != null) {
+                        val keyLenBytes = ByteArray(4).also {
+                            it[0] = ((dbKey.size shr 24) and 0xFF).toByte()
+                            it[1] = ((dbKey.size shr 16) and 0xFF).toByte()
+                            it[2] = ((dbKey.size shr 8) and 0xFF).toByte()
+                            it[3] = (dbKey.size and 0xFF).toByte()
+                        }
+                        write(keyLenBytes)
+                        write(dbKey)
+                    }
+                    write(dbBytes)
+                }.toByteArray()
+
+                val exportVersion = if (dbKey != null) 2 else VERSION
+
                 val salt = ByteArray(SALT_SIZE)
                 secureRandom.nextBytes(salt)
 
@@ -101,12 +120,12 @@ object EncryptedExporter {
                 val cipher = Cipher.getInstance("AES/GCM/NoPadding")
                 cipher.init(Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_LENGTH, iv))
 
-                val ciphertext = cipher.doFinal(dbBytes)
+                val ciphertext = cipher.doFinal(plaintext)
 
                 val headerJson = buildString {
                     append("{")
                     append("\"magic\":\"$MAGIC\",")
-                    append("\"version\":$VERSION,")
+                    append("\"version\":$exportVersion,")
                     append("\"createdAt\":${System.currentTimeMillis()},")
                     append("\"salt\":\"${Base64.encodeToString(salt, Base64.NO_WRAP)}\",")
                     append("\"iv\":\"${Base64.encodeToString(iv, Base64.NO_WRAP)}\"")

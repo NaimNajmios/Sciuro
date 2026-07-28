@@ -31,7 +31,12 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, and **Phase J2 (Developer Options & Settings Redesign)** addressing cross-cutting architectural concerns.
+The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, and **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)** addressing cross-cutting architectural concerns.
+
+**Phase S1 highlights:**
+- **Quarantine instead of delete:** The database startup path no longer silently destroys the database on any passphrase open failure. Key-loss and corruption now rename the file to `sciuro.db.quarantined.<timestamp>` for recovery instead of `deleteDatabase`.
+- **Key-loss detection:** `DatabaseKeyManager.passphraseExists()` lets `PlatformDatabaseModule` distinguish "first run" from "key-loss" (Keystore unavailable, passphrase gone). The cascade that generated a new key, failed to open the DB, and deleted it is broken at its root — the DB is quarantined before a new passphrase is generated.
+- **Backup key recovery:** Encrypted exports now include the SQLCipher passphrase in the payload (version 2 format). On import, the passphrase is automatically recovered and re-stored in `EncryptedSharedPreferences`, enabling full recovery from genuine key-loss events.
 
 **Phase R1 highlights:**
 - **Atomic database transactions:** All transaction mutations now wrap insert + balance update in SQLDelight `database.transaction { }`, preventing orphaned transactions on crash.
