@@ -46,8 +46,9 @@ class ReviewTierDecider(
     private suspend fun hasLearnedRule(merchant: String?): Boolean {
         if (merchant == null) return false
         val key = merchant.lowercase().trim()
-        return database.merchantCategoryRuleQueries
+        val rule = database.merchantCategoryRuleQueries
             .selectMerchantRuleByKey(key)
-            .executeAsOneOrNull() != null
+            .executeAsOneOrNull()
+        return rule != null && rule.confirmation_count >= 2
     }
 }

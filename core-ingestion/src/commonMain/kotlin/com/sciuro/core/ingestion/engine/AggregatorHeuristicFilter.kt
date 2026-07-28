@@ -11,7 +11,6 @@ object AggregatorHeuristicFilter {
             "rm",
             "m2u",
             "cimb notification",
-            "transaction",
             "funds received",
             "transfer",
             "receipt",
@@ -26,25 +25,39 @@ object AggregatorHeuristicFilter {
             "berjaya",
             "kredit",
             "debit",
-            "payment",
-            "received",
             "paid"
         )
-        // Match any of these keywords with word boundaries, case-insensitive
         val regexString = keywords.joinToString(separator = "|") { "\\b$it\\b" }
         Regex(regexString, RegexOption.IGNORE_CASE)
     }
 
-    /**
-     * Very lightweight heuristic to drop obvious spam or non-financial emails/SMS.
-     * We look for common keywords found in banking email subjects/titles and SMS messages.
-     *
-     * @param title The title of the notification
-     * @param text The text body of the notification
-     * @return true if it contains financial keywords and should be processed
-     */
+    private val promotionalKeywordsPattern: Regex by lazy {
+        val keywords = listOf(
+            "promo", "promotion", "diskop", "diskaun", "offer", "tawaran",
+            "discount", "coupon", "voucher", "cashback", "rewards",
+            "limited", "exclusive", "selamatkan", "jimat",
+            "only rm", "hanya rm", "from rm", "dari rm"
+        )
+        val regexString = keywords.joinToString(separator = "|") { "\\b$it\\b" }
+        Regex(regexString, RegexOption.IGNORE_CASE)
+    }
+
+    private val transactionKeywordsPattern: Regex by lazy {
+        val keywords = listOf(
+            "transaction", "payment", "received", "spent", "dibelanjakan",
+            "credited", "dikreditkan", "debited", "didebitkan",
+            "deducted", "ditolak", "masuk", "transfer from", "transfer to",
+            "paid to", "dibayar", "bayaran kepada", "successful", "berjaya"
+        )
+        val regexString = keywords.joinToString(separator = "|") { "\\b$it\\b" }
+        Regex(regexString, RegexOption.IGNORE_CASE)
+    }
+
     fun isFinancial(title: String, text: String): Boolean {
         val combinedText = "$title $text"
-        return financialKeywordsPattern.containsMatchIn(combinedText)
+        if (!financialKeywordsPattern.containsMatchIn(combinedText)) return false
+        if (promotionalKeywordsPattern.containsMatchIn(combinedText) &&
+            !transactionKeywordsPattern.containsMatchIn(combinedText)) return false
+        return true
     }
 }

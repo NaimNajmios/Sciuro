@@ -3,7 +3,33 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
-### Fixed
+
+### Pipeline Edge-Case Hardening (Phases 1-4)
+
+#### Added
+- **UNTRUSTED review tier** (`ReviewTier.UNTRUSTED`, `StructuredDraft.isUntrustedFallback`): When LLM fallback is unavailable and deterministic parser confidence is below threshold, the pipeline now books with `reviewTier = UNTRUSTED` instead of silently accepting a low-confidence parse. Kanban shows a warning badge for UNTRUSTED transactions.
+- **TransactionRejected domain event** (`DomainEvent.TransactionRejected`): Published on `rejectTransaction()` with merchant/amount/direction metadata, enabling downstream engine cleanup.
+- **Transfer link & corroboration cleanup on reject** (`TransactionRepository.rejectTransaction`): Rejecting a transaction now deletes associated transfer links and corroboration rows inside the DB transaction.
+- **Per-engine debounce for all 7 engines** (`EngineTriggerUseCase`): Transfer detection, obligation cycle matching, and BNPL risk evaluation now share the same 15s cooldown as budget/debt/investment/obligation detection.
+- **LLM cache clear** (`LlmFallbackParser.clearCache()`): Exposed for developer diagnostics to invalidate the 24h LLM result cache without app restart.
+- **MYR amount regex support** (`RegexExtractors.amountRegex`): Now supports both `RM` and `MYR` prefixes.
+
+#### Fixed
+- **Concurrent dedup race condition** (`DefaultTransactionBookingUseCase.dedupMutex`): Two events for the same transaction arriving simultaneously (e.g., SMS + notification) could both pass `findLikelyDuplicate` before either wrote to the DB, creating duplicate booked transactions. Fixed by wrapping the dedup-check-through-booking window in a `Mutex`.
+- **Engine failure isolation** (`EngineTriggerUseCase`): Each engine call is now wrapped in its own try/catch. One engine failure no longer blocks subsequent engines or orphans the booked transaction.
+- **Per-transaction debounce granularity**: Debounce checks moved outside `runEngine` so the trace only fires when an engine actually runs (not on skipped debounce ticks).
+- **Unbounded live event concurrency** (`SciuroIngestionOrchestrator`): Live event processing now capped at 4 concurrent coroutines (recovery remains at 8), preventing resource exhaustion during notification bursts.
+- **Recovery blocks live collection** (`SciuroIngestionOrchestrator.startListening`): `recoverStrandedEvents()` and `collectEventsWithRetry()` now run as parallel coroutines instead of sequentially, preventing new events from queuing during stranded-event recovery.
+- **Learned rule immediate activation** (`CategoryResolver`, `ReviewTierDecider.hasLearnedRule`): Merchant-category rules now require `confirmation_count >= 2` before being used for auto-classification. A single mis-tap no longer permanently contaminates auto-classification.
+- **Zero-amount transaction prevention** (`RegexExtractors.extractAmount`): `RM0.00` and `MYR0.00` now return null, preventing booking of zero-value transactions.
+- **Double-tap guard on approve/reject** (`KanbanViewModel.processingTaskIds`): Review actions now check a `processingTaskIds` set before launching, with UI-level guard preventing concurrent mutations on the same task.
+
+#### Changed
+- **Error events from SharedFlow to StateFlow** (`KanbanViewModel.errorEvents`): UI errors now use `MutableStateFlow<String?>` with `clearError()`, preserving error state across configuration changes.
+- **Promotional message filtering** (`AggregatorHeuristicFilter`): Added `promotionalKeywordsPattern` and `transactionKeywordsPattern` checks. Messages matching promotional keywords (promo, offer, discount, etc.) without concrete transaction keywords (paid, received, debited, etc.) are now dropped at the capture layer instead of reaching the parser.
+- **Consistent engine debounce** (`EngineTriggerUseCase`): All 7 engines (transfer, obligation_cycle, budget, debt, investment, obligation_detect, bnpl) now use the same 15s debounce window.
+
+### Fixed (previous)
 - **Kanban/Obligation/Debt edge case fixes**: Comprehensive audit and fix of 12 edge cases across the kanban board, obligation detection, and debt tracking modules.
   - **Bidirectional merchant matching** (`ObligationCycleMatcher`, `DebtEngine`): Matching now checks both directions (`obligation.name.contains(merchant)` OR `merchant.contains(obligation.name)`) — renaming an obligation to "Netflix" no longer breaks auto-settlement with "Netflix Subscription" transactions.
   - **Manual mark-as-paid advances obligation** (`KanbanViewModel.markBillAsPaid`): Creating a manual payment now also calls `obligationRepository.recordPayment()` to update `last_paid_date` and `next_due_date` immediately, instead of waiting for the next CycleMatcher run.

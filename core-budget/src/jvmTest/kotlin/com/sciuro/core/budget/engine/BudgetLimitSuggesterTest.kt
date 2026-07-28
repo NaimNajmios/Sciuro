@@ -4,6 +4,7 @@ import app.cash.sqldelight.db.SqlDriver
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -136,10 +137,11 @@ class BudgetLimitSuggesterTest {
             insertTransaction("tx_$index", "cat_food", 100, now - (index * 1000L))
         }
 
+        val deferred = async { eventBus.events.first() }
         val result = suggester.suggestAndPublish("cat_food")
         assertTrue(result != null && result > 0)
 
-        val event = withTimeout(5000) { eventBus.events.first() } as DomainEvent.BudgetLimitSuggested
+        val event = deferred.await() as DomainEvent.BudgetLimitSuggested
         assertEquals("cat_food", event.categoryId)
         assertEquals(result, event.suggestedAmount, 0.001)
     }

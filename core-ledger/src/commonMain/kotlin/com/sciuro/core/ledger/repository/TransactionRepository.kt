@@ -187,6 +187,8 @@ class TransactionRepository(
                 val oldBalanceDelta = if (oldTx.direction == "INFLOW") -oldTx.amount else oldTx.amount
                 database.accountQueries.updateBalance(balance = oldBalanceDelta, updated_at = now, id = oldTx.account_id)
             }
+            database.transactionCorroborationQueries.deleteCorroborationsByTransactionId(transactionId)
+            database.transferLinkQueries.deleteTransferLinkByTransactionId(transactionId)
             database.transactionRecordQueries.deleteTransaction(transactionId)
         }
 
@@ -205,6 +207,12 @@ class TransactionRepository(
         )
 
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
+        eventBus.publish(DomainEvent.TransactionRejected(
+            transactionId = transactionId,
+            merchant = oldTx.merchant,
+            amount = oldTx.amount,
+            direction = oldTx.direction
+        ))
     }
 
     suspend fun deleteTransaction(transactionId: String) {

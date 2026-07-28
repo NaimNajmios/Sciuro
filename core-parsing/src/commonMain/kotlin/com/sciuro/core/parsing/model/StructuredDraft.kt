@@ -14,7 +14,8 @@ data class StructuredDraft(
     val referenceId: String?,
     val counterpartyAccountNumber: String? = null,
     val timestamp: Long,
-    val confidenceScore: Float = 1.0f
+    val confidenceScore: Float = 1.0f,
+    val isUntrustedFallback: Boolean = false
 ) {
     val isConfident get() = confidenceScore >= DEFAULT_CONFIDENCE_THRESHOLD
 }

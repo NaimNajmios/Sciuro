@@ -31,7 +31,19 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)**, and **Phase S2 (Kanban/Debt/Obligation Edge Case Fixes)** addressing cross-cutting architectural concerns.
+The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)**, **Phase S2 (Kanban/Debt/Obligation Edge Case Fixes)**, and **Pipeline Edge-Case Hardening (Phases 1-4)** addressing cross-cutting architectural concerns.
+
+**Pipeline Edge-Case Hardening highlights:**
+- **Concurrent dedup prevention:** A `Mutex` in `TransactionBookingUseCase` serializes the dedup-check-through-booking window, preventing the race condition where two events for the same transaction (e.g., SMS + notification) could both book before either is detected as a duplicate.
+- **Engine failure isolation:** All 7 downstream engine calls (transfer, obligation cycle, budget, debt, investment, BNPL) are individually try/catch-wrapped. One engine failure no longer blocks others or orphans the booked transaction.
+- **UNTRUSTED review tier:** When LLM fallback is unavailable and deterministic parser confidence is below threshold, the pipeline books with `reviewTier = UNTRUSTED` instead of silently accepting a low-confidence parse — Kanban shows a warning badge.
+- **Consistent 15s engine debounce:** All 7 engines (including transfer, obligation cycle, and BNPL) share the same 15s cooldown, reducing redundant full-scan runs during burst ingestion.
+- **Learned rule threshold:** Merchant-category rules require `confirmation_count >= 2` before auto-classification activates — a single mis-tap no longer permanently contaminates auto-classification.
+- **Double-tap guard on review:** `KanbanViewModel` tracks `processingTaskIds` with StateFlow; UI disables buttons during active mutations.
+- **Reject cleanup:** `rejectTransaction` now deletes associated transfer links and corroboration rows inside the DB transaction.
+- **Promotional message filtering:** `AggregatorHeuristicFilter` drops messages matching promotional keywords without concrete transaction keywords at the capture layer.
+- **Concurrency caps:** Live event processing capped at 4 concurrent (recovery at 8); recovery runs in parallel with live collection.
+- **MYR amount support + zero-amount rejection:** `extractAmount` regex supports both `RM` and `MYR` prefixes; returns null for 0.0 amounts.
 
 **Phase S1 highlights:**
 - **Quarantine instead of delete:** The database startup path no longer silently destroys the database on any passphrase open failure. Key-loss and corruption now rename the file to `sciuro.db.quarantined.<timestamp>` for recovery instead of `deleteDatabase`.

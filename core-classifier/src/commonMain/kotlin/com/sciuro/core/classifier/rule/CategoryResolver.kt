@@ -50,7 +50,7 @@ class CategoryResolver(
         val learnedRule = database.merchantCategoryRuleQueries
             .selectMerchantRuleByKey(normalizedKey)
             .executeAsOneOrNull()
-        if (learnedRule != null) {
+        if (learnedRule != null && learnedRule.confirmation_count >= 2) {
             return CategorySuggestion(
                 categoryId = learnedRule.category_id,
                 confidence = 0.90f,

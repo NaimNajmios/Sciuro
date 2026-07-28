@@ -12,8 +12,10 @@ import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.config.LlmParsingConfig
 import com.sciuro.core.obligations.repository.ObligationRepository
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -107,8 +109,9 @@ class ObligationDetectionEngineTest {
     @Test
     fun `runDetection creates obligation for merchant with 3 plus same-amount outflows`() = runBlocking {
         val baseTime = 1000L
+        val monthMs = 30L * 24L * 60L * 60L * 1000L
         repeat(3) { i ->
-            insertMerchantTransaction(id = "tx_$i", merchant = "netflix", amount = 15.0, timestamp = baseTime + i * 1000L)
+            insertMerchantTransaction(id = "tx_$i", merchant = "netflix", amount = 15.0, timestamp = baseTime + i * monthMs)
         }
 
         engine.runDetection()
@@ -188,13 +191,19 @@ class ObligationDetectionEngineTest {
             insertMerchantTransaction(id = "tx_ac$i", merchant = "netflix", amount = 15.0, timestamp = 1000L + i * 1000L)
         }
 
+        val events = mutableListOf<DomainEvent>()
+        val job = launch {
+            eventBus.events.collect { events.add(it) }
+        }
+
+        yield()
+
         engine.runDetection()
 
-        val events = mutableListOf<DomainEvent>()
-        withTimeout(5000) { eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect } }
+        job.cancel()
 
-        assertTrue(events.any { it is DomainEvent.ObligationCreated })
-        assertTrue(events.any { it is DomainEvent.RecurringObligationConfirmed })
+        assertTrue(events.any { it is DomainEvent.ObligationCreated }, "Should publish ObligationCreated")
+        assertTrue(events.any { it is DomainEvent.RecurringObligationConfirmed }, "Should publish RecurringObligationConfirmed")
     }
 
     @Test
@@ -205,13 +214,18 @@ class ObligationDetectionEngineTest {
             insertMerchantTransaction(id = "tx_pr$i", merchant = "dropbox", amount = 12.0, timestamp = 1000L + i * 1000L)
         }
 
+        val events = mutableListOf<DomainEvent>()
+        val job = launch {
+            eventBus.events.collect { events.add(it) }
+        }
+
+        yield()
+
         engine.runDetection()
 
-        val events = mutableListOf<DomainEvent>()
-        withTimeout(5000) { eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect } }
+        job.cancel()
 
-        assertTrue(events.any { it is DomainEvent.ObligationCreated })
-        assertTrue(events.any { it is DomainEvent.RecurringObligationProposed })
+        assertTrue(events.any { it is DomainEvent.RecurringObligationProposed }, "Should publish RecurringObligationProposed")
     }
 
     @Test

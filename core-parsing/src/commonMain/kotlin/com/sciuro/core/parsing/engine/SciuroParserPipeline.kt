@@ -19,6 +19,8 @@ class SciuroParserPipeline(
 
         val llmResult = llmFallbackParser.parse(event)
 
-        return llmResult ?: deterministicResult
+        if (llmResult != null) return llmResult
+
+        return deterministicResult?.copy(isUntrustedFallback = true)
     }
 }

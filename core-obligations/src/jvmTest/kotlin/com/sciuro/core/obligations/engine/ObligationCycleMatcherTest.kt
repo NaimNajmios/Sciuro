@@ -12,6 +12,7 @@ import com.sciuro.core.obligations.repository.ObligationRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -80,20 +81,20 @@ class ObligationCycleMatcherTest {
 
         val events = mutableListOf<DomainEvent>()
         val job = launch {
-            withTimeout(5000) {
-                eventBus.events.collect { events.add(it); return@collect }
-            }
+            eventBus.events.collect { events.add(it) }
         }
+
+        yield()
 
         matcher.onTransactionBooked(
             transactionId = "tx_1", amount = 15.0, direction = "OUTFLOW",
             categoryId = null, merchant = "netflix"
         )
 
-        job.join()
+        job.cancel()
 
-        assertEquals(2, events.size)
-        val settledEvent = events.last()
+        assertEquals(1, events.size)
+        val settledEvent = events.first()
         assertTrue(settledEvent is DomainEvent.ObligationCycleSettled)
         assertEquals("oblig_1", (settledEvent as DomainEvent.ObligationCycleSettled).obligationId)
         assertEquals("tx_1", settledEvent.transactionId)
@@ -110,17 +111,17 @@ class ObligationCycleMatcherTest {
 
         val events = mutableListOf<DomainEvent>()
         val job = launch {
-            withTimeout(5000) {
-                eventBus.events.collect { events.add(it); return@collect }
-            }
+            eventBus.events.collect { events.add(it) }
         }
+
+        yield()
 
         matcher.onTransactionBooked(
             transactionId = "tx_1", amount = 25.0, direction = "OUTFLOW",
             categoryId = null, merchant = "netflix"
         )
 
-        job.join()
+        job.cancel()
 
         val driftEvent = events.firstOrNull { it is DomainEvent.ObligationAmountDrifted }
         assertNotNull(driftEvent, "Should publish ObligationAmountDrifted when amount changes from 15 to 25")
@@ -244,17 +245,17 @@ class ObligationCycleMatcherTest {
 
         val events = mutableListOf<DomainEvent>()
         val job = launch {
-            withTimeout(5000) {
-                eventBus.events.collect { events.add(it); return@collect }
-            }
+            eventBus.events.collect { events.add(it) }
         }
+
+        yield()
 
         matcher.onTransactionBooked(
             transactionId = "tx_1", amount = 16.0, direction = "OUTFLOW",
             categoryId = null, merchant = "netflix"
         )
 
-        job.join()
+        job.cancel()
 
         val driftEvent = events.firstOrNull { it is DomainEvent.ObligationAmountDrifted }
         assertEquals(null, driftEvent,

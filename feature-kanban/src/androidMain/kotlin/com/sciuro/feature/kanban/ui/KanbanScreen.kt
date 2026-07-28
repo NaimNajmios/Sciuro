@@ -124,7 +124,10 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
 
     LaunchedEffect(Unit) {
         viewModel.errorEvents.collect { message ->
-            snackbarHostState.showSnackbar(message)
+            if (message != null) {
+                snackbarHostState.showSnackbar(message)
+                viewModel.clearError()
+            }
         }
     }
 

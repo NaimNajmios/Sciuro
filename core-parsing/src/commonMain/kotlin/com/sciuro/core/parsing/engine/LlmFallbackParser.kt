@@ -55,6 +55,10 @@ class LlmFallbackParser(
     var lastDebugCapture: LlmFallbackDebugCapture? = null
         private set
 
+    fun clearCache() {
+        cache.clear()
+    }
+
     private var consecutiveFailures = 0
     private var circuitBrokenUntil: Long = 0
 

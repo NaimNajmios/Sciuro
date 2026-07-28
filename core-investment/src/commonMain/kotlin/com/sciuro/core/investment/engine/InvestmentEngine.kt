@@ -32,7 +32,7 @@ class InvestmentEngine(
             val totalSold = sales.sumOf { it.amount }
             val netUnits = totalInvested - totalSold
 
-            if (kotlin.math.abs(netUnits - investment.units_held) > 0.01) {
+            if ((purchases.isNotEmpty() || sales.isNotEmpty()) && kotlin.math.abs(netUnits - investment.units_held) > 0.01) {
                 val unitType = investment.unit_type.ifBlank { "UNITS" }
 
                 database.investmentQueries.updateInvestment(

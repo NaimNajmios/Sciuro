@@ -31,16 +31,20 @@ class SciuroIngestionOrchestrator(
         private const val PROCESSING_STALE_MS = 60_000L
         private const val MAX_BACKOFF_MS = 60_000L
         private const val MAX_CONCURRENT_RECOVERY = 8
+        private const val MAX_CONCURRENT_LIVE = 4
     }
 
     private val recoverySemaphore = Semaphore(MAX_CONCURRENT_RECOVERY)
+    private val liveSemaphore = Semaphore(MAX_CONCURRENT_LIVE)
 
     fun startListening(scope: CoroutineScope) {
         if (job?.isActive == true) return
 
         job = scope.launch {
-            recoverStrandedEvents()
-            collectEventsWithRetry()
+            coroutineScope {
+                launch { recoverStrandedEvents() }
+                launch { collectEventsWithRetry() }
+            }
         }
     }
 
@@ -70,7 +74,9 @@ class SciuroIngestionOrchestrator(
             try {
                 ingestionSource.observeEvents().collect { rawEvent ->
                     launch {
-                        processOneEvent(rawEvent)
+                        liveSemaphore.withPermit {
+                            processOneEvent(rawEvent)
+                        }
                     }
                 }
             } catch (e: CancellationException) {

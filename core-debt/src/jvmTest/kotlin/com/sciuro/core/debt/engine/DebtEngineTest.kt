@@ -8,8 +8,10 @@ import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.debt.repository.DebtPaymentLinkRepository
 import com.sciuro.core.ledger.db.SciuroDatabase
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -123,12 +125,21 @@ class DebtEngineTest {
         insertDebt(id = "debt_bal", name = "Balance Loan", principal = 10000.0, remaining = 8000.0, status = "ACTIVE")
         insertTransaction(id = "tx_bal1", category = "cat_debt_payment", amount = 2000.0, merchant = null)
 
+        val events = mutableListOf<DomainEvent>()
+        val job = launch {
+            eventBus.events.collect { events.add(it) }
+        }
+
+        yield()
+
         engine.processDebtPayments()
+
+        job.cancel()
 
         val updated = database.debtQueries.selectAllDebts().executeAsList().first { it.id == "debt_bal" }
         assertEquals(6000.0, updated.remaining_balance, 0.001)
 
-        val event = withTimeout(5000) { eventBus.events.first() } as DomainEvent.DebtBalanceUpdated
+        val event = events.first { it is DomainEvent.DebtBalanceUpdated } as DomainEvent.DebtBalanceUpdated
         assertEquals("debt_bal", event.debtId)
         assertEquals(6000.0, event.newBalance, 0.001)
         assertEquals("AUTO_MATCH", event.method)
@@ -139,15 +150,22 @@ class DebtEngineTest {
         insertDebt(id = "debt_full", name = "Full Pay Debt", principal = 5000.0, remaining = 5000.0, status = "ACTIVE")
         insertTransaction(id = "tx_full1", category = "cat_debt_payment", amount = 5000.0, merchant = null)
 
+        val events = mutableListOf<DomainEvent>()
+        val job = launch {
+            eventBus.events.collect { events.add(it) }
+        }
+
+        yield()
+
         engine.processDebtPayments()
+
+        job.cancel()
 
         val updated = database.debtQueries.selectAllDebts().executeAsList().first { it.id == "debt_full" }
         assertEquals(0.0, updated.remaining_balance, 0.001)
 
-        val events = mutableListOf<DomainEvent>()
-        withTimeout(5000) { eventBus.events.collect { events.add(it); if (events.size >= 2) return@collect } }
-        assertTrue(events.any { it is DomainEvent.DebtBalanceUpdated })
-        assertTrue(events.any { it is DomainEvent.DebtFullyPaidOff })
+        assertTrue(events.any { it is DomainEvent.DebtBalanceUpdated }, "Should publish DebtBalanceUpdated")
+        assertTrue(events.any { it is DomainEvent.DebtFullyPaidOff }, "Should publish DebtFullyPaidOff")
     }
 
     @Test
@@ -157,13 +175,13 @@ class DebtEngineTest {
 
     @Test
     fun `processDebtPayments no-ops when no transactions match any debt`() = runBlocking {
-        insertDebt(id = "debt_no", name = "No Match", principal = 1000.0, remaining = 800.0, status = "ACTIVE")
+        insertDebt(id = "debt_no", name = "No Match", principal = 1000.0, remaining = 1000.0, status = "ACTIVE")
         insertTransaction(id = "tx_no", category = "cat_income", amount = 500.0, merchant = "Salary")
 
         engine.processDebtPayments()
 
         val updated = database.debtQueries.selectAllDebts().executeAsList().first { it.id == "debt_no" }
-        assertEquals(800.0, updated.remaining_balance, 0.001)
+        assertEquals(1000.0, updated.remaining_balance, 0.001)
     }
 
     private fun insertDebt(id: String, name: String, principal: Double, remaining: Double, status: String) {

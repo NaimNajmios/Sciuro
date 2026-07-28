@@ -4,6 +4,7 @@ import app.cash.sqldelight.db.SqlDriver
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -105,45 +106,46 @@ class BudgetEngineTest {
 
     @Test
     fun `processBudgets excludes transfer transactions from spend calculation`() = runBlocking {
+        val now = System.currentTimeMillis()
         database.budgetQueries.insertBudget(
             id = "budget_tr", category_id = "cat_food",
             allocated_amount = 500.0, current_spent = 0.0,
             period = "MONTHLY", rollover = 0L,
             alert_threshold_percent = null,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         database.transactionRecordQueries.insertTransaction(
             id = "tx_tr1", account_id = "acc_1", category_id = "cat_food",
             amount = 100.0, direction = "OUTFLOW", merchant = null,
-            timestamp = 1000L, reference_id = null,
+            timestamp = now, reference_id = null,
             is_reviewed = 1L, extraction_method = null, confidence = null,
             raw_event_id = null, review_tier = "MANUAL", auto_confirmed_at = null,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         database.transactionRecordQueries.insertTransaction(
             id = "tx_tr_out", account_id = "acc_1", category_id = "cat_food",
             amount = 200.0, direction = "OUTFLOW", merchant = null,
-            timestamp = 2000L, reference_id = null,
+            timestamp = now, reference_id = null,
             is_reviewed = 1L, extraction_method = null, confidence = null,
             raw_event_id = null, review_tier = "MANUAL", auto_confirmed_at = null,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         database.transactionRecordQueries.insertTransaction(
             id = "tx_tr_in", account_id = "acc_2", category_id = "cat_income",
             amount = 200.0, direction = "INFLOW", merchant = null,
-            timestamp = 2000L, reference_id = null,
+            timestamp = now, reference_id = null,
             is_reviewed = 1L, extraction_method = null, confidence = null,
             raw_event_id = null, review_tier = "MANUAL", auto_confirmed_at = null,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         database.transferLinkQueries.insertTransferLink(
             id = "link_1", outflow_transaction_id = "tx_tr_out",
             inflow_transaction_id = "tx_tr_in", amount = 200.0,
-            created_at = 2000L
+            created_at = now
         )
 
         engine.processBudgets()
@@ -154,21 +156,22 @@ class BudgetEngineTest {
 
     @Test
     fun `processBudgets handles rollover from previous period`() = runBlocking {
+        val now = System.currentTimeMillis()
         database.budgetQueries.insertBudget(
             id = "budget_ro", category_id = "cat_food",
             allocated_amount = 500.0, current_spent = 0.0,
             period = "MONTHLY", rollover = 1L,
             alert_threshold_percent = null,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         database.transactionRecordQueries.insertTransaction(
             id = "tx_ro1", account_id = "acc_1", category_id = "cat_food",
             amount = 300.0, direction = "OUTFLOW", merchant = null,
-            timestamp = 1000L, reference_id = null,
+            timestamp = now, reference_id = null,
             is_reviewed = 1L, extraction_method = null, confidence = null,
             raw_event_id = null, review_tier = "MANUAL", auto_confirmed_at = null,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         engine.processBudgets()
@@ -179,47 +182,49 @@ class BudgetEngineTest {
 
     @Test
     fun `processBudgets fires BudgetThresholdCrossed when threshold exceeded`() = runBlocking {
+        val now = System.currentTimeMillis()
         database.budgetQueries.insertBudget(
             id = "budget_th", category_id = "cat_food",
             allocated_amount = 100.0, current_spent = 0.0,
             period = "MONTHLY", rollover = 0L,
             alert_threshold_percent = 0.5,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         database.transactionRecordQueries.insertTransaction(
             id = "tx_th1", account_id = "acc_1", category_id = "cat_food",
             amount = 80.0, direction = "OUTFLOW", merchant = null,
-            timestamp = 1000L, reference_id = null,
+            timestamp = now, reference_id = null,
             is_reviewed = 1L, extraction_method = null, confidence = null,
             raw_event_id = null, review_tier = "MANUAL", auto_confirmed_at = null,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
+        val deferred = async { eventBus.events.first() }
         engine.processBudgets()
-
-        val event = withTimeout(5000) { eventBus.events.first() } as DomainEvent.BudgetThresholdCrossed
+        val event = deferred.await() as DomainEvent.BudgetThresholdCrossed
         assertEquals("cat_food", event.categoryId)
         assertTrue(event.percentUsed >= 0.8)
     }
 
     @Test
     fun `processBudgets does not fire event when spend below threshold`() = runBlocking {
+        val now = System.currentTimeMillis()
         database.budgetQueries.insertBudget(
             id = "budget_nt", category_id = "cat_food",
             allocated_amount = 1000.0, current_spent = 0.0,
             period = "MONTHLY", rollover = 0L,
             alert_threshold_percent = 0.9,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         database.transactionRecordQueries.insertTransaction(
             id = "tx_nt1", account_id = "acc_1", category_id = "cat_food",
             amount = 50.0, direction = "OUTFLOW", merchant = null,
-            timestamp = 1000L, reference_id = null,
+            timestamp = now, reference_id = null,
             is_reviewed = 1L, extraction_method = null, confidence = null,
             raw_event_id = null, review_tier = "MANUAL", auto_confirmed_at = null,
-            created_at = 0L, updated_at = 0L
+            created_at = now, updated_at = now
         )
 
         engine.processBudgets()

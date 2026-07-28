@@ -55,11 +55,18 @@ class KanbanViewModel(
     private val _animationTriggers = MutableSharedFlow<String>(extraBufferCapacity = 16)
     val animationTriggers: SharedFlow<String> = _animationTriggers
 
-    private val _errorEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
-    val errorEvents: SharedFlow<String> = _errorEvents
+    private val _errorEvents = MutableStateFlow<String?>(null)
+    val errorEvents: StateFlow<String?> = _errorEvents.asStateFlow()
+
+    fun clearError() {
+        _errorEvents.value = null
+    }
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _processingTaskIds = MutableStateFlow<Set<String>>(emptySet())
+    val processingTaskIds: StateFlow<Set<String>> = _processingTaskIds.asStateFlow()
 
     fun refresh() {
         viewModelScope.launch {
@@ -148,21 +155,20 @@ class KanbanViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun updateTaskStatus(taskId: String, newStatus: TaskStatus, newAccountId: String? = null, newDirection: String? = null) {
-        if (newStatus == TaskStatus.DONE) {
-            viewModelScope.launch {
-                try {
+        if (taskId in _processingTaskIds.value) return
+        _processingTaskIds.value = _processingTaskIds.value + taskId
+
+        viewModelScope.launch {
+            try {
+                if (newStatus == TaskStatus.DONE) {
                     transactionRepository.reviewTransaction(taskId, null, newAccountId, newDirection)
-                } catch (e: Exception) {
-                    _errorEvents.emit("Failed to approve transaction: ${e.message}")
-                }
-            }
-        } else if (newStatus == TaskStatus.REJECTED) {
-            viewModelScope.launch {
-                try {
+                } else if (newStatus == TaskStatus.REJECTED) {
                     transactionRepository.rejectTransaction(taskId)
-                } catch (e: Exception) {
-                    _errorEvents.emit("Failed to reject transaction: ${e.message}")
                 }
+            } catch (e: Exception) {
+                _errorEvents.value = "Failed to ${if (newStatus == TaskStatus.DONE) "approve" else "reject"} transaction: ${e.message}"
+            } finally {
+                _processingTaskIds.value = _processingTaskIds.value - taskId;
             }
         }
     }
@@ -189,7 +195,7 @@ class KanbanViewModel(
                 val newDueDate = ObligationCycleMatcher.computeNextDueDate(obligation.nextDueDate, obligation.frequency.name)
                 obligationRepository.recordPayment(obligation.id, newDueDate)
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to mark bill as paid: ${e.message}")
+                _errorEvents.value = "Failed to mark bill as paid: ${e.message}"
             }
         }
     }
@@ -199,7 +205,7 @@ class KanbanViewModel(
             try {
                 debtRepository.applyPayment(debtId, amount)
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to record debt payment: ${e.message}")
+                _errorEvents.value = "Failed to record debt payment: ${e.message}"
             }
         }
     }
@@ -209,7 +215,7 @@ class KanbanViewModel(
             try {
                 debtRepository.markAsPaidOff(debtId)
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to mark debt as finished: ${e.message}")
+                _errorEvents.value = "Failed to mark debt as finished: ${e.message}"
             }
         }
     }
@@ -242,7 +248,7 @@ class KanbanViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to update obligation: ${e.message}")
+                _errorEvents.value = "Failed to update obligation: ${e.message}"
             }
         }
     }
@@ -252,7 +258,7 @@ class KanbanViewModel(
             try {
                 obligationRepository.deleteObligation(id)
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to delete obligation: ${e.message}")
+                _errorEvents.value = "Failed to delete obligation: ${e.message}"
             }
         }
     }
@@ -280,7 +286,7 @@ class KanbanViewModel(
                     )
                 )
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to create obligation: ${e.message}")
+                _errorEvents.value = "Failed to create obligation: ${e.message}"
             }
         }
     }
@@ -309,7 +315,7 @@ class KanbanViewModel(
                     )
                 )
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to create debt: ${e.message}")
+                _errorEvents.value = "Failed to create debt: ${e.message}"
             }
         }
     }
@@ -319,7 +325,7 @@ class KanbanViewModel(
             try {
                 debtRepository.deleteDebt(debtId)
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to delete debt: ${e.message}")
+                _errorEvents.value = "Failed to delete debt: ${e.message}"
             }
         }
     }
@@ -351,7 +357,7 @@ class KanbanViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _errorEvents.emit("Failed to update debt: ${e.message}")
+                _errorEvents.value = "Failed to update debt: ${e.message}"
             }
         }
     }

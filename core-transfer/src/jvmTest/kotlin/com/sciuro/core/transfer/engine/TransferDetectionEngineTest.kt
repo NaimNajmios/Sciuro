@@ -206,9 +206,10 @@ class TransferDetectionEngineTest {
         database.accountQueries.insertAccountPairConfirmation(accountA, accountB, currentTimeMillis())
 
         val inflowTxId = bookInflowTransaction(accountId = accountB, amount = 75.0, timestamp = 1000L)
+        val outflowTxId = bookOutflowTransaction(accountId = accountA, amount = 75.0, timestamp = 1060_000L)
 
         engine.onTransactionBooked(
-            newTxId = "outflow_1",
+            newTxId = outflowTxId,
             newTxAccountId = accountA,
             newTxAmount = 75.0,
             newTxDirection = "OUTFLOW",
@@ -274,9 +275,10 @@ class TransferDetectionEngineTest {
         accountRepository.createAccount(Account(id = accountB, name = "Maybank", type = "Bank", accountNumber = "444455556666"))
 
         val inflowTxId = bookInflowTransaction(accountId = accountB, amount = 5.40, timestamp = 1000L)
+        val outflowTxId = bookOutflowTransaction(accountId = accountA, amount = 5.40, timestamp = 2000L)
 
         engine.onTransactionBooked(
-            newTxId = "outflow_1",
+            newTxId = outflowTxId,
             newTxAccountId = accountA,
             newTxAmount = 5.40,
             newTxDirection = "OUTFLOW",

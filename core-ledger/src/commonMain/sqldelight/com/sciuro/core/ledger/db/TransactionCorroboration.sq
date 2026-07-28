@@ -13,3 +13,6 @@ VALUES (?, ?, ?);
 
 selectCorroborations:
 SELECT * FROM transaction_corroboration WHERE transaction_id = ?;
+
+deleteCorroborationsByTransactionId:
+DELETE FROM transaction_corroboration WHERE transaction_id = :transactionId;

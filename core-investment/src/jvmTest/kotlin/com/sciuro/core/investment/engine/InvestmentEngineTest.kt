@@ -6,6 +6,7 @@ import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.engine.TransactionMatchingEngine
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -87,9 +88,10 @@ class InvestmentEngineTest {
             units = 0.0, unitType = "UNITS")
         insertTransaction(id = "tx_4", category = "cat_investment", amount = 2.5, merchant = null)
 
+        val deferred = async { eventBus.events.first() }
         engine.processInvestments()
 
-        val event = withTimeout(5000) { eventBus.events.first() } as DomainEvent.InvestmentTransactionRecorded
+        val event = deferred.await() as DomainEvent.InvestmentTransactionRecorded
         assertEquals("inv_4", event.accountId)
         assertEquals("BUY", event.action)
         assertEquals(2.5, event.unitAmount, 0.001)

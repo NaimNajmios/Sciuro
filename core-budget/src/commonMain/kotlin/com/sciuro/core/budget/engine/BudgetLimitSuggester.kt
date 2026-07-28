@@ -25,7 +25,7 @@ class BudgetLimitSuggester(
 
         val trimCount = (amounts.size * TRIM_FRACTION).toInt().coerceAtLeast(1)
 
-        if (amounts.size <= 2 * trimCount) return null
+        if (amounts.size - 2 * trimCount < 2) return null
 
         val trimmed = amounts.drop(trimCount).dropLast(trimCount)
         return trimmed.average()
