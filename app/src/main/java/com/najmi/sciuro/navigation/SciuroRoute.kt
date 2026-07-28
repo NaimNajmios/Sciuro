@@ -19,4 +19,14 @@ sealed class SciuroRoute(val route: String) {
     data object DeveloperSettings : SciuroRoute("developer_settings?initialTab={initialTab}") {
         fun createRoute(initialTab: Int) = "developer_settings?initialTab=$initialTab"
     }
+
+    companion object {
+        fun parentTabRoute(route: String): String? = when (route) {
+            Dashboard.route, Wallet.route, Kanban.route, Budgets.route, Settings.route -> route
+            AccountDetail.route -> Wallet.route
+            CategoryDrilldown.route -> Budgets.route
+            CategorySettings.route, LinkedAccounts.route, DeveloperSettings.route -> Settings.route
+            else -> null
+        }
+    }
 }

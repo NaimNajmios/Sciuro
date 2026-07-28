@@ -40,4 +40,9 @@ interface SettingsProvider {
     fun setHasSeenBatteryPrompt(hasSeen: Boolean)
     fun isDeveloperOptionsVisible(): Boolean
     fun setDeveloperOptionsVisible(visible: Boolean)
+
+    fun getLastBackupTimestamp(): Long
+    fun setLastBackupTimestamp(timestamp: Long)
+    fun getLastMilestoneReached(): Double
+    fun setLastMilestoneReached(milestone: Double)
 }

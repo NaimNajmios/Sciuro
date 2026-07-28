@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import com.sciuro.core.ledger.config.SettingsProvider
 import java.io.File
 import java.io.FileOutputStream
 
@@ -103,6 +104,7 @@ fun SciuroNavGraph(
             val context = androidx.compose.ui.platform.LocalContext.current
             val scope = androidx.compose.runtime.rememberCoroutineScope()
             val sqlDriver = koinInject<SqlDriver>()
+            val settingsProvider = koinInject<SettingsProvider>()
 
             SettingsScreen(
                 onNavigateToDeveloperSettings = {
@@ -116,7 +118,7 @@ fun SciuroNavGraph(
                 },
                 onExportBackup = { password ->
                     scope.launch(Dispatchers.IO) {
-                        exportBackup(context, password, sqlDriver)
+                        exportBackup(context, password, sqlDriver, settingsProvider)
                     }
                 },
                 onImportBackup = { uri, password ->
@@ -152,13 +154,14 @@ fun SciuroNavGraph(
     }
 }
 
-private suspend fun exportBackup(context: Context, password: String, sqlDriver: SqlDriver) {
+private suspend fun exportBackup(context: Context, password: String, sqlDriver: SqlDriver, settingsProvider: SettingsProvider) {
     try {
         val tempFile = File(context.cacheDir, "sciuro_backup_${System.currentTimeMillis()}.scib")
         val outputStream = FileOutputStream(tempFile)
         val result = EncryptedExporter.export(context, password, outputStream, sqlDriver)
         outputStream.close()
         if (result.isSuccess) {
+            settingsProvider.setLastBackupTimestamp(System.currentTimeMillis())
             val uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",

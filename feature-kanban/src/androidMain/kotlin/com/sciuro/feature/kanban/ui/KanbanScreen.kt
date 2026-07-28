@@ -222,7 +222,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             onMarkPaid = { paymentBill = it },
                             onClickBill = { billToView = it }
                         )
-                        "Debts" -> DebtsColumn(
+                        "Debts" ->   DebtsColumn(
                             debtTasks = debtTasks,
                             showCompletedDebts = showCompletedDebts,
                             onToggleCompleted = { viewModel.toggleShowCompletedDebts() },

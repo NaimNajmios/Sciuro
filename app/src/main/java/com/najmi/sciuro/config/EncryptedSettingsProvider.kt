@@ -187,4 +187,20 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setDeveloperOptionsVisible(visible: Boolean) {
         sharedPreferences.edit().putBoolean("developer_options_visible", visible).apply()
     }
+
+    override fun getLastBackupTimestamp(): Long {
+        return sharedPreferences.getLong("last_backup_timestamp", 0L)
+    }
+
+    override fun setLastBackupTimestamp(timestamp: Long) {
+        sharedPreferences.edit().putLong("last_backup_timestamp", timestamp).apply()
+    }
+
+    override fun getLastMilestoneReached(): Double {
+        return sharedPreferences.getFloat("last_milestone_reached", 0f).toDouble()
+    }
+
+    override fun setLastMilestoneReached(milestone: Double) {
+        sharedPreferences.edit().putFloat("last_milestone_reached", milestone.toFloat()).apply()
+    }
 }

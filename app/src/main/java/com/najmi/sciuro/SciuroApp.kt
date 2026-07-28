@@ -46,13 +46,16 @@ import com.sciuro.feature.settings.di.settingsModule
 
 import com.najmi.sciuro.trace.LogcatPipelineTracer
 import com.sciuro.core.audit.trace.PipelineTracer
+import com.sciuro.feature.settings.config.NotificationPreferencesStore
+import com.najmi.sciuro.worker.NightlyCheckWorker
 
 val appModule = module {
     single<SettingsProvider> { EncryptedSettingsProvider(get()) }
     single<PipelineTracer> { LogcatPipelineTracer(get()) }
+    single { NotificationPreferencesStore(get()) }
     single { com.najmi.sciuro.subscriber.FinanceAppSuggestionSubscriber(get(), get()) }
     single { com.najmi.sciuro.engine.NotificationSuppressionEngine(get(), get(), get(), get(), get(), get(), get()) }
-    single { com.najmi.sciuro.engine.UniversalEventSubscriber(get(), get(), get(), get()) }
+    single { com.najmi.sciuro.engine.UniversalEventSubscriber(get(), get(), get(), get(), get(), get()) }
 }
 
 class SciuroApp : Application(), KoinComponent {
@@ -122,6 +125,15 @@ class SciuroApp : Application(), KoinComponent {
             "ingestion_reconciliation",
             ExistingPeriodicWorkPolicy.UPDATE,
             reconciliationRequest
+        )
+
+        val nightlyRequest = PeriodicWorkRequestBuilder<NightlyCheckWorker>(
+            1, TimeUnit.DAYS
+        ).build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "nightly_check",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            nightlyRequest
         )
     }
 }

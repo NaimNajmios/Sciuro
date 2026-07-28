@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.*
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -221,9 +220,11 @@ fun SciuroMainScreen() {
                 "diagnostics" to 3, "data_tools" to 4, "health" to 5, "pipeline_trace" to 6
             )
             val tab = tabMap[intentDeveloperTab] ?: 0
-            navController.navigate(SciuroRoute.DeveloperSettings.createRoute(tab)) {
+            navController.navigate(SciuroRoute.Settings.route) {
                 popUpTo(SciuroRoute.Dashboard.route) { inclusive = false }
+                launchSingleTop = true
             }
+            navController.navigate(SciuroRoute.DeveloperSettings.createRoute(tab))
             activity?.intent?.removeExtra("open_tab")
             activity?.intent?.removeExtra("developer_tab")
         }
@@ -268,7 +269,7 @@ fun SciuroMainScreen() {
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
                                 items.forEach { item ->
-                                    val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                                    val isSelected = currentDestination?.route?.let { SciuroRoute.parentTabRoute(it) } == item.route
                                     val weight by animateFloatAsState(
                                         targetValue = if (isSelected) 1.5f else 1f,
                                         animationSpec = tween(SciuroMotion.TRANSITION_DURATION_MS)
@@ -283,12 +284,28 @@ fun SciuroMainScreen() {
                                                 if (isSelected) selectedPillColor else Color.Transparent
                                             )
                                             .clickable {
-                                                navController.navigate(item.route) {
-                                                    popUpTo(navController.graph.findStartDestination().id) {
-                                                        saveState = true
+                                                val currentRoute = currentDestination?.route
+                                                if (currentRoute != item.route) {
+                                                    val currentParent = currentRoute?.let { SciuroRoute.parentTabRoute(it) }
+                                                    if (currentParent == item.route) {
+                                                        if (!navController.popBackStack(item.route, inclusive = false)) {
+                                                            navController.navigate(item.route) {
+                                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                                    saveState = true
+                                                                }
+                                                                launchSingleTop = true
+                                                                restoreState = true
+                                                            }
+                                                        }
+                                                    } else {
+                                                        navController.navigate(item.route) {
+                                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                                saveState = true
+                                                            }
+                                                            launchSingleTop = true
+                                                            restoreState = true
+                                                        }
                                                     }
-                                                    launchSingleTop = true
-                                                    restoreState = true
                                                 }
                                             },
                                         contentAlignment = Alignment.Center

@@ -199,6 +199,44 @@
     <string name="dev_tab_health">Health</string>
     <string name="dev_tab_pipeline_trace">Pipeline Trace</string>
 
+    <!-- Notification Preferences -->
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="notif_group_data_safety">Data Safety</string>
+    <string name="notif_backup_reminder">Backup Reminder</string>
+    <string name="notif_backup_reminder_desc">Remind you to export an encrypted backup</string>
+    <string name="notif_interval_days">Every %d days</string>
+    <string name="notif_runway_alert">Runway Alert</string>
+    <string name="notif_runway_alert_desc">Alert when upcoming bills exceed available funds</string>
+    <string name="notif_group_spending">Spending Alerts</string>
+    <string name="notif_large_txn">Large Transaction</string>
+    <string name="notif_large_txn_desc">Notify on transactions above a threshold</string>
+    <string name="notif_threshold_rm">Threshold: RM %.0f</string>
+    <string name="notif_unusual_spending">Unusual Spending</string>
+    <string name="notif_unusual_spending_desc">Notify when a category spend spikes above normal</string>
+    <string name="notif_multiplier">%.1f× normal</string>
+    <string name="notif_group_reminders">Reminders</string>
+    <string name="notif_debt_due">Debt Due Soon</string>
+    <string name="notif_debt_due_desc">Remind you before a debt payment is due</string>
+    <string name="notif_days_before">%d days before</string>
+    <string name="notif_income_not_arrived">Income Not Arrived</string>
+    <string name="notif_income_not_arrived_desc">Alert when expected income hasn\'t arrived</string>
+    <string name="notif_review_reminder">Transaction Review</string>
+    <string name="notif_review_reminder_desc">Remind you to review unassigned transactions</string>
+    <string name="notif_bill_autopay">Bill Autopay Confirmed</string>
+    <string name="notif_bill_autopay_desc">Notify when a recurring bill is auto-confirmed</string>
+    <string name="notif_group_insights">Insights</string>
+    <string name="notif_weekly_digest">Weekly Digest</string>
+    <string name="notif_weekly_digest_desc">Weekly spending summary on Sundays</string>
+    <string name="notif_milestone">Net Worth Milestone</string>
+    <string name="notif_milestone_desc">Congratulate you when net worth crosses a threshold</string>
+    <string name="notif_group_risk">Risk Alerts</string>
+    <string name="notif_bnpl_risk">BNPL Risk</string>
+    <string name="notif_bnpl_risk_desc">Alert when BNPL debts accumulate</string>
+    <string name="notif_cash_anomaly">Cash Anomaly</string>
+    <string name="notif_cash_anomaly_desc">Notify on unexpected cash recount variances</string>
+    <string name="notif_transfer_review">Transfer Review</string>
+    <string name="notif_transfer_review_desc">Flag unmatched transfer candidates for review</string>
+
     <!-- Misc -->
     <string name="settings_hide">Hide</string>
     <string name="settings_show">Show</string>

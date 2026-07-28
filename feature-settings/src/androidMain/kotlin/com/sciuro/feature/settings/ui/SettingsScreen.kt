@@ -63,6 +63,9 @@ fun SettingsScreen(
     var showQuietHoursPicker by remember { mutableStateOf(false) }
     var apiKeyVisible by remember { mutableStateOf(false) }
     var developerTapCount by remember { mutableIntStateOf(0) }
+    var showBackupConfig by remember { mutableStateOf(false) }
+    var showLargeTxnConfig by remember { mutableStateOf(false) }
+    var showDebtDueConfig by remember { mutableStateOf(false) }
     val snackbarHostState = LocalSnackbarHostState.current
     val devGateSnackbarText = stringResource(R.string.dev_gate_snackbar)
     val scope = rememberCoroutineScope()
@@ -292,6 +295,337 @@ fun SettingsScreen(
                             Switch(
                                 checked = uiState.isLockEnabled,
                                 onCheckedChange = { viewModel.setLockEnabled(it) }
+                            )
+                        }
+                    }
+                }
+
+                // Section: Notifications
+                item {
+                    SettingsSectionHeader(stringResource(R.string.settings_section_notifications))
+                }
+
+                // Data Safety group
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                stringResource(R.string.notif_group_data_safety),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Backup Reminder
+                            Row(
+                                modifier = Modifier.fillMaxWidth().clickable { showBackupConfig = !showBackupConfig },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.notif_backup_reminder), style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        stringResource(R.string.notif_backup_reminder_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        stringResource(R.string.notif_interval_days, uiState.notifBackupInterval),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        if (showBackupConfig) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Switch(
+                                    checked = uiState.notifBackupReminder,
+                                    onCheckedChange = { viewModel.setNotifBackupReminder(it) }
+                                )
+                            }
+
+                            AnimatedVisibility(
+                                visible = showBackupConfig,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
+                                Column {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(stringResource(R.string.notif_interval_days, uiState.notifBackupInterval),
+                                        style = MaterialTheme.typography.bodySmall)
+                                    Slider(
+                                        value = uiState.notifBackupInterval.toFloat(),
+                                        onValueChange = { viewModel.setNotifBackupInterval(it.toInt()) },
+                                        valueRange = 1f..30f,
+                                        steps = 28,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            // Runway Alert
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.notif_runway_alert), style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        stringResource(R.string.notif_runway_alert_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Switch(
+                                    checked = uiState.notifRunwayAlert,
+                                    onCheckedChange = { viewModel.setNotifRunwayAlert(it) }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Spending Alerts group
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                stringResource(R.string.notif_group_spending),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Large Transaction
+                            Row(
+                                modifier = Modifier.fillMaxWidth().clickable { showLargeTxnConfig = !showLargeTxnConfig },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.notif_large_txn), style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        stringResource(R.string.notif_large_txn_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        stringResource(R.string.notif_threshold_rm, uiState.notifLargeTxnThreshold),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        if (showLargeTxnConfig) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Switch(
+                                    checked = uiState.notifLargeTxn,
+                                    onCheckedChange = { viewModel.setNotifLargeTxn(it) }
+                                )
+                            }
+
+                            AnimatedVisibility(
+                                visible = showLargeTxnConfig,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
+                                Column {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        stringResource(R.string.notif_threshold_rm, uiState.notifLargeTxnThreshold),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Slider(
+                                        value = (uiState.notifLargeTxnThreshold / 100).toFloat(),
+                                        onValueChange = { viewModel.setNotifLargeTxnThreshold((it * 100).toDouble().coerceAtLeast(100.0)) },
+                                        valueRange = 1f..50f,
+                                        steps = 48,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Reminders group
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                stringResource(R.string.notif_group_reminders),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Debt Due
+                            Row(
+                                modifier = Modifier.fillMaxWidth().clickable { showDebtDueConfig = !showDebtDueConfig },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.notif_debt_due), style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        stringResource(R.string.notif_debt_due_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        stringResource(R.string.notif_days_before, uiState.notifDebtDueDaysBefore),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        if (showDebtDueConfig) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Switch(
+                                    checked = uiState.notifDebtDue,
+                                    onCheckedChange = { viewModel.setNotifDebtDue(it) }
+                                )
+                            }
+
+                            AnimatedVisibility(
+                                visible = showDebtDueConfig,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
+                                Column {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        stringResource(R.string.notif_days_before, uiState.notifDebtDueDaysBefore),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Slider(
+                                        value = uiState.notifDebtDueDaysBefore.toFloat(),
+                                        onValueChange = { viewModel.setNotifDebtDueDaysBefore(it.toInt()) },
+                                        valueRange = 1f..30f,
+                                        steps = 28,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            // Income Not Arrived
+                            NotifToggleRow(
+                                label = stringResource(R.string.notif_income_not_arrived),
+                                description = stringResource(R.string.notif_income_not_arrived_desc),
+                                checked = uiState.notifIncomeNotArrived,
+                                onCheckedChange = { viewModel.setNotifIncomeNotArrived(it) }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            // Transaction Review
+                            NotifToggleRow(
+                                label = stringResource(R.string.notif_review_reminder),
+                                description = stringResource(R.string.notif_review_reminder_desc),
+                                checked = uiState.notifReviewReminder,
+                                onCheckedChange = { viewModel.setNotifReviewReminder(it) }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            // Bill Autopay
+                            NotifToggleRow(
+                                label = stringResource(R.string.notif_bill_autopay),
+                                description = stringResource(R.string.notif_bill_autopay_desc),
+                                checked = uiState.notifBillAutopay,
+                                onCheckedChange = { viewModel.setNotifBillAutopay(it) }
+                            )
+                        }
+                    }
+                }
+
+                // Insights group
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                stringResource(R.string.notif_group_insights),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            NotifToggleRow(
+                                label = stringResource(R.string.notif_weekly_digest),
+                                description = stringResource(R.string.notif_weekly_digest_desc),
+                                checked = uiState.notifWeeklyDigest,
+                                onCheckedChange = { viewModel.setNotifWeeklyDigest(it) }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            NotifToggleRow(
+                                label = stringResource(R.string.notif_milestone),
+                                description = stringResource(R.string.notif_milestone_desc),
+                                checked = uiState.notifMilestone,
+                                onCheckedChange = { viewModel.setNotifMilestone(it) }
+                            )
+                        }
+                    }
+                }
+
+                // Risk Alerts group
+                item {
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                stringResource(R.string.notif_group_risk),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            NotifToggleRow(
+                                label = stringResource(R.string.notif_bnpl_risk),
+                                description = stringResource(R.string.notif_bnpl_risk_desc),
+                                checked = uiState.notifBnplRisk,
+                                onCheckedChange = { viewModel.setNotifBnplRisk(it) }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            NotifToggleRow(
+                                label = stringResource(R.string.notif_cash_anomaly),
+                                description = stringResource(R.string.notif_cash_anomaly_desc),
+                                checked = uiState.notifCashAnomaly,
+                                onCheckedChange = { viewModel.setNotifCashAnomaly(it) }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            NotifToggleRow(
+                                label = stringResource(R.string.notif_transfer_review),
+                                description = stringResource(R.string.notif_transfer_review_desc),
+                                checked = uiState.notifTransferReview,
+                                onCheckedChange = { viewModel.setNotifTransferReview(it) }
                             )
                         }
                     }
@@ -629,4 +963,32 @@ private fun BackupPasswordDialog(
             }
         }
     )
+}
+
+@Composable
+private fun NotifToggleRow(
+    label: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
 }

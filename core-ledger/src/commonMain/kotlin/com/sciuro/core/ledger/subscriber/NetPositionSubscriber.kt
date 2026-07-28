@@ -3,6 +3,7 @@ package com.sciuro.core.ledger.subscriber
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.model.NetPosition
+import com.sciuro.core.ledger.config.SettingsProvider
 import com.sciuro.core.ledger.db.SciuroDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +14,8 @@ import kotlinx.coroutines.launch
 
 class NetPositionSubscriber(
     private val database: SciuroDatabase,
-    private val eventBus: DomainEventBus
+    private val eventBus: DomainEventBus,
+    private val settingsProvider: SettingsProvider
 ) {
     private val _netPosition = MutableStateFlow(NetPosition(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
     val netPosition: StateFlow<NetPosition> = _netPosition.asStateFlow()
@@ -37,6 +39,8 @@ class NetPositionSubscriber(
             }
         }
     }
+
+    private var lastMilestoneNotified: Double = 0.0
 
     private suspend fun recompute() {
         val accounts = database.accountQueries.selectAllAccounts().executeAsList()
@@ -66,5 +70,20 @@ class NetPositionSubscriber(
             totalDebtsReceivable = debtsReceivable,
             netWorth = netWorth
         )
+
+        checkMilestone(netWorth)
+    }
+
+    private suspend fun checkMilestone(netWorth: Double) {
+        val milestones = listOf(1000.0, 5000.0, 10000.0, 50000.0, 100000.0, 500000.0)
+        val lastReached = settingsProvider.getLastMilestoneReached()
+        for (milestone in milestones) {
+            if (netWorth >= milestone && milestone > lastMilestoneNotified && milestone > lastReached) {
+                lastMilestoneNotified = milestone
+                settingsProvider.setLastMilestoneReached(milestone)
+                eventBus.publish(DomainEvent.NetPositionMilestoneReached(netWorth, milestone))
+                break
+            }
+        }
     }
 }

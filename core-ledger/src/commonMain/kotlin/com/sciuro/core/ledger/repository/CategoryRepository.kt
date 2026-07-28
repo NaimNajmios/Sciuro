@@ -61,6 +61,21 @@ class CategoryRepository(
             database.categoryQueries.deleteCategory(id = categoryId)
         }
     }
+    fun observeCategories(): Flow<List<Category>> {
+        return database.categoryQueries.selectAllCategories().asFlow().mapToList(Dispatchers.Default)
+            .map { list ->
+                list.map {
+                    Category(
+                        id = it.id,
+                        name = it.name,
+                        type = it.type,
+                        icon = it.icon,
+                        color = it.color
+                    )
+                }
+            }
+    }
+
     fun observeCategoriesByType(type: String): Flow<List<Category>> {
         return database.categoryQueries.selectCategoriesByType(type).asFlow().mapToList(Dispatchers.Default)
             .map { list ->

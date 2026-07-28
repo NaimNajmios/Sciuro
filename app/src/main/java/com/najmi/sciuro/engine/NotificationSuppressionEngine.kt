@@ -57,7 +57,8 @@ class NotificationSuppressionEngine(
         return event is DomainEvent.BnplRiskThresholdCrossed ||
                event is DomainEvent.ObligationAmountDrifted ||
                event is DomainEvent.RecurringObligationConfirmed ||
-               event is DomainEvent.BudgetLimitSuggested
+               event is DomainEvent.BudgetLimitSuggested ||
+               event is DomainEvent.NetPositionMilestoneReached
     }
 
     private fun isInQuietHours(): Boolean {
