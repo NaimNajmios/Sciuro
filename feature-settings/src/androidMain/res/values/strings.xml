@@ -1,7 +1,6 @@
 <resources>
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
-    <string name="settings_section_application">Application Settings</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
@@ -236,6 +235,28 @@
     <string name="notif_cash_anomaly_desc">Notify on unexpected cash recount variances</string>
     <string name="notif_transfer_review">Transfer Review</string>
     <string name="notif_transfer_review_desc">Flag unmatched transfer candidates for review</string>
+
+    <!-- Settings Navigation -->
+    <string name="settings_section_navigation">Preferences</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_summary">%1$d of %2$d enabled</string>
+    <string name="settings_quiet_hours_summary">Quiet: %1$d:00\u2013%2$d:00</string>
+    <string name="settings_data_privacy">Data &amp; Privacy</string>
+    <string name="settings_budget_summary">Budget warning at %1$d%%</string>
+    <string name="settings_intelligence">Intelligence &amp; Automation</string>
+    <string name="settings_summary_llm_on">LLM: On</string>
+    <string name="settings_summary_llm_off">LLM: Off</string>
+    <string name="settings_summary_autoconfirm_on">Auto-confirm: On</string>
+    <string name="settings_summary_autoconfirm_off">Auto-confirm: Off</string>
+
+    <!-- Notification Settings Screen -->
+    <string name="notification_settings_title">Notifications</string>
+
+    <!-- Data Settings Screen -->
+    <string name="data_settings_title">Data &amp; Privacy</string>
+
+    <!-- Intelligence Settings Screen -->
+    <string name="intelligence_settings_title">Intelligence &amp; Automation</string>
 
     <!-- Misc -->
     <string name="settings_hide">Hide</string>

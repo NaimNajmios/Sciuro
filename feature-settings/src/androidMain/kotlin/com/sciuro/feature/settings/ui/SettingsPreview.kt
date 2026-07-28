@@ -23,25 +23,31 @@ private fun SettingsPreview() {
             SciuroCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Appearance", style = MaterialTheme.typography.titleMedium)
-                    Text("Theme, dark mode scheduling", style = MaterialTheme.typography.bodySmall)
+                    Text("System / Light / Dark", style = MaterialTheme.typography.bodySmall)
                 }
             }
             SciuroCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Security", style = MaterialTheme.typography.titleMedium)
-                    Text("Biometric lock, data encryption", style = MaterialTheme.typography.bodySmall)
+                    Text("Biometric lock on launch", style = MaterialTheme.typography.bodySmall)
                 }
             }
             SciuroCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Linked Accounts", style = MaterialTheme.typography.titleMedium)
-                    Text("Manage notification sources", style = MaterialTheme.typography.bodySmall)
+                    Text("Notifications", style = MaterialTheme.typography.titleMedium)
+                    Text("Manage alert preferences and quiet hours", style = MaterialTheme.typography.bodySmall)
                 }
             }
             SciuroCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Categories", style = MaterialTheme.typography.titleMedium)
-                    Text("Customize transaction categories", style = MaterialTheme.typography.bodySmall)
+                    Text("Data & Privacy", style = MaterialTheme.typography.titleMedium)
+                    Text("Backup, linked accounts, budget threshold", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            SciuroCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Intelligence & Automation", style = MaterialTheme.typography.titleMedium)
+                    Text("LLM classification, auto-confirm bills", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

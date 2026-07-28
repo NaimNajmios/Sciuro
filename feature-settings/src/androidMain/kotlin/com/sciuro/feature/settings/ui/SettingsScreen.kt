@@ -1,85 +1,79 @@
 package com.sciuro.feature.settings.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroCard
-import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
-import com.sciuro.feature.settings.viewmodel.ConnectionTestState
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 import android.os.Build
 import android.os.PowerManager
 import com.najmi.sciuro.core.ui.util.OemAutostartHelper
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import com.sciuro.feature.settings.R
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
-    onNavigateToCategorySettings: () -> Unit = {},
+    onNavigateToNotificationSettings: () -> Unit = {},
+    onNavigateToDataSettings: () -> Unit = {},
+    onNavigateToIntelligenceSettings: () -> Unit = {},
     onNavigateToDeveloperSettings: () -> Unit = {},
-    onNavigateToLinkedAccounts: () -> Unit = {},
-    onExportBackup: (String) -> Unit = {},
-    onImportBackup: (Uri, String) -> Unit = { _, _ -> },
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val themeManager = remember { ThemeManager.getInstance(context) }
     val themePref by themeManager.themePreference.collectAsState()
-
-    var showLlmFields by remember { mutableStateOf(uiState.isLlmEnabled) }
-    var showQuietHoursPicker by remember { mutableStateOf(false) }
-    var apiKeyVisible by remember { mutableStateOf(false) }
     var developerTapCount by remember { mutableIntStateOf(0) }
-    var showBackupConfig by remember { mutableStateOf(false) }
-    var showLargeTxnConfig by remember { mutableStateOf(false) }
-    var showDebtDueConfig by remember { mutableStateOf(false) }
-    var showExportDialog by remember { mutableStateOf(false) }
-    var importFileUri by remember { mutableStateOf<Uri?>(null) }
     val snackbarHostState = LocalSnackbarHostState.current
-    val importFilePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        importFileUri = uri
-    }
     val devGateSnackbarText = stringResource(R.string.dev_gate_snackbar)
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(uiState.isLlmEnabled) {
-        showLlmFields = uiState.isLlmEnabled
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
+
+    val enabledNotifCount = listOf(
+        uiState.notifBackupReminder,
+        uiState.notifRunwayAlert,
+        uiState.notifLargeTxn,
+        uiState.notifDebtDue,
+        uiState.notifIncomeNotArrived,
+        uiState.notifReviewReminder,
+        uiState.notifBillAutopay,
+        uiState.notifWeeklyDigest,
+        uiState.notifMilestone,
+        uiState.notifBnplRisk,
+        uiState.notifCashAnomaly,
+        uiState.notifTransferReview
+    ).count { it }
 
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
@@ -195,90 +189,6 @@ fun SettingsScreen(
                     }
                 }
 
-                // Quiet Hours (under Reliability)
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showQuietHoursPicker = !showQuietHoursPicker },
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.settings_section_quiet_hours), style = MaterialTheme.typography.titleMedium)
-                                    Text(
-                                        if (uiState.isQuietHoursEnabled) stringResource(R.string.settings_quiet_hours_suppressed, uiState.quietHoursStart, uiState.quietHoursEnd)
-                                        else stringResource(R.string.settings_quiet_hours_description),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Icon(
-                                    if (showQuietHoursPicker) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            AnimatedVisibility(
-                                visible = showQuietHoursPicker,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Column {
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Row(
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(stringResource(R.string.settings_section_quiet_hours), style = MaterialTheme.typography.bodyMedium)
-                                        Switch(
-                                            checked = uiState.isQuietHoursEnabled,
-                                            onCheckedChange = { viewModel.setQuietHoursEnabled(it) }
-                                        )
-                                    }
-                                    if (uiState.isQuietHoursEnabled) {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceEvenly,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(stringResource(R.string.settings_quiet_hours_start), style = MaterialTheme.typography.labelSmall)
-                                                Text("${uiState.quietHoursStart}:00", style = MaterialTheme.typography.titleMedium)
-                                                Row {
-                                                    IconButton(onClick = {
-                                                        if (uiState.quietHoursStart > 0) viewModel.setQuietHoursStart(uiState.quietHoursStart - 1)
-                                                    }) { Text("\u2212") }
-                                                    IconButton(onClick = {
-                                                        if (uiState.quietHoursStart < 23) viewModel.setQuietHoursStart(uiState.quietHoursStart + 1)
-                                                    }) { Text("+") }
-                                                }
-                                            }
-                                            Text(stringResource(R.string.settings_quiet_hours_to), style = MaterialTheme.typography.bodyMedium)
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(stringResource(R.string.settings_quiet_hours_end), style = MaterialTheme.typography.labelSmall)
-                                                Text("${uiState.quietHoursEnd}:00", style = MaterialTheme.typography.titleMedium)
-                                                Row {
-                                                    IconButton(onClick = {
-                                                        if (uiState.quietHoursEnd > 0) viewModel.setQuietHoursEnd(uiState.quietHoursEnd - 1)
-                                                    }) { Text("\u2212") }
-                                                    IconButton(onClick = {
-                                                        if (uiState.quietHoursEnd < 23) viewModel.setQuietHoursEnd(uiState.quietHoursEnd + 1)
-                                                    }) { Text("+") }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // Section: Security
                 item {
                     SettingsSectionHeader(stringResource(R.string.settings_section_security))
@@ -308,550 +218,89 @@ fun SettingsScreen(
                     }
                 }
 
-                // Section: Notifications
+                // Navigation: Notifications
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_notifications))
-                }
-
-                // Data Safety group
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                stringResource(R.string.notif_group_data_safety),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Backup Reminder
-                            Row(
-                                modifier = Modifier.fillMaxWidth().clickable { showBackupConfig = !showBackupConfig },
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.notif_backup_reminder), style = MaterialTheme.typography.bodyMedium)
-                                    Text(
-                                        stringResource(R.string.notif_backup_reminder_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        stringResource(R.string.notif_interval_days, uiState.notifBackupInterval),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Icon(
-                                        if (showBackupConfig) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Switch(
-                                    checked = uiState.notifBackupReminder,
-                                    onCheckedChange = { viewModel.setNotifBackupReminder(it) }
-                                )
-                            }
-
-                            AnimatedVisibility(
-                                visible = showBackupConfig,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Column {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(stringResource(R.string.notif_interval_days, uiState.notifBackupInterval),
-                                        style = MaterialTheme.typography.bodySmall)
-                                    Slider(
-                                        value = uiState.notifBackupInterval.toFloat(),
-                                        onValueChange = { viewModel.setNotifBackupInterval(it.toInt()) },
-                                        valueRange = 1f..30f,
-                                        steps = 28,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            }
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                            // Runway Alert
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.notif_runway_alert), style = MaterialTheme.typography.bodyMedium)
-                                    Text(
-                                        stringResource(R.string.notif_runway_alert_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Switch(
-                                    checked = uiState.notifRunwayAlert,
-                                    onCheckedChange = { viewModel.setNotifRunwayAlert(it) }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Spending Alerts group
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                stringResource(R.string.notif_group_spending),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Large Transaction
-                            Row(
-                                modifier = Modifier.fillMaxWidth().clickable { showLargeTxnConfig = !showLargeTxnConfig },
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.notif_large_txn), style = MaterialTheme.typography.bodyMedium)
-                                    Text(
-                                        stringResource(R.string.notif_large_txn_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        stringResource(R.string.notif_threshold_rm, uiState.notifLargeTxnThreshold),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Icon(
-                                        if (showLargeTxnConfig) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Switch(
-                                    checked = uiState.notifLargeTxn,
-                                    onCheckedChange = { viewModel.setNotifLargeTxn(it) }
-                                )
-                            }
-
-                            AnimatedVisibility(
-                                visible = showLargeTxnConfig,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Column {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        stringResource(R.string.notif_threshold_rm, uiState.notifLargeTxnThreshold),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    Slider(
-                                        value = (uiState.notifLargeTxnThreshold / 100).toFloat(),
-                                        onValueChange = { viewModel.setNotifLargeTxnThreshold((it * 100).toDouble().coerceAtLeast(100.0)) },
-                                        valueRange = 1f..50f,
-                                        steps = 48,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Reminders group
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                stringResource(R.string.notif_group_reminders),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Debt Due
-                            Row(
-                                modifier = Modifier.fillMaxWidth().clickable { showDebtDueConfig = !showDebtDueConfig },
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.notif_debt_due), style = MaterialTheme.typography.bodyMedium)
-                                    Text(
-                                        stringResource(R.string.notif_debt_due_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        stringResource(R.string.notif_days_before, uiState.notifDebtDueDaysBefore),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Icon(
-                                        if (showDebtDueConfig) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Switch(
-                                    checked = uiState.notifDebtDue,
-                                    onCheckedChange = { viewModel.setNotifDebtDue(it) }
-                                )
-                            }
-
-                            AnimatedVisibility(
-                                visible = showDebtDueConfig,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Column {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        stringResource(R.string.notif_days_before, uiState.notifDebtDueDaysBefore),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    Slider(
-                                        value = uiState.notifDebtDueDaysBefore.toFloat(),
-                                        onValueChange = { viewModel.setNotifDebtDueDaysBefore(it.toInt()) },
-                                        valueRange = 1f..30f,
-                                        steps = 28,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            }
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                            // Income Not Arrived
-                            NotifToggleRow(
-                                label = stringResource(R.string.notif_income_not_arrived),
-                                description = stringResource(R.string.notif_income_not_arrived_desc),
-                                checked = uiState.notifIncomeNotArrived,
-                                onCheckedChange = { viewModel.setNotifIncomeNotArrived(it) }
-                            )
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                            // Transaction Review
-                            NotifToggleRow(
-                                label = stringResource(R.string.notif_review_reminder),
-                                description = stringResource(R.string.notif_review_reminder_desc),
-                                checked = uiState.notifReviewReminder,
-                                onCheckedChange = { viewModel.setNotifReviewReminder(it) }
-                            )
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                            // Bill Autopay
-                            NotifToggleRow(
-                                label = stringResource(R.string.notif_bill_autopay),
-                                description = stringResource(R.string.notif_bill_autopay_desc),
-                                checked = uiState.notifBillAutopay,
-                                onCheckedChange = { viewModel.setNotifBillAutopay(it) }
-                            )
-                        }
-                    }
-                }
-
-                // Insights group
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                stringResource(R.string.notif_group_insights),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            NotifToggleRow(
-                                label = stringResource(R.string.notif_weekly_digest),
-                                description = stringResource(R.string.notif_weekly_digest_desc),
-                                checked = uiState.notifWeeklyDigest,
-                                onCheckedChange = { viewModel.setNotifWeeklyDigest(it) }
-                            )
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                            NotifToggleRow(
-                                label = stringResource(R.string.notif_milestone),
-                                description = stringResource(R.string.notif_milestone_desc),
-                                checked = uiState.notifMilestone,
-                                onCheckedChange = { viewModel.setNotifMilestone(it) }
-                            )
-                        }
-                    }
-                }
-
-                // Risk Alerts group
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                stringResource(R.string.notif_group_risk),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            NotifToggleRow(
-                                label = stringResource(R.string.notif_bnpl_risk),
-                                description = stringResource(R.string.notif_bnpl_risk_desc),
-                                checked = uiState.notifBnplRisk,
-                                onCheckedChange = { viewModel.setNotifBnplRisk(it) }
-                            )
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                            NotifToggleRow(
-                                label = stringResource(R.string.notif_cash_anomaly),
-                                description = stringResource(R.string.notif_cash_anomaly_desc),
-                                checked = uiState.notifCashAnomaly,
-                                onCheckedChange = { viewModel.setNotifCashAnomaly(it) }
-                            )
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                            NotifToggleRow(
-                                label = stringResource(R.string.notif_transfer_review),
-                                description = stringResource(R.string.notif_transfer_review_desc),
-                                checked = uiState.notifTransferReview,
-                                onCheckedChange = { viewModel.setNotifTransferReview(it) }
-                            )
-                        }
-                    }
-                }
-
-                // Section: Data & Accounts
-                item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_data_backup))
-                }
-
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                stringResource(R.string.settings_data_backup_description),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { showExportDialog = true },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(stringResource(R.string.settings_export))
-                                }
-                                OutlinedButton(
-                                    onClick = { importFilePickerLauncher.launch(arrayOf("*/*")) },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(stringResource(R.string.settings_import))
-                                }
-                            }
-                        }
-                    }
+                    SettingsSectionHeader(stringResource(R.string.settings_section_navigation))
                 }
 
                 item {
                     SciuroCard(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        onClick = onNavigateToLinkedAccounts
+                        onClick = onNavigateToNotificationSettings
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp).fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(stringResource(R.string.settings_linked_accounts), style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_linked_accounts))
-                        }
-                    }
-                }
-
-                item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        onClick = onNavigateToCategorySettings
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(stringResource(R.string.settings_manage_categories), style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_manage_categories))
-                        }
-                    }
-                }
-
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                            Text(stringResource(R.string.settings_budget_warning_threshold), style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Slider(
-                                    value = uiState.budgetWarningThreshold,
-                                    onValueChange = { viewModel.setBudgetWarningThreshold(it) },
-                                    valueRange = 0.5f..1.0f,
-                                    steps = 9,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "${(uiState.budgetWarningThreshold * 100).toInt()}%",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.width(40.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Section: Intelligence & Automation
-                item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_llm))
-                }
-
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(stringResource(R.string.settings_llm_toggle), style = MaterialTheme.typography.bodyMedium)
-                                Switch(
-                                    checked = uiState.isLlmEnabled,
-                                    onCheckedChange = {
-                                        viewModel.setLlmEnabled(it)
-                                        showLlmFields = it
-                                    }
-                                )
-                            }
-
-                            AnimatedVisibility(
-                                visible = showLlmFields,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Column {
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    SciuroTextField(
-                                        value = uiState.apiKey,
-                                        onValueChange = { viewModel.setApiKey(it) },
-                                        label = stringResource(R.string.settings_llm_api_key),
-                                        singleLine = true,
-                                        visualTransformation = if (apiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                        trailingIcon = {
-                                            IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
-                                Text(
-                                    text = if (apiKeyVisible) stringResource(R.string.settings_hide) else stringResource(R.string.settings_show),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    SciuroTextField(
-                                        value = uiState.llmModelName,
-                                        onValueChange = { viewModel.setLlmModelName(it) },
-                                        label = stringResource(R.string.settings_llm_model),
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Button(
-                                            onClick = { viewModel.testConnection() },
-                                            enabled = uiState.apiKey.isNotBlank() && uiState.connectionTestState !is ConnectionTestState.Testing
-                                        ) {
-                                            Text(stringResource(R.string.settings_test_connection))
-                                        }
-
-                                        Spacer(modifier = Modifier.width(16.dp))
-
-                                        when (val state = uiState.connectionTestState) {
-                                            is ConnectionTestState.Testing -> {
-                                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                            }
-                                            is ConnectionTestState.Success -> {
-                                                Text(
-                                                    text = stringResource(R.string.settings_connection_success),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.primary
-                                                )
-                                            }
-                                            is ConnectionTestState.Error -> {
-                                                Text(
-                                                    text = state.message,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.error
-                                                )
-                                            }
-                                            is ConnectionTestState.Idle -> { }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item {
-                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.settings_auto_confirm_recurring), style = MaterialTheme.typography.titleMedium)
+                                Text(stringResource(R.string.settings_notifications), style = MaterialTheme.typography.titleMedium)
                                 Text(
-                                    stringResource(R.string.settings_auto_confirm_description),
+                                    stringResource(R.string.settings_notifications_summary, enabledNotifCount, 12),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (uiState.isQuietHoursEnabled) {
+                                    Text(
+                                        stringResource(R.string.settings_quiet_hours_summary, uiState.quietHoursStart, uiState.quietHoursEnd),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_notifications))
+                        }
+                    }
+                }
+
+                // Navigation: Data & Privacy
+                item {
+                    SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        onClick = onNavigateToDataSettings
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.settings_data_privacy), style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    stringResource(R.string.settings_budget_summary, (uiState.budgetWarningThreshold * 100).toInt()),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Switch(
-                                checked = uiState.isObligationAutoConfirmEnabled,
-                                onCheckedChange = { viewModel.setObligationAutoConfirmEnabled(it) }
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_data_privacy))
+                        }
+                    }
+                }
+
+                // Navigation: Intelligence & Automation
+                item {
+                    SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        onClick = onNavigateToIntelligenceSettings
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.settings_intelligence), style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    buildString {
+                                        append(if (uiState.isLlmEnabled) stringResource(R.string.settings_summary_llm_on) else stringResource(R.string.settings_summary_llm_off))
+                                        append(" · ")
+                                        append(if (uiState.isObligationAutoConfirmEnabled) stringResource(R.string.settings_summary_autoconfirm_on) else stringResource(R.string.settings_summary_autoconfirm_off))
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_intelligence))
                         }
                     }
                 }
@@ -893,28 +342,10 @@ fun SettingsScreen(
             }
         }
     }
-
-    if (showExportDialog) {
-        BackupPasswordDialog(
-            title = stringResource(R.string.settings_backup_export_title),
-            onConfirm = { showExportDialog = false; onExportBackup(it) },
-            onDismiss = { showExportDialog = false }
-        )
-    }
-    importFileUri?.let { uri ->
-        BackupPasswordDialog(
-            title = stringResource(R.string.settings_backup_import_title),
-            onConfirm = { password ->
-                importFileUri = null
-                onImportBackup(uri, password)
-            },
-            onDismiss = { importFileUri = null }
-        )
-    }
 }
 
 @Composable
-private fun SettingsSectionHeader(
+internal fun SettingsSectionHeader(
     title: String,
     modifier: Modifier = Modifier
 ) {
@@ -925,70 +356,4 @@ private fun SettingsSectionHeader(
         fontWeight = FontWeight.SemiBold,
         modifier = modifier.padding(start = 4.dp, top = 20.dp, bottom = 4.dp)
     )
-}
-
-@Composable
-private fun BackupPasswordDialog(
-    title: String,
-    onConfirm: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var password by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column {
-                Text(stringResource(R.string.settings_backup_passphrase_description))
-                Spacer(modifier = Modifier.height(12.dp))
-                SciuroTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = stringResource(R.string.settings_backup_passphrase),
-                    singleLine = true
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { if (password.isNotBlank()) onConfirm(password) },
-                enabled = password.isNotBlank()
-            ) {
-                Text(stringResource(R.string.settings_confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.settings_cancel))
-            }
-        }
-    )
-}
-
-@Composable
-private fun NotifToggleRow(
-    label: String,
-    description: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
-    }
 }

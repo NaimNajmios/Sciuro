@@ -29,8 +29,11 @@ import com.sciuro.feature.dashboard.ui.DashboardScreen
 import com.sciuro.feature.debt.ui.DebtOverviewScreen
 import com.sciuro.feature.kanban.ui.KanbanScreen
 import com.sciuro.feature.settings.ui.CategorySettingsScreen
+import com.sciuro.feature.settings.ui.DataSettingsScreen
 import com.sciuro.feature.settings.ui.DeveloperSettingsScreen
+import com.sciuro.feature.settings.ui.IntelligenceSettingsScreen
 import com.sciuro.feature.settings.ui.LinkedAccountsScreen
+import com.sciuro.feature.settings.ui.NotificationSettingsScreen
 import com.sciuro.feature.settings.ui.SettingsScreen
 import com.sciuro.feature.settings.viewmodel.LinkedAccountsViewModel
 import com.sciuro.feature.wallet.ui.AccountDetailScreen
@@ -101,20 +104,39 @@ fun SciuroNavGraph(
         }
 
         composable(SciuroRoute.Settings.route) {
+            SettingsScreen(
+                onNavigateToNotificationSettings = {
+                    navController.navigate(SciuroRoute.NotificationSettings.route)
+                },
+                onNavigateToDataSettings = {
+                    navController.navigate(SciuroRoute.DataSettings.route)
+                },
+                onNavigateToIntelligenceSettings = {
+                    navController.navigate(SciuroRoute.IntelligenceSettings.route)
+                },
+                onNavigateToDeveloperSettings = {
+                    navController.navigate(SciuroRoute.DeveloperSettings.createRoute(0))
+                }
+            )
+        }
+
+        composable(SciuroRoute.NotificationSettings.route) {
+            NotificationSettingsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(SciuroRoute.DataSettings.route) {
             val context = androidx.compose.ui.platform.LocalContext.current
             val scope = androidx.compose.runtime.rememberCoroutineScope()
             val sqlDriver = koinInject<SqlDriver>()
             val settingsProvider = koinInject<SettingsProvider>()
 
-            SettingsScreen(
-                onNavigateToDeveloperSettings = {
-                    navController.navigate(SciuroRoute.DeveloperSettings.createRoute(0))
+            DataSettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLinkedAccounts = {
+                    navController.navigate(SciuroRoute.LinkedAccounts.route)
                 },
                 onNavigateToCategorySettings = {
                     navController.navigate(SciuroRoute.CategorySettings.route)
-                },
-                onNavigateToLinkedAccounts = {
-                    navController.navigate(SciuroRoute.LinkedAccounts.route)
                 },
                 onExportBackup = { password ->
                     scope.launch(Dispatchers.IO) {
@@ -127,6 +149,10 @@ fun SciuroNavGraph(
                     }
                 }
             )
+        }
+
+        composable(SciuroRoute.IntelligenceSettings.route) {
+            IntelligenceSettingsScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(SciuroRoute.CategorySettings.route) {
