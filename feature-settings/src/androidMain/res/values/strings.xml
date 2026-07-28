@@ -236,6 +236,16 @@
     <string name="notif_transfer_review">Transfer Review</string>
     <string name="notif_transfer_review_desc">Flag unmatched transfer candidates for review</string>
 
+    <!-- Palette Settings -->
+    <string name="settings_palette">Colour palette</string>
+    <string name="settings_palette_choose">Choose a palette</string>
+    <string name="palette_monochrome">Monochrome</string>
+    <string name="palette_amber">Amber</string>
+    <string name="palette_ocean">Ocean</string>
+    <string name="palette_forest">Forest</string>
+    <string name="palette_plum">Plum</string>
+    <string name="palette_slate">Slate</string>
+
     <!-- Settings Navigation -->
     <string name="settings_section_navigation">Preferences</string>
     <string name="settings_notifications">Notifications</string>

@@ -16,6 +16,9 @@ class ThemeManager(context: Context) {
     private val _themePreference = MutableStateFlow(getSavedTheme())
     val themePreference: StateFlow<ThemePreference> = _themePreference.asStateFlow()
     
+    private val _palettePreference = MutableStateFlow(getSavedPalette())
+    val palettePreference: StateFlow<PalettePreference> = _palettePreference.asStateFlow()
+    
     private fun getSavedTheme(): ThemePreference {
         val name = prefs.getString("theme", ThemePreference.SYSTEM_DEFAULT.name)
         return try {
@@ -25,9 +28,23 @@ class ThemeManager(context: Context) {
         }
     }
     
+    private fun getSavedPalette(): PalettePreference {
+        val name = prefs.getString("palette", PalettePreference.MONOCHROME.name)
+        return try {
+            PalettePreference.valueOf(name ?: PalettePreference.MONOCHROME.name)
+        } catch (e: Exception) {
+            PalettePreference.MONOCHROME
+        }
+    }
+    
     fun setTheme(theme: ThemePreference) {
         prefs.edit().putString("theme", theme.name).apply()
         _themePreference.value = theme
+    }
+    
+    fun setPalette(palette: PalettePreference) {
+        prefs.edit().putString("palette", palette.name).apply()
+        _palettePreference.value = palette
     }
 
     fun isDarkModeScheduleEnabled(): Boolean = prefs.getBoolean("dark_mode_schedule_enabled", false)

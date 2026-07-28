@@ -16,9 +16,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.draw.clip
 import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
+import com.najmi.sciuro.core.ui.theme.PalettePreference
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
+import com.najmi.sciuro.core.ui.theme.paletteColors
+import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroCard
@@ -44,6 +52,8 @@ fun SettingsScreen(
     val context = LocalContext.current
     val themeManager = remember { ThemeManager.getInstance(context) }
     val themePref by themeManager.themePreference.collectAsState()
+    val palettePref by themeManager.palettePreference.collectAsState()
+    var showPaletteSheet by remember { mutableStateOf(false) }
     var developerTapCount by remember { mutableIntStateOf(0) }
     val snackbarHostState = LocalSnackbarHostState.current
     val devGateSnackbarText = stringResource(R.string.dev_gate_snackbar)
@@ -128,6 +138,38 @@ fun SettingsScreen(
                                 fillWidth = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
+                        }
+                    }
+                }
+
+                item {
+                    SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        onClick = { showPaletteSheet = true }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(stringResource(R.string.settings_palette), style = MaterialTheme.typography.titleMedium)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Canvas(modifier = Modifier.size(16.dp)) {
+                                    drawCircle(color = paletteColors(palettePref, false).primary)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    paletteDisplayName(palettePref),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = stringResource(R.string.settings_palette),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -342,6 +384,60 @@ fun SettingsScreen(
             }
         }
     }
+
+    if (showPaletteSheet) {
+        SciuroBottomSheet(onDismissRequest = { showPaletteSheet = false }) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.settings_palette_choose),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            PalettePreference.entries.forEach { palette ->
+                val isSelected = palette == palettePref
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            themeManager.setPalette(palette)
+                            showPaletteSheet = false
+                        }
+                        .padding(vertical = 12.dp, horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(paletteColors(palette, false).primary)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        paletteDisplayName(palette),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (isSelected) {
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun paletteDisplayName(palette: PalettePreference): String = when (palette) {
+    PalettePreference.MONOCHROME -> stringResource(R.string.palette_monochrome)
+    PalettePreference.AMBER -> stringResource(R.string.palette_amber)
+    PalettePreference.OCEAN -> stringResource(R.string.palette_ocean)
+    PalettePreference.FOREST -> stringResource(R.string.palette_forest)
+    PalettePreference.PLUM -> stringResource(R.string.palette_plum)
+    PalettePreference.SLATE -> stringResource(R.string.palette_slate)
 }
 
 @Composable
