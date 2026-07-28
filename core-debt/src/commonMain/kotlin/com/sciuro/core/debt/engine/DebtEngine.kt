@@ -15,13 +15,15 @@ class DebtEngine(
     private val matchingEngine: TransactionMatchingEngine
 ) {
     suspend fun processDebtPayments() {
-        val allDebts = database.debtQueries.selectAllDebts().executeAsList()
-        val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
-        val transferTxIds = matchingEngine.getIneligibleTransactionIds()
+        try {
+            val allDebts = database.debtQueries.selectAllDebts().executeAsList()
+            val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
+            val transferTxIds = matchingEngine.getIneligibleTransactionIds()
 
-        val activeDebts = allDebts.filter { it.status != "PAID_OFF" && it.status != "ARCHIVED" }
+            val activeDebts = allDebts.filter { it.status != "PAID_OFF" && it.status != "ARCHIVED" }
 
-        for (debt in activeDebts) {
+            for (debt in activeDebts) {
+                try {
             val debtDirection = debt.direction?.let { dir ->
                 try { DebtDirection.valueOf(dir) } catch (_: Exception) { DebtDirection.I_OWE }
             } ?: DebtDirection.I_OWE
@@ -29,7 +31,8 @@ class DebtEngine(
 
             val matchingTransactions = allTransactions.filter {
                 it.direction == expectedDirection &&
-                (it.category_id == "cat_debt_payment" || it.merchant?.contains(debt.name, ignoreCase = true) == true) &&
+                (it.category_id == "cat_debt_payment" ||
+                 (it.merchant != null && (debt.name.contains(it.merchant!!, ignoreCase = true) || it.merchant!!.contains(debt.name, ignoreCase = true)))) &&
                 it.id !in transferTxIds
             }
 
@@ -53,6 +56,12 @@ class DebtEngine(
                     eventBus.publish(DomainEvent.DebtFullyPaidOff(debt.id))
                 }
             }
+                } catch (e: Exception) {
+                    println("DebtEngine: error processing debt ${debt.id}: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            println("DebtEngine.processDebtPayments failed: ${e.message}")
         }
     }
 }

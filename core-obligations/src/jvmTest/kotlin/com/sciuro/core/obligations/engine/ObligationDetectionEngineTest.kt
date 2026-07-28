@@ -75,6 +75,10 @@ class ObligationDetectionEngineTest {
         override fun isDeveloperOptionsVisible(): Boolean = false
         override fun setDeveloperOptionsVisible(visible: Boolean) {}
         override fun getLlmConfig(): LlmParsingConfig = LlmParsingConfig()
+        override fun getLastBackupTimestamp(): Long = 0L
+        override fun setLastBackupTimestamp(timestamp: Long) {}
+        override fun getLastMilestoneReached(): Double = 0.0
+        override fun setLastMilestoneReached(milestone: Double) {}
     }
 
     @BeforeTest

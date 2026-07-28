@@ -40,6 +40,7 @@ import com.sciuro.feature.kanban.model.DebtTask
 import com.sciuro.feature.kanban.model.KanbanTask
 import com.sciuro.feature.kanban.model.TaskStatus
 import com.sciuro.feature.kanban.viewmodel.KanbanViewModel
+import com.sciuro.feature.kanban.viewmodel.KanbanViewModel.DebtsFilter
 import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.model.DebtType
 import com.sciuro.core.obligations.model.ObligationFrequency
@@ -70,7 +71,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val bills by viewModel.bills.collectAsState()
     val debtTasks by viewModel.debtTasks.collectAsState()
     val expenseCategories by viewModel.expenseCategories.collectAsState()
-    val showCompletedDebts by viewModel.showCompletedDebts.collectAsState()
+    val debtsFilter by viewModel.debtsFilter.collectAsState()
 
     var selectedTab by remember { mutableStateOf("Review") }
     val tabs = listOf("Review", "Bills", "Debts")
@@ -118,6 +119,12 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 delay(1500)
                 recentlySettledIds.remove(cardId)
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.errorEvents.collect { message ->
+            snackbarHostState.showSnackbar(message)
         }
     }
 
@@ -224,8 +231,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         )
                         "Debts" ->   DebtsColumn(
                             debtTasks = debtTasks,
-                            showCompletedDebts = showCompletedDebts,
-                            onToggleCompleted =     { viewModel.toggleShowCompletedDebts() },
+                            debtsFilter = debtsFilter,
+                            onFilterChange = { viewModel.setDebtsFilter(it) },
                             recentlySettledIds = recentlySettledIds,
                             onRecordPayment = { paymentDebt = it },
                             onClickDebt = { debtToView = it }
@@ -591,8 +598,8 @@ private fun BillCard(
 @Composable
 private fun DebtsColumn(
     debtTasks: List<DebtTask>,
-    showCompletedDebts: Boolean,
-    onToggleCompleted: () -> Unit,
+    debtsFilter: DebtsFilter,
+    onFilterChange: (DebtsFilter) -> Unit,
     recentlySettledIds: List<String>,
     onRecordPayment: (DebtTask) -> Unit,
     onClickDebt: (DebtTask) -> Unit
@@ -604,21 +611,21 @@ private fun DebtsColumn(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Debts", style = MaterialTheme.typography.titleMedium)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Show Completed", style = MaterialTheme.typography.labelMedium)
-                Spacer(modifier = Modifier.width(8.dp))
-                Switch(
-                    checked = showCompletedDebts,
-                    onCheckedChange = { onToggleCompleted() },
-                    modifier = Modifier.scale(0.8f)
-                )
-            }
+            PillToggle(
+                options = DebtsFilter.entries.map { it.label },
+                selectedOption = debtsFilter.label,
+                onOptionSelected = { label ->
+                    onFilterChange(DebtsFilter.entries.first { it.label == label })
+                },
+                fillWidth = false
+            )
         }
 
         val activeDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.ACTIVE }
         val completedDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.PAID_OFF }
+        val archivedDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.ARCHIVED }
 
-        if (activeDebts.isEmpty() && completedDebts.isEmpty()) {
+        if (debtTasks.isEmpty()) {
             EmptyStateView(message = stringResource(R.string.kanban_empty_debts))
         } else {
             val noMotion = reducedMotion()
@@ -674,7 +681,7 @@ private fun DebtsColumn(
                 }
             }
 
-            if (showCompletedDebts && completedDebts.isNotEmpty()) {
+            if (completedDebts.isNotEmpty()) {
                 Text("Completed", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                 completedDebts.forEach { debt ->
                     SciuroCard(modifier = Modifier.fillMaxWidth().alpha(0.5f)) {
@@ -700,6 +707,39 @@ private fun DebtsColumn(
                                     shape = MaterialTheme.shapes.small
                                 ) {
                                     Text("PAID OFF", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (archivedDebts.isNotEmpty()) {
+                Text("Archived", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                archivedDebts.forEach { debt ->
+                    SciuroCard(modifier = Modifier.fillMaxWidth().alpha(0.3f)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        debt.name, 
+                                        style = MaterialTheme.typography.titleMedium,
+                                        textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                    )
+                                    if (debt.counterpartyName != null) {
+                                        Text(debt.counterpartyName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                                    }
+                                }
+                                Surface(
+                                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                                    shape = MaterialTheme.shapes.small
+                                ) {
+                                    Text("ARCHIVED", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
                                 }
                             }
                         }

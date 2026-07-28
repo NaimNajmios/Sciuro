@@ -15,7 +15,7 @@ class ObligationCycleMatcher(
 
         val active = database.obligationQueries.selectAllActiveObligations().executeAsList()
         val match = active.find {
-            (merchant != null && it.name.contains(merchant, ignoreCase = true)) ||
+            (merchant != null && (it.name.contains(merchant, ignoreCase = true) || merchant.contains(it.name, ignoreCase = true))) ||
             (it.category_id != null && it.category_id == categoryId &&
              kotlin.math.abs(it.amount - amount) < 2.0)
         } ?: return

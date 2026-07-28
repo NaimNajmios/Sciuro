@@ -16,6 +16,7 @@ import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.obligations.model.Obligation
 import com.sciuro.core.obligations.model.ObligationFrequency
 import com.sciuro.core.obligations.repository.ObligationRepository
+import com.sciuro.core.obligations.engine.ObligationCycleMatcher
 import com.sciuro.feature.kanban.model.BillTask
 import com.sciuro.feature.kanban.model.DebtTask
 import com.sciuro.feature.kanban.model.KanbanTask
@@ -45,8 +46,17 @@ class KanbanViewModel(
     eventBus: DomainEventBus
 ) : ViewModel() {
 
+    enum class DebtsFilter(val label: String) {
+        ACTIVE("Active"),
+        INCLUDING_PAID_OFF("+Paid Off"),
+        ALL("All")
+    }
+
     private val _animationTriggers = MutableSharedFlow<String>(extraBufferCapacity = 16)
     val animationTriggers: SharedFlow<String> = _animationTriggers
+
+    private val _errorEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
+    val errorEvents: SharedFlow<String> = _errorEvents
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
@@ -111,19 +121,21 @@ class KanbanViewModel(
             initialValue = emptyList()
         )
 
-    private val _showCompletedDebts = MutableStateFlow(false)
-    val showCompletedDebts: StateFlow<Boolean> = _showCompletedDebts.asStateFlow()
+    private val _debtsFilter = MutableStateFlow(DebtsFilter.ACTIVE)
+    val debtsFilter: StateFlow<DebtsFilter> = _debtsFilter.asStateFlow()
 
-    fun toggleShowCompletedDebts() {
-        _showCompletedDebts.value = !_showCompletedDebts.value
+    fun setDebtsFilter(filter: DebtsFilter) {
+        _debtsFilter.value = filter
     }
 
     val debtTasks: StateFlow<List<DebtTask>> = debtRepository.observeDebts()
-        .combine(_showCompletedDebts) { debts, showCompleted ->
-            debts.filter { 
-                if (showCompleted) it.status == DebtStatus.ACTIVE || it.status == DebtStatus.PAID_OFF 
-                else it.status == DebtStatus.ACTIVE 
-            }.map { DebtTask.fromDebt(it) }
+        .combine(_debtsFilter) { debts, filter ->
+            val allowedStatuses = when (filter) {
+                DebtsFilter.ACTIVE -> setOf(DebtStatus.ACTIVE)
+                DebtsFilter.INCLUDING_PAID_OFF -> setOf(DebtStatus.ACTIVE, DebtStatus.PAID_OFF)
+                DebtsFilter.ALL -> DebtStatus.entries.toSet()
+            }
+            debts.filter { it.status in allowedStatuses }.map { DebtTask.fromDebt(it) }
         }
         .stateIn(
             scope = viewModelScope,
@@ -138,44 +150,67 @@ class KanbanViewModel(
     fun updateTaskStatus(taskId: String, newStatus: TaskStatus, newAccountId: String? = null, newDirection: String? = null) {
         if (newStatus == TaskStatus.DONE) {
             viewModelScope.launch {
-                transactionRepository.reviewTransaction(taskId, null, newAccountId, newDirection)
+                try {
+                    transactionRepository.reviewTransaction(taskId, null, newAccountId, newDirection)
+                } catch (e: Exception) {
+                    _errorEvents.emit("Failed to approve transaction: ${e.message}")
+                }
             }
         } else if (newStatus == TaskStatus.REJECTED) {
             viewModelScope.launch {
-                transactionRepository.rejectTransaction(taskId)
+                try {
+                    transactionRepository.rejectTransaction(taskId)
+                } catch (e: Exception) {
+                    _errorEvents.emit("Failed to reject transaction: ${e.message}")
+                }
             }
         }
     }
 
     fun markBillAsPaid(obligation: Obligation) {
         viewModelScope.launch(Dispatchers.IO) {
-            val tx = Transaction(
-                id = UUID.randomUUID().toString(),
-                accountId = obligation.accountId,
-                categoryId = obligation.categoryId,
-                amount = obligation.amount,
-                direction = "OUTFLOW",
-                merchant = obligation.name,
-                timestamp = System.currentTimeMillis(),
-                referenceId = null,
-                isReviewed = true,
-                extractionMethod = "MANUAL",
-                confidence = 1.0,
-                rawEventId = null
-            )
-            transactionRepository.bookTransaction(tx, source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL, confidence = 1.0f)
+            try {
+                val tx = Transaction(
+                    id = UUID.randomUUID().toString(),
+                    accountId = obligation.accountId,
+                    categoryId = obligation.categoryId,
+                    amount = obligation.amount,
+                    direction = "OUTFLOW",
+                    merchant = obligation.name,
+                    timestamp = System.currentTimeMillis(),
+                    referenceId = null,
+                    isReviewed = true,
+                    extractionMethod = "MANUAL",
+                    confidence = 1.0,
+                    rawEventId = null
+                )
+                transactionRepository.bookTransaction(tx, source = com.sciuro.core.audit.model.AuditSource.USER_MANUAL, confidence = 1.0f)
+
+                val newDueDate = ObligationCycleMatcher.computeNextDueDate(obligation.nextDueDate, obligation.frequency.name)
+                obligationRepository.recordPayment(obligation.id, newDueDate)
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to mark bill as paid: ${e.message}")
+            }
         }
     }
 
     fun recordDebtPayment(debtId: String, amount: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-            debtRepository.applyPayment(debtId, amount)
+            try {
+                debtRepository.applyPayment(debtId, amount)
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to record debt payment: ${e.message}")
+            }
         }
     }
 
     fun markDebtAsFinished(debtId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            debtRepository.markAsPaidOff(debtId)
+            try {
+                debtRepository.markAsPaidOff(debtId)
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to mark debt as finished: ${e.message}")
+            }
         }
     }
 
@@ -189,28 +224,36 @@ class KanbanViewModel(
         accountId: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val currentBills = bills.value
-            val existing = currentBills.find { it.id == id }
-            if (existing != null) {
-                obligationRepository.updateObligation(
-                    Obligation(
-                        id = id,
-                        name = name,
-                        amount = amount,
-                        frequency = frequency,
-                        nextDueDate = nextDueDate,
-                        categoryId = categoryId,
-                        accountId = accountId,
-                        isActive = true
+            try {
+                val currentBills = bills.value
+                val existing = currentBills.find { it.id == id }
+                if (existing != null) {
+                    obligationRepository.updateObligation(
+                        Obligation(
+                            id = id,
+                            name = name,
+                            amount = amount,
+                            frequency = frequency,
+                            nextDueDate = nextDueDate,
+                            categoryId = categoryId,
+                            accountId = accountId,
+                            isActive = true
+                        )
                     )
-                )
+                }
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to update obligation: ${e.message}")
             }
         }
     }
 
     fun deleteObligation(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            obligationRepository.deleteObligation(id)
+            try {
+                obligationRepository.deleteObligation(id)
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to delete obligation: ${e.message}")
+            }
         }
     }
 
@@ -223,18 +266,22 @@ class KanbanViewModel(
         accountId: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            obligationRepository.createObligation(
-                Obligation(
-                    id = UUID.randomUUID().toString(),
-                    name = name,
-                    amount = amount,
-                    frequency = frequency,
-                    nextDueDate = nextDueDate,
-                    categoryId = categoryId,
-                    accountId = accountId,
-                    isActive = true
+            try {
+                obligationRepository.createObligation(
+                    Obligation(
+                        id = UUID.randomUUID().toString(),
+                        name = name,
+                        amount = amount,
+                        frequency = frequency,
+                        nextDueDate = nextDueDate,
+                        categoryId = categoryId,
+                        accountId = accountId,
+                        isActive = true
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to create obligation: ${e.message}")
+            }
         }
     }
 
@@ -247,25 +294,33 @@ class KanbanViewModel(
         notes: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            debtRepository.createDebt(
-                Debt(
-                    id = UUID.randomUUID().toString(),
-                    name = name,
-                    type = type,
-                    direction = direction,
-                    counterpartyName = counterpartyName,
-                    status = DebtStatus.ACTIVE,
-                    principalAmount = principalAmount,
-                    remainingBalance = principalAmount,
-                    notes = notes
+            try {
+                debtRepository.createDebt(
+                    Debt(
+                        id = UUID.randomUUID().toString(),
+                        name = name,
+                        type = type,
+                        direction = direction,
+                        counterpartyName = counterpartyName,
+                        status = DebtStatus.ACTIVE,
+                        principalAmount = principalAmount,
+                        remainingBalance = principalAmount,
+                        notes = notes
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to create debt: ${e.message}")
+            }
         }
     }
     
     fun deleteDebt(debtId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            debtRepository.deleteDebt(debtId)
+            try {
+                debtRepository.deleteDebt(debtId)
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to delete debt: ${e.message}")
+            }
         }
     }
 
@@ -276,24 +331,27 @@ class KanbanViewModel(
         notes: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            // Fetch current to maintain other fields
-            val currentDebts = debtTasks.value
-            val existing = currentDebts.find { it.id == debtId }
-            if (existing != null) {
-                debtRepository.updateDebt(
-                    Debt(
-                        id = debtId,
-                        name = name,
-                        type = existing.type,
-                        direction = existing.direction,
-                        counterpartyName = existing.counterpartyName,
-                        status = DebtStatus.ACTIVE,
-                        principalAmount = principalAmount,
-                        // if principal is updated, what happens to remaining balance? Let's just set remaining to principal for simplicity on edit for now, or calculate diff
-                        remainingBalance = principalAmount, 
-                        notes = notes
+            try {
+                val currentDebts = debtTasks.value
+                val existing = currentDebts.find { it.id == debtId }
+                if (existing != null) {
+                    val adjustedRemaining = minOf(existing.debt.remainingBalance, principalAmount)
+                    debtRepository.updateDebt(
+                        Debt(
+                            id = debtId,
+                            name = name,
+                            type = existing.type,
+                            direction = existing.direction,
+                            counterpartyName = existing.counterpartyName,
+                            status = existing.debt.status,
+                            principalAmount = principalAmount,
+                            remainingBalance = adjustedRemaining,
+                            notes = notes
+                        )
                     )
-                )
+                }
+            } catch (e: Exception) {
+                _errorEvents.emit("Failed to update debt: ${e.message}")
             }
         }
     }

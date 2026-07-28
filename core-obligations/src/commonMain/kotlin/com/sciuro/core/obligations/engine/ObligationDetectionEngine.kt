@@ -16,14 +16,16 @@ class ObligationDetectionEngine(
     private val settingsProvider: SettingsProvider
 ) {
     suspend fun runDetection() {
-        val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
-        val confidenceTracker = ConfidenceTracker(database)
-        val autoConfirmEnabled = settingsProvider.isObligationAutoConfirmEnabled()
-        val autoConfirmThreshold = settingsProvider.getAutoConfirmThreshold()
+        try {
+            val allTransactions = database.transactionRecordQueries.selectAllTransactions().executeAsList()
+            val confidenceTracker = ConfidenceTracker(database)
+            val autoConfirmEnabled = settingsProvider.isObligationAutoConfirmEnabled()
+            val autoConfirmThreshold = settingsProvider.getAutoConfirmThreshold()
 
-        val byMerchant = allTransactions.filter { it.merchant != null }.groupBy { it.merchant!!.lowercase() }
+            val byMerchant = allTransactions.filter { it.merchant != null }.groupBy { it.merchant!!.lowercase() }
 
-        for ((merchant, txs) in byMerchant) {
+            for ((merchant, txs) in byMerchant) {
+                try {
             if (txs.size < 3) continue
             val outflows = txs.filter { it.direction == "OUTFLOW" }
             if (outflows.size < 3) continue
@@ -68,6 +70,12 @@ class ObligationDetectionEngine(
                 obligationRepository.createObligation(newObligation)
                 eventBus.publish(DomainEvent.RecurringObligationProposed(newObligation.id, 0.5))
             }
+                } catch (e: Exception) {
+                    println("ObligationDetectionEngine: error processing merchant $merchant: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            println("ObligationDetectionEngine.runDetection failed: ${e.message}")
         }
     }
 }

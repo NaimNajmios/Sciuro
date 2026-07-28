@@ -48,11 +48,11 @@ object FrequencyDetector {
     private fun classifyInterval(intervalMs: Long): ObligationFrequency? {
         val days = intervalMs.toDouble() / DAY_MS
         return when {
-            days in 5.0..9.0 -> ObligationFrequency.WEEKLY
-            days in 12.0..16.0 -> ObligationFrequency.BIWEEKLY
-            days in 25.0..35.0 -> ObligationFrequency.MONTHLY
-            days in 80.0..100.0 -> ObligationFrequency.QUARTERLY
-            days in 350.0..380.0 -> ObligationFrequency.YEARLY
+            days < 10.0 -> ObligationFrequency.WEEKLY
+            days < 18.0 -> ObligationFrequency.BIWEEKLY
+            days < 45.0 -> ObligationFrequency.MONTHLY
+            days < 120.0 -> ObligationFrequency.QUARTERLY
+            days < 400.0 -> ObligationFrequency.YEARLY
             else -> null
         }
     }

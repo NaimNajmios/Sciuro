@@ -111,11 +111,29 @@ class ObligationRepository(
     }
 
     suspend fun advanceNextDueDate(id: String, newDueDate: Long) {
-        database.obligationQueries.updateNextDueDate(newDueDate, currentTimeMillis(), id)
+        withAudit(
+            entityType = EntityType.RECURRING_OBLIGATION,
+            entityId = id,
+            action = AuditAction.UPDATE,
+            beforeState = null,
+            afterState = "next_due_date: $newDueDate",
+            source = AuditSource.SYSTEM_AUTO
+        ) {
+            database.obligationQueries.updateNextDueDate(newDueDate, currentTimeMillis(), id)
+        }
     }
 
     suspend fun recordPayment(id: String, newDueDate: Long) {
-        database.obligationQueries.recordPayment(newDueDate, currentTimeMillis(), currentTimeMillis(), id)
+        withAudit(
+            entityType = EntityType.RECURRING_OBLIGATION,
+            entityId = id,
+            action = AuditAction.UPDATE,
+            beforeState = null,
+            afterState = "next_due_date: $newDueDate, last_paid_date: ${currentTimeMillis()}",
+            source = AuditSource.SYSTEM_AUTO
+        ) {
+            database.obligationQueries.recordPayment(newDueDate, currentTimeMillis(), currentTimeMillis(), id)
+        }
     }
 
     fun observeActiveObligations(): Flow<List<Obligation>> {

@@ -20,5 +20,8 @@ SELECT * FROM debt_payment_link WHERE transaction_id = ?;
 deletePaymentLinkByTransaction:
 DELETE FROM debt_payment_link WHERE transaction_id = ?;
 
+deletePaymentLinksByDebt:
+DELETE FROM debt_payment_link WHERE debt_id = ?;
+
 sumPaymentsByDebt:
 SELECT SUM(amount_applied) AS applied_total FROM debt_payment_link WHERE debt_id = ?;

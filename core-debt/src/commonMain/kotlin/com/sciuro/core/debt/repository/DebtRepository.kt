@@ -102,6 +102,7 @@ class DebtRepository(
             afterState = null,
             source = AuditSource.USER_MANUAL
         ) {
+            database.debtPaymentLinkQueries.deletePaymentLinksByDebt(id)
             database.debtQueries.deleteDebt(id)
         }
     }
@@ -121,8 +122,8 @@ class DebtRepository(
     
     suspend fun applyPayment(debtId: String, paymentAmount: Double) {
         val debt = database.debtQueries.selectAllDebts().executeAsList().find { it.id == debtId } ?: return
-        val newBalance = debt.remaining_balance - paymentAmount
-        
+        val newBalance = (debt.remaining_balance - paymentAmount).coerceAtLeast(0.0)
+
         withAudit(
             entityType = EntityType.DEBT,
             entityId = debtId,
@@ -132,6 +133,10 @@ class DebtRepository(
             source = AuditSource.SYSTEM_AUTO
         ) {
             database.debtQueries.updateDebtBalance(newBalance, currentTimeMillis(), debtId)
+        }
+
+        if (newBalance <= 0.0) {
+            markAsPaidOff(debtId)
         }
     }
     
