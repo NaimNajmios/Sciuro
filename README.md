@@ -31,12 +31,22 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, and **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)** addressing cross-cutting architectural concerns.
+The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)**, and **Phase S2 (Kanban/Debt/Obligation Edge Case Fixes)** addressing cross-cutting architectural concerns.
 
 **Phase S1 highlights:**
 - **Quarantine instead of delete:** The database startup path no longer silently destroys the database on any passphrase open failure. Key-loss and corruption now rename the file to `sciuro.db.quarantined.<timestamp>` for recovery instead of `deleteDatabase`.
 - **Key-loss detection:** `DatabaseKeyManager.passphraseExists()` lets `PlatformDatabaseModule` distinguish "first run" from "key-loss" (Keystore unavailable, passphrase gone). The cascade that generated a new key, failed to open the DB, and deleted it is broken at its root — the DB is quarantined before a new passphrase is generated.
 - **Backup key recovery:** Encrypted exports now include the SQLCipher passphrase in the payload (version 2 format). On import, the passphrase is automatically recovered and re-stored in `EncryptedSharedPreferences`, enabling full recovery from genuine key-loss events.
+
+**Phase S2 highlights:**
+- **Bidirectional merchant matching:** Auto-settlement (`ObligationCycleMatcher`, `DebtEngine`) now checks both directions of the merchant name match. Renaming an obligation from "Netflix Subscription" to "Netflix" no longer breaks automatic cycle settlement.
+- **Manual mark-as-paid advances obligation:** Creating a manual payment from the kanban Bills tab now immediately updates the obligation's `last_paid_date` and `next_due_date` instead of waiting for the next `CycleMatcher` run.
+- **Debt payment clamping & auto-completion:** Overpaying a debt no longer produces negative `remainingBalance`. When balance reaches zero, the debt is automatically transitioned to `PAID_OFF` status.
+- **Debt editing preserves progress:** Editing a debt's name, notes, or principal no longer silently resets `remainingBalance` or overrides `status` to `ACTIVE`.
+- **Debts filter tri-state:** The kanban Debts tab filter replaced the boolean "Show Completed" switch with a `PillToggle` offering three states: Active, +Paid Off, and All (including ARCHIVED).
+- **Error handling on write paths:** All ViewModel mutation operations now emit user-visible snackbar errors on failure. Detection engines wrap batch processing in try/catch with per-record granularity — one corrupt record no longer aborts the entire cycle.
+- **Orphaned link cleanup:** Deleting a debt removes associated `debt_payment_link` rows, preventing orphaned references and stale `SUM` queries.
+- **Audit coverage for fast-path mutations:** `obligationRepository.recordPayment()` and `advanceNextDueDate()` now emit audit log entries, closing the last unaudited mutation gap in the obligations domain.
 
 **Phase R1 highlights:**
 - **Atomic database transactions:** All transaction mutations now wrap insert + balance update in SQLDelight `database.transaction { }`, preventing orphaned transactions on crash.

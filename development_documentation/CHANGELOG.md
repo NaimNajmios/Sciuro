@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- **Kanban/Obligation/Debt edge case fixes**: Comprehensive audit and fix of 12 edge cases across the kanban board, obligation detection, and debt tracking modules.
+  - **Bidirectional merchant matching** (`ObligationCycleMatcher`, `DebtEngine`): Matching now checks both directions (`obligation.name.contains(merchant)` OR `merchant.contains(obligation.name)`) — renaming an obligation to "Netflix" no longer breaks auto-settlement with "Netflix Subscription" transactions.
+  - **Manual mark-as-paid advances obligation** (`KanbanViewModel.markBillAsPaid`): Creating a manual payment now also calls `obligationRepository.recordPayment()` to update `last_paid_date` and `next_due_date` immediately, instead of waiting for the next CycleMatcher run.
+  - **applyPayment clamps to zero & auto-marks PAID_OFF** (`DebtRepository.applyPayment`): Overpayment no longer produces negative remaining balances. Balance reaching zero auto-transitions the debt to PAID_OFF status.
+  - **updateDebt preserves remaining balance & status** (`KanbanViewModel.updateDebt`): Editing a debt no longer resets `remainingBalance = principalAmount` or overrides `status = ACTIVE` — the existing balance is preserved and capped at the new principal; existing status is retained.
+  - **Orphaned payment link cleanup** (`DebtRepository.deleteDebt`): Deleting a debt now removes associated rows from `debt_payment_link` instead of leaving orphaned references.
+  - **Audit wrappers added** (`ObligationRepository.recordPayment`, `advanceNextDueDate`): Fast-path obligation mutations now emit audit log entries for traceability.
+  - **Error handling added** (`KanbanViewModel`, all write operations): try/catch with `errorEvents` SharedFlow emits user-facing snackbar messages on mutation failures. Detection engines (`ObligationDetectionEngine`, `DebtEngine`) wrap batch runs in try/catch with per-record granularity to prevent single corrupt records from aborting an entire processing cycle.
+
+### Changed
+- **Debts filter tri-state** (`KanbanViewModel`): Replaced boolean `showCompletedDebts` toggle with `DebtsFilter` enum (Active / +Paid Off / All). The DebtsColumn now uses a `PillToggle` instead of a `Switch`. ARCHIVED debts are visible when the "All" filter is selected.
+- **FrequencyDetector classification ranges** (`FrequencyDetector.classifyInterval`): Widened interval ranges to eliminate detection gaps (5-10→WEEKLY, 10-18→BIWEEKLY, 18-45→MONTHLY, 45-120→QUARTERLY, 120-400→YEARLY) — previously, intervals between predefined ranges (e.g., 9-12 days) returned null and defaulted to MONTHLY with a wrong due date.
+
 ### Added
 - **Phase S1 — Database Safety: Key-Loss Detection, Quarantine, & Backup Key Recovery**: Three changes to prevent silent data destruction and provide a recovery path for database encryption key-loss events.
   - **Delete → Quarantine (`PlatformDatabaseModule.kt`)**: The old `catch (e: Exception) { context.deleteDatabase() }` block in the Koin module was destroying the database on any open failure (key-loss, corruption, version mismatch). Replaced with two-phase startup: Phase 1 detects key-loss (DB exists but no stored passphrase) and renames the file to `sciuro.db.quarantined.<timestamp>`; Phase 2 detects corruption (stored passphrase exists but open fails) and quarantines with WAL/SHM/journal cleanup. Both paths log warnings via `Log.w("SciuroDB", ...)`. The quarantined file is recoverable by renaming it back.
