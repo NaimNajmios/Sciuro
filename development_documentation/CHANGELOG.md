@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### M2–M4 — Dark Component Gap Closure (10 items)
+
+#### Added
+- **InvestmentCard live pricing** (`feature-wallet`): Each investment card shows "Live: RM X" in green/red based on gain/loss via `InvestmentValuationEngine.getCurrentValue()`. Pull-to-refresh now calls `refreshInvestments()`. Per-investment live prices in `_investmentLivePrices`.
+- **BNPL risk warning card** (`feature-debt`): Amber `SciuroCard` with warning icon on `DebtOverviewScreen` when ≥2 active BNPL/credit card debts detected. Driven by `DebtViewModel.bnplRisk`.
+- **Credit card statement** (`feature-kanban`): `DebtDetailSheet` loads `StatementSummary` via `CreditCardStatementEngine` when `debt.type == CREDIT_CARD`. Shows balance, min payment, cycle payments, days remaining.
+- **Income pattern display** (`feature-dashboard`): "Next: RM X on [date]" replaces "based on bills only" in the runway card when recurring income is detected.
+- **Net worth milestone badge** (`feature-dashboard`): Persistent "RM X milestone reached" chip in hero panel, read from `SettingsProvider`.
+- **Obligation drift badge** (`feature-kanban`): Amber "AMOUNT CHANGED" badge on bill cards. `BillDetailSheet` shows "RM X → RM Y" history.
+- **Transfer candidate badge** (`feature-kanban`): Unmatched self-transfer candidates labeled "TRANSFER" in Kanban Review tab.
+- **Manual price override screen** (`feature-settings`): New `InvestmentPriceScreen` listing all investments with book/live/manual prices and Set/Clear buttons. Entry via Data & Privacy.
+- **Weekly digest card** (`feature-dashboard`): Real-time 7-day spending summary (total, count, top category) between summary row and adjustment banners.
+- **Merchant→account rules tab** (`feature-settings`): PillToggle on `MerchantRulesScreen` adds Accounts tab with learned merchant→account associations and delete.
+
+#### Changed
+- **WalletViewModel.refresh()**: Replaced 600ms delay with `refreshInvestments()` call.
+- **MerchantRuleRepository**: Added `accountRepository` param and `observeAllAccountRules()` / `deleteAccountRule()` methods.
+- **MerchantAccountRule.sq**: Added `selectAllMerchantAccountRules` query.
+
 ### Phase K2 — UX Polish (Phase 1: Tactile Polish)
 
 #### Added
