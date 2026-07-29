@@ -106,7 +106,7 @@ fun DeveloperTabIngestionLog(
                 }
 
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp).padding(bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -117,8 +117,7 @@ fun DeveloperTabIngestionLog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Switch(
                         checked = showRead,
-                        onCheckedChange = { viewModel.toggleShowRead() },
-                        modifier = Modifier.height(20.dp)
+                        onCheckedChange = { viewModel.toggleShowRead() }
                     )
                 }
             }
