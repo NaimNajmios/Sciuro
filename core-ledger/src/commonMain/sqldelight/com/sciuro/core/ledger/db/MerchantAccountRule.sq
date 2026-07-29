@@ -17,6 +17,9 @@ SELECT * FROM merchant_account_rule WHERE merchant_key = ?;
 selectTopAccountForMerchant:
 SELECT * FROM merchant_account_rule WHERE merchant_key = ? ORDER BY confirmation_count DESC LIMIT 1;
 
+selectAllMerchantAccountRules:
+SELECT * FROM merchant_account_rule ORDER BY confirmation_count DESC;
+
 deleteMerchantAccountRule:
 DELETE FROM merchant_account_rule WHERE merchant_key = ? AND account_id = ?;
 

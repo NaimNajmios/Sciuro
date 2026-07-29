@@ -49,4 +49,9 @@
     <!-- BNPL Risk -->
     <string name="debt_bnpl_risk_title">%d active BNPL debts</string>
     <string name="debt_bnpl_risk_desc">RM %d total across PayLater and credit card debts</string>
+
+    <!-- Context menu -->
+    <string name="debt_context_edit">Edit debt</string>
+    <string name="debt_context_mark_finished">Mark as finished</string>
+    <string name="debt_context_delete">Delete debt</string>
 </resources>

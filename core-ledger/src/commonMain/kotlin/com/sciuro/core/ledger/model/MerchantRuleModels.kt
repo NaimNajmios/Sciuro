@@ -1,5 +1,19 @@
 package com.sciuro.core.ledger.model
 
+data class MerchantAccountRuleUiModel(
+    val merchantKey: String,
+    val displayName: String,
+    val accountId: String,
+    val accountName: String,
+    val confirmationCount: Int
+) {
+    companion object {
+        fun displayNameFromKey(key: String): String =
+            key.split("_", " ")
+                .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+    }
+}
+
 data class MerchantRuleUiModel(
     val merchantKey: String,
     val displayName: String,

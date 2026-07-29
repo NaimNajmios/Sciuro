@@ -30,6 +30,7 @@ fun DataSettingsScreen(
     onNavigateToLinkedAccounts: () -> Unit = {},
     onNavigateToCategorySettings: () -> Unit = {},
     onNavigateToMerchantRules: () -> Unit = {},
+    onNavigateToInvestmentPrice: () -> Unit = {},
     onExportBackup: (String) -> Unit = {},
     onImportBackup: (Uri, String) -> Unit = { _, _ -> },
     viewModel: DataSettingsViewModel = koinViewModel()
@@ -147,6 +148,22 @@ fun DataSettingsScreen(
                         ) {
                             Text(stringResource(R.string.settings_manage_merchant_rules), style = MaterialTheme.typography.titleMedium)
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_manage_merchant_rules))
+                        }
+                    }
+                }
+
+                item {
+                    SciuroCard(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        onClick = onNavigateToInvestmentPrice
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(stringResource(R.string.settings_manage_investment_prices), style = MaterialTheme.typography.titleMedium)
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_manage_investment_prices))
                         }
                     }
                 }

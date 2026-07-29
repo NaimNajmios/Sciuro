@@ -71,6 +71,9 @@ class KanbanViewModel(
     private val _driftedAmounts = MutableStateFlow<Map<String, Pair<Double, Double>>>(emptyMap())
     val driftedAmounts: StateFlow<Map<String, Pair<Double, Double>>> = _driftedAmounts.asStateFlow()
 
+    private val _transferCandidateIds = MutableStateFlow<Set<String>>(emptySet())
+    val transferCandidateIds: StateFlow<Set<String>> = _transferCandidateIds.asStateFlow()
+
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
@@ -89,6 +92,9 @@ class KanbanViewModel(
                     is DomainEvent.ObligationAmountDrifted -> {
                         _driftedAmounts.value = _driftedAmounts.value + (event.obligationId to Pair(event.oldAmount, event.newAmount))
                         _animationTriggers.emit(event.obligationId)
+                    }
+                    is DomainEvent.TransferUnmatchedFlagged -> {
+                        _transferCandidateIds.value = _transferCandidateIds.value + event.transactionId
                     }
                     else -> {}
                 }

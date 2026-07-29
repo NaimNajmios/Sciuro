@@ -1,7 +1,9 @@
 package com.sciuro.feature.dashboard.ui
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
@@ -14,9 +16,13 @@ import androidx.compose.ui.Modifier
 import org.koin.compose.koinInject
 import com.sciuro.core.ledger.config.SettingsProvider
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowInsetsControllerCompat
 import kotlinx.coroutines.launch
 import com.sciuro.feature.dashboard.R
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
@@ -27,6 +33,7 @@ import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.FastTransactionSheet
 import com.najmi.sciuro.core.ui.components.FastTxOption
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -126,6 +133,26 @@ fun DashboardScreen(
     val msgDeleted = stringResource(R.string.dashboard_transaction_deleted)
 
     val pullToRefreshState = rememberPullToRefreshState()
+    val scrollState = rememberLazyListState()
+
+    val view = LocalView.current
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val isPrimaryDark = primaryColor.luminance() < 0.5f
+
+    val isAtHeroPanel by remember {
+        derivedStateOf {
+            scrollState.firstVisibleItemIndex == 0 && scrollState.firstVisibleItemScrollOffset < 200
+        }
+    }
+
+    SideEffect {
+        if (!view.isInEditMode) {
+            val window = (view.context as Activity).window
+            window.statusBarColor = if (isAtHeroPanel) primaryColor.toArgb() else surfaceColor.toArgb()
+            WindowInsetsControllerCompat(window, view).isAppearanceLightStatusBars = !isAtHeroPanel || !isPrimaryDark
+        }
+    }
 
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(true) {
@@ -139,6 +166,7 @@ fun DashboardScreen(
         .fillMaxSize()
     ) {
         LazyColumn(
+            state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp)
         ) {
@@ -244,6 +272,40 @@ fun DashboardScreen(
                                 expectedIncomeAmount = state.expectedIncomeAmount,
                                 expectedIncomeDate = state.expectedIncomeDate
                             )
+
+                            state.weeklyDigest?.let { digest ->
+                                SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("This week", style = MaterialTheme.typography.titleSmall)
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                "RM ${"%.0f".format(digest.totalSpent)} across ${digest.transactionCount} transaction${if (digest.transactionCount != 1) "s" else ""}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            if (digest.topCategoryName != null) {
+                                                Text(
+                                                    "Top: ${digest.topCategoryName}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                        if (digest.unreviewedCount > 0) {
+                                            Text(
+                                                "${digest.unreviewedCount} to review",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    }
+                                }
+                            }
 
                             AdjustmentBanner(adjustmentCount = state.recentAdjustmentCount)
                             

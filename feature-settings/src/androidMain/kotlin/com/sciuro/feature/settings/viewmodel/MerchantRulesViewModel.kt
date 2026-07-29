@@ -3,6 +3,7 @@ package com.sciuro.feature.settings.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sciuro.core.ledger.model.Category
+import com.sciuro.core.ledger.model.MerchantAccountRuleUiModel
 import com.sciuro.core.ledger.model.MerchantRuleUiModel
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.core.ledger.repository.MerchantRuleRepository
@@ -14,7 +15,9 @@ import kotlinx.coroutines.launch
 
 data class MerchantRulesUiState(
     val rules: List<MerchantRuleUiModel> = emptyList(),
+    val accountRules: List<MerchantAccountRuleUiModel> = emptyList(),
     val categories: List<Category> = emptyList(),
+    val selectedTab: String = "Categories",
     val isLoading: Boolean = true
 ) {
     companion object {
@@ -32,19 +35,28 @@ class MerchantRulesViewModel(
     val state: StateFlow<MerchantRulesUiState> = _state.asStateFlow()
 
     init {
-        val rulesFlow = merchantRuleRepository.observeAllRules()
-        val categoriesFlow = categoryRepository.observeCategories()
         viewModelScope.launch {
-            combine(rulesFlow, categoriesFlow) { rules, categories ->
+            combine(
+                merchantRuleRepository.observeAllRules(),
+                merchantRuleRepository.observeAllAccountRules(),
+                categoryRepository.observeCategories()
+            ) { rules, accountRules, categories ->
+                val current = _state.value
                 MerchantRulesUiState(
                     rules = rules,
+                    accountRules = accountRules,
                     categories = categories,
+                    selectedTab = current.selectedTab,
                     isLoading = false
                 )
             }.collect { uiState ->
                 _state.value = uiState
             }
         }
+    }
+
+    fun setSelectedTab(tab: String) {
+        _state.value = _state.value.copy(selectedTab = tab)
     }
 
     fun deleteRule(merchantKey: String) {
@@ -56,6 +68,12 @@ class MerchantRulesViewModel(
     fun overrideRule(merchantKey: String, newCategoryId: String) {
         viewModelScope.launch {
             merchantRuleRepository.overrideRule(merchantKey, newCategoryId)
+        }
+    }
+
+    fun deleteAccountRule(merchantKey: String, accountId: String) {
+        viewModelScope.launch {
+            merchantRuleRepository.deleteAccountRule(merchantKey, accountId)
         }
     }
 }

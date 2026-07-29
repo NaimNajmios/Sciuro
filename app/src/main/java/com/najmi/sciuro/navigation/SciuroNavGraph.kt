@@ -32,6 +32,7 @@ import com.sciuro.feature.settings.ui.CategorySettingsScreen
 import com.sciuro.feature.settings.ui.DataSettingsScreen
 import com.sciuro.feature.settings.ui.DeveloperSettingsScreen
 import com.sciuro.feature.settings.ui.IntelligenceSettingsScreen
+import com.sciuro.feature.settings.ui.InvestmentPriceScreen
 import com.sciuro.feature.settings.ui.LinkedAccountsScreen
 import com.sciuro.feature.settings.ui.MerchantRulesScreen
 import com.sciuro.feature.settings.ui.NotificationSettingsScreen
@@ -142,6 +143,9 @@ fun SciuroNavGraph(
                 onNavigateToMerchantRules = {
                     navController.navigate(SciuroRoute.MerchantRules.route)
                 },
+                onNavigateToInvestmentPrice = {
+                    navController.navigate(SciuroRoute.InvestmentPriceSettings.route)
+                },
                 onExportBackup = { password ->
                     scope.launch(Dispatchers.IO) {
                         exportBackup(context, password, sqlDriver, settingsProvider)
@@ -176,6 +180,10 @@ fun SciuroNavGraph(
 
         composable(SciuroRoute.MerchantRules.route) {
             MerchantRulesScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(SciuroRoute.InvestmentPriceSettings.route) {
+            InvestmentPriceScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(SciuroRoute.LinkedAccounts.route) {

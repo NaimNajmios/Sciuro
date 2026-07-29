@@ -31,6 +31,8 @@ import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.najmi.sciuro.core.ui.util.SciuroHaptics
+import com.najmi.sciuro.core.ui.util.bounceClick
 import androidx.compose.ui.res.stringResource
 import com.sciuro.core.budget.model.BudgetPeriod
 import com.sciuro.core.budget.engine.BudgetLimitSuggester
@@ -63,6 +65,9 @@ fun BudgetsScreen(
 
     var suggestedAmount by remember { mutableStateOf<Double?>(null) }
     val suggester: BudgetLimitSuggester = koinInject()
+
+    var contextMenuBudgetId by remember { mutableStateOf<String?>(null) }
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -155,13 +160,19 @@ fun BudgetsScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 16.dp)
-                                        .clickable {
-                                            editingBudgetId = budget.id
-                                            selectedCategoryId = null
-                                            amountText = budget.allocatedAmount.roundToInt().toString()
-                                            selectedPeriod = BudgetPeriod.valueOf(budget.period)
-                                            showSheet = true
-                                        }
+                                        .bounceClick(
+                                            onClick = {
+                                                editingBudgetId = budget.id
+                                                selectedCategoryId = null
+                                                amountText = budget.allocatedAmount.roundToInt().toString()
+                                                selectedPeriod = BudgetPeriod.valueOf(budget.period)
+                                                showSheet = true
+                                            },
+                                            onLongClick = {
+                                                SciuroHaptics.success(haptic)
+                                                contextMenuBudgetId = budget.id
+                                            }
+                                        )
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Row(
@@ -259,6 +270,38 @@ fun BudgetsScreen(
                                             )
                                         }
                                     }
+                                }
+
+                                DropdownMenu(
+                                    expanded = contextMenuBudgetId == budget.id,
+                                    onDismissRequest = { contextMenuBudgetId = null }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.budget_context_edit)) },
+                                        onClick = {
+                                            editingBudgetId = budget.id
+                                            selectedCategoryId = null
+                                            amountText = budget.allocatedAmount.roundToInt().toString()
+                                            selectedPeriod = BudgetPeriod.valueOf(budget.period)
+                                            showSheet = true
+                                            contextMenuBudgetId = null
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.budget_context_view_transactions)) },
+                                        onClick = {
+                                            onNavigateToCategoryDrilldown()
+                                            contextMenuBudgetId = null
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.budget_context_delete)) },
+                                        onClick = {
+                                            editingBudgetId = budget.id
+                                            showDeleteConfirmation = true
+                                            contextMenuBudgetId = null
+                                        }
+                                    )
                                 }
                             }
                         }

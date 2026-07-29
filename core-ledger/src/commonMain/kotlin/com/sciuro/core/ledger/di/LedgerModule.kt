@@ -18,5 +18,5 @@ val ledgerModule = module {
     single { com.sciuro.core.ledger.repository.RawEventRepository(get()) }
     single { com.sciuro.core.ledger.engine.TransactionMatchingEngine(get()) }
     single { com.sciuro.core.ledger.repository.MerchantAccountRuleRepository(get()) }
-    single { com.sciuro.core.ledger.repository.MerchantRuleRepository(get(), get()) }
+    single { com.sciuro.core.ledger.repository.MerchantRuleRepository(get(), get(), get()) }
 }

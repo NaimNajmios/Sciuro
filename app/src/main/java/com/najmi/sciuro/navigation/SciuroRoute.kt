@@ -15,6 +15,7 @@ sealed class SciuroRoute(val route: String) {
     data object DataSettings : SciuroRoute("data_settings")
     data object IntelligenceSettings : SciuroRoute("intelligence_settings")
     data object MerchantRules : SciuroRoute("merchant_rules")
+    data object InvestmentPriceSettings : SciuroRoute("investment_price_settings")
 
     data object AccountDetail : SciuroRoute("account_detail/{accountId}") {
         fun createRoute(accountId: String) = "account_detail/$accountId"
@@ -31,7 +32,7 @@ sealed class SciuroRoute(val route: String) {
             CategoryDrilldown.route -> Budgets.route
             CategorySettings.route, LinkedAccounts.route, DeveloperSettings.route,
             NotificationSettings.route, DataSettings.route, IntelligenceSettings.route,
-            MerchantRules.route -> Settings.route
+            MerchantRules.route, InvestmentPriceSettings.route -> Settings.route
             else -> null
         }
     }

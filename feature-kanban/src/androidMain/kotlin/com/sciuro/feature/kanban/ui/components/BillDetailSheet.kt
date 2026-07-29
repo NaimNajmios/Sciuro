@@ -25,7 +25,8 @@ fun BillDetailSheet(
     bill: BillTask,
     onDismiss: () -> Unit,
     onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    driftInfo: Pair<Double, Double>? = null
 ) {
     SciuroFormSheet(
         title = stringResource(R.string.kanban_bill_details_title),
@@ -57,6 +58,24 @@ fun BillDetailSheet(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
+        }
+
+        if (driftInfo != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = com.najmi.sciuro.core.ui.theme.SignalWarning.copy(alpha = 0.1f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        "Amount changed: RM ${"%.0f".format(driftInfo.first)} → RM ${"%.0f".format(driftInfo.second)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = com.najmi.sciuro.core.ui.theme.SignalWarning,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
         
         Spacer(modifier = Modifier.height(8.dp))

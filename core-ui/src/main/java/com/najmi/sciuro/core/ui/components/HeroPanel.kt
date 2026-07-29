@@ -31,13 +31,14 @@ fun HeroPanel(
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
     val isOnDarkSurface = MaterialTheme.colorScheme.primary.luminance() < 0.5f
+    val statusBarDp = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.primary)
             .semantics(mergeDescendants = true) { contentDescription = title }
-            .padding(top = 48.dp, bottom = 32.dp)
+            .padding(top = statusBarDp + 24.dp, bottom = 32.dp)
     ) {
         Row(
             modifier = Modifier

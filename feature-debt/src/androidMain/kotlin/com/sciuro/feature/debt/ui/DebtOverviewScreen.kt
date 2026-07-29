@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.najmi.sciuro.core.ui.util.SciuroHaptics
+import com.najmi.sciuro.core.ui.util.bounceClick
 import com.sciuro.feature.debt.R
 import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
@@ -61,6 +63,9 @@ fun DebtOverviewScreen(
     var showApplyPaymentConfirmation by remember { mutableStateOf(false) }
     var showMarkFinishedConfirmation by remember { mutableStateOf(false) }
     var autoMarkFinishedDebtId by remember { mutableStateOf<String?>(null) }
+
+    var contextMenuDebtId by remember { mutableStateOf<String?>(null) }
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
 
     // Form state
     var formName by remember { mutableStateOf("") }
@@ -152,6 +157,23 @@ fun DebtOverviewScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 16.dp)
+                                        .bounceClick(
+                                            onClick = {
+                                                editingDebt = debt
+                                                formName = debt.name
+                                                formType = debt.type
+                                                formDirection = debt.direction
+                                                formAmountText = if (debt.remainingBalance > 0)
+                                                    debt.remainingBalance.toInt().toString() else ""
+                                                formCounterparty = debt.counterpartyName ?: ""
+                                                formNotes = debt.notes ?: ""
+                                                showFormSheet = true
+                                            },
+                                            onLongClick = {
+                                                SciuroHaptics.success(haptic)
+                                                contextMenuDebtId = debt.id
+                                            }
+                                        )
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Row(
@@ -233,6 +255,43 @@ fun DebtOverviewScreen(
                                             }
                                         }
                                     }
+                                }
+
+                                DropdownMenu(
+                                    expanded = contextMenuDebtId == debt.id,
+                                    onDismissRequest = { contextMenuDebtId = null }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.debt_context_edit)) },
+                                        onClick = {
+                                            editingDebt = debt
+                                            formName = debt.name
+                                            formType = debt.type
+                                            formDirection = debt.direction
+                                            formAmountText = if (debt.remainingBalance > 0)
+                                                debt.remainingBalance.toInt().toString() else ""
+                                            formCounterparty = debt.counterpartyName ?: ""
+                                            formNotes = debt.notes ?: ""
+                                            showFormSheet = true
+                                            contextMenuDebtId = null
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.debt_context_mark_finished)) },
+                                        onClick = {
+                                            editingDebt = debt
+                                            showMarkFinishedConfirmation = true
+                                            contextMenuDebtId = null
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.debt_context_delete)) },
+                                        onClick = {
+                                            editingDebt = debt
+                                            showDeleteConfirmation = true
+                                            contextMenuDebtId = null
+                                        }
+                                    )
                                 }
                             }
                         }

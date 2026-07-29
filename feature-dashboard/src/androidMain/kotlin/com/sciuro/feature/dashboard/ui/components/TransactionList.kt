@@ -1,5 +1,8 @@
 package com.sciuro.feature.dashboard.ui.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -21,15 +24,18 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.TransactionCard
+import com.najmi.sciuro.core.ui.util.SciuroHaptics
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.core.ledger.db.Transaction_record
 import com.sciuro.feature.dashboard.R
@@ -45,6 +51,9 @@ fun TransactionList(
     @Suppress("UnusedParameter")
     modifier: Modifier = Modifier
 ) {
+    var contextMenuTx by remember { mutableStateOf<Transaction_record?>(null) }
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
 
     transactions.forEach { tx ->
         val cat = categoryMap[tx.category_id]
@@ -64,7 +73,11 @@ fun TransactionList(
                 isTransfer = isTransfer,
                 confidence = tx.confidence,
                 extractionMethod = tx.extraction_method,
-                onClick = { onTransactionClick(tx) }
+                onClick = { onTransactionClick(tx) },
+                onLongClick = {
+                    SciuroHaptics.success(haptic)
+                    contextMenuTx = tx
+                }
             )
         }
 
@@ -115,6 +128,28 @@ fun TransactionList(
             }
         } else {
             cardContent()
+        }
+
+        DropdownMenu(
+            expanded = contextMenuTx?.id == tx.id,
+            onDismissRequest = { contextMenuTx = null }
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.dashboard_context_copy_amount)) },
+                onClick = {
+                    val amountText = "RM ${"%.2f".format(tx.amount)}"
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("amount", amountText))
+                    contextMenuTx = null
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.dashboard_context_mark_transfer)) },
+                onClick = {
+                    onTransactionClick(tx)
+                    contextMenuTx = null
+                }
+            )
         }
     }
 }

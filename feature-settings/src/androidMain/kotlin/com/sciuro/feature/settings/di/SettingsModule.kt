@@ -3,6 +3,7 @@ package com.sciuro.feature.settings.di
 import com.sciuro.feature.settings.viewmodel.DataSettingsViewModel
 import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
 import com.sciuro.feature.settings.viewmodel.IntelligenceSettingsViewModel
+import com.sciuro.feature.settings.viewmodel.InvestmentPriceViewModel
 import com.sciuro.feature.settings.viewmodel.LinkedAccountsViewModel
 import com.sciuro.feature.settings.viewmodel.MerchantRulesViewModel
 import com.sciuro.feature.settings.viewmodel.NotificationSettingsViewModel
@@ -18,4 +19,5 @@ val settingsModule = module {
     viewModel { DeveloperSettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LinkedAccountsViewModel(get()) }
     viewModel { MerchantRulesViewModel(get(), get()) }
+    viewModel { InvestmentPriceViewModel(get(), get(), get()) }
 }

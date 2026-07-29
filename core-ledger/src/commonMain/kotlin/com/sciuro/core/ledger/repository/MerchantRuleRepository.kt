@@ -2,6 +2,7 @@ package com.sciuro.core.ledger.repository
 
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.ledger.db.SciuroDatabase
+import com.sciuro.core.ledger.model.MerchantAccountRuleUiModel
 import com.sciuro.core.ledger.model.MerchantRuleUiModel
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
@@ -12,7 +13,8 @@ import kotlinx.coroutines.flow.map
 
 class MerchantRuleRepository(
     private val database: SciuroDatabase,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val accountRepository: AccountRepository
 ) {
     fun observeAllRules(): Flow<List<MerchantRuleUiModel>> {
         val rulesFlow = database.merchantCategoryRuleQueries
@@ -54,5 +56,32 @@ class MerchantRuleRepository(
             first_seen_at = now,
             last_confirmed_at = now
         )
+    }
+
+    fun observeAllAccountRules(): Flow<List<MerchantAccountRuleUiModel>> {
+        val rulesFlow = database.merchantAccountRuleQueries
+            .selectAllMerchantAccountRules()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+
+        val accountsFlow = accountRepository.observeAccounts()
+
+        return combine(rulesFlow, accountsFlow) { rules, accounts ->
+            val accMap = accounts.associateBy { it.id }
+            rules.map { rule ->
+                val account = accMap[rule.account_id]
+                MerchantAccountRuleUiModel(
+                    merchantKey = rule.merchant_key,
+                    displayName = MerchantAccountRuleUiModel.displayNameFromKey(rule.merchant_key),
+                    accountId = rule.account_id,
+                    accountName = account?.name ?: rule.account_id,
+                    confirmationCount = rule.confirmation_count.toInt()
+                )
+            }.sortedBy { it.displayName }
+        }
+    }
+
+    suspend fun deleteAccountRule(merchantKey: String, accountId: String) {
+        database.merchantAccountRuleQueries.deleteMerchantAccountRule(merchantKey, accountId)
     }
 }

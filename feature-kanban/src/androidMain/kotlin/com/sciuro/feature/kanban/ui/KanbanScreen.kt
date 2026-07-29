@@ -72,6 +72,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val debtTasks by viewModel.debtTasks.collectAsState()
     val expenseCategories by viewModel.expenseCategories.collectAsState()
     val debtsFilter by viewModel.debtsFilter.collectAsState()
+    val driftedAmounts by viewModel.driftedAmounts.collectAsState()
+    val transferCandidateIds by viewModel.transferCandidateIds.collectAsState()
 
     var selectedTab by remember { mutableStateOf("Review") }
     val tabs = listOf("Review", "Bills", "Debts")
@@ -232,7 +234,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             bills = bills,
                             recentlySettledIds = recentlySettledIds,
                             onMarkPaid = { paymentBill = it },
-                            onClickBill = { billToView = it }
+                            onClickBill = { billToView = it },
+                            driftedAmounts = driftedAmounts
                         )
                         "Debts" ->   DebtsColumn(
                             debtTasks = debtTasks,
@@ -250,7 +253,8 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             onReject = { taskToReject = it },
                             onApprove = { task, accountId, direction ->
                                 taskToApprove = Triple(task, accountId, direction)
-                            }
+                            },
+                            transferCandidateIds = transferCandidateIds
                         )
                     }
                 }
@@ -397,6 +401,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     if (billToView != null) {
         BillDetailSheet(
             bill = billToView!!,
+            driftInfo = driftedAmounts[billToView!!.obligation.id],
             onDismiss = { billToView = null },
             onEditClick = {
                 billToEdit = billToView
@@ -485,7 +490,8 @@ private fun ReviewColumn(
     selectedStatus: String,
     onStatusChange: (String) -> Unit,
     onReject: (KanbanTask) -> Unit,
-    onApprove: (KanbanTask, String?, String) -> Unit
+    onApprove: (KanbanTask, String?, String) -> Unit,
+    transferCandidateIds: Set<String> = emptySet()
 ) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         PillToggle(
@@ -506,7 +512,8 @@ private fun ReviewColumn(
                     task = task,
                     accounts = accounts,
                     onApprove = { accountId, direction -> onApprove(task, accountId, direction) },
-                    onReject = { onReject(task) }
+                    onReject = { onReject(task) },
+                    isTransferCandidate = task.id in transferCandidateIds
                 )
             }
         }
@@ -518,7 +525,8 @@ private fun BillsColumn(
     bills: List<BillTask>,
     recentlySettledIds: List<String>,
     onMarkPaid: (BillTask) -> Unit,
-    onClickBill: (BillTask) -> Unit
+    onClickBill: (BillTask) -> Unit,
+    driftedAmounts: Map<String, Pair<Double, Double>> = emptyMap()
 ) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val overdueBills = bills.filter { it.status == BillStatus.OVERDUE }
@@ -531,19 +539,19 @@ private fun BillsColumn(
         } else {
             if (overdueBills.isNotEmpty()) {
                 Text(stringResource(R.string.kanban_section_overdue), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-                overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
+                overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds, driftInfo = driftedAmounts[bill.obligation.id]) }
             }
             if (dueSoonBills.isNotEmpty()) {
                 Text(stringResource(R.string.kanban_section_due_soon), style = MaterialTheme.typography.titleMedium, color = com.najmi.sciuro.core.ui.theme.SignalWarning, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-                dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
+                dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds, driftInfo = driftedAmounts[bill.obligation.id]) }
             }
             if (upcomingBills.isNotEmpty()) {
                 Text(stringResource(R.string.kanban_section_upcoming), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-                upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
+                upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds, driftInfo = driftedAmounts[bill.obligation.id]) }
             }
             if (settledBills.isNotEmpty()) {
                 Text("Settled", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-                settledBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds) }
+                settledBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds, driftInfo = driftedAmounts[bill.obligation.id]) }
             }
         }
     }
@@ -590,12 +598,12 @@ private fun BillCard(
                         ) {
                             Text("PAID", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
-                    } else if (driftInfo != null) {
+                        } else if (driftInfo != null) {
                         Surface(
-                            color = SignalWarning.copy(alpha = 0.2f),
+                            color = com.najmi.sciuro.core.ui.theme.SignalWarning.copy(alpha = 0.2f),
                             shape = MaterialTheme.shapes.small
                         ) {
-                            Text("AMOUNT CHANGED", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = SignalWarning)
+                            Text("AMOUNT CHANGED", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = com.najmi.sciuro.core.ui.theme.SignalWarning)
                         }
                     }
                 }
@@ -769,7 +777,8 @@ fun KanbanTaskCard(
     task: KanbanTask,
     accounts: List<Account>,
     onApprove: (String?, String) -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
+    isTransferCandidate: Boolean = false
 ) {
     var selectedAccount by remember(task.id) {
         mutableStateOf(accounts.find { it.id == task.accountId })
@@ -809,11 +818,32 @@ fun KanbanTaskCard(
                 }
             }
 
-            Text(
-                text = task.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                if (isTransferCandidate) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        color = com.najmi.sciuro.core.ui.theme.SignalWarning.copy(alpha = 0.2f),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            "TRANSFER",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = com.najmi.sciuro.core.ui.theme.SignalWarning
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = task.description,

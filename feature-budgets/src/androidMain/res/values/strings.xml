@@ -22,6 +22,9 @@
     <string name="budget_deleted">Budget deleted</string>
     <string name="budget_delete_title">Delete Budget</string>
     <string name="budget_delete_message">Are you sure you want to delete this budget? This action cannot be undone.</string>
+    <string name="budget_context_edit">Edit budget</string>
+    <string name="budget_context_view_transactions">View transactions</string>
+    <string name="budget_context_delete">Delete budget</string>
 
     <!-- Category Drilldown Screen -->
     <string name="budget_category_spending_title">Category Spending</string>

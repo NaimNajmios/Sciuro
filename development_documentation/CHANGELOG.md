@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Phase K2 — UX Polish (Phase 1: Tactile Polish)
+
+#### Added
+- **SciuroHaptics** (`core-ui/util/SciuroHaptics.kt`): Unified haptic feedback utility with semantic methods — `selection()`, `success()`, `warning()`, `error()`, `transferMatch()`. All use Compose `LocalHapticFeedback` (no `VIBRATE` permission). Replaces 13+ scattered raw `performHapticFeedback` calls across `InteractiveModifier.bounceClick`, `SciuroPrimaryButton`, and `FastTransactionSheet` (numpad + filter chips).
+- **Long-press context menus**: `combinedClickable` support added to `bounceClick` modifier via optional `onLongClick` parameter. Transaction cards, budget cards, and debt cards now show contextual `DropdownMenu` on long-press:
+  - **TransactionCard**: "Copy amount" (copies to clipboard), "Mark as transfer"
+  - **Budget cards**: "Edit budget", "View transactions", "Delete budget"
+  - **Debt cards**: "Edit debt", "Mark as finished", "Delete debt"
+- **Edge-to-edge status bar theming** (`DashboardScreen`): Scroll-aware status bar color — transparent/primary at top (HeroPanel visible), transitions to surface color when scrolled past HeroPanel. Status bar icon color adapts via `WindowInsetsControllerCompat.isAppearanceLightStatusBars`. Uses `derivedStateOf` for efficient recomposition.
+- **HeroPanel dynamic top padding** (`HeroPanel.kt`): Replaced fixed 48dp top padding with `WindowInsets.statusBars` + 24dp, ensuring proper status bar clearance across devices with varying status bar heights.
+- **String resources**: 8 new context menu strings across `feature-dashboard`, `feature-budgets`, and `feature-debt`.
+
+#### Changed
+- `InteractiveModifier.bounceClick` now uses `combinedClickable` instead of `clickable` (supports long-press). Haptic type changed from `LongPress` to `SciuroHaptics.selection()` (lighter `TextHandleMove` for taps).
+- `SciuroPrimaryButton` haptic changed from raw `LongPress` to `SciuroHaptics.success()`.
+- `FastTransactionSheet` numpad and chip haptics changed from `TextHandleMove` to `SciuroHaptics.selection()`. Save button no longer fires double-haptic (removed duplicate from Numpad's onClick — `SciuroPrimaryButton` handles it internally).
+
 ### Developer Tools — Ingestion Log Pagination & Read Tracking
 
 #### Added

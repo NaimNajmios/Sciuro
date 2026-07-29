@@ -280,7 +280,18 @@
     <string name="merchant_rules_delete_action">Reset</string>
     <string name="merchant_rules_override_title">Change Category</string>
     <string name="merchant_rules_override_hint">Current: %s. Pick a new category for this merchant.</string>
+    <string name="merchant_rules_account_manage">Learned Merchant Account Rules</string>
+    <string name="merchant_rules_account_empty">No merchant to account rules learned yet. The system learns which account to use for each merchant as you recategorize transactions.</string>
+    <string name="merchant_rules_account_delete">Reset Account Rule</string>
+    <string name="merchant_rules_account_delete_confirm">Reset the account rule for "%1$s" to "%2$s"? The system will re-learn it on the next matching transaction.</string>
     <string name="settings_manage_merchant_rules">Manage Merchant Rules</string>
+    <string name="settings_manage_investment_prices">Investment Price Overrides</string>
+
+    <!-- Investment Price Screen -->
+    <string name="investment_price_title">Investment Prices</string>
+    <string name="investment_price_back">Back</string>
+    <string name="investment_price_manage">Manual Price Overrides</string>
+    <string name="investment_price_empty">No investments yet. Add investments in the Wallet to override prices.</string>
 
     <!-- Misc -->
     <string name="settings_hide">Hide</string>

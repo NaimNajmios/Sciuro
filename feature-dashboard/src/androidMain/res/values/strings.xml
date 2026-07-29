@@ -76,4 +76,6 @@
     <string name="dashboard_swipe_instructions">Swipe right to approve, left to reject</string>
     <string name="dashboard_approve_cd">Approve</string>
     <string name="dashboard_reject_cd">Reject</string>
+    <string name="dashboard_context_copy_amount">Copy amount</string>
+    <string name="dashboard_context_mark_transfer">Mark as transfer</string>
 </resources>

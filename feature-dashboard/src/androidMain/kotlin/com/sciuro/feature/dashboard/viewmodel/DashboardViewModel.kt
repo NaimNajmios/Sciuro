@@ -37,6 +37,13 @@ import com.sciuro.core.ledger.config.SettingsProvider
 
 import kotlinx.coroutines.flow.first
 
+data class WeeklyDigestData(
+    val totalSpent: Double = 0.0,
+    val topCategoryName: String? = null,
+    val transactionCount: Int = 0,
+    val unreviewedCount: Int = 0
+)
+
 data class NetPositionBreakdown(
     val cash: Double = 0.0,
     val debts: Double = 0.0,
@@ -59,7 +66,8 @@ data class DashboardState(
     val hasIncomePattern: Boolean = false,
     val expectedIncomeAmount: Double = 0.0,
     val expectedIncomeDate: Long? = null,
-    val lastMilestoneReached: Double = 0.0
+    val lastMilestoneReached: Double = 0.0,
+    val weeklyDigest: WeeklyDigestData? = null
 )
 
 data class TransactionDetailData(
@@ -188,7 +196,17 @@ class DashboardViewModel(
         }.sumOf { it.remainingBalance.toDouble() }
 
         val runway = totalAccounts + expectedIncome - obligationsDue - debtsDue
-        
+
+        val oneWeekMs = 7L * 24L * 60L * 60L * 1000L
+        val weekAgo = currentTimeMillis() - oneWeekMs
+        val weekTxs = allTxs.filter { it.timestamp >= weekAgo && it.direction == "OUTFLOW" }
+        val weekTotal = weekTxs.sumOf { it.amount }
+        val weekCount = weekTxs.size
+        val allCatMap = (expenseCats + incomeCats).associateBy { it.id }
+        val topCategory = weekTxs.groupBy { it.category_id }.maxByOrNull { it.value.sumOf { tx -> tx.amount } }
+        val topCatName = topCategory?.key?.let { allCatMap[it]?.name }
+        val weeklyDigest = if (weekCount > 0) WeeklyDigestData(weekTotal, topCatName, weekCount, unreviewed.size) else null
+
         DashboardState(
             netPosition = netPosition,
             netPositionBreakdown = breakdown,
@@ -204,7 +222,8 @@ class DashboardViewModel(
             hasIncomePattern = incomePattern != null,
             expectedIncomeAmount = incomePattern?.amount ?: 0.0,
             expectedIncomeDate = incomePattern?.nextExpectedDate,
-            lastMilestoneReached = settingsProvider.getLastMilestoneReached()
+            lastMilestoneReached = settingsProvider.getLastMilestoneReached(),
+            weeklyDigest = weeklyDigest
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DashboardState())
 

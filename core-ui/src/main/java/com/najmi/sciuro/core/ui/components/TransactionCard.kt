@@ -39,7 +39,8 @@ fun TransactionCard(
     isTransfer: Boolean = false,
     confidence: Double? = null,
     extractionMethod: String? = null,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onLongClick: (() -> Unit)? = null
 ) {
     val directionTint = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
     val amountColor = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else MaterialTheme.colorScheme.onSurface
@@ -51,7 +52,7 @@ fun TransactionCard(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .bounceClick(onClick = onClick)
+            .bounceClick(onClick = onClick, onLongClick = onLongClick)
     ) {
         Row(
             modifier = Modifier

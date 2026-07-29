@@ -185,7 +185,7 @@ fun SciuroPrimaryButton(
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     Button(
         onClick = {
-            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+            com.najmi.sciuro.core.ui.util.SciuroHaptics.success(haptic)
             onClick()
         },
         modifier = modifier.fillMaxWidth().height(52.dp),

@@ -20,13 +20,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
+import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SheetList
-
-
 import com.sciuro.core.ledger.model.Category
+import com.sciuro.core.ledger.model.MerchantAccountRuleUiModel
 import com.sciuro.core.ledger.model.MerchantRuleUiModel
 import com.sciuro.feature.settings.R
 import com.sciuro.feature.settings.viewmodel.MerchantRulesViewModel
@@ -40,14 +40,15 @@ fun MerchantRulesScreen(
     val uiState by viewModel.state.collectAsState()
     var rulePendingDelete by remember { mutableStateOf<MerchantRuleUiModel?>(null) }
     var rulePendingOverride by remember { mutableStateOf<MerchantRuleUiModel?>(null) }
+    var accountRulePendingDelete by remember { mutableStateOf<MerchantAccountRuleUiModel?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = stringResource(R.string.merchant_rules_title),
             heroFigure = { Text(stringResource(R.string.merchant_rules_title), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary) },
-            toggleOptions = emptyList(),
-            selectedToggle = "",
-            onToggleSelected = {},
+            toggleOptions = listOf("Categories", "Accounts"),
+            selectedToggle = uiState.selectedTab,
+            onToggleSelected = { viewModel.setSelectedTab(it) },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
@@ -70,32 +71,54 @@ fun MerchantRulesScreen(
             ) {
                 item {
                     Text(
-                        stringResource(R.string.merchant_rules_manage),
+                        stringResource(if (uiState.selectedTab == "Categories") R.string.merchant_rules_manage else R.string.merchant_rules_account_manage),
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 }
 
-                if (uiState.rules.isEmpty()) {
-                    item {
-                        Text(
-                            stringResource(R.string.merchant_rules_empty),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp)
+                if (uiState.selectedTab == "Categories") {
+                    if (uiState.rules.isEmpty()) {
+                        item {
+                            Text(
+                                stringResource(R.string.merchant_rules_empty),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp)
+                            )
+                        }
+                    }
+
+                    items(uiState.rules) { rule ->
+                        MerchantRuleCard(
+                            rule = rule,
+                            onDelete = { rulePendingDelete = it },
+                            onOverride = { rulePendingOverride = it }
                         )
                     }
-                }
 
-                items(uiState.rules) { rule ->
-                    MerchantRuleCard(
-                        rule = rule,
-                        onDelete = { rulePendingDelete = it },
-                        onOverride = { rulePendingOverride = it }
-                    )
-                }
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                } else {
+                    if (uiState.accountRules.isEmpty()) {
+                        item {
+                            Text(
+                                stringResource(R.string.merchant_rules_account_empty),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp)
+                            )
+                        }
+                    }
 
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                    items(uiState.accountRules) { rule ->
+                        MerchantAccountRuleCard(
+                            rule = rule,
+                            onDelete = { accountRulePendingDelete = it }
+                        )
+                    }
+
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                }
             }
         }
     }
@@ -125,6 +148,20 @@ fun MerchantRulesScreen(
             onDismiss = { rulePendingOverride = null }
         )
     }
+
+    accountRulePendingDelete?.let { rule ->
+        SciuroConfirmationDialog(
+            title = stringResource(R.string.merchant_rules_account_delete),
+            message = stringResource(R.string.merchant_rules_account_delete_confirm, rule.displayName, rule.accountName),
+            confirmText = stringResource(R.string.merchant_rules_delete_action),
+            isDestructive = true,
+            onConfirm = {
+                viewModel.deleteAccountRule(rule.merchantKey, rule.accountId)
+                accountRulePendingDelete = null
+            },
+            onDismiss = { accountRulePendingDelete = null }
+        )
+    }
 }
 
 @Composable
@@ -151,6 +188,42 @@ private fun MerchantRuleCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     stringResource(R.string.merchant_rules_category, rule.categoryName),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    stringResource(R.string.merchant_rules_confirmation_count, rule.confirmationCount),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+            IconButton(onClick = { onDelete(rule) }) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = stringResource(R.string.merchant_rules_delete),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MerchantAccountRuleCard(
+    rule: MerchantAccountRuleUiModel,
+    onDelete: (MerchantAccountRuleUiModel) -> Unit
+) {
+    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(rule.displayName, style = MaterialTheme.typography.bodyLarge)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Account: ${rule.accountName}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

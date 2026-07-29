@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import com.najmi.sciuro.core.ui.util.SciuroHaptics
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -103,7 +103,7 @@ fun FastTransactionSheet(
         )
 
         val haptic = LocalHapticFeedback.current
-        
+
         // Description / Label (Text Field Removed to prevent keyboard conflict)
         SciuroTextField(
             value = merchant,
@@ -114,9 +114,9 @@ fun FastTransactionSheet(
             items(presetLabels) { label ->
                 FilterChip(
                     selected = merchant == label,
-                    onClick = { 
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        merchant = label 
+                    onClick = {
+                        SciuroHaptics.selection(haptic)
+                        merchant = label
                     },
                     label = { Text(label) }
                 )
@@ -132,10 +132,10 @@ fun FastTransactionSheet(
                     items(cats) { cat ->
                         FilterChip(
                             selected = categoryId == cat.id,
-                            onClick = { 
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onClick = {
+                                SciuroHaptics.selection(haptic)
                                 categoryId = cat.id
-                                showCategoryError = false 
+                                showCategoryError = false
                             },
                             label = { Text(cat.name) }
                         )
@@ -149,10 +149,10 @@ fun FastTransactionSheet(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(accounts) { acc ->
                 FilterChip(
-                    selected = accountId == acc.id,
-                    onClick = { 
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        accountId = acc.id 
+                        selected = accountId == acc.id,
+                    onClick = {
+                        SciuroHaptics.selection(haptic)
+                        accountId = acc.id
                     },
                     label = { Text(acc.name) }
                 )
@@ -166,9 +166,9 @@ fun FastTransactionSheet(
                     items(accounts.filter { it.id != accountId }) { acc ->
                         FilterChip(
                             selected = destinationAccountId == acc.id,
-                            onClick = { 
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                destinationAccountId = acc.id 
+                            onClick = {
+                                SciuroHaptics.selection(haptic)
+                                destinationAccountId = acc.id
                             },
                             label = { Text(acc.name) }
                         )
@@ -218,7 +218,6 @@ fun Numpad(
     onSaveClick: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val rows = listOf(
             listOf("1", "2", "3"),
@@ -230,7 +229,7 @@ fun Numpad(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (num in row) {
                     NumpadButton(text = num, onClick = { 
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        SciuroHaptics.selection(haptic)
                         onNumberClick(num) 
                     }, modifier = Modifier.weight(1f))
                 }
@@ -239,15 +238,15 @@ fun Numpad(
         
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NumpadButton(text = ".", onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                SciuroHaptics.selection(haptic)
                 onDecimalClick()
             }, modifier = Modifier.weight(1f))
             NumpadButton(text = "0", onClick = { 
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                SciuroHaptics.selection(haptic)
                 onNumberClick("0") 
             }, modifier = Modifier.weight(1f))
             NumpadButton(text = stringResource(R.string.shared_backspace), icon = Icons.Filled.Backspace, onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                SciuroHaptics.selection(haptic)
                 onBackspaceClick()
             }, modifier = Modifier.weight(1f))
         }
@@ -255,7 +254,6 @@ fun Numpad(
         SciuroPrimaryButton(
             text = stringResource(R.string.tx_save_transaction),
             onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onSaveClick()
             },
             modifier = Modifier.padding(top = 8.dp)
