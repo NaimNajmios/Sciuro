@@ -68,6 +68,9 @@ class KanbanViewModel(
     private val _processingTaskIds = MutableStateFlow<Set<String>>(emptySet())
     val processingTaskIds: StateFlow<Set<String>> = _processingTaskIds.asStateFlow()
 
+    private val _driftedAmounts = MutableStateFlow<Map<String, Pair<Double, Double>>>(emptyMap())
+    val driftedAmounts: StateFlow<Map<String, Pair<Double, Double>>> = _driftedAmounts.asStateFlow()
+
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
@@ -83,6 +86,10 @@ class KanbanViewModel(
                     is DomainEvent.ObligationCycleSettled -> _animationTriggers.emit(event.obligationId)
                     is DomainEvent.DebtBalanceUpdated -> _animationTriggers.emit(event.debtId)
                     is DomainEvent.DebtFullyPaidOff -> _animationTriggers.emit(event.debtId)
+                    is DomainEvent.ObligationAmountDrifted -> {
+                        _driftedAmounts.value = _driftedAmounts.value + (event.obligationId to Pair(event.oldAmount, event.newAmount))
+                        _animationTriggers.emit(event.obligationId)
+                    }
                     else -> {}
                 }
             }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +28,8 @@ fun DeveloperTabIngestionLog(
     val deadLetterEvents by viewModel.deadLetterEvents.collectAsState()
     val pendingCount by viewModel.pendingCount.collectAsState()
     val deadLetterCount by viewModel.deadLetterCount.collectAsState()
+    val hasMore by viewModel.hasMoreDeadLetters.collectAsState()
+    val showRead by viewModel.showReadDeadLetters().collectAsState()
 
     var selectedDeadLetter by remember { mutableStateOf<com.sciuro.core.ledger.db.Raw_event_staging?>(null) }
 
@@ -82,13 +85,41 @@ fun DeveloperTabIngestionLog(
                         "Dead-Letter Events",
                         style = MaterialTheme.typography.titleSmall
                     )
-                    IconButton(onClick = { viewModel.refreshCounts() }) {
-                        Icon(
-                            Icons.Filled.Refresh,
-                            contentDescription = "Refresh",
-                            modifier = androidx.compose.ui.Modifier.size(20.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (deadLetterEvents.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.markAllRead() }) {
+                                Icon(
+                                    Icons.Filled.Done,
+                                    contentDescription = "Mark All Read",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        IconButton(onClick = { viewModel.refreshCounts() }) {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = "Refresh",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Show read",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Switch(
+                        checked = showRead,
+                        onCheckedChange = { viewModel.toggleShowRead() },
+                        modifier = Modifier.height(20.dp)
+                    )
                 }
             }
         }
@@ -132,17 +163,55 @@ fun DeveloperTabIngestionLog(
                     Text(event.title, style = MaterialTheme.typography.titleSmall)
                     Text(event.text, maxLines = 2, style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(
-                        onClick = { viewModel.resendDeadLetter(event.id) },
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            Icons.Filled.Refresh,
-                            contentDescription = stringResource(R.string.dev_ingestion_resend),
-                            modifier = androidx.compose.ui.Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.dev_ingestion_resend))
+                        TextButton(
+                            onClick = { viewModel.resendDeadLetter(event.id) },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = stringResource(R.string.dev_ingestion_resend),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.dev_ingestion_resend))
+                        }
+                        if (event.is_read == 0L) {
+                            IconButton(
+                                onClick = { viewModel.markRead(event.id) },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.Done,
+                                    contentDescription = "Mark read",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            Text(
+                                "Read",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        if (hasMore) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextButton(onClick = { viewModel.loadMoreDeadLetters() }) {
+                        Text("Load More")
                     }
                 }
             }
@@ -165,7 +234,7 @@ fun DeveloperTabIngestionLog(
                 label = "Title",
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             )
-            
+
             com.najmi.sciuro.core.ui.components.SciuroTextField(
                 value = editText,
                 onValueChange = { editText = it },

@@ -24,7 +24,8 @@ import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.SheetList
-import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
+
+
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.core.ledger.model.MerchantRuleUiModel
 import com.sciuro.feature.settings.R
@@ -43,7 +44,7 @@ fun MerchantRulesScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = stringResource(R.string.merchant_rules_title),
-            heroFigure = { Text(stringResource(R.string.merchant_rules_title), style = MaterialTheme.typography.headlineLarge, color = BrandPrimaryDark) },
+            heroFigure = { Text(stringResource(R.string.merchant_rules_title), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {},
@@ -52,7 +53,7 @@ fun MerchantRulesScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.merchant_rules_back),
-                        tint = BrandPrimaryDark
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }

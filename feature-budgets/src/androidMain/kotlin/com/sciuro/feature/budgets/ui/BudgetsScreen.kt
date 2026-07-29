@@ -81,7 +81,7 @@ fun BudgetsScreen(
                 HeroPanel(
                     title = stringResource(R.string.budget_title),
                     heroFigure = if (budgets.isEmpty()) {
-                        { Text(stringResource(R.string.budget_no_active), style = MaterialTheme.typography.headlineLarge, color = Color.White) }
+                        { Text(stringResource(R.string.budget_no_active), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary) }
                     } else {
                         { HeroFigurePair(first = totalSpent, second = totalAllocated) }
                     },
@@ -89,6 +89,7 @@ fun BudgetsScreen(
                     selectedToggle = "",
                     onToggleSelected = {},
                     content = {
+                        val onPrimary = MaterialTheme.colorScheme.onPrimary
                         if (atRisk.isNotEmpty()) {
                             Column(
                                 modifier = Modifier
@@ -105,7 +106,7 @@ fun BudgetsScreen(
                                         Text(
                                             text = budget.categoryName,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.7f)
+                                            color = onPrimary.copy(alpha = 0.7f)
                                         )
                                         Text(
                                             text = "${(budget.progress * 100).toInt()}%",
@@ -113,7 +114,7 @@ fun BudgetsScreen(
                                             color = when (budget.health()) {
                                                 BudgetHealth.OVER -> SignalDanger
                                                 BudgetHealth.APPROACHING -> SignalWarning
-                                                BudgetHealth.HEALTHY -> Color.White.copy(alpha = 0.6f)
+                                                BudgetHealth.HEALTHY -> onPrimary.copy(alpha = 0.6f)
                                             }
                                         )
                                     }
@@ -122,7 +123,7 @@ fun BudgetsScreen(
                                 Text(
                                     text = stringResource(R.string.budget_view_categories),
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = Color.White.copy(alpha = 0.8f),
+                                    color = onPrimary.copy(alpha = 0.8f),
                                     modifier = Modifier.clickable { onNavigateToCategoryDrilldown() }
                                 )
                             }

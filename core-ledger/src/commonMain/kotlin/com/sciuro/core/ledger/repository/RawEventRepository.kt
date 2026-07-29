@@ -78,6 +78,28 @@ open class RawEventRepository(
         return database.rawEventStagingQueries.selectStrandedEventsCount(staleProcessedBeforeMs).executeAsOne()
     }
 
+    open fun observeDeadLetterEventsPaginated(limit: Long, offset: Long, showRead: Boolean): Flow<List<Raw_event_staging>> {
+        return database.rawEventStagingQueries.selectDeadLetterEventsPaginated(
+            showRead = if (showRead) 1L else 0L,
+            limit = limit,
+            offset = offset
+        ).asFlow().mapToList(Dispatchers.Default)
+    }
+
+    open suspend fun countDeadLetterFiltered(showRead: Boolean): Long {
+        return database.rawEventStagingQueries.countDeadLetterFiltered(
+            showRead = if (showRead) 1L else 0L
+        ).executeAsOne()
+    }
+
+    open suspend fun markRead(id: String) {
+        database.rawEventStagingQueries.markRead(id)
+    }
+
+    open suspend fun markAllDeadLetterRead() {
+        database.rawEventStagingQueries.markAllDeadLetterRead()
+    }
+
     open suspend fun requeueRawEvent(id: String) {
         database.rawEventStagingQueries.requeueRawEvent(id)
     }

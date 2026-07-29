@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.sciuro.core.investment.model.Investment
@@ -16,9 +18,14 @@ import com.sciuro.core.investment.model.Investment
 @Composable
 fun InvestmentCard(
     investment: Investment,
+    livePrice: Double? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val bookValue = investment.unitsHeld * investment.averageBuyPrice
+    val showLive = livePrice != null && livePrice > 0.0 && kotlin.math.abs(livePrice - bookValue) > 0.01
+    val liveColor = if (showLive && livePrice!! >= bookValue) Color(0xFF4CAF50) else Color(0xFFE53935)
+
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
@@ -46,12 +53,22 @@ fun InvestmentCard(
                     Text(investment.assetName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.7f))
                 }
             }
-            val valNow = investment.unitsHeld * investment.averageBuyPrice
-            Text(
-                "RM ${"%.2f".format(valNow)}",
-                style = MaterialTheme.typography.titleMedium,
-                fontFamily = IBMPlexMono
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "RM ${"%.2f".format(bookValue)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = IBMPlexMono
+                )
+                if (showLive) {
+                    Text(
+                        "Live: RM ${"%.2f".format(livePrice)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = IBMPlexMono,
+                        color = liveColor,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }

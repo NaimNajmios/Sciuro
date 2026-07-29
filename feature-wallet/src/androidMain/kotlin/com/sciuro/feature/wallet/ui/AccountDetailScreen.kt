@@ -155,11 +155,12 @@ fun AccountDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = stringResource(R.string.wallet_back_cd),
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
                 content = {
+                    val onPrimary = MaterialTheme.colorScheme.onPrimary
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -172,8 +173,8 @@ fun AccountDetailScreen(
                             FilledTonalButton(
                                 onClick = { showQrFullScreen = true },
                                 colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = Color.White.copy(alpha = 0.15f),
-                                    contentColor = Color.White
+                                    containerColor = onPrimary.copy(alpha = 0.15f),
+                                    contentColor = onPrimary
                                 )
                             ) {
                                 Icon(
@@ -187,8 +188,8 @@ fun AccountDetailScreen(
                         FilledTonalButton(
                             onClick = { showAdjustmentDialog = true },
                             colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = Color.White.copy(alpha = 0.15f),
-                                contentColor = Color.White
+                                containerColor = onPrimary.copy(alpha = 0.15f),
+                                contentColor = onPrimary
                             )
                         ) {
                             Icon(
@@ -209,7 +210,7 @@ fun AccountDetailScreen(
                     Icon(
                         Icons.Filled.MoreVert,
                         contentDescription = stringResource(R.string.wallet_more_options_cd),
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
                 DropdownMenu(

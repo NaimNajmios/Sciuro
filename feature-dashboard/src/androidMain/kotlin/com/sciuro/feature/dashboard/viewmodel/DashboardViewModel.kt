@@ -33,6 +33,7 @@ import com.sciuro.core.debt.repository.DebtRepository
 import com.sciuro.core.investment.repository.InvestmentRepository
 import com.sciuro.core.obligations.engine.IncomeRecurrencePatternDetector
 import com.sciuro.core.obligations.repository.ObligationRepository
+import com.sciuro.core.ledger.config.SettingsProvider
 
 import kotlinx.coroutines.flow.first
 
@@ -55,7 +56,10 @@ data class DashboardState(
     val recentAdjustmentCount: Int = 0,
     val balanceHistory: List<Float> = emptyList(),
     val runway: Double = 0.0,
-    val hasIncomePattern: Boolean = false
+    val hasIncomePattern: Boolean = false,
+    val expectedIncomeAmount: Double = 0.0,
+    val expectedIncomeDate: Long? = null,
+    val lastMilestoneReached: Double = 0.0
 )
 
 data class TransactionDetailData(
@@ -76,7 +80,8 @@ class DashboardViewModel(
     private val debtRepository: DebtRepository,
     private val investmentRepository: InvestmentRepository,
     private val obligationRepository: ObligationRepository,
-    private val incomeDetector: IncomeRecurrencePatternDetector
+    private val incomeDetector: IncomeRecurrencePatternDetector,
+    private val settingsProvider: SettingsProvider
 ) : ViewModel() {
     
     init {
@@ -196,7 +201,10 @@ class DashboardViewModel(
             recentAdjustmentCount = recentAdjustments.size,
             balanceHistory = balanceHistory,
             runway = runway,
-            hasIncomePattern = incomePattern != null
+            hasIncomePattern = incomePattern != null,
+            expectedIncomeAmount = incomePattern?.amount ?: 0.0,
+            expectedIncomeDate = incomePattern?.nextExpectedDate,
+            lastMilestoneReached = settingsProvider.getLastMilestoneReached()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DashboardState())
 

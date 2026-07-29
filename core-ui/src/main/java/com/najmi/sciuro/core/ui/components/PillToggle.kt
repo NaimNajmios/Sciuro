@@ -20,7 +20,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.najmi.sciuro.core.ui.theme.BrandPrimaryLight
 
 @Composable
 fun PillToggle(
@@ -32,10 +31,10 @@ fun PillToggle(
     fillWidth: Boolean = false,
     scrollable: Boolean = false
 ) {
-    val containerColor = if (isOnDarkSurface) Color.White.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
-    val activeColor = if (isOnDarkSurface) Color.White else MaterialTheme.colorScheme.primary
-    val activeTextColor = if (isOnDarkSurface) Color.Black else MaterialTheme.colorScheme.onPrimary
-    val inactiveTextColor = if (isOnDarkSurface) Color.White.copy(alpha = 0.85f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+    val containerColor = if (isOnDarkSurface) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+    val activeColor = if (isOnDarkSurface) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+    val activeTextColor = if (isOnDarkSurface) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
+    val inactiveTextColor = if (isOnDarkSurface) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
 
     Box(
         modifier = modifier

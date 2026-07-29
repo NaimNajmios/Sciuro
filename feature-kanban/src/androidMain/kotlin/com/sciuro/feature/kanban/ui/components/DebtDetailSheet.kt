@@ -6,15 +6,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroFormSheet
+import com.sciuro.core.debt.engine.CreditCardStatementEngine
+import com.sciuro.core.debt.engine.StatementSummary
+import com.sciuro.core.debt.model.DebtType
 import com.sciuro.feature.kanban.R
 import com.sciuro.feature.kanban.model.DebtTask
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +28,11 @@ fun DebtDetailSheet(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val engine: CreditCardStatementEngine = koinInject()
+    val statement by produceState<StatementSummary?>(initialValue = null, key1 = debt.id) {
+        value = if (debt.type == DebtType.CREDIT_CARD) engine.getStatementSummary(debt.id) else null
+    }
+
     SciuroFormSheet(
         title = stringResource(R.string.kanban_debt_details_title),
         onDismissRequest = onDismiss
@@ -53,6 +62,29 @@ fun DebtDetailSheet(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
+        }
+
+        if (statement != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        stringResource(R.string.kanban_cc_statement_title, "${"%.0f".format(statement!!.statementBalance)}"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.kanban_cc_statement_detail, "${"%.0f".format(statement!!.minPaymentDue)}", statement!!.paymentCount, statement!!.daysRemaining),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
         
         Spacer(modifier = Modifier.height(16.dp))

@@ -196,6 +196,19 @@ fun DeveloperTabPipelineTrace(
                 }
             }
 
+            if (events.size >= 100) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        TextButton(onClick = { viewModel.loadMorePipelineEvents() }) {
+                            Text("Load More")
+                        }
+                    }
+                }
+            }
+
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }

@@ -45,4 +45,8 @@
     <string name="debt_apply_payment_message">Are you sure you want to apply this payment?</string>
     <string name="debt_fully_paid_title">Debt Fully Paid</string>
     <string name="debt_fully_paid_message">This debt\'s balance has reached zero. Would you like to mark it as finished?</string>
+
+    <!-- BNPL Risk -->
+    <string name="debt_bnpl_risk_title">%d active BNPL debts</string>
+    <string name="debt_bnpl_risk_desc">RM %d total across PayLater and credit card debts</string>
 </resources>

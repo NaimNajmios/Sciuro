@@ -105,6 +105,10 @@
     <!-- Edit sheets -->
     <string name="kanban_edit_bill_title">Edit Bill</string>
 
+    <!-- Credit Card Statement -->
+    <string name="kanban_cc_statement_title">Current statement: RM %1$s</string>
+    <string name="kanban_cc_statement_detail">Min payment: RM %1$s  ·  %2$d payment(s)  ·  %3$d days remaining</string>
+
     <!-- Accessibility -->
     <string name="kanban_add_tab_cd">Add %1$s</string>
 </resources>

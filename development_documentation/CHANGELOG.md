@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Developer Tools — Ingestion Log Pagination & Read Tracking
+
+#### Added
+- **Ingestion log pagination**: Dead-letter events now load in 50-item pages with a "Load More" button at the bottom of the list, preventing long load times when the dead-letter table contains thousands of rows.
+- **Mark as read**: New `is_read` column on `raw_event_staging` (migration `14.sqm`). Dead-letter events can be marked as read individually (checkmark icon per card) or in bulk ("Mark All Read" button in the summary card header). Unread events appear by default; a "Show read" toggle reveals previously acknowledged events.
+- **Pipeline trace pagination**: Trace events no longer hardcoded to 100 — a "Load More" button increases the limit by 100 on each tap. Filter changes reset the limit to prevent stale results.
+
+#### Changed
+- **`RawEventStaging.sq`**: Added `selectDeadLetterEventsPaginated` (LIMIT/OFFSET with `is_read` filter), `countDeadLetterFiltered`, `markRead`, `markAllDeadLetterRead` queries. Added `is_read INTEGER NOT NULL DEFAULT 0` to the CREATE TABLE to match the `14.sqm` migration.
+
+### HeroPanel — Palette-Aware Color Inheritance
+
+#### Changed
+- **HeroPanel background**: Changed from hardcoded `SurfaceHero` (`#000000` black) to `MaterialTheme.colorScheme.primary`, making the hero section dynamically inherit the user's selected palette color (Monochrome, Amber, Ocean, Forest, Plum, or Slate).
+- **HeroPanel text/icons**: Title, hero figure text, navigation icons, and WaveChart sparkline now use `MaterialTheme.colorScheme.onPrimary` instead of `Color.White`, ensuring proper contrast against any palette primary color.
+- **PillToggle dark surface mode**: Dark-surface mode no longer uses hardcoded `Color.White`/`Color.Black` — it derives colors from `MaterialTheme.colorScheme.onPrimary`/`primary`, making pills adaptable to any themed background.
+- **All 14 HeroPanel call sites**: Updated across all feature modules (settings, wallet, dashboard, debt, budgets, kanban) to replace `BrandPrimaryDark`, `Color.White`, and `SurfaceHero` with the corresponding `onPrimary` palette tokens.
+- **WalletScreen custom hero section**: The manual hero section (which replaces HeroPanel for the wallet type selector) also updated from `SurfaceHero` to `MaterialTheme.colorScheme.primary` / `onPrimary`.
+
 ### Core-Classifier Edge-Case Hardening (Phases 1–4)
 
 #### Fixed

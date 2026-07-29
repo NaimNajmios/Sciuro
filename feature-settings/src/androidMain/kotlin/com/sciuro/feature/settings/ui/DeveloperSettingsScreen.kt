@@ -10,7 +10,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
-import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.feature.settings.R
@@ -72,7 +71,7 @@ fun DeveloperSettingsScreen(
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             HeroPanel(
                 title = stringResource(R.string.developer_title),
-                heroFigure = { Text(lastCaptureText, style = MaterialTheme.typography.headlineLarge, color = BrandPrimaryDark) },
+                heroFigure = { Text(lastCaptureText, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary) },
                 toggleOptions = emptyList(),
                 selectedToggle = "",
                 onToggleSelected = {},
@@ -81,7 +80,7 @@ fun DeveloperSettingsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = stringResource(R.string.linked_accounts_back),
-                            tint = BrandPrimaryDark
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
@@ -95,12 +94,12 @@ fun DeveloperSettingsScreen(
                         Text(
                             text = stringResource(R.string.developer_pending, pendingCount.toInt()),
                             style = MaterialTheme.typography.bodySmall,
-                            color = BrandPrimaryDark.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                         )
                         Text(
                             text = stringResource(R.string.developer_dead, deadLetterCount.toInt()),
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (deadLetterCount > 0) SignalDanger else BrandPrimaryDark.copy(alpha = 0.7f)
+                            color = if (deadLetterCount > 0) SignalDanger else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                         )
                     }
                 }

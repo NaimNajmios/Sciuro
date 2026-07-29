@@ -16,6 +16,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+data class BnplRiskInfo(
+    val count: Int = 0,
+    val total: Double = 0.0
+)
+
 class DebtViewModel(
     private val debtRepository: DebtRepository
 ) : ViewModel() {
@@ -40,6 +45,20 @@ class DebtViewModel(
     val debts: StateFlow<List<DebtUiModel>> = debtRepository.observeDebts()
         .map { it.toUiModel() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val bnplRisk: StateFlow<BnplRiskInfo> = debtRepository.observeDebts()
+        .map { allDebts ->
+            val bnpl = allDebts.filter { it.status == DebtStatus.ACTIVE && isBnplDebt(it) }
+            BnplRiskInfo(count = bnpl.size, total = bnpl.sumOf { it.remainingBalance })
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BnplRiskInfo())
+
+    private fun isBnplDebt(debt: Debt): Boolean {
+        if (debt.type == DebtType.CREDIT_CARD) return true
+        val name = debt.name.lowercase()
+        return name.contains("bnpl") || name.contains("paylater") || name.contains("pay later")
+            || name.contains("atome") || name.contains("hoolah") || name.contains("split")
+    }
 
     val debtsIOwe: StateFlow<List<DebtUiModel>> = debtRepository.observeDebtsByDirection(DebtDirection.I_OWE)
         .map { it.toUiModel() }

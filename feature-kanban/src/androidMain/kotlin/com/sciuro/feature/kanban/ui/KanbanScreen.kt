@@ -162,6 +162,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         else -> stringResource(R.string.kanban_hero_title_tasks)
                     },
                     heroFigure = {
+                        val onPrimary = MaterialTheme.colorScheme.onPrimary
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -173,7 +174,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                     else -> "${todoCount + inProgressCount}"
                                 },
                                 style = MaterialTheme.typography.headlineMedium,
-                                color = Color.White,
+                                color = onPrimary,
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                             )
                             Text(
@@ -183,7 +184,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                                     else -> stringResource(R.string.kanban_hero_figure_total)
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.7f)
+                                color = onPrimary.copy(alpha = 0.7f)
                             )
                         }
                     },
@@ -191,6 +192,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                     selectedToggle = selectedTab,
                     onToggleSelected = { selectedTab = it },
                     content = {
+                        val onPrimary = MaterialTheme.colorScheme.onPrimary
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -199,19 +201,19 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                         ) {
                             when (selectedTab) {
                                 "Bills" -> {
-                                    HeroMetric(label = stringResource(R.string.kanban_metric_overdue), value = billOverdue.toString(), color = if (billOverdue > 0) com.najmi.sciuro.core.ui.theme.SignalDanger else Color.White.copy(alpha = 0.7f))
-                                    HeroMetric(label = stringResource(R.string.kanban_metric_due_soon), value = billDueSoon.toString(), color = if (billDueSoon > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = stringResource(R.string.kanban_metric_overdue), value = billOverdue.toString(), color = if (billOverdue > 0) com.najmi.sciuro.core.ui.theme.SignalDanger else onPrimary.copy(alpha = 0.7f))
+                                    HeroMetric(label = stringResource(R.string.kanban_metric_due_soon), value = billDueSoon.toString(), color = if (billDueSoon > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else onPrimary.copy(alpha = 0.7f))
                                 }
                                 "Debts" -> {
                                     val totalOwe = remember(debtTasks) { debtTasks.filter { it.direction == com.sciuro.core.debt.model.DebtDirection.I_OWE }.sumOf { it.remainingBalance } }
                                     val totalOwed = remember(debtTasks) { debtTasks.filter { it.direction == com.sciuro.core.debt.model.DebtDirection.OWED_TO_ME }.sumOf { it.remainingBalance } }
-                                    HeroMetric(label = "I Owe", value = "RM ${"%.0f".format(totalOwe)}", color = Color.White.copy(alpha = 0.9f))
-                                    HeroMetric(label = "Owed To Me", value = "RM ${"%.0f".format(totalOwed)}", color = Color.White.copy(alpha = 0.9f))
+                                    HeroMetric(label = "I Owe", value = "RM ${"%.0f".format(totalOwe)}", color = onPrimary.copy(alpha = 0.9f))
+                                    HeroMetric(label = "Owed To Me", value = "RM ${"%.0f".format(totalOwed)}", color = onPrimary.copy(alpha = 0.9f))
                                 }
                                 else -> {
-                                    HeroMetric(label = "To Do", value = todoCount.toString(), color = Color.White.copy(alpha = 0.9f))
-                                    HeroMetric(label = "In Progress", value = inProgressCount.toString(), color = if (inProgressCount > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else Color.White.copy(alpha = 0.7f))
-                                    HeroMetric(label = "Done", value = doneCount.toString(), color = Color.White.copy(alpha = 0.7f))
+                                    HeroMetric(label = "To Do", value = todoCount.toString(), color = onPrimary.copy(alpha = 0.9f))
+                                    HeroMetric(label = "In Progress", value = inProgressCount.toString(), color = if (inProgressCount > 0) com.najmi.sciuro.core.ui.theme.SignalWarning else onPrimary.copy(alpha = 0.7f))
+                                    HeroMetric(label = "Done", value = doneCount.toString(), color = onPrimary.copy(alpha = 0.7f))
                                 }
                             }
                         }
@@ -552,7 +554,8 @@ private fun BillCard(
     bill: BillTask,
     onMarkPaid: (BillTask) -> Unit,
     onClick: () -> Unit,
-    isRecentlySettled: Boolean = false
+    isRecentlySettled: Boolean = false,
+    driftInfo: Pair<Double, Double>? = null
 ) {
     val noMotion = reducedMotion()
     val scale by animateFloatAsState(
@@ -586,6 +589,13 @@ private fun BillCard(
                             shape = MaterialTheme.shapes.small
                         ) {
                             Text("PAID", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                    } else if (driftInfo != null) {
+                        Surface(
+                            color = SignalWarning.copy(alpha = 0.2f),
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text("AMOUNT CHANGED", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = SignalWarning)
                         }
                     }
                 }

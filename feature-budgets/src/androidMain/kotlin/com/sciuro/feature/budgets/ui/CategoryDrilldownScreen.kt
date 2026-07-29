@@ -38,7 +38,7 @@ fun CategoryDrilldownScreen(
                 Text(
                     "RM %.0f".format(state.totalSpend),
                     style = MaterialTheme.typography.headlineLarge,
-                    color = androidx.compose.ui.graphics.Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontFamily = IBMPlexMono
                 )
             },
@@ -50,7 +50,7 @@ fun CategoryDrilldownScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.budget_back),
-                        tint = androidx.compose.ui.graphics.Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }

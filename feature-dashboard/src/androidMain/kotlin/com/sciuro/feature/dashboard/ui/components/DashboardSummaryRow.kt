@@ -16,6 +16,8 @@ fun DashboardSummaryRow(
     activeBudgetsCount: Int,
     runway: Double,
     hasIncomePattern: Boolean,
+    expectedIncomeAmount: Double = 0.0,
+    expectedIncomeDate: Long? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -42,7 +44,14 @@ fun DashboardSummaryRow(
                     style = MaterialTheme.typography.headlineSmall,
                     color = if (runway < 0) SignalDanger else MaterialTheme.colorScheme.onSurface
                 )
-                if (!hasIncomePattern) {
+                if (hasIncomePattern && expectedIncomeDate != null) {
+                    val dateStr = java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault()).format(java.util.Date(expectedIncomeDate))
+                    Text(
+                        stringResource(R.string.dashboard_expected_income, expectedIncomeAmount.toInt(), dateStr),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else if (!hasIncomePattern) {
                     Text(
                         stringResource(R.string.dashboard_based_on_bills_only),
                         style = MaterialTheme.typography.labelSmall,

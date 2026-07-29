@@ -27,6 +27,8 @@
     <string name="dashboard_active_budgets">Active Budgets</string>
     <string name="dashboard_runway">Runway</string>
     <string name="dashboard_based_on_bills_only">based on bills only</string>
+    <string name="dashboard_expected_income">Next: RM %1$d on %2$s</string>
+    <string name="dashboard_milestone_reached">RM %1$d milestone reached</string>
 
     <!-- AutoBookedBanner -->
     <string name="dashboard_auto_booked_success_cd">Auto-booked Success</string>

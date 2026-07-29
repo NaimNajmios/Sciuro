@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -95,30 +96,35 @@ class WalletViewModel(
     private val _currentInvestmentTotal = MutableStateFlow(0.0)
     val currentInvestmentTotal: StateFlow<Double> = _currentInvestmentTotal.asStateFlow()
 
+    private val _investmentLivePrices = MutableStateFlow<Map<String, Double>>(emptyMap())
+    val investmentLivePrices: StateFlow<Map<String, Double>> = _investmentLivePrices.asStateFlow()
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     fun refresh() {
-        viewModelScope.launch {
-            _isRefreshing.value = true
-            delay(600)
-            _isRefreshing.value = false
-        }
+        refreshInvestments()
     }
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _currentInvestmentTotal.value = investmentValuationEngine.getTotalCurrentValue()
-            } catch (_: Exception) {}
-        }
+        refreshInvestments()
     }
 
     fun refreshInvestments() {
         viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.value = true
             try {
                 _currentInvestmentTotal.value = investmentValuationEngine.getTotalCurrentValue()
+                val investments = investmentRepository.observeInvestments().first()
+                val prices = mutableMapOf<String, Double>()
+                for (inv in investments) {
+                    try {
+                        prices[inv.id] = investmentValuationEngine.getCurrentValue(inv.id)
+                    } catch (_: Exception) {}
+                }
+                _investmentLivePrices.value = prices
             } catch (_: Exception) {}
+            _isRefreshing.value = false
         }
     }
 

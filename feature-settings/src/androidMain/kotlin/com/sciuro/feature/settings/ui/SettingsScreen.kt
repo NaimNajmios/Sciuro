@@ -21,7 +21,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.ui.draw.clip
-import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
+
+
 import com.najmi.sciuro.core.ui.theme.PalettePreference
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
@@ -88,7 +89,7 @@ fun SettingsScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = stringResource(R.string.settings_title),
-            heroFigure = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineLarge, color = BrandPrimaryDark) },
+            heroFigure = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {}

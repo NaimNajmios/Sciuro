@@ -97,6 +97,7 @@ fun WalletScreen(
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val investments by viewModel.investments.collectAsState()
+    val livePrices by viewModel.investmentLivePrices.collectAsState()
     
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
@@ -192,7 +193,7 @@ fun WalletScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(com.najmi.sciuro.core.ui.theme.SurfaceHero)
+                        .background(MaterialTheme.colorScheme.primary)
                         .padding(top = 48.dp, bottom = 48.dp)
                 ) {
             Row(
@@ -204,7 +205,7 @@ fun WalletScreen(
                     Text(
                         text = if (selectedAssetType == "Liquid Cash") stringResource(R.string.wallet_total_liquidity) else stringResource(R.string.wallet_total_investments),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     HeroFigure(amount = displayTotal)
@@ -283,6 +284,7 @@ fun WalletScreen(
                         investments.forEach { inv ->
                             InvestmentCard(
                                 investment = inv,
+                                livePrice = livePrices[inv.id],
                                 onClick = {
                                     editingInvestmentId = inv.id
                                     newAssetType = inv.assetType

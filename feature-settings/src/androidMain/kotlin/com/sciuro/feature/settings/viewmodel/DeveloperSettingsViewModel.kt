@@ -22,7 +22,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
@@ -64,9 +66,23 @@ class DeveloperSettingsViewModel(
     private val _simulationResult = MutableStateFlow<SimulationResult?>(null)
     val simulationResult: StateFlow<SimulationResult?> = _simulationResult.asStateFlow()
 
-    val deadLetterEvents: StateFlow<List<Raw_event_staging>> =
-        rawEventRepository.observeDeadLetterEvents()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // Dead-letter pagination
+    private val _deadLetterLimit = MutableStateFlow(50L)
+    private val _showReadDeadLetters = MutableStateFlow(false)
+    private val _totalFilteredDeadLetterCount = MutableStateFlow(0L)
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val deadLetterEvents: StateFlow<List<Raw_event_staging>> = combine(
+        _deadLetterLimit, _showReadDeadLetters
+    ) { limit, showRead ->
+        rawEventRepository.observeDeadLetterEventsPaginated(limit, 0L, showRead)
+    }.flatMapLatest { it }
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val hasMoreDeadLetters: StateFlow<Boolean> = combine(
+        _deadLetterLimit, _totalFilteredDeadLetterCount
+    ) { limit, total -> limit < total }
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _pendingCount = MutableStateFlow(0L)
     val pendingCount: StateFlow<Long> = _pendingCount.asStateFlow()
@@ -103,6 +119,8 @@ class DeveloperSettingsViewModel(
     private val _pipelineEvents = MutableStateFlow<List<TraceEventSummary>>(emptyList())
     val pipelineEvents: StateFlow<List<TraceEventSummary>> = _pipelineEvents.asStateFlow()
 
+    private val _pipelineTraceLimit = MutableStateFlow(100L)
+
     private val _traceFilterStatus = MutableStateFlow("ALL")
     val traceFilterStatus: StateFlow<String> = _traceFilterStatus.asStateFlow()
 
@@ -121,11 +139,18 @@ class DeveloperSettingsViewModel(
     fun setTraceFilter(status: String, pkg: String) {
         _traceFilterStatus.value = status
         _traceFilterPackage.value = pkg
+        _pipelineTraceLimit.value = 100L
         loadPipelineEvents()
     }
 
     fun setShowOnlyAllowlisted(show: Boolean) {
         _showOnlyAllowlisted.value = show
+        _pipelineTraceLimit.value = 100L
+        loadPipelineEvents()
+    }
+
+    fun loadMorePipelineEvents() {
+        _pipelineTraceLimit.value += 100L
         loadPipelineEvents()
     }
 
@@ -136,7 +161,7 @@ class DeveloperSettingsViewModel(
                 val pkg = _traceFilterPackage.value.ifBlank { null }
                 val allowed = if (_showOnlyAllowlisted.value) ingestionAllowlist.effectivePackages.value else null
                 val events = database.pipelineTraceQueries
-                    .selectFilteredTraceEvents(pkg, status, 100L)
+                    .selectFilteredTraceEvents(pkg, status, _pipelineTraceLimit.value)
                     .executeAsList()
                     .map {
                         TraceEventSummary(it.raw_event_id, it.first_at, it.last_at, it.stage_count, it.package_name)
@@ -230,8 +255,44 @@ class DeveloperSettingsViewModel(
                 _pendingCount.value = rawEventRepository.countPending()
                 _deadLetterCount.value = rawEventRepository.countDeadLetter()
                 _lastCapturedAt.value = rawEventRepository.getLastCapturedAt()
+                _totalFilteredDeadLetterCount.value = rawEventRepository.countDeadLetterFiltered(_showReadDeadLetters.value)
             } catch (e: Exception) {
                 _uiError.value = e.message ?: "Failed to refresh counts"
+            }
+        }
+    }
+
+    fun loadMoreDeadLetters() {
+        _deadLetterLimit.value += 50L
+    }
+
+    fun showReadDeadLetters(): StateFlow<Boolean> = _showReadDeadLetters.asStateFlow()
+
+    fun toggleShowRead() {
+        _showReadDeadLetters.value = !_showReadDeadLetters.value
+        _deadLetterLimit.value = 50L
+        refreshCounts()
+    }
+
+    fun markRead(eventId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                rawEventRepository.markRead(eventId)
+                refreshCounts()
+            } catch (e: Exception) {
+                _uiError.value = e.message ?: "Failed to mark as read"
+            }
+        }
+    }
+
+    fun markAllRead() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                rawEventRepository.markAllDeadLetterRead()
+                _deadLetterLimit.value = 50L
+                refreshCounts()
+            } catch (e: Exception) {
+                _uiError.value = e.message ?: "Failed to mark all as read"
             }
         }
     }

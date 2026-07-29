@@ -1,17 +1,22 @@
 package com.sciuro.feature.debt.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import com.najmi.sciuro.core.ui.theme.SignalWarning
 import com.sciuro.feature.debt.R
 import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
@@ -26,6 +31,7 @@ import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.model.DebtType
+import com.sciuro.feature.debt.viewmodel.BnplRiskInfo
 import com.sciuro.feature.debt.viewmodel.DebtViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -37,6 +43,7 @@ fun DebtOverviewScreen(
     val allDebts by viewModel.debts.collectAsState()
     val debtsIOwe by viewModel.debtsIOwe.collectAsState()
     val debtsOwedToMe by viewModel.debtsOwedToMe.collectAsState()
+    val bnplRisk by viewModel.bnplRisk.collectAsState()
 
     var selectedTab by remember { mutableStateOf("I Owe") }
     val tabs = listOf("I Owe", "Owed to Me")
@@ -72,7 +79,7 @@ fun DebtOverviewScreen(
                 HeroPanel(
                     title = stringResource(R.string.debt_title),
                     heroFigure = if (allDebts.isEmpty()) {
-                        { Text(stringResource(R.string.debt_empty_state), style = MaterialTheme.typography.headlineLarge, color = Color.White) }
+                        { Text(stringResource(R.string.debt_empty_state), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary) }
                     } else {
                         { HeroFigurePair(first = totalIOwe, second = totalOwedToMe) }
                     },
@@ -89,12 +96,12 @@ fun DebtOverviewScreen(
                             Text(
                                 text = "I Owe: RM ${"%.2f".format(totalIOwe)}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                             )
                             Text(
                                 text = "Owed: RM ${"%.2f".format(totalOwedToMe)}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                             )
                         }
                     }
@@ -116,6 +123,11 @@ fun DebtOverviewScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        if (bnplRisk.count >= 2) {
+                            BnplWarningCard(bnplRisk = bnplRisk)
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
                         if (displayedDebts.isEmpty()) {
                             EmptyStateView(
                                 message = if (selectedTab == "I Owe")
@@ -496,5 +508,43 @@ fun DebtOverviewScreen(
             },
             onDismiss = { autoMarkFinishedDebtId = null }
         )
+    }
+}
+
+@Composable
+private fun BnplWarningCard(bnplRisk: BnplRiskInfo) {
+    SciuroCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(SignalWarning.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = null,
+                    tint = SignalWarning,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.debt_bnpl_risk_title, bnplRisk.count),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    stringResource(R.string.debt_bnpl_risk_desc, bnplRisk.total.toInt()),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }

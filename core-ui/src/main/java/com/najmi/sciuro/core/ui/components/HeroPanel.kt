@@ -9,15 +9,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.najmi.sciuro.core.ui.theme.SurfaceHero
 
 @Composable
 fun HeroPanel(
@@ -31,10 +30,12 @@ fun HeroPanel(
     navigationIcon: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
+    val isOnDarkSurface = MaterialTheme.colorScheme.primary.luminance() < 0.5f
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(SurfaceHero)
+            .background(MaterialTheme.colorScheme.primary)
             .semantics(mergeDescendants = true) { contentDescription = title }
             .padding(top = 48.dp, bottom = 32.dp)
     ) {
@@ -54,7 +55,7 @@ fun HeroPanel(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                 )
             }
 
@@ -72,7 +73,7 @@ fun HeroPanel(
                     options = toggleOptions,
                     selectedOption = selectedToggle,
                     onOptionSelected = onToggleSelected,
-                    isOnDarkSurface = true
+                    isOnDarkSurface = isOnDarkSurface
                 )
             }
         }
@@ -103,6 +104,9 @@ fun WaveChart(
     data: List<Float>,
     modifier: Modifier = Modifier
 ) {
+    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     Canvas(modifier = modifier
         .fillMaxWidth()
         .height(48.dp)
@@ -134,7 +138,7 @@ fun WaveChart(
 
         drawPath(
             path = path,
-            color = Color.White,
+            color = onPrimaryColor,
             style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
         )
 
@@ -143,12 +147,12 @@ fun WaveChart(
         val lastY = lastNormY * (size.height - 12.dp.toPx()) + 6.dp.toPx()
 
         drawCircle(
-            color = Color.White,
+            color = onPrimaryColor,
             radius = 5.dp.toPx(),
             center = Offset(lastX, lastY)
         )
         drawCircle(
-            color = SurfaceHero,
+            color = primaryColor,
             radius = 5.dp.toPx(),
             center = Offset(lastX, lastY),
             style = Stroke(width = 1.5f.dp.toPx())

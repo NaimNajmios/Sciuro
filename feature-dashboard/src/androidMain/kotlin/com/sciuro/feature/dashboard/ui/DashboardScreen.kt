@@ -2,6 +2,8 @@ package com.sciuro.feature.dashboard.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -170,6 +172,32 @@ fun DashboardScreen(
                             accountsCount = state.accounts.size,
                             recentAdjustmentCount = state.recentAdjustmentCount
                         )
+                        if (state.lastMilestoneReached > 0) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Text(
+                                        stringResource(R.string.dashboard_milestone_reached, state.lastMilestoneReached.toInt()),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
                     }
                 )
             }
@@ -212,7 +240,9 @@ fun DashboardScreen(
                             DashboardSummaryRow(
                                 activeBudgetsCount = state.activeBudgetsCount,
                                 runway = state.runway,
-                                hasIncomePattern = state.hasIncomePattern
+                                hasIncomePattern = state.hasIncomePattern,
+                                expectedIncomeAmount = state.expectedIncomeAmount,
+                                expectedIncomeDate = state.expectedIncomeDate
                             )
 
                             AdjustmentBanner(adjustmentCount = state.recentAdjustmentCount)
