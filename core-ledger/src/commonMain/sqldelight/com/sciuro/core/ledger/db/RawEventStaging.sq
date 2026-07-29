@@ -20,7 +20,7 @@ INSERT INTO raw_event_staging(id, source_type, source_package_or_address, title,
 VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING');
 
 markProcessing:
-UPDATE raw_event_staging SET status = 'PROCESSING', attempt_count = attempt_count + 1, last_error = ? WHERE id = ?;
+UPDATE raw_event_staging SET status = 'PROCESSING', attempt_count = attempt_count + 1, last_error = ? WHERE id = ? AND status = 'PENDING';
 
 markProcessed:
 UPDATE raw_event_staging SET status = 'PROCESSED', processed_at = ? WHERE id = ?;

@@ -32,6 +32,7 @@ class SciuroIngestionOrchestrator(
         private const val MAX_BACKOFF_MS = 60_000L
         private const val MAX_CONCURRENT_RECOVERY = 8
         private const val MAX_CONCURRENT_LIVE = 4
+        private const val MAX_RECONNECT_ATTEMPTS = 10
     }
 
     private val recoverySemaphore = Semaphore(MAX_CONCURRENT_RECOVERY)
@@ -42,13 +43,18 @@ class SciuroIngestionOrchestrator(
 
         job = scope.launch {
             coroutineScope {
-                launch { recoverStrandedEvents() }
+                launch {
+                    while (true) {
+                        recoverStrandedEvents()
+                        delay(PROCESSING_STALE_MS)
+                    }
+                }
                 launch { collectEventsWithRetry() }
             }
         }
     }
 
-    private suspend fun recoverStrandedEvents() = coroutineScope {
+    private suspend fun recoverStrandedEvents() {
         val staleThreshold = currentTimeMillis() - PROCESSING_STALE_MS
         val strandedEvents = rawEventRepository.getStrandedEvents(staleThreshold)
         for (staging in strandedEvents) {
@@ -60,10 +66,8 @@ class SciuroIngestionOrchestrator(
                 text = staging.text,
                 timestamp = staging.timestamp
             )
-            launch {
-                recoverySemaphore.withPermit {
-                    processOneEvent(rawEvent)
-                }
+            recoverySemaphore.withPermit {
+                processOneEvent(rawEvent)
             }
         }
     }
@@ -83,6 +87,9 @@ class SciuroIngestionOrchestrator(
                 throw e
             } catch (_: Exception) {
                 attempt++
+                if (attempt > MAX_RECONNECT_ATTEMPTS) {
+                    return@coroutineScope
+                }
                 val delayMs = minOf(1000L * (1L shl minOf(attempt, 5)), MAX_BACKOFF_MS)
                 delay(delayMs)
             }

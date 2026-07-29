@@ -268,6 +268,20 @@
     <!-- Intelligence Settings Screen -->
     <string name="intelligence_settings_title">Intelligence &amp; Automation</string>
 
+    <!-- Merchant Rules Screen -->
+    <string name="merchant_rules_title">Merchant Rules</string>
+    <string name="merchant_rules_back">Back</string>
+    <string name="merchant_rules_manage">Learned Merchant Rules</string>
+    <string name="merchant_rules_empty">No merchant rules learned yet. Categorize transactions to teach Sciuro your preferences.</string>
+    <string name="merchant_rules_category">Category: %s</string>
+    <string name="merchant_rules_confirmation_count">%d confirmation(s)</string>
+    <string name="merchant_rules_delete">Reset Rule</string>
+    <string name="merchant_rules_delete_confirm">Reset the learned rule for \"%s\"? The system will re-learn it on the next categorization.</string>
+    <string name="merchant_rules_delete_action">Reset</string>
+    <string name="merchant_rules_override_title">Change Category</string>
+    <string name="merchant_rules_override_hint">Current: %s. Pick a new category for this merchant.</string>
+    <string name="settings_manage_merchant_rules">Manage Merchant Rules</string>
+
     <!-- Misc -->
     <string name="settings_hide">Hide</string>
     <string name="settings_show">Show</string>

@@ -33,6 +33,7 @@ import com.sciuro.feature.settings.ui.DataSettingsScreen
 import com.sciuro.feature.settings.ui.DeveloperSettingsScreen
 import com.sciuro.feature.settings.ui.IntelligenceSettingsScreen
 import com.sciuro.feature.settings.ui.LinkedAccountsScreen
+import com.sciuro.feature.settings.ui.MerchantRulesScreen
 import com.sciuro.feature.settings.ui.NotificationSettingsScreen
 import com.sciuro.feature.settings.ui.SettingsScreen
 import com.sciuro.feature.settings.viewmodel.LinkedAccountsViewModel
@@ -138,6 +139,9 @@ fun SciuroNavGraph(
                 onNavigateToCategorySettings = {
                     navController.navigate(SciuroRoute.CategorySettings.route)
                 },
+                onNavigateToMerchantRules = {
+                    navController.navigate(SciuroRoute.MerchantRules.route)
+                },
                 onExportBackup = { password ->
                     scope.launch(Dispatchers.IO) {
                         exportBackup(context, password, sqlDriver, settingsProvider)
@@ -168,6 +172,10 @@ fun SciuroNavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 initialTab = initialTab
             )
+        }
+
+        composable(SciuroRoute.MerchantRules.route) {
+            MerchantRulesScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(SciuroRoute.LinkedAccounts.route) {

@@ -108,11 +108,14 @@ class AccountRepository(
             afterState = null,
             source = AuditSource.USER_MANUAL
         ) {
-            database.accountQueries.updateAccountStatus(
-                status = "DELETED",
-                updated_at = currentTimeMillis(),
-                id = accountId
-            )
+            database.transaction {
+                database.accountQueries.updateAccountStatus(
+                    status = "DELETED",
+                    updated_at = currentTimeMillis(),
+                    id = accountId
+                )
+                database.merchantAccountRuleQueries.deleteMerchantAccountRuleByAccount(accountId)
+            }
         }
     }
     

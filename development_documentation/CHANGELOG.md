@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Core-Classifier Edge-Case Hardening (Phases 1–4)
+
+#### Fixed
+- **Locale-sensitive `lowercase()` in merchant matching** (Case 2c): All `lowercase()` calls in `CategoryResolver`, `ReviewTierDecider`, `RuleLearner`, and `AccountMatcher` replaced with locale-independent `forEach { append(it.lowercaseChar()) }` — Turkish/Azeri locale no longer breaks merchant string comparisons.
+- **Blank merchant bypasses guards** (Case 2b): `CategoryResolver.resolve()` and `ReviewTierDecider.hasLearnedRule()` now return early when `merchant.isBlank()`, preventing learned-rule lookup with empty-string keys.
+- **Empty package queried against DB** (Case 2a): `AccountMatcher.match()` now guards `isNotBlank()` before querying `selectAccountByPackage`, preventing unintended matches on blank-package accounts.
+- **NaN/Infinity amount propagation** (Case 2f): `DefaultTransactionBookingUseCase.book()` validates `draft.amount.isNaN()` and `isInfinite()` before entering the booking mutex, dead-lettering invalid amounts instead of writing them to the DB.
+- **Cancellation-stranding of events** (Case 3a): `markProcessing()` moved inside `dedupMutex.withLock` so coroutine cancellation before the lock no longer leaves the event stuck in PROCESSING state.
+- **Re-processing of already-booked events** (Cases 2e/3b): `markProcessing` SQL now has `WHERE status = 'PENDING'`. A Kotlin-side status check inside the dedup mutex provides a second safety layer. Duplicate event IDs from the source can no longer produce double-booked transactions.
+- **False dedup positives on same-amount same-time transactions** (Case 3c): `findLikelyDuplicate` now also matches on `merchant` — two transactions with the same amount (±1¢) and timestamp (±90s) but different merchants are no longer falsely treated as duplicates.
+- **Parser null = permanent dead letter** (Case 5a): Parser failure no longer permanently dead-letters the event; it stays PENDING for retry. `recoverStrandedEvents` now runs as a periodic loop (every 60s), retrying PENDING and stale-PROCESSING events.
+- **Infinite retry on source connection loss** (Case 5d): `collectEventsWithRetry` now has `MAX_RECONNECT_ATTEMPTS = 10`. After 10 consecutive failed reconnects, the listener coroutine exits instead of retrying forever.
+- **Account deletion leaves dangling merchant rules** (Case 4d): `AccountRepository.deleteAccount()` now clears `merchant_account_rule` entries for the deleted account inside a `database.transaction { }`. Added `deleteMerchantAccountRuleByAccount` SQL query and `MerchantAccountRuleRepository.deleteByAccountId()`.
+
+#### Changed
+- **Confidence threshold check centralized** (Case 6b): Extracted `val isHighConfidence = draft.confidenceScore >= confidenceThreshold` in `DefaultTransactionBookingUseCase.book()` — `parseStage`, `extractionMethod`, and `auditSource` now derive from a single expression instead of three independent checks.
+- **Staging status guard** (`RawEventStaging.sq`): `markProcessing` query updated to `WHERE id = ? AND status = 'PENDING'`, providing an atomic guard against re-processing already-processed events.
+- **`findLikelyDuplicate` SQL** (`TransactionRecord.sq`): Changed from positional `?` parameters to named parameters (`:direction`, `:amount`, `:timestamp`, `:windowMs`, `:merchant`). Added merchant matching clause with null-safe OR pattern.
+- **`collectEventsWithRetry` max reconnects** (`SciuroIngestionOrchestrator`): While loop now exits after `MAX_RECONNECT_ATTEMPTS = 10` failed attempts instead of retrying forever.
+- **`recoverStrandedEvents` periodic sweep** (`SciuroIngestionOrchestrator`): Recovery now runs every 60s (wrapped in `while(true)` loop) for automatic retry of PENDING events, instead of running once at startup only.
+
+### M1 — Merchant Rules UI (Dark Component Gap Closure)
+
+#### Added
+- **Merchant Rules settings screen** (`feature-settings`): New `MerchantRulesScreen` displaying all learned merchant→category rules from `merchant_category_rule` table. Each card shows merchant display name (title-cased from lowered key), resolved category name, confirmation count, and trust badge (green checkmark when count ≥ 3). Tap a card to open the override bottom sheet with all categories listed — picking a new category upserts the rule with count reset to 1. Delete icon opens a confirmation dialog that calls `deleteMerchantRule()` — the system will re-learn from scratch on the next categorization.
+- **MerchantRuleRepository** (`core-ledger`): New `MerchantRuleRepository` wrapping `merchantCategoryRuleQueries` with `observeAllRules(): Flow<List<MerchantRuleUiModel>>` (combines rules + categories reactively), `deleteRule(merchantKey)`, and `overrideRule(merchantKey, newCategoryId)`. Registered as a Koin singleton in `LedgerModule`.
+- **MerchantRuleUiModel** (`core-ledger/model`): Data class with `displayNameFromKey()` title-casing helper and `TRUST_THRESHOLD = 3`.
+- **MerchantRulesViewModel** (`feature-settings`): Reactively observes both rules and categories via `combine`, exposing `deleteRule()` and `overrideRule()` mutations. Uses `LinkedAccountsViewModel`-style `Loading`/`Empty` companion pattern.
+- **Navigation**: Added `SciuroRoute.MerchantRules` route with parent mapping to Settings. Wired `composable` block in `SciuroNavGraph` and added "Manage Merchant Rules" navigation card in `DataSettingsScreen` below "Manage Categories".
+- **String resources**: 13 new entries in `feature-settings/strings.xml` covering title, empty state, card labels, delete confirmation, and override sheet.
+
 ### Pipeline Edge-Case Hardening (Phases 1-4)
 
 #### Added

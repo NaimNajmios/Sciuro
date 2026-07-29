@@ -338,13 +338,15 @@ class TransactionRepository(
         amount: Double,
         direction: String,
         timestamp: Long,
+        merchant: String? = null,
         windowMs: Long = 90_000
     ): com.sciuro.core.ledger.db.Transaction_record? {
         return database.transactionRecordQueries.findLikelyDuplicate(
             direction = direction,
             amount = amount,
             timestamp = timestamp,
-            value_ = windowMs
+            merchant = merchant,
+            windowMs = windowMs
         ).executeAsOneOrNull()
     }
 

@@ -19,3 +19,6 @@ SELECT * FROM merchant_account_rule WHERE merchant_key = ? ORDER BY confirmation
 
 deleteMerchantAccountRule:
 DELETE FROM merchant_account_rule WHERE merchant_key = ? AND account_id = ?;
+
+deleteMerchantAccountRuleByAccount:
+DELETE FROM merchant_account_rule WHERE account_id = ?;

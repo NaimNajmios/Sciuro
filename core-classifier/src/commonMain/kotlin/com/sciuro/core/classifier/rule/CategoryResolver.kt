@@ -7,7 +7,7 @@ class CategoryResolver(
     private val database: SciuroDatabase
 ) {
     suspend fun resolve(merchant: String?, amount: Double, direction: String): CategorySuggestion? {
-        if (merchant == null) return null
+        if (merchant == null || merchant.isBlank()) return null
 
         if (direction == "OUTFLOW") {
             val debtMatch = database.debtQueries.selectDebtsByDirectionAndActive("I_OWE")
@@ -46,7 +46,7 @@ class CategoryResolver(
             }
         }
 
-        val normalizedKey = merchant.lowercase().trim()
+        val normalizedKey = buildString { merchant.forEach { append(it.lowercaseChar()) } }.trim()
         val learnedRule = database.merchantCategoryRuleQueries
             .selectMerchantRuleByKey(normalizedKey)
             .executeAsOneOrNull()
@@ -83,7 +83,7 @@ class CategoryResolver(
         private const val CAT_EDUCATION = "cat_exp_8"
 
         fun guessFromStaticHeuristic(merchant: String): String? {
-            val lower = merchant.lowercase()
+            val lower = buildString { merchant.forEach { append(it.lowercaseChar()) } }
             return when {
                 lower.contains("tenaga nasional") || lower.contains("tnb") || lower.contains("air selangor") || lower.contains("syabas") || lower.contains("indah water") || lower.contains("iwk") || lower.contains("telekom") || lower.contains("unifi") || lower.contains("tm") || lower.contains("celcom") || lower.contains("maxis") || lower.contains("digi") || lower.contains("umobile") || lower.contains("time") || lower.contains("astral") || lower.contains("electric") || lower.contains("water bill") || lower.contains("internet") || lower.contains("phone bill") -> CAT_UTILITIES
                 lower.contains("grab") || lower.contains("maxim") || lower.contains("airasia ride") || lower.contains("mycar") || lower.contains("petron") || lower.contains("shell") || lower.contains("caltex") || lower.contains("bdp") || lower.contains("tng") || lower.contains("touch") || lower.contains("ktm") || lower.contains("mrt") || lower.contains("lrt") || lower.contains("monorel") || lower.contains("rapidkl") || lower.contains("bus") || lower.contains("taxi") || lower.contains("parkir") || lower.contains("parking") || lower.contains("toll") || lower.contains("toll plus") || lower.contains("touchngo") || lower.contains("tngewallet") -> CAT_TRANSPORT

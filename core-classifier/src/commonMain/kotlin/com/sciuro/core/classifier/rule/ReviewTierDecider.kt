@@ -44,8 +44,8 @@ class ReviewTierDecider(
     }
 
     private suspend fun hasLearnedRule(merchant: String?): Boolean {
-        if (merchant == null) return false
-        val key = merchant.lowercase().trim()
+        if (merchant == null || merchant.isBlank()) return false
+        val key = buildString { merchant.forEach { append(it.lowercaseChar()) } }.trim()
         val rule = database.merchantCategoryRuleQueries
             .selectMerchantRuleByKey(key)
             .executeAsOneOrNull()

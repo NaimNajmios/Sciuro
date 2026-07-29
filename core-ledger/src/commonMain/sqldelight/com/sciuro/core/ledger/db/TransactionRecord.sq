@@ -92,7 +92,8 @@ DELETE FROM transaction_record WHERE id = ?;
 
 findLikelyDuplicate:
 SELECT * FROM transaction_record
-WHERE direction = ?
-AND ABS(amount - ?) < 0.01
-AND ABS(timestamp - ?) < ?
+WHERE direction = :direction
+AND ABS(amount - :amount) < 0.01
+AND ABS(timestamp - :timestamp) < :windowMs
+AND (merchant = :merchant OR (merchant IS NULL AND :merchant IS NULL))
 LIMIT 1;

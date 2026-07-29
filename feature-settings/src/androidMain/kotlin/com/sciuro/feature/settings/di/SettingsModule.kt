@@ -4,6 +4,7 @@ import com.sciuro.feature.settings.viewmodel.DataSettingsViewModel
 import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
 import com.sciuro.feature.settings.viewmodel.IntelligenceSettingsViewModel
 import com.sciuro.feature.settings.viewmodel.LinkedAccountsViewModel
+import com.sciuro.feature.settings.viewmodel.MerchantRulesViewModel
 import com.sciuro.feature.settings.viewmodel.NotificationSettingsViewModel
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -16,4 +17,5 @@ val settingsModule = module {
     viewModel { IntelligenceSettingsViewModel(get()) }
     viewModel { DeveloperSettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LinkedAccountsViewModel(get()) }
+    viewModel { MerchantRulesViewModel(get(), get()) }
 }

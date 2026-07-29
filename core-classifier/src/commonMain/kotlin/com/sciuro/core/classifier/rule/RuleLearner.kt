@@ -49,7 +49,7 @@ class RuleLearner(
     }
 
     private suspend fun learnMerchantCategory(merchant: String, categoryId: String) {
-        val normalizedKey = merchant.lowercase().trim()
+        val normalizedKey = buildString { merchant.forEach { append(it.lowercaseChar()) } }.trim()
         val existing = database.merchantCategoryRuleQueries
             .selectMerchantRuleByKey(normalizedKey)
             .executeAsOneOrNull()
@@ -75,7 +75,7 @@ class RuleLearner(
     }
 
     private suspend fun learnMerchantAccount(merchant: String, accountId: String) {
-        val normalizedKey = merchant.lowercase().trim()
+        val normalizedKey = buildString { merchant.forEach { append(it.lowercaseChar()) } }.trim()
         merchantAccountRuleRepository.learn(normalizedKey, accountId)
 
         eventBus.publish(

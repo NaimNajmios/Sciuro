@@ -10,10 +10,12 @@ class AccountMatcher(
     suspend fun match(rawEvent: RawEvent, draft: StructuredDraft): AccountMatch? {
         val candidates = mutableListOf<AccountMatch>()
 
-        database.accountQueries.selectAccountByPackage(rawEvent.sourcePackageOrAddress)
-            .executeAsOneOrNull()?.let { acc ->
-                candidates.add(AccountMatch(acc.id, 100, "package"))
-            }
+        if (rawEvent.sourcePackageOrAddress.isNotBlank()) {
+            database.accountQueries.selectAccountByPackage(rawEvent.sourcePackageOrAddress)
+                .executeAsOneOrNull()?.let { acc ->
+                    candidates.add(AccountMatch(acc.id, 100, "package"))
+                }
+        }
 
         draft.accountOrChannel?.let { channel ->
             val suffix = channel.takeLast(4).filter { it.isDigit() }
@@ -37,7 +39,7 @@ class AccountMatcher(
 
         val merchant = draft.merchant
         if (merchant != null) {
-            val merchantKey = merchant.lowercase().trim()
+            val merchantKey = buildString { merchant.forEach { append(it.lowercaseChar()) } }.trim()
             val learnedRule = database.merchantAccountRuleQueries
                 .selectTopAccountForMerchant(merchantKey)
                 .executeAsOneOrNull()

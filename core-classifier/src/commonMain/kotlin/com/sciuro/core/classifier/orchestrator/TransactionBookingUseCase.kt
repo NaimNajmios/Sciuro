@@ -44,10 +44,8 @@ open class DefaultTransactionBookingUseCase(
     private val dedupMutex: Mutex = Mutex()
 ) : TransactionBookingUseCase {
     override suspend fun book(rawEvent: RawEvent): BookingResult? {
-        rawEventRepository.markProcessing(rawEvent.id)
-
         val staging = rawEventRepository.getRawEventById(rawEvent.id)
-        if (staging != null && staging.attempt_count > MAX_ATTEMPTS) {
+        if (staging != null && staging.attempt_count >= MAX_ATTEMPTS) {
             rawEventRepository.markDeadLetter(rawEvent.id, "Max attempt count exceeded (${staging.attempt_count})")
             tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.FAILURE,
                 detail = mapOf("transition" to "DEAD_LETTER", "reason" to "max_attempts", "attempts" to "${staging.attempt_count}"))
@@ -62,16 +60,17 @@ open class DefaultTransactionBookingUseCase(
         val parseMs = currentTimeMillis() - parseStart
 
         if (draft == null) {
-            rawEventRepository.markDeadLetter(rawEvent.id, "Parser pipeline returned null")
             tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.DROP,
-                detail = mapOf("transition" to "DEAD_LETTER", "reason" to "parser_null", "duration_ms" to "$parseMs"))
+                detail = mapOf("transition" to "RETRY_PENDING", "reason" to "parser_null", "duration_ms" to "$parseMs"))
             return null
         }
 
-        val parseStage = if (draft.confidenceScore >= confidenceThreshold) TraceStage.PARSE_REGEX else TraceStage.PARSE_LLM
-        tracer.trace(rawEvent.id, null, parseStage, TraceOutcome.SUCCESS,
-            durationMs = parseMs, confidence = draft.confidenceScore,
-            detail = mapOf("merchant" to draft.merchant, "direction" to draft.direction?.name, "amount" to "${draft.amount}"))
+        if (draft.amount.isNaN() || draft.amount.isInfinite()) {
+            rawEventRepository.markDeadLetter(rawEvent.id, "Invalid amount: ${draft.amount}")
+            tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.DROP,
+                detail = mapOf("transition" to "DEAD_LETTER", "reason" to "invalid_amount"))
+            return null
+        }
 
         val directionName = draft.direction?.name ?: run {
             rawEventRepository.markDeadLetter(rawEvent.id, "Direction could not be determined")
@@ -80,11 +79,27 @@ open class DefaultTransactionBookingUseCase(
             return null
         }
 
+        val isHighConfidence = draft.confidenceScore >= confidenceThreshold
+        val parseStage = if (isHighConfidence) TraceStage.PARSE_REGEX else TraceStage.PARSE_LLM
+        tracer.trace(rawEvent.id, null, parseStage, TraceOutcome.SUCCESS,
+            durationMs = parseMs, confidence = draft.confidenceScore,
+            detail = mapOf("merchant" to draft.merchant, "direction" to draft.direction?.name, "amount" to "${draft.amount}"))
+
         dedupMutex.withLock {
+            val row = rawEventRepository.getRawEventById(rawEvent.id)
+            if (row == null || row.status != "PENDING") {
+                tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.SKIP,
+                    detail = mapOf("reason" to "not_pending", "status" to (row?.status ?: "null")))
+                return@book null
+            }
+
+            rawEventRepository.markProcessing(rawEvent.id)
+
             val duplicate = transactionRepository.findLikelyDuplicate(
                 amount = draft.amount,
                 direction = directionName,
-                timestamp = draft.timestamp
+                timestamp = draft.timestamp,
+                merchant = draft.merchant
             )
             if (duplicate != null) {
                 transactionRepository.attachCorroboratingSource(duplicate.id, rawEvent.id)
@@ -134,7 +149,7 @@ open class DefaultTransactionBookingUseCase(
                 if (accountId != null) TraceOutcome.SUCCESS else TraceOutcome.SKIP,
                 detail = mapOf("account_id" to accountId, "package" to rawEvent.sourcePackageOrAddress, "account_channel" to draft.accountOrChannel, "match_reason" to (accountMatch?.reason ?: "none")))
 
-            val extractionMethod = if (draft.confidenceScore >= confidenceThreshold) "REGEX" else "LLM_FALLBACK"
+            val extractionMethod = if (isHighConfidence) "REGEX" else "LLM_FALLBACK"
 
             val tier = if (draft.isUntrustedFallback) {
                 com.sciuro.core.audit.model.ReviewTier.UNTRUSTED
@@ -167,7 +182,7 @@ open class DefaultTransactionBookingUseCase(
                 autoConfirmedAt = if (isReviewed) nowAuto else null
             )
 
-            val auditSource = if (draft.confidenceScore >= confidenceThreshold) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
+            val auditSource = if (isHighConfidence) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
             transactionRepository.bookTransaction(transaction, source = auditSource)
             tracer.trace(rawEvent.id, transaction.id, TraceStage.BOOK, TraceOutcome.SUCCESS,
                 confidence = draft.confidenceScore,

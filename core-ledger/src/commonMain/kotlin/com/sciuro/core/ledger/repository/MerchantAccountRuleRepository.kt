@@ -24,4 +24,8 @@ class MerchantAccountRuleRepository(
             .executeAsOneOrNull()
             ?.account_id
     }
+
+    suspend fun deleteByAccountId(accountId: String) {
+        database.merchantAccountRuleQueries.deleteMerchantAccountRuleByAccount(accountId)
+    }
 }

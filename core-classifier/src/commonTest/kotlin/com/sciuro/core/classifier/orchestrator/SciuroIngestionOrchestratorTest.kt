@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 
 class SciuroIngestionOrchestratorTest {
 
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(Dispatchers.Unconfined)
     private lateinit var orchestrator: SciuroIngestionOrchestrator
     private lateinit var fakeIngestionSource: FakeIngestionSource
     private lateinit var fakeRawEventRepository: FakeRawEventRepository
@@ -53,7 +53,13 @@ class SciuroIngestionOrchestratorTest {
         )
 
         orchestrator.startListening(scope)
-        delay(500)
+
+        // Wait until both stranded events are processed or timeout
+        var waited = 0
+        while (waited < 50 && (fakeBookingUseCase.bookedCount < 2 || fakeEngineTriggerUseCase.triggeredCount < 2)) {
+            delay(100)
+            waited++
+        }
 
         assertEquals(2, fakeBookingUseCase.bookedCount, "Should have processed 2 stranded events")
         assertEquals(2, fakeEngineTriggerUseCase.triggeredCount, "Should have triggered engines for 2 events")
@@ -77,7 +83,12 @@ class SciuroIngestionOrchestratorTest {
         )
 
         orchestrator.startListening(scope)
-        delay(500)
+
+        var waited = 0
+        while (waited < 50 && fakeRawEventRepository.deadLetterCount < 1) {
+            delay(100)
+            waited++
+        }
 
         assertEquals(0, fakeBookingUseCase.bookedCount)
         assertEquals(0, fakeEngineTriggerUseCase.triggeredCount)
@@ -112,7 +123,11 @@ class SciuroIngestionOrchestratorTest {
             timestamp = 1000L
         ))
 
-        delay(500)
+        var waited = 0
+        while (waited < 50 && (fakeBookingUseCase.bookedCount < 1 || fakeEngineTriggerUseCase.triggeredCount < 1)) {
+            delay(100)
+            waited++
+        }
 
         assertTrue(fakeBookingUseCase.bookedCount >= 1, "Should have processed the realtime event")
         assertTrue(fakeEngineTriggerUseCase.triggeredCount >= 1, "Should have triggered engines for realtime event")
