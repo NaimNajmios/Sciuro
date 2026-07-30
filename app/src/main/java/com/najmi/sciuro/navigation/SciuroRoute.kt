@@ -9,6 +9,9 @@ sealed class SciuroRoute(val route: String) {
     data object Settings : SciuroRoute("settings")
     data object DebtOverview : SciuroRoute("debt_overview")
     data object CategoryDrilldown : SciuroRoute("category_drilldown")
+    data object CategoryTransactions : SciuroRoute("category_transactions/{categoryId}/{categoryName}") {
+        fun createRoute(categoryId: String, categoryName: String) = "category_transactions/$categoryId/$categoryName"
+    }
     data object CategorySettings : SciuroRoute("category_settings")
     data object LinkedAccounts : SciuroRoute("linked_accounts")
     data object NotificationSettings : SciuroRoute("notification_settings")
@@ -29,7 +32,7 @@ sealed class SciuroRoute(val route: String) {
         fun parentTabRoute(route: String): String? = when (route) {
             Dashboard.route, Wallet.route, Kanban.route, Budgets.route, Settings.route -> route
             AccountDetail.route -> Wallet.route
-            CategoryDrilldown.route -> Budgets.route
+            CategoryDrilldown.route, CategoryTransactions.route -> Budgets.route
             CategorySettings.route, LinkedAccounts.route, DeveloperSettings.route,
             NotificationSettings.route, DataSettings.route, IntelligenceSettings.route,
             MerchantRules.route, InvestmentPriceSettings.route -> Settings.route

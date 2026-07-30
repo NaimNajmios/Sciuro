@@ -69,6 +69,7 @@ import com.najmi.sciuro.core.ui.theme.AccountColorGrey
 import com.najmi.sciuro.core.ui.theme.AccountColorBlack
 import com.najmi.sciuro.core.ui.theme.AccountColorBrown
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.najmi.sciuro.core.ui.components.SciuroDateRangePicker
 import com.najmi.sciuro.core.ui.components.TransactionCard
 import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
 import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
@@ -131,6 +132,47 @@ fun WalletScreen(
     // Transaction list filter
     var txFilter by rememberSaveable { mutableStateOf("All") }
 
+    // Duration filter
+    var selectedRange by rememberSaveable { mutableStateOf("Today") }
+    var showDatePickerDialog by remember { mutableStateOf(false) }
+
+    val startDate by viewModel.startDate.collectAsState()
+    val endDate by viewModel.endDate.collectAsState()
+
+    LaunchedEffect(selectedRange, startDate, endDate) {
+        when (selectedRange) {
+            "Today" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
+            }
+            "This Week" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
+            }
+            "This Month" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
+            }
+            "Custom" -> {
+                viewModel.setDateRange(startDate, endDate)
+            }
+        }
+    }
+
     val accountPagerState = rememberPagerState(pageCount = { accounts.size })
 
     var showQrDialog by rememberSaveable { mutableStateOf(false) }
@@ -190,8 +232,8 @@ fun WalletScreen(
     val totalInvestments = if (currentInvestmentTotal > 0.0) currentInvestmentTotal else investments.sumOf { it.unitsHeld * it.averageBuyPrice }
     val displayTotal = if (selectedAssetType == "Liquid Cash") totalLiquidity else totalInvestments
     
-    val allTransactions by viewModel.allTransactions.collectAsState()
-    val allAdjustments by viewModel.allAdjustments.collectAsState()
+    val filteredTransactions by viewModel.filteredTransactions.collectAsState()
+    val filteredAdjustments by viewModel.filteredAdjustments.collectAsState()
     val expenseCats by viewModel.expenseCategories.collectAsState()
     val incomeCats by viewModel.incomeCategories.collectAsState()
     
@@ -334,7 +376,27 @@ fun WalletScreen(
         }
         item {
             SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 8.dp)
+            ) {
+                PillToggle(
+                    options = listOf("Today", "This Week", "This Month", "Custom"),
+                    selectedOption = selectedRange,
+                    onOptionSelected = {
+                        selectedRange = it
+                        if (it == "Custom") {
+                            showDatePickerDialog = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    fillWidth = true
+                )
+            }
             
             Box(
                 modifier = Modifier
@@ -359,8 +421,8 @@ fun WalletScreen(
 
                     if (selectedAssetType == "Liquid Cash" && accounts.isNotEmpty()) {
                         val selectedAccountId = accounts[accountPagerState.currentPage].id
-                        val accountTx = allTransactions.filter { it.account_id == selectedAccountId }
-                        val accountAdjustments = allAdjustments
+                        val accountTx = filteredTransactions.filter { it.account_id == selectedAccountId }
+                        val accountAdjustments = filteredAdjustments
 
                         if (txFilter == "Adjustments") {
                                 if (accountAdjustments.isEmpty()) {
@@ -1016,6 +1078,23 @@ fun WalletScreen(
         QrCodeDialog(
             qrPath = selectedQrPath!!,
             onDismiss = { showQrDialog = false; selectedQrPath = null }
+        )
+    }
+
+    if (showDatePickerDialog) {
+        val dateRangePickerState = rememberDateRangePickerState()
+        SciuroDateRangePicker(
+            dateRangePickerState = dateRangePickerState,
+            onDismiss = {
+                showDatePickerDialog = false
+                if (startDate == null && endDate == null) {
+                    selectedRange = "Today"
+                }
+            },
+            onConfirm = { start, end ->
+                viewModel.setDateRange(start, end)
+                showDatePickerDialog = false
+            }
         )
     }
 }

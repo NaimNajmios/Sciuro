@@ -25,6 +25,7 @@ import com.najmi.sciuro.export.EncryptedExporter
 import com.najmi.sciuro.export.EncryptedImporter
 import com.sciuro.feature.budgets.ui.BudgetsScreen
 import com.sciuro.feature.budgets.ui.CategoryDrilldownScreen
+import com.sciuro.feature.budgets.ui.CategoryTransactionsScreen
 import com.sciuro.feature.dashboard.ui.DashboardScreen
 import com.sciuro.feature.debt.ui.DebtOverviewScreen
 import com.sciuro.feature.kanban.ui.KanbanScreen
@@ -94,7 +95,28 @@ fun SciuroNavGraph(
         }
 
         composable(SciuroRoute.CategoryDrilldown.route) {
-            CategoryDrilldownScreen(onNavigateBack = { navController.popBackStack() })
+            CategoryDrilldownScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCategoryTransactions = { categoryId, categoryName ->
+                    navController.navigate(SciuroRoute.CategoryTransactions.createRoute(categoryId, categoryName))
+                }
+            )
+        }
+
+        composable(
+            route = SciuroRoute.CategoryTransactions.route,
+            arguments = listOf(
+                navArgument("categoryId") { type = NavType.StringType },
+                navArgument("categoryName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
+            val categoryName = backStackEntry.arguments?.getString("categoryName") ?: ""
+            CategoryTransactionsScreen(
+                categoryId = categoryId,
+                categoryName = categoryName,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(SciuroRoute.DebtOverview.route) {

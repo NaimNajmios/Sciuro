@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -99,6 +100,37 @@ class WalletViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    private val _startDate = MutableStateFlow<Long?>(null)
+    val startDate: StateFlow<Long?> = _startDate.asStateFlow()
+
+    private val _endDate = MutableStateFlow<Long?>(null)
+    val endDate: StateFlow<Long?> = _endDate.asStateFlow()
+
+    fun setDateRange(start: Long?, end: Long?) {
+        _startDate.value = start
+        _endDate.value = end
+    }
+
+    val filteredTransactions: StateFlow<List<com.sciuro.core.ledger.db.Transaction_record>> = combine(
+        allTransactions, _startDate, _endDate
+    ) { txs, start, end ->
+        txs.filter { tx ->
+            val afterStart = start?.let { tx.timestamp >= it } ?: true
+            val beforeEnd = end?.let { tx.timestamp <= it } ?: true
+            afterStart && beforeEnd
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val filteredAdjustments: StateFlow<List<com.sciuro.core.ledger.db.Cash_adjustment>> = combine(
+        allAdjustments, _startDate, _endDate
+    ) { adjs, start, end ->
+        adjs.filter { adj ->
+            val afterStart = start?.let { adj.timestamp >= it } ?: true
+            val beforeEnd = end?.let { adj.timestamp <= it } ?: true
+            afterStart && beforeEnd
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _currentInvestmentTotal = MutableStateFlow(0.0)
     val currentInvestmentTotal: StateFlow<Double> = _currentInvestmentTotal.asStateFlow()

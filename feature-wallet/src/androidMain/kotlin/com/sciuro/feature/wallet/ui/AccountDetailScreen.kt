@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +36,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountDetailScreen(
     onNavigateBack: () -> Unit,
@@ -47,6 +49,46 @@ fun AccountDetailScreen(
 
     var currentDialog by remember { mutableStateOf<AccountDetailDialog>(AccountDetailDialog.None) }
     var detailData by remember { mutableStateOf<TransactionDetailData?>(null) }
+
+    var selectedRange by rememberSaveable { mutableStateOf("Today") }
+    var showDatePickerDialog by remember { mutableStateOf(false) }
+
+    val startDate by viewModel.startDate.collectAsState()
+    val endDate by viewModel.endDate.collectAsState()
+
+    LaunchedEffect(selectedRange, startDate, endDate) {
+        when (selectedRange) {
+            "Today" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
+            }
+            "This Week" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
+            }
+            "This Month" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
+            }
+            "Custom" -> {
+                viewModel.setDateRange(startDate, endDate)
+            }
+        }
+    }
 
     val expenseCats by viewModel.expenseCategories.collectAsState()
     val incomeCats by viewModel.incomeCategories.collectAsState()
@@ -150,7 +192,10 @@ fun AccountDetailScreen(
                                         categoryMap = categoryMap,
                                         onTransactionClick = { tx ->
                                             currentDialog = AccountDetailDialog.TransactionDetail(tx)
-                                        }
+                                        },
+                                        selectedRange = selectedRange,
+                                        onRangeSelected = { selectedRange = it },
+                                        onCustomRangeClick = { showDatePickerDialog = true }
                                     )
                                 }
                             }
@@ -424,5 +469,22 @@ fun AccountDetailScreen(
                 onDismiss = { currentDialog = AccountDetailDialog.None }
             )
         }
+    }
+
+    if (showDatePickerDialog) {
+        val dateRangePickerState = rememberDateRangePickerState()
+        SciuroDateRangePicker(
+            dateRangePickerState = dateRangePickerState,
+            onDismiss = {
+                showDatePickerDialog = false
+                if (startDate == null && endDate == null) {
+                    selectedRange = "Today"
+                }
+            },
+            onConfirm = { start, end ->
+                viewModel.setDateRange(start, end)
+                showDatePickerDialog = false
+            }
+        )
     }
 }

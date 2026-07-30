@@ -30,4 +30,30 @@
     <string name="budget_category_spending_title">Category Spending</string>
     <string name="budget_back">Back</string>
     <string name="budget_no_outflow">No outflow spending in the last 30 days.</string>
+    <string name="budget_empty_drilldown">No spending to show for this period.</string>
+    <string name="budget_error_drilldown">Something went wrong. Please try again.</string>
+    <string name="budget_retry">Retry</string>
+
+    <!-- Time period toggle -->
+    <string name="budget_period_30_days">30 Days</string>
+    <string name="budget_period_this_month">This Month</string>
+    <string name="budget_period_last_month">Last Month</string>
+    <string name="budget_period_3_months">3 Months</string>
+
+    <!-- Section headers -->
+    <string name="budget_section_over">Over Budget</string>
+    <string name="budget_section_approaching">Approaching Limit</string>
+    <string name="budget_section_on_track">On Track</string>
+    <string name="budget_section_no_budget">No Budget Set</string>
+    <string name="budget_section_uncategorised">Uncategorised</string>
+
+    <!-- Card -->
+    <string name="budget_card_view_transactions">View Transactions</string>
+    <string name="budget_card_categorise_now">Categorise Now</string>
+    <string name="budget_card_remaining">RM %s left</string>
+    <string name="budget_card_per_day">RM %s/day</string>
+    <string name="budget_card_transactions">%d transactions</string>
+
+    <!-- Stats -->
+    <string name="budget_stats_format">%d categories · highest: %s</string>
 </resources>

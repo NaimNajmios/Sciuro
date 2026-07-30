@@ -7,5 +7,5 @@ import org.koin.dsl.module
 
 val budgetsModule = module {
     viewModel { BudgetsViewModel(get(), get(), get()) }
-    viewModel { CategoryDrilldownViewModel(get(), get(), get()) }
+    viewModel { CategoryDrilldownViewModel(get(), get(), get(), get()) }
 }

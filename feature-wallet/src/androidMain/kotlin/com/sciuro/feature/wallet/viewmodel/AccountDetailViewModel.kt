@@ -75,6 +75,17 @@ class AccountDetailViewModel(
 
     private val _selectedFilter = MutableStateFlow("All")
 
+    private val _startDate = MutableStateFlow<Long?>(null)
+    val startDate: StateFlow<Long?> = _startDate.asStateFlow()
+
+    private val _endDate = MutableStateFlow<Long?>(null)
+    val endDate: StateFlow<Long?> = _endDate.asStateFlow()
+
+    private val _dateRange: StateFlow<Pair<Long?, Long?>> = combine(
+        _startDate, _endDate
+    ) { start, end -> start to end }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null to null)
+
     val expenseCategories: StateFlow<List<com.sciuro.core.ledger.model.Category>> = categoryRepository.observeCategoriesByType("OUTFLOW")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -85,17 +96,28 @@ class AccountDetailViewModel(
         accountRepository.observeAccountById(accountId),
         transactionRepository.observeTransactionsForAccount(accountId),
         cashAdjustmentRepository.observeAdjustmentsForAccount(accountId),
-        _selectedFilter
-    ) { account, transactions, adjustments, filter ->
+        _selectedFilter,
+        _dateRange
+    ) { account, transactions, adjustments, filter, (start, end) ->
         if (account == null) return@combine AccountDetailUiState.Loading
-        val timeline = buildTimeline(transactions, adjustments, filter)
-        val velocity = if (transactions.isNotEmpty() && account.balance > 0) {
-            VelocityCalculator().calculate(account.balance, transactions)
+        val filteredTxs = transactions.filter { tx ->
+            val afterStart = start?.let { tx.timestamp >= it } ?: true
+            val beforeEnd = end?.let { tx.timestamp <= it } ?: true
+            afterStart && beforeEnd
+        }
+        val filteredAdjs = adjustments.filter { adj ->
+            val afterStart = start?.let { adj.timestamp >= it } ?: true
+            val beforeEnd = end?.let { adj.timestamp <= it } ?: true
+            afterStart && beforeEnd
+        }
+        val timeline = buildTimeline(filteredTxs, filteredAdjs, filter)
+        val velocity = if (filteredTxs.isNotEmpty() && account.balance > 0) {
+            VelocityCalculator().calculate(account.balance, filteredTxs)
         } else null
         AccountDetailUiState.Loaded(
             account = account,
-            transactions = transactions,
-            adjustments = adjustments,
+            transactions = filteredTxs,
+            adjustments = filteredAdjs,
             selectedFilter = filter,
             timeline = timeline,
             spendingVelocity = velocity
@@ -142,6 +164,11 @@ class AccountDetailViewModel(
 
     fun setFilter(filter: String) {
         _selectedFilter.value = filter
+    }
+
+    fun setDateRange(start: Long?, end: Long?) {
+        _startDate.value = start
+        _endDate.value = end
     }
 
     fun recordCorrection(amount: Double, reason: String, remark: String? = null) {

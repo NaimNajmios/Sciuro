@@ -37,6 +37,7 @@ import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.DashboardSkeleton
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.BiometricConfirmDialog
+import com.najmi.sciuro.core.ui.components.SciuroDateRangePicker
 import com.sciuro.feature.dashboard.ui.components.PredictionCard
 import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -424,18 +425,20 @@ fun DashboardScreen(
     
     if (showDatePickerDialog) {
         val dateRangePickerState = rememberDateRangePickerState()
-        com.sciuro.feature.dashboard.ui.components.DashboardDatePicker(
+        SciuroDateRangePicker(
             dateRangePickerState = dateRangePickerState,
             onDismiss = {
                 showDatePickerDialog = false
                 if (startDate == null && endDate == null) {
-                    selectedRange = "This Month"
+                    selectedRange = "Today"
                 }
             },
             onConfirm = { start, end ->
                 viewModel.setDateRange(start, end)
                 showDatePickerDialog = false
-            }
+            },
+            confirmText = stringResource(com.sciuro.feature.dashboard.R.string.dashboard_ok),
+            dismissText = stringResource(com.sciuro.feature.dashboard.R.string.dashboard_cancel)
         )
     }
     

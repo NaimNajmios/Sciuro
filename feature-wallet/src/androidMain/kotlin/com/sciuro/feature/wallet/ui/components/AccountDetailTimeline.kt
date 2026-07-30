@@ -37,6 +37,9 @@ fun AccountDetailTimeline(
     onFilterSelected: (String) -> Unit,
     categoryMap: Map<String, com.sciuro.core.ledger.model.Category>,
     onTransactionClick: (com.sciuro.core.ledger.db.Transaction_record) -> Unit,
+    selectedRange: String = "Today",
+    onRangeSelected: (String) -> Unit = {},
+    onCustomRangeClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.animateContentSize()) {
@@ -45,6 +48,21 @@ fun AccountDetailTimeline(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(vertical = 8.dp)
         )
+
+        PillToggle(
+            options = listOf("Today", "This Week", "This Month", "Custom"),
+            selectedOption = selectedRange,
+            onOptionSelected = {
+                onRangeSelected(it)
+                if (it == "Custom") {
+                    onCustomRangeClick()
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            fillWidth = true,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         PillToggle(
             options = filterOptions,
