@@ -31,7 +31,6 @@ import androidx.compose.ui.draw.clip
 import com.najmi.sciuro.core.ui.theme.PalettePreference
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
-import org.koin.compose.koinInject
 import com.najmi.sciuro.core.ui.theme.paletteColors
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -59,7 +58,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val themeManager: ThemeManager = koinInject()
+    val themeManager = remember { ThemeManager.getInstance(context) }
     val themePref by themeManager.themePreference.collectAsState()
     val palettePref by themeManager.palettePreference.collectAsState()
     var showPaletteSheet by remember { mutableStateOf(false) }

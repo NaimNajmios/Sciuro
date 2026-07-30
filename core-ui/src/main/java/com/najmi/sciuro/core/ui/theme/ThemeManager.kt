@@ -97,4 +97,15 @@ class ThemeManager(context: Context) {
         }
         return if (inDarkWindow) ThemePreference.DARK else ThemePreference.LIGHT
     }
+
+    companion object {
+        @Volatile
+        private var instance: ThemeManager? = null
+
+        fun getInstance(context: android.content.Context): ThemeManager {
+            return instance ?: synchronized(this) {
+                instance ?: ThemeManager(context.applicationContext).also { instance = it }
+            }
+        }
+    }
 }

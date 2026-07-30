@@ -29,7 +29,7 @@ import com.najmi.sciuro.navigation.SciuroNavGraph
 import com.najmi.sciuro.navigation.SciuroRoute
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import android.app.Activity
-import android.content.Intent
+import android.content.Intent  
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
 

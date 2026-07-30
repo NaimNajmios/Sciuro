@@ -43,7 +43,6 @@ import java.util.concurrent.TimeUnit
 import com.sciuro.feature.debt.di.debtFeatureModule
 import com.sciuro.core.obligations.di.obligationsModule
 import com.sciuro.feature.settings.di.settingsModule
-import com.najmi.sciuro.core.ui.di.coreUiModule
 import com.sciuro.feature.widget.di.widgetModule
 
 import com.najmi.sciuro.trace.LogcatPipelineTracer
@@ -92,7 +91,6 @@ class SciuroApp : Application(), KoinComponent {
                 obligationsModule,
                 settingsModule,
                 appModule,
-                coreUiModule,
                 parsingModule,
                 classifierModule,
                 ingestionModule,

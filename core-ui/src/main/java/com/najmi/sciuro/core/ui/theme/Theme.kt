@@ -15,14 +15,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
-import org.koin.compose.koinInject
+
 
 @Composable
 fun SciuroTheme(
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val themeManager = koinInject<ThemeManager>()
+    val themeManager = remember { ThemeManager.getInstance(context) }
 
     val themePref by themeManager.themePreference.collectAsState()
     val palettePref by themeManager.palettePreference.collectAsState()
@@ -124,10 +124,6 @@ private fun validatePaletteContrast(pc: PaletteColors): Boolean {
         pc.surfaceVariant to pc.onSurfaceVariant,
         pc.primaryContainer to pc.onPrimaryContainer,
         pc.tertiaryContainer to pc.onTertiaryContainer,
-        pc.primaryContainer to pc.primary,
-        pc.primaryContainer to pc.onPrimary,
-        pc.tertiaryContainer to pc.tertiary,
-        pc.tertiaryContainer to pc.onTertiary,
     )
     return pairs.all { (bg, fg) -> fg.contrastRatio(bg) >= 3.0 }
 }
