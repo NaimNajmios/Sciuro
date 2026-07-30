@@ -1,10 +1,15 @@
 package com.sciuro.feature.wallet.ui.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroCard
@@ -20,7 +25,21 @@ fun AccountInfoCard(
     val hasBasicInfo = !accountNumber.isNullOrBlank() || !accountHolderName.isNullOrBlank() || !bankInstitutionCode.isNullOrBlank()
     if (!hasBasicInfo) return
 
-    SciuroCard(modifier = modifier.fillMaxWidth()) {
+    val context = LocalContext.current
+
+    SciuroCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable {
+                val parts = mutableListOf<String>()
+                if (!accountHolderName.isNullOrBlank()) parts.add(accountHolderName)
+                if (!accountNumber.isNullOrBlank()) parts.add(accountNumber)
+                if (!bankInstitutionCode.isNullOrBlank()) parts.add(bankInstitutionCode)
+                if (parts.isNotEmpty()) {
+                    copyToClipboard(context, "account_info", parts.joinToString("\n"))
+                }
+            }
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -85,4 +104,9 @@ private fun DetailRow(label: String, value: String) {
             fontWeight = FontWeight.Medium
         )
     }
+}
+
+private fun copyToClipboard(context: Context, label: String, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
 }

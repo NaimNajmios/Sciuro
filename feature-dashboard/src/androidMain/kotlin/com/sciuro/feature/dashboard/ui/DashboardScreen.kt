@@ -63,7 +63,7 @@ fun DashboardScreen(
     val autoBookedTxs by viewModel.autoBookedTransactions.collectAsState()
     val reviewSuggestions by viewModel.reviewSuggestions.collectAsState()
     val autoConfirmedForCategoryReview by viewModel.autoConfirmedForCategoryReview.collectAsState()
-    var selectedRange by remember { mutableStateOf("This Month") }
+    var selectedRange by remember { mutableStateOf("Today") }
     val typeFilter by viewModel.typeFilter.collectAsState()
     val filterOptions = listOf("All", "Income", "Expense")
     val startDate by viewModel.startDate.collectAsState()
@@ -370,6 +370,7 @@ fun DashboardScreen(
                                 TransactionList(
                                     transactions = paginatedTransactions,
                                     categoryMap = categoryMap,
+                                    selectedRange = selectedRange,
                                     onTransactionClick = { tx ->
                                         selectedTxForDetail = tx
                                         showDetailSheet = true
