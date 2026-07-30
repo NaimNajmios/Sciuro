@@ -17,7 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.najmi.sciuro.core.ui.util.SciuroHaptics
 import com.najmi.sciuro.core.ui.util.bounceClick
 import com.sciuro.feature.debt.R
@@ -53,6 +53,7 @@ fun DebtOverviewScreen(
     val tabs = listOf("I Owe", "Owed to Me")
     val displayedDebts = if (selectedTab == "I Owe") debtsIOwe else debtsOwedToMe
 
+    val tokens = LocalSciuroSemanticTokens.current
     var showFormSheet by remember { mutableStateOf(false) }
     var editingDebt by remember { mutableStateOf<com.sciuro.feature.debt.model.DebtUiModel?>(null) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -598,6 +599,7 @@ fun DebtOverviewScreen(
 
 @Composable
 private fun BnplWarningCard(bnplRisk: BnplRiskInfo) {
+    val tokens = LocalSciuroSemanticTokens.current
     SciuroCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -608,13 +610,13 @@ private fun BnplWarningCard(bnplRisk: BnplRiskInfo) {
                 modifier = Modifier
                     .size(32.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(SignalWarning.copy(alpha = 0.15f)),
+                    .background(tokens.signalWarning.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = SciuroIcons.Warning,
                     contentDescription = null,
-                    tint = SignalWarning,
+                    tint = tokens.signalWarning,
                     modifier = Modifier.size(20.dp)
                 )
             }

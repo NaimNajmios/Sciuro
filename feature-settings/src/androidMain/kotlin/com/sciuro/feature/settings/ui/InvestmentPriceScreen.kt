@@ -18,7 +18,6 @@ import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
-import com.najmi.sciuro.core.ui.theme.BrandPrimaryDark
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.sciuro.feature.settings.R
 import com.sciuro.feature.settings.viewmodel.InvestmentPriceItem
@@ -35,7 +34,7 @@ fun InvestmentPriceScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
             title = stringResource(R.string.investment_price_title),
-            heroFigure = { Text(stringResource(R.string.investment_price_title), style = MaterialTheme.typography.headlineLarge, color = BrandPrimaryDark) },
+            heroFigure = { Text(stringResource(R.string.investment_price_title), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary) },
             toggleOptions = emptyList(),
             selectedToggle = "",
             onToggleSelected = {},
@@ -44,7 +43,7 @@ fun InvestmentPriceScreen(
                     Icon(
                         imageVector = SciuroIcons.Back,
                         contentDescription = stringResource(R.string.investment_price_back),
-                        tint = BrandPrimaryDark
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }

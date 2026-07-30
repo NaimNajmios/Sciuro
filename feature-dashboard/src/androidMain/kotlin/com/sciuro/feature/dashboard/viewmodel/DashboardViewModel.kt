@@ -166,7 +166,7 @@ class DashboardViewModel(
             afterStart && beforeEnd
         }
 
-        val balanceHistory = computeBalanceHistory(allTxs)
+        val balanceHistory = computeBalanceHistory(filteredTxs)
         
         val totalAccounts = accounts.sumOf { it.balance }
         val totalInvestments = investments.filterIsInstance<com.sciuro.core.investment.model.Investment>().sumOf { (it.unitsHeld * it.averageBuyPrice).toDouble() }

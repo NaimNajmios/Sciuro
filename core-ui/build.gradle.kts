@@ -44,4 +44,6 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.lottie.compose)
     implementation(libs.androidx.biometric)
+    implementation(libs.koin.core)
+    implementation(libs.koin.androidx.compose)
 }

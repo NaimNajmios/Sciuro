@@ -10,8 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.najmi.sciuro.core.ui.theme.SignalDanger
-import com.najmi.sciuro.core.ui.theme.SignalIncome
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.sciuro.core.parsing.metrics.ParserHealthRow
 import com.sciuro.feature.settings.R
@@ -22,6 +21,7 @@ fun DeveloperTabHealth(
     viewModel: DeveloperSettingsViewModel,
     modifier: Modifier = Modifier
 ) {
+    val tokens = LocalSciuroSemanticTokens.current
     val healthData by viewModel.healthData.collectAsState()
     val priorHealthData by viewModel.priorHealthData.collectAsState()
     val metrics by viewModel.pipelineMetrics.collectAsState()
@@ -84,7 +84,7 @@ fun DeveloperTabHealth(
                                     "${"%.0f".format(avgMatchRate * 100)}%",
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (avgMatchRate >= 0.7f) SignalIncome else SignalDanger
+                                    color = if (avgMatchRate >= 0.7f) tokens.signalIncome else tokens.signalDanger
                                 )
                                 Text(
                                     "Avg. Match Rate",
@@ -149,13 +149,14 @@ fun DeveloperTabHealth(
 
 @Composable
 private fun RowHealthCard(row: ParserHealthRow, priorRow: ParserHealthRow?) {
+    val tokens = LocalSciuroSemanticTokens.current
     val matchRate = row.matchRate
     val priorMatchRate = priorRow?.matchRate
     val trendColor = when {
         priorMatchRate == null -> MaterialTheme.colorScheme.onSurfaceVariant
-        matchRate >= priorMatchRate -> SignalIncome
-        (priorMatchRate - matchRate) > 0.2 -> SignalDanger
-        else -> SignalDanger
+        matchRate >= priorMatchRate -> tokens.signalIncome
+        (priorMatchRate - matchRate) > 0.2 -> tokens.signalDanger
+        else -> tokens.signalDanger
     }
     val trendIcon = when {
         priorMatchRate == null -> "-"

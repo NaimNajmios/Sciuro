@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Phase K3 — Scroll Fix & Dashboard Transaction Display
+
+#### Fixed
+- **Account Detail cannot scroll** (`AccountDetailScreen.kt`): Restructured root layout from `Column(fillMaxSize)` to `Box(fillMaxSize)` wrapping a `LazyColumn` with two `item { }` blocks following AGENTS.md full-screen swiping pattern. `HeroPanel` in first item, `SheetList(offset(-24.dp).fillParentMaxHeight())` in second. Added `.verticalScroll(rememberScrollState())` to the inner Column inside SheetList for scrolling long timeline lists.
+- **Dashboard content clipping** (`DashboardScreen.kt`): Added `.verticalScroll(rememberScrollState())` to the inner Column inside `SheetList(fillParentMaxHeight())` to prevent content truncation when banner cards + transaction list exceed viewport height.
+- **Balance chart date-range inaccuracy** (`DashboardViewModel.kt`): Changed `computeBalanceHistory(allTxs)` to `computeBalanceHistory(filteredTxs)` so the chart reflects the selected date range instead of showing all-time balances.
+
 ### M2–M4 — Dark Component Gap Closure (10 items)
 
 #### Added

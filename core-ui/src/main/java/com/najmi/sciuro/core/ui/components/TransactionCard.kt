@@ -21,10 +21,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.najmi.sciuro.core.ui.R
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
-import com.najmi.sciuro.core.ui.theme.SignalDanger
-import com.najmi.sciuro.core.ui.theme.SignalIncome
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.najmi.sciuro.core.ui.util.bounceClick
-import com.najmi.sciuro.core.ui.theme.SignalWarning
 
 
 @Composable
@@ -41,8 +39,9 @@ fun TransactionCard(
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null
 ) {
-    val directionTint = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
-    val amountColor = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else MaterialTheme.colorScheme.onSurface
+    val t = LocalSciuroSemanticTokens.current
+    val directionTint = if (direction == "INFLOW") t.signalIncome else t.signalDanger
+    val amountColor = if (direction == "INFLOW") t.signalIncome else MaterialTheme.colorScheme.onSurface
 
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -131,10 +130,10 @@ fun TransactionCard(
 
             if (confidence != null && extractionMethod != null) {
                 val dotColor = when {
-                    extractionMethod == "MANUAL" -> SignalIncome
-                    confidence >= 0.85f -> SignalIncome
-                    confidence >= 0.50f -> SignalWarning
-                    else -> SignalDanger
+                    extractionMethod == "MANUAL" -> t.signalIncome
+                    confidence >= 0.85f -> t.signalIncome
+                    confidence >= 0.50f -> t.signalWarning
+                    else -> t.signalDanger
                 }
                 val manualEntryLabel = stringResource(R.string.tx_manual_entry)
                 val confidenceLabel = if (extractionMethod == "MANUAL") manualEntryLabel else "Confidence ${(confidence * 100).toInt()} percent"

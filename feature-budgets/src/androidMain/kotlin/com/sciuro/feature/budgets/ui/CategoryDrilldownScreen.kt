@@ -14,8 +14,7 @@ import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
-import com.najmi.sciuro.core.ui.theme.SignalDanger
-import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.sciuro.core.ledger.config.SettingsProvider
 import com.sciuro.feature.budgets.R
 import com.sciuro.feature.budgets.viewmodel.CategoryDrilldownViewModel
@@ -30,6 +29,7 @@ fun CategoryDrilldownScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val threshold = settingsProvider.getBudgetWarningThreshold()
+    val tokens = LocalSciuroSemanticTokens.current
 
     Column(modifier = Modifier.fillMaxSize()) {
         HeroPanel(
@@ -92,8 +92,8 @@ fun CategoryDrilldownScreen(
                                 if (budget > 0) {
                                     val percent = (cat.spend / budget).toFloat().coerceIn(0f, 1f)
                                     val barColor = when {
-                                        percent >= threshold -> SignalDanger
-                                        percent >= threshold - 0.1f -> SignalWarning
+                                        percent >= threshold -> tokens.signalDanger
+                                        percent >= threshold - 0.1f -> tokens.signalWarning
                                         else -> MaterialTheme.colorScheme.primary
                                     }
                                     LinearProgressIndicator(

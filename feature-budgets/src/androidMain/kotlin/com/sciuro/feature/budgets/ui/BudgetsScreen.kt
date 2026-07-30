@@ -30,8 +30,7 @@ import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.BiometricConfirmDialog
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
-import com.najmi.sciuro.core.ui.theme.SignalDanger
-import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.najmi.sciuro.core.ui.util.SciuroHaptics
 import com.najmi.sciuro.core.ui.util.bounceClick
 import androidx.compose.ui.res.stringResource
@@ -68,6 +67,7 @@ fun BudgetsScreen(
     var suggestedAmount by remember { mutableStateOf<Double?>(null) }
     val suggester: BudgetLimitSuggester = koinInject()
 
+    val tokens = LocalSciuroSemanticTokens.current
     var contextMenuBudgetId by remember { mutableStateOf<String?>(null) }
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
 
@@ -119,8 +119,8 @@ fun BudgetsScreen(
                                             text = "${(budget.progress * 100).toInt()}%",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = when (budget.health()) {
-                                                BudgetHealth.OVER -> SignalDanger
-                                                BudgetHealth.APPROACHING -> SignalWarning
+                                                BudgetHealth.OVER -> tokens.signalDanger
+                                                BudgetHealth.APPROACHING -> tokens.signalWarning
                                                 BudgetHealth.HEALTHY -> onPrimary.copy(alpha = 0.6f)
                                             }
                                         )
@@ -245,8 +245,8 @@ fun BudgetsScreen(
                                         Spacer(modifier = Modifier.height(8.dp))
                                         val health = budget.health()
                                         val progressColor = when (health) {
-                                            BudgetHealth.OVER -> SignalDanger
-                                            BudgetHealth.APPROACHING -> SignalWarning
+                                            BudgetHealth.OVER -> tokens.signalDanger
+                                            BudgetHealth.APPROACHING -> tokens.signalWarning
                                             BudgetHealth.HEALTHY -> MaterialTheme.colorScheme.primary
                                         }
                                         LinearProgressIndicator(

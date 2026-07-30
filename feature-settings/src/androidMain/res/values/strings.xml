@@ -246,6 +246,10 @@
     <string name="palette_plum">Plum</string>
     <string name="palette_slate">Slate</string>
     <string name="palette_dynamic">Dynamic (Material You)</string>
+    <string name="settings_dark_schedule">Dark mode schedule</string>
+    <string name="settings_dark_schedule_summary">Auto-switch at set times</string>
+    <string name="settings_dark_schedule_start">Start time</string>
+    <string name="settings_dark_schedule_end">End time</string>
 
     <!-- Settings Navigation -->
     <string name="settings_section_navigation">Preferences</string>

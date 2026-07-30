@@ -9,9 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
-import com.najmi.sciuro.core.ui.theme.SignalDanger
-import com.najmi.sciuro.core.ui.theme.SignalIncome
-import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.sciuro.core.ledger.engine.SpendingVelocity
 import com.sciuro.core.ledger.engine.VelocityTrend
 import com.sciuro.feature.wallet.R
@@ -19,10 +17,11 @@ import kotlin.math.min
 
 @Composable
 fun AccountVelocityCard(velocity: SpendingVelocity) {
+    val tokens = LocalSciuroSemanticTokens.current
     val burnColor = when {
-        velocity.burnRatePercent > 0.8f -> SignalDanger
-        velocity.burnRatePercent > 0.5f -> SignalWarning
-        else -> SignalIncome
+        velocity.burnRatePercent > 0.8f -> tokens.signalDanger
+        velocity.burnRatePercent > 0.5f -> tokens.signalWarning
+        else -> tokens.signalIncome
     }
 
     val trendSymbol = when (velocity.trend) {
@@ -32,8 +31,8 @@ fun AccountVelocityCard(velocity: SpendingVelocity) {
         VelocityTrend.N_A -> "\u2014"
     }
     val trendColor = when (velocity.trend) {
-        VelocityTrend.UP -> SignalDanger
-        VelocityTrend.DOWN -> SignalIncome
+        VelocityTrend.UP -> tokens.signalDanger
+        VelocityTrend.DOWN -> tokens.signalIncome
         VelocityTrend.STABLE -> MaterialTheme.colorScheme.onSurfaceVariant
         VelocityTrend.N_A -> MaterialTheme.colorScheme.onSurfaceVariant
     }

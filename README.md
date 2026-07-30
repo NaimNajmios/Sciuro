@@ -40,7 +40,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase K1 (UI Polish & Accessibility Pass)**, **Phase K2 (UX Polish — Complete)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)**, **Phase S2 (Kanban/Debt/Obligation Edge Case Fixes)**, **Core-Classifier Edge-Case Hardening (Phases 1-4)**, **Pipeline Edge-Case Hardening**, **M1 — Merchant Rules UI (Dark Component Gap Closure)**, and **Dev-Tools-Pagination-Hero-Palette** (ingestion log pagination + mark-as-read, pipeline trace pagination, HeroPanel palette-aware colors) addressing cross-cutting architectural concerns.
+The project is fully functional and has completed **Phase K3 (Scroll Fix & Dashboard Transaction Display)**, **Phase K2 (UX Polish — Complete)**, **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)**, **Phase S2 (Kanban/Debt/Obligation Edge Case Fixes)**, **Core-Classifier Edge-Case Hardening (Phases 1-4)**, **Pipeline Edge-Case Hardening**, **M1 — Merchant Rules UI (Dark Component Gap Closure)**, and **Dev-Tools-Pagination-Hero-Palette** (ingestion log pagination + mark-as-read, pipeline trace pagination, HeroPanel palette-aware colors) addressing cross-cutting architectural concerns.
 
 **Core-Classifier Edge-Case Hardening highlights:**
 - **16 edge cases resolved** across the `core-classifier` module: input validation (NaN amounts, blank merchants/packages, locale-dependent `lowercase()`), state/timing (cancellation-stranding, duplicate re-processing, false dedup), user behavior (account deletion orphaned merchant rules), and failure/degradation (parser null retry, infinite source reconnects).
@@ -153,7 +153,7 @@ Sciuro is built using a strict modular Kotlin Multiplatform structure:
 
 ### Full-Screen Swiping Architecture
 
-All scrollable screens (Dashboard, Kanban, Budgets, Wallet, Settings) follow a consistent full-screen swiping pattern. The root layout uses a `Box` containing a single `LazyColumn` with two `item { }` blocks:
+All scrollable screens (Dashboard, Kanban, Budgets, Wallet, Settings, Account Detail) follow a consistent full-screen swiping pattern. The root layout uses a `Box` containing a single `LazyColumn` with two `item { }` blocks:
 
 ```
 Box(fillMaxSize) {
@@ -171,7 +171,7 @@ Box(fillMaxSize) {
 
 - The `HeroPanel` scrolls off-screen naturally as the user swipes up.
 - The `SheetList` uses `fillParentMaxHeight()` to fill the remaining viewport, with a `-24.dp` offset for the overlapping visual effect.
-- Content inside `SheetList` uses plain `Column` + `forEach` (never a nested `LazyColumn`) since the parent `LazyColumn` handles all vertical scrolling.
+- Content inside `SheetList` uses plain `Column` + `forEach` (never a nested `LazyColumn`). Add `.verticalScroll(rememberScrollState())` to the inner Column when content may exceed the viewport height (e.g., long transaction lists with banners).
 - The FAB is overlaid in the root `Box` with `Modifier.align(Alignment.BottomEnd)`.
 - Hero figure text uses `headlineLarge` typography to prevent number overflow on large figures.
 

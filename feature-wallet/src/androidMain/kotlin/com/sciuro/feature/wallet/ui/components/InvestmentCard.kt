@@ -9,10 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
+import com.najmi.sciuro.core.ui.theme.AccountColorGreen
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.sciuro.core.investment.model.Investment
 
 @Composable
@@ -24,7 +25,8 @@ fun InvestmentCard(
 ) {
     val bookValue = investment.unitsHeld * investment.averageBuyPrice
     val showLive = livePrice != null && livePrice > 0.0 && kotlin.math.abs(livePrice - bookValue) > 0.01
-    val liveColor = if (showLive && livePrice!! >= bookValue) Color(0xFF4CAF50) else Color(0xFFE53935)
+    val tokens = LocalSciuroSemanticTokens.current
+    val liveColor = if (showLive && livePrice!! >= bookValue) AccountColorGreen else tokens.signalDanger
 
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),

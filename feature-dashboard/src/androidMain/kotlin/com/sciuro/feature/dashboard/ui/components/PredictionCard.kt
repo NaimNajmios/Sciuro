@@ -9,18 +9,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.Sparkline
-import com.najmi.sciuro.core.ui.theme.SignalDanger
-import com.najmi.sciuro.core.ui.theme.SignalIncome
-import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.sciuro.core.budget.engine.RunwayPrediction
 import com.sciuro.feature.dashboard.R
 
 @Composable
 fun PredictionCard(prediction: RunwayPrediction) {
+    val tokens = LocalSciuroSemanticTokens.current
     val accentColor = when {
-        prediction.daysUntilNegative < 7 -> SignalDanger
-        prediction.daysUntilNegative < 14 -> SignalWarning
-        else -> SignalIncome
+        prediction.daysUntilNegative < 7 -> tokens.signalDanger
+        prediction.daysUntilNegative < 14 -> tokens.signalWarning
+        else -> tokens.signalIncome
     }
 
     SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {

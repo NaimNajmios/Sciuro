@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
+import java.time.format.DateTimeFormatter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -29,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import com.najmi.sciuro.core.ui.theme.PalettePreference
 import com.najmi.sciuro.core.ui.theme.ThemeManager
 import com.najmi.sciuro.core.ui.theme.ThemePreference
+import org.koin.compose.koinInject
 import com.najmi.sciuro.core.ui.theme.paletteColors
 import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -56,7 +59,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val themeManager = remember { ThemeManager.getInstance(context) }
+    val themeManager: ThemeManager = koinInject()
     val themePref by themeManager.themePreference.collectAsState()
     val palettePref by themeManager.palettePreference.collectAsState()
     var showPaletteSheet by remember { mutableStateOf(false) }
@@ -185,6 +188,77 @@ fun SettingsScreen(
                                 )
                             }
                         }
+                    }
+                }
+
+                // Dark mode schedule
+                item {
+                    val isScheduleEnabled = themeManager.isDarkModeScheduleEnabled()
+                    var showScheduleSheet by remember { mutableStateOf(false) }
+                    SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        stringResource(R.string.settings_dark_schedule),
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        stringResource(R.string.settings_dark_schedule_summary),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Switch(
+                                    checked = isScheduleEnabled,
+                                    onCheckedChange = { themeManager.setDarkModeScheduleEnabled(it) }
+                                )
+                            }
+                            if (isScheduleEnabled) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().clickable { showScheduleSheet = true },
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        stringResource(R.string.settings_dark_schedule_start),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        formatTime(themeManager.getDarkModeScheduleStart()),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().clickable { showScheduleSheet = true },
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        stringResource(R.string.settings_dark_schedule_end),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        formatTime(themeManager.getDarkModeScheduleEnd()),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (showScheduleSheet) {
+                        DarkModeScheduleSheet(
+                            themeManager = themeManager,
+                            onDismiss = { showScheduleSheet = false }
+                        )
                     }
                 }
 
@@ -391,6 +465,85 @@ fun SettingsScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+private val timeFormatter = DateTimeFormatter.ofPattern("h:mm a")
+
+private fun formatTime(time: java.time.LocalTime): String = time.format(timeFormatter)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DarkModeScheduleSheet(
+    themeManager: ThemeManager,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val startTime = remember { themeManager.getDarkModeScheduleStart() }
+    val endTime = remember { themeManager.getDarkModeScheduleEnd() }
+
+    SciuroBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                stringResource(R.string.settings_dark_schedule),
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    android.app.TimePickerDialog(
+                        context,
+                        { _, hour, minute ->
+                            themeManager.setDarkModeScheduleStart(java.time.LocalTime.of(hour, minute))
+                        },
+                        startTime.hour,
+                        startTime.minute,
+                        false
+                    ).show()
+                },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(R.string.settings_dark_schedule_start))
+                Text(
+                    formatTime(startTime),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    android.app.TimePickerDialog(
+                        context,
+                        { _, hour, minute ->
+                            themeManager.setDarkModeScheduleEnd(java.time.LocalTime.of(hour, minute))
+                        },
+                        endTime.hour,
+                        endTime.minute,
+                        false
+                    ).show()
+                },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(R.string.settings_dark_schedule_end))
+                Text(
+                    formatTime(endTime),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            SciuroPrimaryButton(
+                text = stringResource(android.R.string.ok),
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

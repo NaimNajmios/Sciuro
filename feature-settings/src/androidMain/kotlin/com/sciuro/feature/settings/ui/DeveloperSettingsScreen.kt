@@ -10,7 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
-import com.najmi.sciuro.core.ui.theme.SignalDanger
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.sciuro.feature.settings.R
 import com.sciuro.feature.settings.viewmodel.DeveloperSettingsViewModel
@@ -43,6 +43,7 @@ fun DeveloperSettingsScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val tokens = LocalSciuroSemanticTokens.current
 
     LaunchedEffect(uiError) {
         uiError?.let { error ->
@@ -99,7 +100,7 @@ fun DeveloperSettingsScreen(
                         Text(
                             text = stringResource(R.string.developer_dead, deadLetterCount.toInt()),
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (deadLetterCount > 0) SignalDanger else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                            color = if (deadLetterCount > 0) tokens.signalDanger else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                         )
                     }
                 }

@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroCard
-import com.najmi.sciuro.core.ui.theme.SignalDanger
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 import com.sciuro.feature.dashboard.R
 
 @Composable
@@ -20,6 +20,7 @@ fun DashboardSummaryRow(
     expectedIncomeDate: Long? = null,
     modifier: Modifier = Modifier
 ) {
+    val tokens = LocalSciuroSemanticTokens.current
     Row(
         modifier = modifier.fillMaxWidth().height(IntrinsicSize.Max).padding(bottom = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -42,7 +43,7 @@ fun DashboardSummaryRow(
                 Text(
                     "RM ${"%.0f".format(runway)}",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = if (runway < 0) SignalDanger else MaterialTheme.colorScheme.onSurface
+                    color = if (runway < 0) tokens.signalDanger else MaterialTheme.colorScheme.onSurface
                 )
                 if (hasIncomePattern && expectedIncomeDate != null) {
                     val dateStr = java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault()).format(java.util.Date(expectedIncomeDate))

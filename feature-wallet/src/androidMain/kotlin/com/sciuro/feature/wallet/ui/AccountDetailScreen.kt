@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -156,223 +158,230 @@ fun AccountDetailScreen(
     val account = state.account!!
     val isCashWallet = account.type.lowercase().contains("cash") || account.type.lowercase().contains("personal")
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            HeroPanel(
-                title = account.name,
-                heroFigure = { HeroFigure(account.balance) },
-                toggleOptions = emptyList(),
-                selectedToggle = "",
-                onToggleSelected = { },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = SciuroIcons.Back,
-                            contentDescription = stringResource(R.string.wallet_back_cd),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                },
-                content = {
-                    val onPrimary = MaterialTheme.colorScheme.onPrimary
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (account.qr_image_path != null && !isCashWallet) {
-                            FilledTonalButton(
-                                onClick = { showQrFullScreen = true },
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = onPrimary.copy(alpha = 0.15f),
-                                    contentColor = onPrimary
-                                )
-                            ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    HeroPanel(
+                        title = account.name,
+                        heroFigure = { HeroFigure(account.balance) },
+                        toggleOptions = emptyList(),
+                        selectedToggle = "",
+                        onToggleSelected = { },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
                                 Icon(
-                                    SciuroIcons.QrCodeScanner,
-                                    contentDescription = stringResource(R.string.wallet_view_qr_cd),
-                                    modifier = Modifier.size(18.dp)
+                                    imageVector = SciuroIcons.Back,
+                                    contentDescription = stringResource(R.string.wallet_back_cd),
+                                    tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
+                        },
+                        content = {
+                            val onPrimary = MaterialTheme.colorScheme.onPrimary
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp)
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (account.qr_image_path != null && !isCashWallet) {
+                                    FilledTonalButton(
+                                        onClick = { showQrFullScreen = true },
+                                        colors = ButtonDefaults.filledTonalButtonColors(
+                                            containerColor = onPrimary.copy(alpha = 0.15f),
+                                            contentColor = onPrimary
+                                        )
+                                    ) {
+                                        Icon(
+                                            SciuroIcons.QrCodeScanner,
+                                            contentDescription = stringResource(R.string.wallet_view_qr_cd),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+                                FilledTonalButton(
+                                    onClick = { showAdjustmentDialog = true },
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = onPrimary.copy(alpha = 0.15f),
+                                        contentColor = onPrimary
+                                    )
+                                ) {
+                                    Icon(
+                                        SciuroIcons.Tune,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(stringResource(R.string.wallet_adjust_balance))
+                                }
+                            }
                         }
-                        FilledTonalButton(
-                            onClick = { showAdjustmentDialog = true },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = onPrimary.copy(alpha = 0.15f),
-                                contentColor = onPrimary
-                            )
-                        ) {
+                    )
+
+                    Box(modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd).padding(top = 36.dp, end = 16.dp)) {
+                        var expanded by remember { mutableStateOf(false) }
+                        IconButton(onClick = { expanded = true }) {
                             Icon(
-                                SciuroIcons.Tune,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                Icons.Filled.MoreVert,
+                                contentDescription = stringResource(R.string.wallet_more_options_cd),
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(stringResource(R.string.wallet_adjust_balance))
                         }
-                    }
-                }
-            )
-
-            Box(modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd).padding(top = 36.dp, end = 16.dp)) {
-                var expanded by remember { mutableStateOf(false) }
-                IconButton(onClick = { expanded = true }) {
-                    Icon(
-                        Icons.Filled.MoreVert,
-                        contentDescription = stringResource(R.string.wallet_more_options_cd),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.wallet_edit_details)) },
-                        leadingIcon = { Icon(SciuroIcons.Edit, contentDescription = null) },
-                        onClick = {
-                            expanded = false
-                            showEditDetailsDialog = true
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.wallet_change_color)) },
-                        leadingIcon = { Icon(SciuroIcons.Tune, contentDescription = null) },
-                        onClick = {
-                            expanded = false
-                            selectedColor = state.account?.color
-                            showColorDialog = true
-                        }
-                    )
-                    if (state.account?.is_system == 0L) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.wallet_archive_account)) },
-                            leadingIcon = { Icon(SciuroIcons.Close, contentDescription = null) },
-                            onClick = {
-                                expanded = false
-                                showArchiveDialog = true
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.wallet_delete_account_title), color = MaterialTheme.colorScheme.error) },
-                            leadingIcon = { Icon(SciuroIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                expanded = false
-                                showDeleteDialog = true
-                            }
-                        )
-                    }
-                }
-            }
-        }
-        
-        if (account.account_number != null || account.account_holder_name != null || account.bank_institution_code != null) {
-            com.najmi.sciuro.core.ui.components.SciuroCard(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(top = 16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Account Details",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    val accName = account.account_holder_name
-                    val accNum = account.account_number
-                    val accBank = account.bank_institution_code
-                    
-                    if (!accName.isNullOrBlank()) {
-                        Row {
-                            Text("Name: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(accName, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
-                        }
-                    }
-                    if (!accNum.isNullOrBlank()) {
-                        Row {
-                            Text("Account: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(accNum, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
-                        }
-                    }
-                    if (!accBank.isNullOrBlank()) {
-                        Row {
-                            Text("Bank Code: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(accBank, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
-                        }
-                    }
-                }
-            }
-        }
-
-        SheetList(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 32.dp)
-            ) {
-                if (state.spendingVelocity != null) {
-                    com.sciuro.feature.wallet.ui.components.AccountVelocityCard(velocity = state.spendingVelocity!!)
-                }
-                Text(
-                    stringResource(R.string.wallet_transaction_history),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                PillToggle(
-                    options = filterOptions,
-                    selectedOption = state.selectedFilter,
-                    onOptionSelected = { viewModel.setFilter(it) },
-                    modifier = Modifier.fillMaxWidth(),
-                    fillWidth = true,
-                    scrollable = true
-                )
-
-                if (state.timeline.isEmpty()) {
-                    com.najmi.sciuro.core.ui.components.EmptyStateView(
-                        message = if (state.selectedFilter == "Adjustments") stringResource(R.string.wallet_empty_no_adjustments_recorded)
-                                   else if (state.selectedFilter == "All" && state.transactions.isEmpty() && state.adjustments.isEmpty()) stringResource(R.string.wallet_empty_no_tx_or_adjustments)
-                                   else stringResource(R.string.wallet_empty_no_items_filter),
-                        fallbackIcon = SciuroIcons.Receipt
-                    )
-                } else {
-                    for (item in state.timeline) {
-                        when (item) {
-                            is TimelineItem.TransactionItem -> {
-                                val tx = item.tx
-                                val isTransfer = tx.category_id == "cat_transfer"
-                                val statusText = if (tx.is_reviewed == 1L) stringResource(R.string.wallet_reviewed) else stringResource(R.string.wallet_unreviewed)
-                                val cat = categoryMap[tx.category_id]
-                                val catColor = cat?.color?.let { parseColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant
-                                val catIcon = mapCategoryIcon(tx.category_id)
-                                TransactionCard(
-                                    merchantName = tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
-                                    amount = "RM ${"%.2f".format(tx.amount)}",
-                                    direction = tx.direction,
-                                    statusText = statusText,
-                                    categoryIcon = catIcon,
-                                    categoryColor = catColor,
-                                    isTransfer = isTransfer,
-                                    confidence = tx.confidence,
-                                    extractionMethod = tx.extraction_method,
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.wallet_edit_details)) },
+                                leadingIcon = { Icon(SciuroIcons.Edit, contentDescription = null) },
+                                onClick = {
+                                    expanded = false
+                                    showEditDetailsDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.wallet_change_color)) },
+                                leadingIcon = { Icon(SciuroIcons.Tune, contentDescription = null) },
+                                onClick = {
+                                    expanded = false
+                                    selectedColor = state.account?.color
+                                    showColorDialog = true
+                                }
+                            )
+                            if (state.account?.is_system == 0L) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.wallet_archive_account)) },
+                                    leadingIcon = { Icon(SciuroIcons.Close, contentDescription = null) },
                                     onClick = {
-                                        selectedTxForDetail = tx
-                                        showDetailSheet = true
+                                        expanded = false
+                                        showArchiveDialog = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.wallet_delete_account_title), color = MaterialTheme.colorScheme.error) },
+                                    leadingIcon = { Icon(SciuroIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                    onClick = {
+                                        expanded = false
+                                        showDeleteDialog = true
                                     }
                                 )
                             }
-                            is TimelineItem.AdjustmentItem -> {
-                                val adj = item.adjustment
-                                AdjustmentCard(
-                                    reason = adj.reason,
-                                    amount = adj.amount
+                        }
+                    }
+                }
+            }
+
+            item {
+                SheetList(modifier = Modifier.offset(y = (-24).dp).fillParentMaxHeight()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (account.account_number != null || account.account_holder_name != null || account.bank_institution_code != null) {
+                        com.najmi.sciuro.core.ui.components.SciuroCard(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "Account Details",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
+
+                                val accName = account.account_holder_name
+                                val accNum = account.account_number
+                                val accBank = account.bank_institution_code
+
+                                if (!accName.isNullOrBlank()) {
+                                    Row {
+                                        Text("Name: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(accName, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                                    }
+                                }
+                                if (!accNum.isNullOrBlank()) {
+                                    Row {
+                                        Text("Account: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(accNum, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                                    }
+                                }
+                                if (!accBank.isNullOrBlank()) {
+                                    Row {
+                                        Text("Bank Code: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(accBank, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 32.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        if (state.spendingVelocity != null) {
+                            com.sciuro.feature.wallet.ui.components.AccountVelocityCard(velocity = state.spendingVelocity!!)
+                        }
+                        Text(
+                            stringResource(R.string.wallet_transaction_history),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+
+                        PillToggle(
+                            options = filterOptions,
+                            selectedOption = state.selectedFilter,
+                            onOptionSelected = { viewModel.setFilter(it) },
+                            modifier = Modifier.fillMaxWidth(),
+                            fillWidth = true,
+                            scrollable = true
+                        )
+
+                        if (state.timeline.isEmpty()) {
+                            com.najmi.sciuro.core.ui.components.EmptyStateView(
+                                message = if (state.selectedFilter == "Adjustments") stringResource(R.string.wallet_empty_no_adjustments_recorded)
+                                           else if (state.selectedFilter == "All" && state.transactions.isEmpty() && state.adjustments.isEmpty()) stringResource(R.string.wallet_empty_no_tx_or_adjustments)
+                                           else stringResource(R.string.wallet_empty_no_items_filter),
+                                fallbackIcon = SciuroIcons.Receipt
+                            )
+                        } else {
+                            for (item in state.timeline) {
+                                when (item) {
+                                    is TimelineItem.TransactionItem -> {
+                                        val tx = item.tx
+                                        val isTransfer = tx.category_id == "cat_transfer"
+                                        val statusText = if (tx.is_reviewed == 1L) stringResource(R.string.wallet_reviewed) else stringResource(R.string.wallet_unreviewed)
+                                        val cat = categoryMap[tx.category_id]
+                                        val catColor = cat?.color?.let { parseColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant
+                                        val catIcon = mapCategoryIcon(tx.category_id)
+                                        TransactionCard(
+                                            merchantName = tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
+                                            amount = "RM ${"%.2f".format(tx.amount)}",
+                                            direction = tx.direction,
+                                            statusText = statusText,
+                                            categoryIcon = catIcon,
+                                            categoryColor = catColor,
+                                            isTransfer = isTransfer,
+                                            confidence = tx.confidence,
+                                            extractionMethod = tx.extraction_method,
+                                            onClick = {
+                                                selectedTxForDetail = tx
+                                                showDetailSheet = true
+                                            }
+                                        )
+                                    }
+                                    is TimelineItem.AdjustmentItem -> {
+                                        val adj = item.adjustment
+                                        AdjustmentCard(
+                                            reason = adj.reason,
+                                            amount = adj.amount
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

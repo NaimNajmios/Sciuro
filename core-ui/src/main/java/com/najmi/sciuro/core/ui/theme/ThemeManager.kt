@@ -12,13 +12,16 @@ enum class ThemePreference {
 
 class ThemeManager(context: Context) {
     private val prefs = context.getSharedPreferences("sciuro_theme_prefs", Context.MODE_PRIVATE)
-    
+
     private val _themePreference = MutableStateFlow(getSavedTheme())
     val themePreference: StateFlow<ThemePreference> = _themePreference.asStateFlow()
-    
+
     private val _palettePreference = MutableStateFlow(getSavedPalette())
     val palettePreference: StateFlow<PalettePreference> = _palettePreference.asStateFlow()
-    
+
+    private val _scheduleChanged = MutableStateFlow(System.currentTimeMillis())
+    val scheduleChanged: StateFlow<Long> = _scheduleChanged.asStateFlow()
+
     private fun getSavedTheme(): ThemePreference {
         val name = prefs.getString("theme", ThemePreference.SYSTEM_DEFAULT.name)
         return try {
@@ -27,7 +30,7 @@ class ThemeManager(context: Context) {
             ThemePreference.SYSTEM_DEFAULT
         }
     }
-    
+
     private fun getSavedPalette(): PalettePreference {
         val name = prefs.getString("palette", PalettePreference.MONOCHROME.name)
         return try {
@@ -36,12 +39,12 @@ class ThemeManager(context: Context) {
             PalettePreference.MONOCHROME
         }
     }
-    
+
     fun setTheme(theme: ThemePreference) {
         prefs.edit().putString("theme", theme.name).apply()
         _themePreference.value = theme
     }
-    
+
     fun setPalette(palette: PalettePreference) {
         prefs.edit().putString("palette", palette.name).apply()
         _palettePreference.value = palette
@@ -51,6 +54,7 @@ class ThemeManager(context: Context) {
 
     fun setDarkModeScheduleEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("dark_mode_schedule_enabled", enabled).apply()
+        _scheduleChanged.value = System.currentTimeMillis()
     }
 
     fun getDarkModeScheduleStart(): LocalTime {
@@ -64,6 +68,7 @@ class ThemeManager(context: Context) {
             .putInt("dark_mode_start_hour", time.hour)
             .putInt("dark_mode_start_minute", time.minute)
             .apply()
+        _scheduleChanged.value = System.currentTimeMillis()
     }
 
     fun getDarkModeScheduleEnd(): LocalTime {
@@ -77,32 +82,19 @@ class ThemeManager(context: Context) {
             .putInt("dark_mode_end_hour", time.hour)
             .putInt("dark_mode_end_minute", time.minute)
             .apply()
+        _scheduleChanged.value = System.currentTimeMillis()
     }
 
     fun getEffectiveTheme(): ThemePreference {
-        if (!isDarkModeScheduleEnabled()) return getSavedTheme()
-
+        if (!isDarkModeScheduleEnabled()) return _themePreference.value
         val now = LocalTime.now()
         val start = getDarkModeScheduleStart()
         val end = getDarkModeScheduleEnd()
-
         val inDarkWindow = if (start.isBefore(end)) {
             now in start..end
         } else {
             now >= start || now <= end
         }
-
         return if (inDarkWindow) ThemePreference.DARK else ThemePreference.LIGHT
-    }
-    
-    companion object {
-        @Volatile
-        private var instance: ThemeManager? = null
-        
-        fun getInstance(context: Context): ThemeManager {
-            return instance ?: synchronized(this) {
-                instance ?: ThemeManager(context.applicationContext).also { instance = it }
-            }
-        }
     }
 }

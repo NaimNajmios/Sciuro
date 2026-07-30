@@ -17,9 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.R
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
-import com.najmi.sciuro.core.ui.theme.SignalDanger
-import com.najmi.sciuro.core.ui.theme.SignalIncome
-import com.najmi.sciuro.core.ui.theme.SignalWarning
+import com.najmi.sciuro.core.ui.theme.LocalSciuroSemanticTokens
 
 data class AuditEventDisplay(
     val label: String,
@@ -46,6 +44,7 @@ fun TransactionDetailSheet(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val tokens = LocalSciuroSemanticTokens.current
     if (showSheet) {
         SciuroFormSheet(
             title = stringResource(R.string.tx_details_title),
@@ -76,14 +75,14 @@ fun TransactionDetailSheet(
                     style = MaterialTheme.typography.headlineSmall,
                     fontFamily = IBMPlexMono,
                     fontWeight = FontWeight.Bold,
-                    color = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else MaterialTheme.colorScheme.onSurface
+                    color = if (direction == "INFLOW") tokens.signalIncome else MaterialTheme.colorScheme.onSurface
                 )
             }
 
             Text(
                 text = if (direction == "INFLOW") stringResource(R.string.tx_income) else stringResource(R.string.tx_expense),
                 style = MaterialTheme.typography.labelMedium,
-                color = if (direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
+                color = if (direction == "INFLOW") tokens.signalIncome else tokens.signalDanger
             )
 
             if (hasTransferLink) {
@@ -109,10 +108,10 @@ fun TransactionDetailSheet(
                         else -> extractionMethod
                     }
                     val dotColor = when {
-                        extractionMethod == "MANUAL" -> SignalIncome
-                        confidence != null && confidence >= 0.85 -> SignalIncome
-                        confidence != null && confidence >= 0.50 -> SignalWarning
-                        else -> SignalDanger
+                        extractionMethod == "MANUAL" -> tokens.signalIncome
+                        confidence != null && confidence >= 0.85 -> tokens.signalIncome
+                        confidence != null && confidence >= 0.50 -> tokens.signalWarning
+                        else -> tokens.signalDanger
                     }
     
                     Row(
