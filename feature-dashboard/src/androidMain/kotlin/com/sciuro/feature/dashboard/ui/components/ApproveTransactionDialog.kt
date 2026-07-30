@@ -1,14 +1,18 @@
 package com.sciuro.feature.dashboard.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import com.sciuro.core.ledger.db.Account
 import com.sciuro.feature.dashboard.R
 
@@ -65,6 +69,8 @@ fun ApproveTransactionDialog(
                 onClick = onApprove,
                 enabled = selectedAccountId != null
             ) {
+                Icon(SciuroIcons.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.dashboard_approve))
             }
         },

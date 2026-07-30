@@ -10,6 +10,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.sciuro.feature.wallet.R
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 
 @Composable
 fun OnboardingIntroScreen(
@@ -47,6 +48,7 @@ fun OnboardingIntroScreen(
         SciuroPrimaryButton(
             text = stringResource(R.string.wallet_intro_get_started),
             onClick = onContinue,
+            icon = SciuroIcons.Forward,
             modifier = Modifier.fillMaxWidth()
         )
     }

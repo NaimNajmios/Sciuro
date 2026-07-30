@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import com.sciuro.feature.wallet.R
 
 @Composable
@@ -103,6 +104,8 @@ fun OnboardingBatteryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
+                Icon(SciuroIcons.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.wallet_allow_background_activity))
             }
 
@@ -119,16 +122,22 @@ fun OnboardingBatteryScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    Icon(SciuroIcons.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.wallet_open_autostart_settings))
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
             TextButton(onClick = onSkip) {
-                Text(
-                    stringResource(R.string.wallet_skip_for_now),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(SciuroIcons.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.wallet_skip_for_now),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

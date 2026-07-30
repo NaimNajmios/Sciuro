@@ -6,8 +6,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Add
+import com.najmi.sciuro.core.ui.util.SciuroIcons
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.najmi.sciuro.core.ui.components.SciuroNavigationCard
+import com.najmi.sciuro.core.ui.components.SciuroSectionHeader
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
 
@@ -54,7 +58,7 @@ fun DataSettingsScreen(
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = SciuroIcons.Back,
                         contentDescription = stringResource(R.string.linked_accounts_back),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -71,7 +75,7 @@ fun DataSettingsScreen(
                 contentPadding = PaddingValues(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp)
             ) {
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_data_backup))
+                    SciuroSectionHeader(stringResource(R.string.settings_section_data_backup), icon = SciuroIcons.Info)
                 }
 
                 item {
@@ -91,12 +95,16 @@ fun DataSettingsScreen(
                                     onClick = { showExportDialog = true },
                                     modifier = Modifier.weight(1f)
                                 ) {
+                                    Icon(Icons.Filled.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(6.dp))
                                     Text(stringResource(R.string.settings_export))
                                 }
                                 OutlinedButton(
                                     onClick = { importFilePickerLauncher.launch(arrayOf("*/*")) },
                                     modifier = Modifier.weight(1f)
                                 ) {
+                                    Icon(Icons.Filled.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(6.dp))
                                     Text(stringResource(R.string.settings_import))
                                 }
                             }
@@ -105,67 +113,39 @@ fun DataSettingsScreen(
                 }
 
                 item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    SciuroNavigationCard(
+                        title = stringResource(R.string.settings_linked_accounts),
+                        summary = "",
+                        leadingIcon = Icons.Filled.Settings,
                         onClick = onNavigateToLinkedAccounts
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(stringResource(R.string.settings_linked_accounts), style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_linked_accounts))
-                        }
-                    }
+                    )
                 }
 
                 item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    SciuroNavigationCard(
+                        title = stringResource(R.string.settings_manage_categories),
+                        summary = "",
+                        leadingIcon = Icons.Filled.Settings,
                         onClick = onNavigateToCategorySettings
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(stringResource(R.string.settings_manage_categories), style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_manage_categories))
-                        }
-                    }
+                    )
                 }
 
                 item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    SciuroNavigationCard(
+                        title = stringResource(R.string.settings_manage_merchant_rules),
+                        summary = "",
+                        leadingIcon = Icons.Filled.Settings,
                         onClick = onNavigateToMerchantRules
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(stringResource(R.string.settings_manage_merchant_rules), style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_manage_merchant_rules))
-                        }
-                    }
+                    )
                 }
 
                 item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    SciuroNavigationCard(
+                        title = stringResource(R.string.settings_manage_investment_prices),
+                        summary = "",
+                        leadingIcon = Icons.Filled.Settings,
                         onClick = onNavigateToInvestmentPrice
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(stringResource(R.string.settings_manage_investment_prices), style = MaterialTheme.typography.titleMedium)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_manage_investment_prices))
-                        }
-                    }
+                    )
                 }
 
                 item {

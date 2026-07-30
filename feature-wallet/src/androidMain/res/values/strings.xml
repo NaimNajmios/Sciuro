@@ -74,7 +74,7 @@
     <string name="wallet_empty_no_items_filter">No items match the current filter.</string>
     <string name="wallet_qr_code_saved">QR code saved</string>
     <string name="wallet_qr_code_removed">QR code removed</string>
-    <string name="wallet_edit_tx_not_implemented">Edit transaction not yet implemented</string>
+    <string name="wallet_transaction_updated">Transaction updated</string>
     <string name="wallet_archive_account_message">Are you sure you want to archive this account? It will be hidden from the main wallet views but historical transactions will be kept.</string>
     <string name="wallet_archive">Archive</string>
     <string name="wallet_account_archived">Account archived</string>
@@ -150,4 +150,9 @@
     <string name="wallet_cash_wallet">Cash Wallet</string>
     <string name="wallet_e_wallet">E-Wallet</string>
     <string name="wallet_bank_account">Bank Account</string>
+
+    <!-- AccountVelocityCard -->
+    <string name="wallet_spending_velocity">Spending Velocity</string>
+    <string name="wallet_no_spending_yet">No spending recorded</string>
+    <string name="wallet_days_remaining">At this rate: %d days remaining</string>
 </resources>

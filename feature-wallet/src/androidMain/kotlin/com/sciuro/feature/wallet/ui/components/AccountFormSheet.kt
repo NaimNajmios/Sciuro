@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -62,6 +62,7 @@ fun AccountFormSheet(
     SciuroFormSheet(
         title = if (editingAccountId == null) stringResource(R.string.wallet_add_account) else stringResource(R.string.wallet_edit_account),
         onDismissRequest = onDismiss, 
+        icon = SciuroIcons.Home,
         modifier = modifier
     ) {
 
@@ -165,7 +166,7 @@ fun AccountFormSheet(
                 ) {
                     if (initialColor == hex) {
                         Box(modifier = Modifier.fillMaxSize().clip(CircleShape).background(Color.White.copy(alpha = 0.3f)))
-                        Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center))
+                        Icon(SciuroIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center))
                     }
                 }
             }

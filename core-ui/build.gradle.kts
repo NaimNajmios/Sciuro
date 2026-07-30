@@ -43,4 +43,5 @@ dependencies {
     implementation(libs.androidx.ui.text.google.fonts)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.lottie.compose)
+    implementation(libs.androidx.biometric)
 }

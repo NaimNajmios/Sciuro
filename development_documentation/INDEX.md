@@ -3,7 +3,7 @@
 ## Phase Status
 | Phase | Status | Summary |
 |---|---|---|---|---|
-| **K2 — UX Polish (State-of-the-Art Enhancements)** | **In Progress (Phase 1 + 2 Complete)** | Cross-cutting UX enhancements: unified haptics, long-press menus, edge-to-edge system bars (Phase 1). Shimmer skeleton loading, predictive back gesture, Material You dynamic color (Phase 2). Remaining: biometric actions, smart notifications, Glance widgets (Phase 3); predictive analytics, spending velocity (Phase 4). See [phase-K2-ux-polish/PLAN.md](phase-K2-ux-polish/PLAN.md). |
+| **K2 — UX Polish (State-of-the-Art Enhancements)** | **Complete** | Comprehensive UX enhancement across 4 phases: unified haptics, long-press menus, edge-to-edge system bars (Phase 1). Shimmer skeleton loading, predictive back gesture, Material You dynamic color (Phase 2). Biometric confirmations, smart notification actions, Glance widgets (Phase 3). Predictive runway analytics, per-account spending velocity, reusable sparkline component (Phase 4). See [phase-K2-ux-polish/PLAN.md](phase-K2-ux-polish/PLAN.md). |
 | **Dev-Tools-Pagination-Hero-Palette** | **Completed** | Ingestion log pagination (50-item pages + "Load More"), mark-as-read (individual + bulk) with `is_read` column + "Show read" toggle, pipeline trace pagination (dynamic limit + "Load More"), HeroPanel palette inheritance (`primary`/`onPrimary` instead of hardcoded black/white across all call sites), PillToggle dark-surface theme awareness |
 | A0 - Engineering foundations | Completed | Module structure, Koin DI, detekt/ktlint, CI scaffold, SQLDelight + migrations, `development_documentation/` scaffold, test-tier strategy |
 | A1 - Audit Log core | Completed | AuditLog entity, SQLDelight schema, AuditRepository, and Repository-wrapper pattern |

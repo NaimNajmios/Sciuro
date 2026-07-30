@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.najmi.sciuro.MainActivity
 import com.najmi.sciuro.R
+import com.najmi.sciuro.receiver.NotificationActionReceiver
 
 object NotificationHelper {
     private const val REVIEW_CHANNEL_ID = "sciuro_review_channel"
@@ -121,19 +122,38 @@ object NotificationHelper {
     fun showBillReminder(context: Context, obligationId: String, obligationName: String, dueDate: Long) {
         ensureChannel(context, BILL_CHANNEL_ID, BILL_CHANNEL_NAME, "Reminders for upcoming bills")
 
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("open_tab", "kanban")
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context, BILL_NOTIFICATION_BASE + obligationId.hashCode(),
-            intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
         val daysUntil = (dueDate - System.currentTimeMillis()) / (24 * 60 * 60 * 1000)
         val body = if (daysUntil <= 0) "$obligationName is due today!"
         else if (daysUntil == 1L) "$obligationName is due tomorrow"
         else "$obligationName is due in $daysUntil days"
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("open_tab", "kanban")
+        }
+        val notificationId = BILL_NOTIFICATION_BASE + obligationId.hashCode()
+        val pendingIntent = PendingIntent.getActivity(
+            context, notificationId, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val markPaidIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = NotificationActionReceiver.ACTION_MARK_PAID
+            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+        }
+        val markPaidPendingIntent = PendingIntent.getBroadcast(
+            context, notificationId + 1000, markPaidIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val snoozeIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = NotificationActionReceiver.ACTION_SNOOZE_BILL
+            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+        }
+        val snoozePendingIntent = PendingIntent.getBroadcast(
+            context, notificationId + 2000, snoozeIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
         val notification = NotificationCompat.Builder(context, BILL_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -142,10 +162,12 @@ object NotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
+            .addAction(0, "Mark as paid", markPaidPendingIntent)
+            .addAction(0, "Snooze 1 day", snoozePendingIntent)
             .build()
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(BILL_NOTIFICATION_BASE + obligationId.hashCode(), notification)
+        nm.notify(notificationId, notification)
     }
 
     fun showDebtAlert(context: Context, debtId: String, debtName: String, message: String) {
@@ -455,10 +477,30 @@ object NotificationHelper {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("open_tab", "kanban")
         }
+        val notificationId = TRANSFER_NOTIFICATION_BASE + candidateRecipient.hashCode()
         val pendingIntent = PendingIntent.getActivity(
-            context, TRANSFER_NOTIFICATION_BASE, intent,
+            context, notificationId, intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+
+        val approveIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = NotificationActionReceiver.ACTION_APPROVE_TRANSFER
+            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+        }
+        val approvePendingIntent = PendingIntent.getBroadcast(
+            context, notificationId + 1000, approveIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val rejectIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = NotificationActionReceiver.ACTION_REJECT_TRANSFER
+            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+        }
+        val rejectPendingIntent = PendingIntent.getBroadcast(
+            context, notificationId + 2000, rejectIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         val notification = NotificationCompat.Builder(context, TRANSFER_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Transfer to Review")
@@ -466,8 +508,10 @@ object NotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
+            .addAction(0, "Yes, it's me", approvePendingIntent)
+            .addAction(0, "Not me", rejectPendingIntent)
             .build()
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(TRANSFER_NOTIFICATION_BASE + candidateRecipient.hashCode(), notification)
+        nm.notify(notificationId, notification)
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.najmi.sciuro.core.ui.R
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import com.najmi.sciuro.core.ui.util.formatDecimalFirstInput
 
 data class FastTxOption(val id: String, val name: String)
@@ -256,6 +257,7 @@ fun Numpad(
             onClick = {
                 onSaveClick()
             },
+            icon = SciuroIcons.Check,
             modifier = Modifier.padding(top = 8.dp)
         )
     }

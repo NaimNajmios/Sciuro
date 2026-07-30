@@ -17,6 +17,7 @@ import com.najmi.sciuro.core.ui.components.SciuroFormSheet
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SciuroAmountField
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import com.sciuro.core.ledger.db.Account
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.feature.dashboard.R
@@ -124,6 +125,8 @@ fun EditTransactionSheet(
             onClick = onDelete,
             modifier = Modifier.fillMaxWidth()
         ) {
+            Icon(SciuroIcons.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.dashboard_delete), color = MaterialTheme.colorScheme.error)
         }
     }

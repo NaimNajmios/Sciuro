@@ -9,7 +9,7 @@ import com.sciuro.core.budget.repository.BudgetRepository
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.feature.budgets.model.BudgetUiModel
-import com.sciuro.feature.budgets.model.mapCategoryIcon
+import com.najmi.sciuro.core.ui.util.mapCategoryIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

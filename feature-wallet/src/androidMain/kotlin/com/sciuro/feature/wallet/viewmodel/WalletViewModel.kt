@@ -25,6 +25,10 @@ import com.sciuro.core.investment.model.Investment
 import com.sciuro.core.investment.engine.InvestmentValuationEngine
 
 import com.sciuro.core.ledger.repository.CategoryRepository
+import com.sciuro.core.audit.model.EntityType
+import com.sciuro.core.audit.repository.AuditRepository
+import com.sciuro.core.ledger.repository.RawEventRepository
+import com.sciuro.core.transfer.repository.TransferRepository
 
 class WalletViewModel(
     private val accountRepository: AccountRepository,
@@ -33,7 +37,10 @@ class WalletViewModel(
     private val investmentRepository: InvestmentRepository,
     private val categoryRepository: CategoryRepository,
     private val cashAdjustmentRepository: CashAdjustmentRepository,
-    private val investmentValuationEngine: InvestmentValuationEngine
+    private val investmentValuationEngine: InvestmentValuationEngine,
+    private val auditRepository: AuditRepository,
+    private val transferRepository: TransferRepository,
+    private val rawEventRepository: RawEventRepository
 ) : ViewModel() {
     
     val accounts: StateFlow<List<WalletAccount>> = accountRepository.observeAccounts()
@@ -218,6 +225,17 @@ class WalletViewModel(
         viewModelScope.launch {
             transactionRepository.deleteTransaction(transactionId)
         }
+    }
+
+    suspend fun loadTransactionDetail(tx: com.sciuro.core.ledger.db.Transaction_record): TransactionDetailData {
+        val auditLogs = auditRepository.getLogsForEntity(tx.id, EntityType.TRANSACTION)
+        val transferLink = transferRepository.getTransferForTransaction(tx.id)
+        val rawEvent = tx.raw_event_id?.let { rawEventRepository.getRawEventById(it) }
+        return TransactionDetailData(
+            auditLogs = auditLogs,
+            transferLink = transferLink,
+            rawEvent = rawEvent
+        )
     }
     
     fun addInvestment(assetSymbol: String, assetName: String, assetType: String, unitsHeld: Double, averageBuyPrice: Double, associatedAccountId: String?) {

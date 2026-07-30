@@ -1,22 +1,6 @@
 package com.sciuro.feature.budgets.model
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material.icons.filled.Computer
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocalGroceryStore
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.Refresh
 import java.util.Calendar
 import kotlin.math.ceil
 
@@ -73,23 +57,4 @@ data class BudgetUiModel(
     }
 }
 
-fun mapCategoryIcon(categoryId: String?): ImageVector? {
-    return when (categoryId) {
-        "cat_dining", "cat_exp_1" -> Icons.Filled.Restaurant
-        "cat_groceries", "cat_exp_6" -> Icons.Filled.LocalGroceryStore
-        "cat_transport", "cat_exp_2" -> Icons.Filled.DirectionsCar
-        "cat_utilities", "cat_exp_3" -> Icons.Filled.Home
-        "cat_exp_4" -> Icons.Filled.ShoppingCart
-        "cat_exp_5" -> Icons.Filled.Description
-        "cat_exp_7" -> Icons.Filled.LocalHospital
-        "cat_exp_8" -> Icons.Filled.School
-        "cat_exp_9", "cat_inc_6" -> Icons.Filled.MoreHoriz
-        "cat_inc_1" -> Icons.Filled.AccountBalance
-        "cat_inc_2" -> Icons.Filled.Computer
-        "cat_inc_3" -> Icons.Filled.CardGiftcard
-        "cat_inc_4" -> Icons.AutoMirrored.Filled.TrendingUp
-        "cat_inc_5" -> Icons.Filled.Refresh
-        "cat_transfer" -> Icons.Filled.SwapHoriz
-        else -> null
-    }
-}
+

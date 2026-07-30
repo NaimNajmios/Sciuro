@@ -4,7 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import com.najmi.sciuro.core.ui.util.SciuroIcons
+
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,14 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.ui.draw.clip
 
 
@@ -31,6 +34,8 @@ import com.najmi.sciuro.core.ui.components.SciuroBottomSheet
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.najmi.sciuro.core.ui.components.SciuroNavigationCard
+import com.najmi.sciuro.core.ui.components.SciuroSectionHeader
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.LocalSnackbarHostState
 import com.sciuro.feature.settings.viewmodel.SettingsViewModel
@@ -105,7 +110,7 @@ fun SettingsScreen(
             ) {
                 // Section: Appearance
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_appearance))
+                    SciuroSectionHeader(stringResource(R.string.settings_section_appearance), Icons.Filled.Settings)
                 }
 
                 item {
@@ -153,7 +158,15 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(stringResource(R.string.settings_palette), style = MaterialTheme.typography.titleMedium)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Filled.Settings, contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+                                Text(stringResource(R.string.settings_palette), style = MaterialTheme.typography.titleMedium)
+                            }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Canvas(modifier = Modifier.size(16.dp)) {
                                     drawCircle(color = paletteColors(palettePref, false).primary)
@@ -166,7 +179,7 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
-                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    Icons.AutoMirrored.Outlined.ArrowForward,
                                     contentDescription = stringResource(R.string.settings_palette),
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -177,7 +190,7 @@ fun SettingsScreen(
 
                 // Section: Background Reliability
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_background_reliability))
+                    SciuroSectionHeader(stringResource(R.string.settings_section_background_reliability), icon = SciuroIcons.Info)
                 }
 
                 item {
@@ -234,7 +247,7 @@ fun SettingsScreen(
 
                 // Section: Security
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_security))
+                    SciuroSectionHeader(stringResource(R.string.settings_section_security), Icons.Filled.Lock)
                 }
 
                 item {
@@ -263,95 +276,51 @@ fun SettingsScreen(
 
                 // Navigation: Notifications
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_navigation))
+                    SciuroSectionHeader(stringResource(R.string.settings_section_navigation), icon = SciuroIcons.Search)
                 }
 
                 item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    SciuroNavigationCard(
+                        title = stringResource(R.string.settings_notifications),
+                        summary = buildString {
+                            append(stringResource(R.string.settings_notifications_summary, enabledNotifCount, 12))
+                            if (uiState.isQuietHoursEnabled) {
+                                append(" · ")
+                                append(stringResource(R.string.settings_quiet_hours_summary, uiState.quietHoursStart, uiState.quietHoursEnd))
+                            }
+                        },
+                        leadingIcon = Icons.Filled.Notifications,
                         onClick = onNavigateToNotificationSettings
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.settings_notifications), style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    stringResource(R.string.settings_notifications_summary, enabledNotifCount, 12),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                if (uiState.isQuietHoursEnabled) {
-                                    Text(
-                                        stringResource(R.string.settings_quiet_hours_summary, uiState.quietHoursStart, uiState.quietHoursEnd),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_notifications))
-                        }
-                    }
+                    )
                 }
 
-                // Navigation: Data & Privacy
                 item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    SciuroNavigationCard(
+                        title = stringResource(R.string.settings_data_privacy),
+                        summary = stringResource(R.string.settings_budget_summary, (uiState.budgetWarningThreshold * 100).toInt()),
+                        leadingIcon = SciuroIcons.Lock,
                         onClick = onNavigateToDataSettings
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.settings_data_privacy), style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    stringResource(R.string.settings_budget_summary, (uiState.budgetWarningThreshold * 100).toInt()),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_data_privacy))
-                        }
-                    }
+                    )
                 }
 
-                // Navigation: Intelligence & Automation
                 item {
-                    SciuroCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    SciuroNavigationCard(
+                        title = stringResource(R.string.settings_intelligence),
+                        summary = buildString {
+                            append(if (uiState.isLlmEnabled) stringResource(R.string.settings_summary_llm_on) else stringResource(R.string.settings_summary_llm_off))
+                            append(" · ")
+                            append(if (uiState.isObligationAutoConfirmEnabled) stringResource(R.string.settings_summary_autoconfirm_on) else stringResource(R.string.settings_summary_autoconfirm_off))
+                        },
+                        leadingIcon = SciuroIcons.Star,
                         onClick = onNavigateToIntelligenceSettings
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.settings_intelligence), style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    buildString {
-                                        append(if (uiState.isLlmEnabled) stringResource(R.string.settings_summary_llm_on) else stringResource(R.string.settings_summary_llm_off))
-                                        append(" · ")
-                                        append(if (uiState.isObligationAutoConfirmEnabled) stringResource(R.string.settings_summary_autoconfirm_on) else stringResource(R.string.settings_summary_autoconfirm_off))
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_intelligence))
-                        }
-                    }
+                    )
                 }
 
                 // Section: Developer
                 item {
-                    SettingsSectionHeader(
+                    SciuroSectionHeader(
                         title = stringResource(R.string.settings_developer_options),
+                        icon = Icons.Filled.Settings,
                         modifier = Modifier.clickable {
                             developerTapCount++
                             if (developerTapCount >= 7) {
@@ -367,19 +336,12 @@ fun SettingsScreen(
 
                 if (uiState.isDeveloperOptionsVisible) {
                     item {
-                        SciuroCard(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        SciuroNavigationCard(
+                            title = stringResource(R.string.settings_developer_options),
+                            summary = "",
+                            leadingIcon = Icons.Filled.Settings,
                             onClick = onNavigateToDeveloperSettings
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(stringResource(R.string.settings_developer_options), style = MaterialTheme.typography.titleMedium)
-                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.settings_developer_options))
-                            }
-                        }
+                        )
                     }
                 }
             }
@@ -422,7 +384,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.weight(1f))
                     if (isSelected) {
                         Icon(
-                            Icons.Filled.Check,
+                            SciuroIcons.Check,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
@@ -444,16 +406,4 @@ private fun paletteDisplayName(palette: PalettePreference): String = when (palet
     PalettePreference.DYNAMIC -> stringResource(R.string.palette_dynamic)
 }
 
-@Composable
-internal fun SettingsSectionHeader(
-    title: String,
-    modifier: Modifier = Modifier
-) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.SemiBold,
-        modifier = modifier.padding(start = 4.dp, top = 20.dp, bottom = 4.dp)
-    )
-}
+

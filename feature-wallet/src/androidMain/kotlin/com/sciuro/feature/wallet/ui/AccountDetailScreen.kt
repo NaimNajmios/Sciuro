@@ -13,12 +13,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Tune
+import com.najmi.sciuro.core.ui.util.SciuroIcons
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +47,8 @@ import com.najmi.sciuro.core.ui.components.SciuroConfirmationDialog
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
+import com.najmi.sciuro.core.ui.components.SciuroAmountField
+import com.najmi.sciuro.core.ui.util.mapCategoryIcon
 import com.sciuro.feature.wallet.R
 import org.koin.androidx.compose.koinViewModel
 
@@ -120,6 +119,21 @@ fun AccountDetailScreen(
         }
     }
 
+    // Edit Transaction State
+    var showEditTransactionDialog by remember { mutableStateOf(false) }
+    var editingTxId by remember { mutableStateOf<String?>(null) }
+    var editTxAmount by remember { mutableStateOf("") }
+    var editTxMerchant by remember { mutableStateOf("") }
+    var editTxAccountId by remember { mutableStateOf<String?>(null) }
+    var editTxDirection by remember { mutableStateOf("OUTFLOW") }
+    var editTxCategoryId by remember { mutableStateOf<String?>(null) }
+
+    val expenseCats by viewModel.expenseCategories.collectAsState()
+    val incomeCats by viewModel.incomeCategories.collectAsState()
+    val categoryMap = remember(expenseCats, incomeCats) {
+        (expenseCats + incomeCats).associateBy { it.id }
+    }
+
     val presetColors = listOf(
         null,
         "#4CAF50", // Green
@@ -153,7 +167,7 @@ fun AccountDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            imageVector = SciuroIcons.Back,
                             contentDescription = stringResource(R.string.wallet_back_cd),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
@@ -178,7 +192,7 @@ fun AccountDetailScreen(
                                 )
                             ) {
                                 Icon(
-                                    Icons.Filled.QrCodeScanner,
+                                    SciuroIcons.QrCodeScanner,
                                     contentDescription = stringResource(R.string.wallet_view_qr_cd),
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -193,7 +207,7 @@ fun AccountDetailScreen(
                             )
                         ) {
                             Icon(
-                                Icons.Filled.Tune,
+                                SciuroIcons.Tune,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -219,7 +233,7 @@ fun AccountDetailScreen(
                 ) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.wallet_edit_details)) },
-                        leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                        leadingIcon = { Icon(SciuroIcons.Edit, contentDescription = null) },
                         onClick = {
                             expanded = false
                             showEditDetailsDialog = true
@@ -227,6 +241,7 @@ fun AccountDetailScreen(
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.wallet_change_color)) },
+                        leadingIcon = { Icon(SciuroIcons.Tune, contentDescription = null) },
                         onClick = {
                             expanded = false
                             selectedColor = state.account?.color
@@ -236,6 +251,7 @@ fun AccountDetailScreen(
                     if (state.account?.is_system == 0L) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.wallet_archive_account)) },
+                            leadingIcon = { Icon(SciuroIcons.Close, contentDescription = null) },
                             onClick = {
                                 expanded = false
                                 showArchiveDialog = true
@@ -243,7 +259,7 @@ fun AccountDetailScreen(
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.wallet_delete_account_title), color = MaterialTheme.colorScheme.error) },
-                            leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                            leadingIcon = { Icon(SciuroIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                             onClick = {
                                 expanded = false
                                 showDeleteDialog = true
@@ -300,6 +316,9 @@ fun AccountDetailScreen(
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 32.dp)
             ) {
+                if (state.spendingVelocity != null) {
+                    com.sciuro.feature.wallet.ui.components.AccountVelocityCard(velocity = state.spendingVelocity!!)
+                }
                 Text(
                     stringResource(R.string.wallet_transaction_history),
                     style = MaterialTheme.typography.titleMedium,
@@ -319,7 +338,8 @@ fun AccountDetailScreen(
                     com.najmi.sciuro.core.ui.components.EmptyStateView(
                         message = if (state.selectedFilter == "Adjustments") stringResource(R.string.wallet_empty_no_adjustments_recorded)
                                    else if (state.selectedFilter == "All" && state.transactions.isEmpty() && state.adjustments.isEmpty()) stringResource(R.string.wallet_empty_no_tx_or_adjustments)
-                                   else stringResource(R.string.wallet_empty_no_items_filter)
+                                   else stringResource(R.string.wallet_empty_no_items_filter),
+                        fallbackIcon = SciuroIcons.Receipt
                     )
                 } else {
                     for (item in state.timeline) {
@@ -328,11 +348,16 @@ fun AccountDetailScreen(
                                 val tx = item.tx
                                 val isTransfer = tx.category_id == "cat_transfer"
                                 val statusText = if (tx.is_reviewed == 1L) stringResource(R.string.wallet_reviewed) else stringResource(R.string.wallet_unreviewed)
+                                val cat = categoryMap[tx.category_id]
+                                val catColor = cat?.color?.let { parseColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant
+                                val catIcon = mapCategoryIcon(tx.category_id)
                                 TransactionCard(
                                     merchantName = tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
                                     amount = "RM ${"%.2f".format(tx.amount)}",
                                     direction = tx.direction,
                                     statusText = statusText,
+                                    categoryIcon = catIcon,
+                                    categoryColor = catColor,
                                     isTransfer = isTransfer,
                                     confidence = tx.confidence,
                                     extractionMethod = tx.extraction_method,
@@ -405,15 +430,56 @@ fun AccountDetailScreen(
             auditEvents = auditEvents,
             onEditClick = {
                 showDetailSheet = false
-                coroutineScope.launch {
-                    snackbarHostState.showSnackbar(context.getString(R.string.wallet_edit_tx_not_implemented))
-                }
+                editingTxId = tx.id
+                editTxAmount = tx.amount.toString()
+                editTxMerchant = tx.merchant ?: ""
+                editTxAccountId = tx.account_id
+                editTxDirection = tx.direction
+                editTxCategoryId = tx.category_id
+                showEditTransactionDialog = true
             },
             onDeleteClick = {
                 showDetailSheet = false
                 txToDelete = tx
                 showDeleteTxConfirmation = true
             }
+        )
+    }
+
+    if (showEditTransactionDialog) {
+        AccountDetailEditTransactionSheet(
+            accounts = listOfNotNull(state.account),
+            editTxAmount = editTxAmount,
+            onAmountChange = { editTxAmount = it },
+            editTxMerchant = editTxMerchant,
+            onMerchantChange = { editTxMerchant = it },
+            editTxDirection = editTxDirection,
+            onDirectionChange = { editTxDirection = it },
+            editTxCategoryId = editTxCategoryId,
+            onCategoryIdChange = { editTxCategoryId = it },
+            editTxAccountId = editTxAccountId,
+            onAccountIdChange = { editTxAccountId = it },
+            expenseCategories = expenseCats,
+            incomeCategories = incomeCats,
+            onDelete = {
+                showEditTransactionDialog = false
+                txToDelete = editingTxId?.let { id -> state.transactions.find { it.id == id } }
+                txToDelete?.let { showDeleteTxConfirmation = true }
+            },
+            onSave = {
+                val amt = editTxAmount.toDoubleOrNull() ?: 0.0
+                viewModel.editTransaction(
+                    transactionId = editingTxId!!,
+                    amount = amt,
+                    direction = editTxDirection,
+                    merchant = editTxMerchant,
+                    categoryId = editTxCategoryId,
+                    accountId = editTxAccountId
+                )
+                showEditTransactionDialog = false
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_transaction_updated)) }
+            },
+            onDismiss = { showEditTransactionDialog = false }
         )
     }
 
@@ -727,6 +793,8 @@ private fun EditAccountDetailsSheet(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     OutlinedButton(onClick = onPickQr) {
+                        Icon(SciuroIcons.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(stringResource(R.string.wallet_change))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -739,7 +807,7 @@ private fun EditAccountDetailsSheet(
                     onClick = onPickQr,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(SciuroIcons.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.wallet_select_qr_image))
                 }
@@ -756,14 +824,144 @@ private fun EditAccountDetailsSheet(
                 onClick = onDismiss,
                 modifier = Modifier.weight(1f)
             ) {
+                Icon(SciuroIcons.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.wallet_cancel))
             }
 
             SciuroPrimaryButton(
                 text = stringResource(R.string.wallet_save),
                 onClick = { onConfirm(accountNumber.ifBlank { null }, accountHolderName.ifBlank { null }, bankInstitutionCode.ifBlank { null }) },
+                icon = SciuroIcons.Edit,
                 modifier = Modifier.weight(1f)
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AccountDetailEditTransactionSheet(
+    accounts: List<com.sciuro.core.ledger.db.Account>,
+    editTxAmount: String,
+    onAmountChange: (String) -> Unit,
+    editTxMerchant: String,
+    onMerchantChange: (String) -> Unit,
+    editTxDirection: String,
+    onDirectionChange: (String) -> Unit,
+    editTxCategoryId: String?,
+    onCategoryIdChange: (String?) -> Unit,
+    editTxAccountId: String?,
+    onAccountIdChange: (String?) -> Unit,
+    expenseCategories: List<com.sciuro.core.ledger.model.Category>,
+    incomeCategories: List<com.sciuro.core.ledger.model.Category>,
+    onDelete: () -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    SciuroBottomSheet(
+        onDismissRequest = onDismiss
+    ) {
+        Text(stringResource(R.string.wallet_edit_transaction), style = MaterialTheme.typography.headlineSmall)
+
+        SciuroAmountField(
+            value = editTxAmount,
+            onValueChange = onAmountChange,
+            label = stringResource(R.string.wallet_amount_rm)
+        )
+
+        SciuroTextField(
+            value = editTxMerchant,
+            onValueChange = onMerchantChange,
+            label = stringResource(R.string.wallet_merchant_note)
+        )
+
+        PillToggle(
+            options = listOf("Expense", "Income"),
+            selectedOption = if (editTxDirection == "OUTFLOW") "Expense" else "Income",
+            onOptionSelected = { label ->
+                onDirectionChange(if (label == "Expense") "OUTFLOW" else "INFLOW")
+                onCategoryIdChange(null)
+            },
+            fillWidth = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        var accountExpanded by remember { mutableStateOf(false) }
+        ExposedDropdownMenuBox(
+            expanded = accountExpanded,
+            onExpandedChange = { accountExpanded = it }
+        ) {
+            val selAcc = accounts.find { it.id == editTxAccountId }
+            SciuroTextField(
+                value = selAcc?.name ?: stringResource(R.string.wallet_select_account),
+                onValueChange = {},
+                readOnly = true,
+                label = stringResource(R.string.wallet_wallet_account),
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
+                modifier = Modifier.menuAnchor()
+            )
+            ExposedDropdownMenu(
+                expanded = accountExpanded,
+                onDismissRequest = { accountExpanded = false }
+            ) {
+                accounts.forEach { acc ->
+                    DropdownMenuItem(
+                        text = { Text(acc.name) },
+                        onClick = {
+                            onAccountIdChange(acc.id)
+                            accountExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Text(stringResource(R.string.wallet_category), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val relevantCategories = if (editTxDirection == "OUTFLOW") expenseCategories else incomeCategories
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(relevantCategories) { cat ->
+                FilterChip(
+                    selected = editTxCategoryId == cat.id,
+                    onClick = { onCategoryIdChange(cat.id) },
+                    label = { Text(cat.name) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedButton(
+                onClick = onDelete,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text(stringResource(R.string.wallet_delete))
+            }
+
+            SciuroPrimaryButton(
+                text = stringResource(R.string.wallet_save),
+                onClick = onSave,
+                modifier = Modifier.weight(1f),
+                enabled = editTxAmount.isNotBlank() && editTxAccountId != null
+            )
+        }
+    }
+}
+
+private fun parseColor(hex: String?): Color? {
+    if (hex == null) return null
+    return try {
+        Color(android.graphics.Color.parseColor(hex))
+    } catch (e: Exception) {
+        null
     }
 }

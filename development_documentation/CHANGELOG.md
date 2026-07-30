@@ -23,6 +23,35 @@ All notable changes to this project will be documented in this file.
 - **MerchantRuleRepository**: Added `accountRepository` param and `observeAllAccountRules()` / `deleteAccountRule()` methods.
 - **MerchantAccountRule.sq**: Added `selectAllMerchantAccountRules` query.
 
+### Phase K2 — UX Polish (Phase 4: Intelligence) + Phase 3.3 (Glance Widgets)
+
+#### Added
+- **Predictive runway analytics** (`core-budget/engine/RunwayPredictor.kt`): KMP engine computing 30-day forward projection of account balance from daily average spend + upcoming obligations. Produces `RunwayPrediction` (days until negative, confidence %, projected daily balance as sparkline data). Registered as Koin singleton.
+- **PredictionCard** (`feature-dashboard/components/PredictionCard.kt`): Dashboard card showing projected runway with color coding (red <7d, yellow <14d, green >14d), sparkline via `Sparkline`, confidence label, daily burn rate. Integrated into `DashboardScreen` between weekly digest and transaction history.
+- **Sparkline component** (`core-ui/components/Sparkline.kt`): Reusable Canvas-based sparkline adapted from `WaveChart` — accepts `lineColor`, `lineWidth`, `height`, `showDot` parameters. Used by PredictionCard.
+- **Per-account spending velocity** (`core-ledger/engine/VelocityCalculator.kt`): KMP calculator computing daily average spend (30-day rolling), burn rate percentage, days until depleted, and trend direction (up/down/stable vs. previous 30-days).
+- **AccountVelocityCard** (`feature-wallet/components/AccountVelocityCard.kt`): Card on AccountDetailScreen showing RM/day in IBMPlexMono, color-coded LinearProgressIndicator (burn rate), trend arrow, days remaining text.
+- **Glance home screen widgets** (`:feature-widget` new module): Home screen presence with `SciuroBalanceWidget` (net position) and `SciuroBudgetWidget` (top 3 at-risk budgets). Uses `glance-appwidget:1.1.1` + `glance-material3:1.1.1`. Widgets auto-refresh every 30 minutes. DI via `KoinJavaComponent.get<>()`. Module registered in `SciuroApp.kt`.
+
+#### Changed
+- `DashboardViewModel`: Added 13th constructor parameter `RunwayPredictor`, injects prediction in combine block. State includes `runwayPrediction: RunwayPrediction?`.
+- `AccountDetailViewModel`: State now includes `spendingVelocity: SpendingVelocity?`, computed in combine from account balance + transactions.
+- `AccountDetailScreen`: Shows `AccountVelocityCard` in SheetList before Transaction History header.
+- `DashboardModule.kt`: Added 13th `get()` for RunwayPredictor constructor parameter.
+- `libs.versions.toml`: Added `glance = "1.1.1"`, `glance-appwidget`, `glance-material3` libraries.
+- `settings.gradle.kts`: Added `include(":feature-widget")`.
+
+### Phase K2 — UX Polish (Phase 3: Security & Reach)
+
+#### Added
+- **Biometric confirmation for destructive actions** (`core-ui/components/BiometricConfirmDialog.kt`): Reusable composable that triggers `BiometricPrompt` (BIOMETRIC_STRONG | DEVICE_CREDENTIAL) for high-value mutations. Integrated into Dashboard (delete transaction), Budgets (delete budget), and Debt (delete debt) confirmation flows. Falls back to direct execution if no biometric/credential enrolled. `androidx.biometric` dependency added to `core-ui/build.gradle.kts`.
+- **Inline notification actions** (`app/receiver/NotificationActionReceiver.kt`): New `BroadcastReceiver` handling `APPROVE_TRANSFER`, `REJECT_TRANSFER`, `MARK_PAID`, `SNOOZE_BILL` actions. Uses `KoinComponent` for DI. Registered in `AndroidManifest.xml`.
+- **Smart notification replies** (`NotificationHelper.kt`): `showTransferReviewAlert()` now includes "Yes, it's me" and "Not me" action buttons. `showBillReminder()` now includes "Mark as paid" and "Snooze 1 day" action buttons. Actions cancel the notification immediately with intent-based callbacks to the `NotificationActionReceiver`.
+
+#### Changed
+- `core-ui/build.gradle.kts`: added `implementation(libs.androidx.biometric)` dependency.
+- `AndroidManifest.xml`: registered `NotificationActionReceiver` as exported="false".
+
 ### Phase K2 — UX Polish (Phase 2: Loading & Navigation)
 
 #### Added

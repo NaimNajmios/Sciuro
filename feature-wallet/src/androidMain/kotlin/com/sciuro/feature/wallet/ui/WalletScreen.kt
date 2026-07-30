@@ -19,14 +19,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Toll
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.QrCodeScanner
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
@@ -72,6 +69,11 @@ import com.najmi.sciuro.core.ui.theme.AccountColorGrey
 import com.najmi.sciuro.core.ui.theme.AccountColorBlack
 import com.najmi.sciuro.core.ui.theme.AccountColorBrown
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.najmi.sciuro.core.ui.components.TransactionCard
+import com.najmi.sciuro.core.ui.components.TransactionDetailSheet
+import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
+import com.najmi.sciuro.core.ui.components.AuditEventDisplay
+import com.najmi.sciuro.core.ui.util.mapCategoryIcon
 import com.sciuro.feature.wallet.ui.components.AccountCard
 import com.sciuro.feature.wallet.ui.components.AccountPagerDots
 import com.sciuro.feature.wallet.ui.components.InvestmentCard
@@ -142,6 +144,25 @@ fun WalletScreen(
     var editTxAccountId by rememberSaveable { mutableStateOf<String?>(null) }
     var editTxDirection by rememberSaveable { mutableStateOf("OUTFLOW") }
     var editTxCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
+    
+    // Detail Sheet State
+    var showDetailSheet by remember { mutableStateOf(false) }
+    var selectedTxForDetail by remember { mutableStateOf<com.sciuro.core.ledger.db.Transaction_record?>(null) }
+    var detailData by remember { mutableStateOf<com.sciuro.feature.wallet.viewmodel.TransactionDetailData?>(null) }
+    
+    LaunchedEffect(showDetailSheet, selectedTxForDetail) {
+        if (showDetailSheet && selectedTxForDetail != null) {
+            detailData = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                viewModel.loadTransactionDetail(selectedTxForDetail!!)
+            }
+        } else {
+            detailData = null
+        }
+    }
+    
+    var showDeleteTxConfirmation by remember { mutableStateOf(false) }
+    var txToDelete by remember { mutableStateOf<com.sciuro.core.ledger.db.Transaction_record?>(null) }
+    
     var installedApps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
 
     LaunchedEffect(Unit) {
@@ -171,6 +192,12 @@ fun WalletScreen(
     
     val allTransactions by viewModel.allTransactions.collectAsState()
     val allAdjustments by viewModel.allAdjustments.collectAsState()
+    val expenseCats by viewModel.expenseCategories.collectAsState()
+    val incomeCats by viewModel.incomeCategories.collectAsState()
+    
+    val categoryMap = remember(expenseCats, incomeCats) {
+        (expenseCats + incomeCats).associateBy { it.id }
+    }
     
     val pullToRefreshState = rememberPullToRefreshState()
 
@@ -228,6 +255,7 @@ fun WalletScreen(
                 if (accounts.isEmpty()) {
                     com.najmi.sciuro.core.ui.components.EmptyStateView(
                         message = stringResource(R.string.wallet_empty_no_accounts),
+                        fallbackIcon = SciuroIcons.Home,
                         primaryCtaText = stringResource(R.string.wallet_add_account),
                         onPrimaryCtaClick = {
                             editingAccountId = null
@@ -267,6 +295,7 @@ fun WalletScreen(
                 if (investments.isEmpty()) {
                     com.najmi.sciuro.core.ui.components.EmptyStateView(
                         message = stringResource(R.string.wallet_empty_no_investments),
+                        fallbackIcon = SciuroIcons.TrendingUp,
                         primaryCtaText = stringResource(R.string.wallet_add_investment),
                         onPrimaryCtaClick = {
                             editingInvestmentId = null
@@ -335,7 +364,7 @@ fun WalletScreen(
 
                         if (txFilter == "Adjustments") {
                                 if (accountAdjustments.isEmpty()) {
-                                    com.najmi.sciuro.core.ui.components.EmptyStateView(message = stringResource(R.string.wallet_empty_no_adjustments))
+                                    com.najmi.sciuro.core.ui.components.EmptyStateView(message = stringResource(R.string.wallet_empty_no_adjustments), fallbackIcon = SciuroIcons.Tune)
                                 } else {
                                     accountAdjustments.forEach { adj ->
                                         AdjustmentCard(
@@ -345,55 +374,29 @@ fun WalletScreen(
                                     }
                                 }
                             } else if (accountTx.isEmpty()) {
-                                com.najmi.sciuro.core.ui.components.EmptyStateView(message = stringResource(R.string.wallet_empty_no_transactions))
+                                com.najmi.sciuro.core.ui.components.EmptyStateView(message = stringResource(R.string.wallet_empty_no_transactions), fallbackIcon = SciuroIcons.Receipt)
                             } else {
                                 accountTx.take(20).forEach { tx ->
-                                    Card(
-                                        modifier = Modifier.fillMaxWidth().clickable {
-                                            editingTxId = tx.id
-                                            editTxAmount = tx.amount.toString()
-                                            editTxMerchant = tx.merchant ?: ""
-                                            editTxAccountId = tx.account_id
-                                            editTxDirection = tx.direction
-                                            editTxCategoryId = tx.category_id
-                                            showEditTransactionDialog = true
-                                        },
-                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), contentColor = MaterialTheme.colorScheme.onSurface)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Icon(
-                                                    imageVector = if (tx.direction == "INFLOW") Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
-                                                    contentDescription = null,
-                                                    tint = if (tx.direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else com.najmi.sciuro.core.ui.theme.SignalDanger
-                                                )
-                                                Column {
-                                                    Text(
-                                                        tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        color = MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                    Text(
-                                                        if (tx.is_reviewed == 1L) stringResource(R.string.wallet_reviewed) else stringResource(R.string.wallet_unreviewed),
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = if (tx.is_reviewed == 1L) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
-                                                    )
-                                                }
-                                            }
-                                            Text(
-                                                "RM ${"%.2f".format(tx.amount)}",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = if (tx.direction == "INFLOW") com.najmi.sciuro.core.ui.theme.SignalIncome else MaterialTheme.colorScheme.onSurface
-                                            )
+                                    val cat = categoryMap[tx.category_id]
+                                    val catColor = cat?.color?.let { parseColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant
+                                    val catIcon = mapCategoryIcon(tx.category_id)
+                                    val isTransfer = tx.category_id == "cat_transfer"
+                                    val statusText = if (tx.is_reviewed == 1L) stringResource(R.string.wallet_reviewed) else stringResource(R.string.wallet_unreviewed)
+                                    TransactionCard(
+                                        merchantName = tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
+                                        amount = "RM ${"%.2f".format(tx.amount)}",
+                                        direction = tx.direction,
+                                        statusText = statusText,
+                                        categoryIcon = catIcon,
+                                        categoryColor = catColor,
+                                        isTransfer = isTransfer,
+                                        confidence = tx.confidence,
+                                        extractionMethod = tx.extraction_method,
+                                        onClick = {
+                                            selectedTxForDetail = tx
+                                            showDetailSheet = true
                                         }
-                                    }
+                                    )
                                 }
                             }
                         } else if (selectedAssetType == "Investments") {
@@ -444,7 +447,7 @@ fun WalletScreen(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.wallet_add_cd))
+            Icon(SciuroIcons.Add, contentDescription = stringResource(R.string.wallet_add_cd))
         }
     }
 
@@ -554,7 +557,7 @@ fun WalletScreen(
                         ) {
                             if (newAccountColor == hex) {
                                 Box(modifier = Modifier.fillMaxSize().clip(CircleShape).background(Color.White.copy(alpha = 0.3f)))
-                                Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center))
+                                                Icon(SciuroIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center))
                             }
                         }
                     }
@@ -574,6 +577,8 @@ fun WalletScreen(
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
+                            Icon(SciuroIcons.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.wallet_delete))
                         }
                     }
@@ -729,6 +734,8 @@ fun WalletScreen(
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
+                            Icon(SciuroIcons.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.wallet_delete))
                         }
                     }
@@ -832,8 +839,6 @@ fun WalletScreen(
                 }
                 
                 Text(stringResource(R.string.wallet_category), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                val expenseCats by viewModel.expenseCategories.collectAsState()
-                val incomeCats by viewModel.incomeCategories.collectAsState()
                 val relevantCategories = if (editTxDirection == "OUTFLOW") expenseCats else incomeCats
                 
                 LazyRow(
@@ -863,6 +868,8 @@ fun WalletScreen(
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
+                        Icon(SciuroIcons.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(stringResource(R.string.wallet_delete))
                     }
                     
@@ -885,6 +892,92 @@ fun WalletScreen(
                     )
                 }
         }
+    }
+
+    if (showDetailSheet && selectedTxForDetail != null) {
+        val tx = selectedTxForDetail!!
+        val isTransfer = detailData?.transferLink != null || tx.category_id == "cat_transfer"
+        val rawEvent = detailData?.rawEvent
+        val auditLogs = detailData?.auditLogs ?: emptyList()
+        val formattedTimestamp = java.text.SimpleDateFormat("d MMM yyyy, h:mm a", java.util.Locale.getDefault())
+            .format(java.util.Date(tx.timestamp))
+        val categoryNames = categoryMap.mapValues { it.value.name }
+        val auditEvents = auditLogs.map { log ->
+            val actionLabel = when (log.action.name) {
+                "CREATE" -> "Created"
+                "UPDATE" -> "Edited"
+                "RECLASSIFY" -> "Recategorized"
+                "DELETE" -> "Deleted"
+                else -> log.action.name
+            }
+            val sourceLabel = when (log.source.name) {
+                "SYSTEM_AUTO" -> "auto"
+                "USER_MANUAL" -> "you"
+                "LLM_INFERRED" -> "AI"
+                else -> log.source.name
+            }
+            val detail = formatAuditLogDetail(
+                action = log.action.name,
+                source = log.source.name,
+                beforeState = log.beforeState,
+                afterState = log.afterState,
+                categoryNames = categoryNames
+            )
+            AuditEventDisplay(
+                label = "$actionLabel ($sourceLabel)",
+                detail = detail,
+                isCurrent = false
+            )
+        }
+
+        TransactionDetailSheet(
+            showSheet = showDetailSheet,
+            onDismiss = { showDetailSheet = false },
+            merchantName = tx.merchant ?: stringResource(R.string.wallet_unknown_merchant),
+            amount = "RM ${"%.2f".format(tx.amount)}",
+            direction = tx.direction,
+            timestamp = formattedTimestamp,
+            extractionMethod = tx.extraction_method,
+            confidence = tx.confidence,
+            rawEventTitle = rawEvent?.title,
+            rawEventText = rawEvent?.text,
+            hasTransferLink = isTransfer,
+            auditEvents = auditEvents,
+            onEditClick = {
+                showDetailSheet = false
+                editingTxId = tx.id
+                editTxAmount = tx.amount.toString()
+                editTxMerchant = tx.merchant ?: ""
+                editTxAccountId = tx.account_id
+                editTxDirection = tx.direction
+                editTxCategoryId = tx.category_id
+                showEditTransactionDialog = true
+            },
+            onDeleteClick = {
+                showDetailSheet = false
+                txToDelete = tx
+                showDeleteTxConfirmation = true
+            }
+        )
+    }
+
+    if (showDeleteTxConfirmation && txToDelete != null) {
+        SciuroConfirmationDialog(
+            title = stringResource(R.string.wallet_delete_transaction_title),
+            message = stringResource(R.string.wallet_delete_transaction_message),
+            confirmText = stringResource(R.string.wallet_delete),
+            isDestructive = true,
+            onConfirm = {
+                txToDelete?.let { viewModel.deleteTransaction(it.id) }
+                showDeleteTxConfirmation = false
+                txToDelete = null
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.wallet_transaction_deleted)) }
+            },
+            onDismiss = {
+                showDeleteTxConfirmation = false
+                txToDelete = null
+            }
+        )
     }
 
     if (showDeleteAccountDialog) {
@@ -924,5 +1017,14 @@ fun WalletScreen(
             qrPath = selectedQrPath!!,
             onDismiss = { showQrDialog = false; selectedQrPath = null }
         )
+    }
+}
+
+private fun parseColor(hex: String?): Color? {
+    if (hex == null) return null
+    return try {
+        Color(android.graphics.Color.parseColor(hex))
+    } catch (e: Exception) {
+        null
     }
 }

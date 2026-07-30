@@ -45,6 +45,9 @@
                 <data android:scheme="package" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".receiver.NotificationActionReceiver"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

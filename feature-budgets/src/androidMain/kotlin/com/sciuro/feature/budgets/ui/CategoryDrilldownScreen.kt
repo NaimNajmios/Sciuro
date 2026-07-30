@@ -2,7 +2,7 @@ package com.sciuro.feature.budgets.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,7 +48,7 @@ fun CategoryDrilldownScreen(
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = SciuroIcons.Back,
                         contentDescription = stringResource(R.string.budget_back),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )

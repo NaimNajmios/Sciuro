@@ -3,8 +3,7 @@ package com.sciuro.feature.kanban.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,7 +34,8 @@ fun DebtDetailSheet(
 
     SciuroFormSheet(
         title = stringResource(R.string.kanban_debt_details_title),
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        icon = SciuroIcons.Payments
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -124,7 +124,7 @@ fun DebtDetailSheet(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Delete,
+                    imageVector = SciuroIcons.Delete,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
@@ -138,7 +138,7 @@ fun DebtDetailSheet(
                 shape = RoundedCornerShape(24.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Edit,
+                    imageVector = SciuroIcons.Edit,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )

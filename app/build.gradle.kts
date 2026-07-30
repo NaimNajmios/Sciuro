@@ -80,6 +80,7 @@ dependencies {
     implementation(project(":feature-debt"))
     implementation(project(":feature-budgets"))
     implementation(project(":feature-settings"))
+    implementation(project(":feature-widget"))
     
     // Core Modules
     implementation(project(":core-ingestion"))

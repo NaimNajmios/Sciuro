@@ -9,11 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Assignment
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.PieChart
-import androidx.compose.material.icons.filled.Settings
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -56,11 +52,11 @@ sealed class NavItem(
     val label: String,
     val icon: ImageVector
 ) {
-    data object Dashboard : NavItem("dashboard", "Home", Icons.Filled.Home)
-    data object Kanban : NavItem("kanban", "Tasks", Icons.Filled.Assignment)
-    data object Wallet : NavItem("wallet", "Wallet", Icons.Filled.AccountBalanceWallet)
-    data object Budgets : NavItem("budgets", "Budgets", Icons.Filled.PieChart)
-    data object Settings : NavItem("settings", "Settings", Icons.Filled.Settings)
+    data object Dashboard : NavItem("dashboard", "Home", SciuroIcons.NavHome)
+    data object Kanban : NavItem("kanban", "Tasks", SciuroIcons.NavKanban)
+    data object Wallet : NavItem("wallet", "Wallet", SciuroIcons.NavWallet)
+    data object Budgets : NavItem("budgets", "Budgets", SciuroIcons.NavBudgets)
+    data object Settings : NavItem("settings", "Settings", SciuroIcons.NavSettings)
 }
 
 class MainActivity : FragmentActivity() {

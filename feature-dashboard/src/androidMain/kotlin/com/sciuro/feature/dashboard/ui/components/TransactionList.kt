@@ -6,36 +6,20 @@ import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material.icons.filled.Computer
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocalGroceryStore
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.TransactionCard
 import com.najmi.sciuro.core.ui.util.SciuroHaptics
+import com.najmi.sciuro.core.ui.util.mapCategoryIcon
 import com.sciuro.core.ledger.model.Category
 import com.sciuro.core.ledger.db.Transaction_record
 import com.sciuro.feature.dashboard.R
@@ -106,8 +90,8 @@ fun TransactionList(
                         else -> Color.Transparent
                     }
                     val icon = when (dismissState.targetValue) {
-                        SwipeToDismissBoxValue.StartToEnd -> Icons.Filled.Check
-                        SwipeToDismissBoxValue.EndToStart -> Icons.Filled.Delete
+                        SwipeToDismissBoxValue.StartToEnd -> SciuroIcons.Check
+                        SwipeToDismissBoxValue.EndToStart -> SciuroIcons.Delete
                         else -> null
                     }
                     Box(
@@ -163,23 +147,3 @@ private fun parseColor(hex: String?): Color? {
     }
 }
 
-private fun mapCategoryIcon(categoryId: String?): ImageVector? {
-    return when (categoryId) {
-        "cat_dining", "cat_exp_1" -> Icons.Filled.Restaurant
-        "cat_groceries", "cat_exp_6" -> Icons.Filled.LocalGroceryStore
-        "cat_transport", "cat_exp_2" -> Icons.Filled.DirectionsCar
-        "cat_utilities", "cat_exp_3" -> Icons.Filled.Home
-        "cat_exp_4" -> Icons.Filled.ShoppingCart
-        "cat_exp_5" -> Icons.Filled.Description
-        "cat_exp_7" -> Icons.Filled.LocalHospital
-        "cat_exp_8" -> Icons.Filled.School
-        "cat_exp_9", "cat_inc_6" -> Icons.Filled.MoreHoriz
-        "cat_inc_1" -> Icons.Filled.AccountBalance
-        "cat_inc_2" -> Icons.Filled.Computer
-        "cat_inc_3" -> Icons.Filled.CardGiftcard
-        "cat_inc_4" -> Icons.AutoMirrored.Filled.TrendingUp
-        "cat_inc_5" -> Icons.Filled.Refresh
-        "cat_transfer" -> Icons.Filled.SwapHoriz
-        else -> null
-    }
-}

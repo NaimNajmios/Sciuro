@@ -7,10 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -52,7 +49,7 @@ fun MerchantRulesScreen(
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = SciuroIcons.Back,
                         contentDescription = stringResource(R.string.merchant_rules_back),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -199,7 +196,7 @@ private fun MerchantRuleCard(
             }
             IconButton(onClick = { onDelete(rule) }) {
                 Icon(
-                    Icons.Filled.Delete,
+                    SciuroIcons.Delete,
                     contentDescription = stringResource(R.string.merchant_rules_delete),
                     tint = MaterialTheme.colorScheme.error
                 )
@@ -235,7 +232,7 @@ private fun MerchantAccountRuleCard(
             }
             IconButton(onClick = { onDelete(rule) }) {
                 Icon(
-                    Icons.Filled.Delete,
+                    SciuroIcons.Delete,
                     contentDescription = stringResource(R.string.merchant_rules_delete),
                     tint = MaterialTheme.colorScheme.error
                 )
@@ -247,7 +244,7 @@ private fun MerchantAccountRuleCard(
 @Composable
 private fun TrustBadge(isTrusted: Boolean) {
     val color = if (isTrusted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-    val icon = if (isTrusted) Icons.Filled.Check else Icons.Filled.Close
+    val icon = if (isTrusted) SciuroIcons.Check else SciuroIcons.Close
     Box(
         modifier = Modifier
             .size(20.dp)

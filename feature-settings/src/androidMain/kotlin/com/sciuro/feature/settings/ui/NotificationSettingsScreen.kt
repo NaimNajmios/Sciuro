@@ -9,9 +9,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import com.najmi.sciuro.core.ui.util.SciuroIcons
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.najmi.sciuro.core.ui.components.SciuroSectionHeader
 import com.najmi.sciuro.core.ui.components.SheetList
 
 
@@ -49,7 +52,7 @@ fun NotificationSettingsScreen(
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = SciuroIcons.Back,
                         contentDescription = stringResource(R.string.linked_accounts_back),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -66,7 +69,7 @@ fun NotificationSettingsScreen(
                 contentPadding = PaddingValues(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp)
             ) {
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_quiet_hours))
+                    SciuroSectionHeader(stringResource(R.string.settings_section_quiet_hours), icon = SciuroIcons.Lock)
                 }
 
                 item {
@@ -123,7 +126,7 @@ fun NotificationSettingsScreen(
                                                 Text(stringResource(R.string.settings_quiet_hours_start), style = MaterialTheme.typography.labelSmall)
                                                 Text("${uiState.quietHoursStart}:00", style = MaterialTheme.typography.titleMedium)
                                                 Row {
-                                                    IconButton(onClick = {
+                                                                                    IconButton(onClick = {
                                                         if (uiState.quietHoursStart > 0) viewModel.setQuietHoursStart(uiState.quietHoursStart - 1)
                                                     }) { Text("\u2212") }
                                                     IconButton(onClick = {
@@ -153,7 +156,7 @@ fun NotificationSettingsScreen(
                 }
 
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_notifications))
+                    SciuroSectionHeader(stringResource(R.string.settings_section_notifications), icon = SciuroIcons.Search)
                 }
 
                 item {

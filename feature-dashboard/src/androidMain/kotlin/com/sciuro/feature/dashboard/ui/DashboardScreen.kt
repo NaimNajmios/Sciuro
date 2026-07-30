@@ -5,12 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import org.koin.compose.koinInject
@@ -35,6 +34,8 @@ import com.najmi.sciuro.core.ui.components.FastTxOption
 import com.najmi.sciuro.core.ui.components.PillToggle
 import com.najmi.sciuro.core.ui.components.DashboardSkeleton
 import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.najmi.sciuro.core.ui.components.BiometricConfirmDialog
+import com.sciuro.feature.dashboard.ui.components.PredictionCard
 import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -142,6 +143,7 @@ fun DashboardScreen(
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showBiometricDelete by remember { mutableStateOf(false) }
 
     val msgRejected = stringResource(R.string.dashboard_transaction_rejected)
     val msgApproved = stringResource(R.string.dashboard_transaction_approved)
@@ -234,7 +236,7 @@ fun DashboardScreen(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Filled.Check,
+                                        imageVector = SciuroIcons.Check,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(14.dp)
@@ -346,6 +348,10 @@ fun DashboardScreen(
                                 }
                             }
 
+                            if (state.runwayPrediction != null) {
+                                PredictionCard(prediction = state.runwayPrediction!!)
+                            }
+
                             TransactionHistoryHeader(
                                 typeFilter = typeFilter,
                                 filterOptions = filterOptions,
@@ -407,7 +413,7 @@ fun DashboardScreen(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.dashboard_add_transaction_cd))
+            Icon(SciuroIcons.Add, contentDescription = stringResource(R.string.dashboard_add_transaction_cd))
         }
     }
     }
@@ -578,14 +584,25 @@ fun DashboardScreen(
             confirmText = stringResource(R.string.dashboard_delete),
             isDestructive = true,
             onConfirm = {
+                showBiometricDelete = true
+            },
+            onDismiss = { showDeleteConfirmation = false }
+        )
+    }
+
+    if (showBiometricDelete) {
+        BiometricConfirmDialog(
+            actionName = "Delete transaction",
+            onConfirmed = {
                 viewModel.deleteTransaction(editingTxId!!)
+                showBiometricDelete = false
                 showDeleteConfirmation = false
                 showEditTransactionDialog = false
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(msgDeleted)
                 }
             },
-            onDismiss = { showDeleteConfirmation = false }
+            onDismiss = { showBiometricDelete = false }
         )
     }
 }

@@ -2,9 +2,9 @@
 
 ## Overview
 
-Elevate Sciuro from solid production grade to award-tier polish through micro-interactions, contextual intelligence, platform-native depth, and intelligent loading states. Four phases spanning 13 enhancements, building on Phase K1's accessibility and externalization groundwork.
+Elevate Sciuro from solid production grade to award-tier polish through micro-interactions, contextual intelligence, platform-native depth, and intelligent loading states. **All 4 phases are now complete.**
 
-## Phase 1 — Tactile Polish (~2 days)
+## Phase 1 — Tactile Polish ✅
 
 | # | Enhancement | Files | Effort |
 |---|------------|-------|--------|
@@ -29,9 +29,7 @@ Elevate Sciuro from solid production grade to award-tier polish through micro-in
 - Scroll-aware status bar: transparent when HeroPanel visible, surface color when scrolled
 - HeroPanel receives `statusBarsPadding()` for safe content placement while background bleeds full-bleed
 
----
-
-## Phase 2 — Loading & Navigation (~3 days)
+## Phase 2 — Loading & Navigation ✅
 
 | # | Enhancement | Files | Effort |
 |---|------------|-------|--------|
@@ -55,9 +53,7 @@ Elevate Sciuro from solid production grade to award-tier polish through micro-in
 - Add `PalettePreference.DYNAMIC` enum value
 - Conditional call on API 31+ in `SciuroTheme`
 
----
-
-## Phase 3 — Security & Reach (~4 days)
+## Phase 3 — Security & Reach ✅
 
 | # | Enhancement | Files | Effort |
 |---|------------|-------|--------|
@@ -83,9 +79,7 @@ Elevate Sciuro from solid production grade to award-tier polish through micro-in
 - `SciuroBudgetWidget`: top 3 at-risk categories with progress bars
 - Glance uses separate composable tree (`@GlanceComposable`), different State pattern
 
----
-
-## Phase 4 — Intelligence (~5 days)
+## Phase 4 — Intelligence ✅
 
 | # | Enhancement | Files | Effort |
 |---|------------|-------|--------|
@@ -101,6 +95,7 @@ Elevate Sciuro from solid production grade to award-tier polish through micro-in
 - **Wallpaper-Based Account Colors**: Extract dominant/vibrant colors from device wallpaper to auto-assign account card colors
 - **Shared Element Transitions**: Animate card expansion from list to detail screen
 - **Cross-Device Sync**: Push-based sync between devices via Ktor backend
+- **Widget Tap Actions**: Wire `actionStartActivity<MainActivity>()` once `:feature-widget` can depend on `:app` module pattern is established
 
 ---
 

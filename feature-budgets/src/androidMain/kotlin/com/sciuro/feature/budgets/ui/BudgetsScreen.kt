@@ -8,7 +8,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +28,7 @@ import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SciuroAmountField
 import com.najmi.sciuro.core.ui.components.SheetList
+import com.najmi.sciuro.core.ui.components.BiometricConfirmDialog
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
 import com.najmi.sciuro.core.ui.theme.SignalDanger
 import com.najmi.sciuro.core.ui.theme.SignalWarning
@@ -62,6 +63,7 @@ fun BudgetsScreen(
     var selectedPeriod by remember { mutableStateOf(BudgetPeriod.MONTHLY) }
 
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showBiometricDelete by remember { mutableStateOf(false) }
 
     var suggestedAmount by remember { mutableStateOf<Double?>(null) }
     val suggester: BudgetLimitSuggester = koinInject()
@@ -145,6 +147,7 @@ fun BudgetsScreen(
                         if (budgets.isEmpty()) {
                             EmptyStateView(
                                 message = stringResource(R.string.budget_empty_state),
+                                fallbackIcon = SciuroIcons.Star,
                                 primaryCtaText = stringResource(R.string.budget_create),
                                 onPrimaryCtaClick = {
                                     selectedCategoryId = null
@@ -278,6 +281,7 @@ fun BudgetsScreen(
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.budget_context_edit)) },
+                                        leadingIcon = { Icon(SciuroIcons.Edit, contentDescription = null) },
                                         onClick = {
                                             editingBudgetId = budget.id
                                             selectedCategoryId = null
@@ -289,6 +293,7 @@ fun BudgetsScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.budget_context_view_transactions)) },
+                                        leadingIcon = { Icon(SciuroIcons.Receipt, contentDescription = null) },
                                         onClick = {
                                             onNavigateToCategoryDrilldown()
                                             contextMenuBudgetId = null
@@ -296,6 +301,7 @@ fun BudgetsScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.budget_context_delete)) },
+                                        leadingIcon = { Icon(SciuroIcons.Delete, contentDescription = null) },
                                         onClick = {
                                             editingBudgetId = budget.id
                                             showDeleteConfirmation = true
@@ -328,7 +334,7 @@ fun BudgetsScreen(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.budget_add))
+                Icon(SciuroIcons.Add, contentDescription = stringResource(R.string.budget_add))
             }
         }
     }
@@ -417,6 +423,8 @@ fun BudgetsScreen(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
+                        Icon(SciuroIcons.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(stringResource(R.string.budget_delete))
                     }
 
@@ -455,6 +463,7 @@ fun BudgetsScreen(
                             snackbarHostState.showSnackbar("Budget created for $catName")
                         }
                     },
+                    icon = SciuroIcons.Add,
                     enabled = isValidAmount && selectedCategoryId != null
                 )
             }
@@ -469,14 +478,26 @@ fun BudgetsScreen(
             confirmText = stringResource(R.string.budget_delete),
             isDestructive = true,
             onConfirm = {
+                showBiometricDelete = true
+            },
+            onDismiss = { showDeleteConfirmation = false }
+        )
+    }
+
+    if (showBiometricDelete) {
+        val budgetDeletedText = stringResource(R.string.budget_deleted)
+        BiometricConfirmDialog(
+            actionName = "Delete budget",
+            onConfirmed = {
                 coroutineScope.launch {
                     viewModel.deleteBudget(editingBudgetId!!)
+                    showBiometricDelete = false
                     showDeleteConfirmation = false
                     showSheet = false
                     snackbarHostState.showSnackbar(budgetDeletedText)
                 }
             },
-            onDismiss = { showDeleteConfirmation = false }
+            onDismiss = { showBiometricDelete = false }
         )
     }
 }

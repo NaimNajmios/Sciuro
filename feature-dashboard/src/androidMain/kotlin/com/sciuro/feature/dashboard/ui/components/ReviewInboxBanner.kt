@@ -2,7 +2,7 @@ package com.sciuro.feature.dashboard.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +33,7 @@ fun ReviewInboxBanner(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Warning,
+                    imageVector = SciuroIcons.Warning,
                     contentDescription = stringResource(R.string.dashboard_review_inbox_warning_cd),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )

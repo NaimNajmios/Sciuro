@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import com.najmi.sciuro.core.ui.theme.SignalWarning
 import com.najmi.sciuro.core.ui.util.SciuroHaptics
 import com.najmi.sciuro.core.ui.util.bounceClick
 import com.sciuro.feature.debt.R
+import com.najmi.sciuro.core.ui.components.BiometricConfirmDialog
 import com.najmi.sciuro.core.ui.components.EmptyStateView
 import com.najmi.sciuro.core.ui.components.HeroFigurePair
 import com.najmi.sciuro.core.ui.components.HeroPanel
@@ -54,6 +56,7 @@ fun DebtOverviewScreen(
     var showFormSheet by remember { mutableStateOf(false) }
     var editingDebt by remember { mutableStateOf<com.sciuro.feature.debt.model.DebtUiModel?>(null) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showBiometricDelete by remember { mutableStateOf(false) }
     var showRecordPayment by remember { mutableStateOf<String?>(null) }
     var paymentAmountText by remember { mutableStateOf("") }
     
@@ -139,6 +142,7 @@ fun DebtOverviewScreen(
                                     stringResource(R.string.debt_empty_i_owe)
                                 else
                                     stringResource(R.string.debt_empty_owed),
+                                fallbackIcon = SciuroIcons.Payments,
                                 primaryCtaText = stringResource(R.string.debt_add),
                                 onPrimaryCtaClick = {
                                     formName = ""
@@ -234,6 +238,8 @@ fun DebtOverviewScreen(
                                                     },
                                                     modifier = Modifier.padding(end = 8.dp)
                                                 ) {
+                                                    Icon(SciuroIcons.Payments, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                    Spacer(modifier = Modifier.width(8.dp))
                                                     Text(stringResource(R.string.debt_record_payment))
                                                 }
                                             }
@@ -251,6 +257,8 @@ fun DebtOverviewScreen(
                                                     showFormSheet = true
                                                 }
                                             ) {
+                                                Icon(SciuroIcons.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Spacer(modifier = Modifier.width(8.dp))
                                                 Text(stringResource(R.string.debt_edit))
                                             }
                                         }
@@ -263,6 +271,7 @@ fun DebtOverviewScreen(
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.debt_context_edit)) },
+                                        leadingIcon = { Icon(SciuroIcons.Edit, contentDescription = null) },
                                         onClick = {
                                             editingDebt = debt
                                             formName = debt.name
@@ -278,6 +287,7 @@ fun DebtOverviewScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.debt_context_mark_finished)) },
+                                        leadingIcon = { Icon(SciuroIcons.Check, contentDescription = null) },
                                         onClick = {
                                             editingDebt = debt
                                             showMarkFinishedConfirmation = true
@@ -286,6 +296,7 @@ fun DebtOverviewScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.debt_context_delete)) },
+                                        leadingIcon = { Icon(SciuroIcons.Delete, contentDescription = null) },
                                         onClick = {
                                             editingDebt = debt
                                             showDeleteConfirmation = true
@@ -318,7 +329,7 @@ fun DebtOverviewScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.debt_add))
+                Icon(SciuroIcons.Add, contentDescription = stringResource(R.string.debt_add))
             }
         }
     }
@@ -401,6 +412,8 @@ fun DebtOverviewScreen(
                                 contentColor = MaterialTheme.colorScheme.error
                             )
                         ) {
+                            Icon(SciuroIcons.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.debt_delete))
                         }
 
@@ -428,6 +441,7 @@ fun DebtOverviewScreen(
                             }
                         }
                     },
+                    icon = SciuroIcons.Add,
                     enabled = formName.isNotBlank() && (formAmountText.toDoubleOrNull() ?: 0.0) > 0,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -502,11 +516,22 @@ fun DebtOverviewScreen(
             confirmText = stringResource(R.string.debt_confirm_delete),
             isDestructive = true,
             onConfirm = {
+                showBiometricDelete = true
+            },
+            onDismiss = { showDeleteConfirmation = false }
+        )
+    }
+
+    if (showBiometricDelete) {
+        BiometricConfirmDialog(
+            actionName = "Delete debt",
+            onConfirmed = {
                 editingDebt?.let { viewModel.deleteDebt(it.id) }
+                showBiometricDelete = false
                 showDeleteConfirmation = false
                 showFormSheet = false
             },
-            onDismiss = { showDeleteConfirmation = false }
+            onDismiss = { showBiometricDelete = false }
         )
     }
 
@@ -528,6 +553,7 @@ fun DebtOverviewScreen(
                         showApplyPaymentConfirmation = true
                     }
                 },
+                icon = SciuroIcons.Payments,
                 enabled = (paymentAmountText.toDoubleOrNull() ?: 0.0) > 0,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -586,7 +612,7 @@ private fun BnplWarningCard(bnplRisk: BnplRiskInfo) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Warning,
+                    imageVector = SciuroIcons.Warning,
                     contentDescription = null,
                     tint = SignalWarning,
                     modifier = Modifier.size(20.dp)

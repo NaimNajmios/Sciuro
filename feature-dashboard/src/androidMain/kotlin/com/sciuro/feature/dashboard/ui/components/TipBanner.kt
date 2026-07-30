@@ -3,8 +3,7 @@ package com.sciuro.feature.dashboard.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Lightbulb
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +38,7 @@ fun TipBanner(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Lightbulb,
+                    imageVector = SciuroIcons.Lightbulb,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.size(20.dp)
@@ -75,7 +74,7 @@ fun TipBanner(
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        Icons.Filled.Close,
+                        SciuroIcons.Close,
                         contentDescription = stringResource(R.string.dashboard_dismiss_cd),
                         modifier = Modifier.size(16.dp)
                     )

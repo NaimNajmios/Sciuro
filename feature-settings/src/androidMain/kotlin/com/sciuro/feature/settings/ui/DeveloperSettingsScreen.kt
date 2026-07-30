@@ -2,7 +2,7 @@ package com.sciuro.feature.settings.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -78,7 +78,7 @@ fun DeveloperSettingsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            imageVector = SciuroIcons.ArrowLeft,
                             contentDescription = stringResource(R.string.linked_accounts_back),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )

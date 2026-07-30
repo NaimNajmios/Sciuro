@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.R
 import com.najmi.sciuro.core.ui.theme.IBMPlexMono
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 
 val AdjustmentReasonPresets = listOf(
     "Lost Cash",
@@ -43,11 +44,11 @@ fun AdjustmentBottomSheet(
     val delta = if (newBalance != null) newBalance - currentBalance else null
     val isLargeVariance = delta != null && kotlin.math.abs(delta) >= 50.0
 
-    SciuroBottomSheet(onDismissRequest = onDismiss) {
-        Text(
-            stringResource(R.string.shared_adjust_balance),
-            style = MaterialTheme.typography.headlineSmall
-        )
+    SciuroFormSheet(
+        title = stringResource(R.string.shared_adjust_balance),
+        onDismissRequest = onDismiss,
+        icon = SciuroIcons.Tune
+    ) {
 
         Text(
             "Current Balance: RM ${"%.2f".format(currentBalance)}",

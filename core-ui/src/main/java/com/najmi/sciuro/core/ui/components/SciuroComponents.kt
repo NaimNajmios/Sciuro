@@ -6,11 +6,15 @@ import androidx.compose.material3.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Close
 import com.najmi.sciuro.core.ui.util.bounceClick
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +52,7 @@ fun SciuroFormSheet(
     title: String,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     SciuroBottomSheet(
@@ -58,11 +63,20 @@ fun SciuroFormSheet(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                if (icon != null) {
+                    Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
+                }
+                Text(title, style = MaterialTheme.typography.headlineSmall)
+            }
             IconButton(onClick = onDismissRequest) {
-                Icon(Icons.Filled.Close, contentDescription = "Close")
+                Icon(Icons.Outlined.Close, contentDescription = "Close")
             }
         }
         content()
@@ -180,7 +194,8 @@ fun SciuroPrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     Button(
@@ -198,6 +213,10 @@ fun SciuroPrimaryButton(
             disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
         )
     ) {
+        if (icon != null) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+        }
         Text(text, style = MaterialTheme.typography.titleMedium)
     }
 }
@@ -231,5 +250,79 @@ fun SciuroCard(
         ) {
             Column(content = content)
         }
+    }
+}
+
+@Composable
+fun SciuroNavigationCard(
+    title: String,
+    summary: String,
+    leadingIcon: ImageVector? = null,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    SciuroCard(
+        modifier = modifier.fillMaxWidth().padding(bottom = 8.dp),
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                if (leadingIcon != null) {
+                    Icon(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium)
+                    Text(summary, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Icon(
+                Icons.AutoMirrored.Outlined.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun SciuroSectionHeader(
+    title: String,
+    icon: ImageVector? = null,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.padding(start = 4.dp, top = 20.dp, bottom = 4.dp)
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

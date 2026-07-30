@@ -11,6 +11,9 @@ import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.CashAdjustmentRepository
 import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
+import com.sciuro.core.ledger.repository.CategoryRepository
+import com.sciuro.core.ledger.engine.VelocityCalculator
+import com.sciuro.core.ledger.engine.SpendingVelocity
 import com.sciuro.core.transfer.model.TransferLink
 import com.sciuro.core.transfer.repository.TransferRepository
 import kotlinx.coroutines.flow.*
@@ -26,7 +29,8 @@ data class AccountDetailState(
     val transactions: List<com.sciuro.core.ledger.db.Transaction_record> = emptyList(),
     val adjustments: List<com.sciuro.core.ledger.db.Cash_adjustment> = emptyList(),
     val selectedFilter: String = "All",
-    val timeline: List<TimelineItem> = emptyList()
+    val timeline: List<TimelineItem> = emptyList(),
+    val spendingVelocity: SpendingVelocity? = null
 )
 
 data class TransactionDetailData(
@@ -42,12 +46,19 @@ class AccountDetailViewModel(
     private val cashAdjustmentRepository: CashAdjustmentRepository,
     private val auditRepository: AuditRepository,
     private val transferRepository: TransferRepository,
-    private val rawEventRepository: RawEventRepository
+    private val rawEventRepository: RawEventRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val accountId: String = checkNotNull(savedStateHandle["accountId"]) { "accountId must be provided" }
 
     private val _selectedFilter = MutableStateFlow("All")
+
+    val expenseCategories: StateFlow<List<com.sciuro.core.ledger.model.Category>> = categoryRepository.observeCategoriesByType("OUTFLOW")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val incomeCategories: StateFlow<List<com.sciuro.core.ledger.model.Category>> = categoryRepository.observeCategoriesByType("INFLOW")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val state: StateFlow<AccountDetailState> = combine(
         accountRepository.observeAccountById(accountId),
@@ -56,12 +67,16 @@ class AccountDetailViewModel(
         _selectedFilter
     ) { account, transactions, adjustments, filter ->
         val timeline = buildTimeline(transactions, adjustments, filter)
+        val velocity = if (transactions.isNotEmpty() && account != null && account.balance > 0) {
+            VelocityCalculator().calculate(account.balance, transactions)
+        } else null
         AccountDetailState(
             account = account,
             transactions = transactions,
             adjustments = adjustments,
             selectedFilter = filter,
-            timeline = timeline
+            timeline = timeline,
+            spendingVelocity = velocity
         )
     }.stateIn(
         scope = viewModelScope,
@@ -214,6 +229,19 @@ class AccountDetailViewModel(
             transferLink = transferLink,
             rawEvent = rawEvent
         )
+    }
+
+    fun editTransaction(transactionId: String, amount: Double, direction: String, merchant: String, categoryId: String?, accountId: String?) {
+        viewModelScope.launch {
+            transactionRepository.editTransaction(
+                transactionId = transactionId,
+                newAmount = amount,
+                newDirection = direction,
+                newMerchant = merchant,
+                newCategoryId = categoryId,
+                newAccountId = accountId
+            )
+        }
     }
 
     fun deleteTransaction(transactionId: String) {

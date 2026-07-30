@@ -2,7 +2,7 @@ package com.sciuro.feature.dashboard.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +33,7 @@ fun AutoBookedBanner(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.CheckCircle,
+                    imageVector = SciuroIcons.CheckCircle,
                     contentDescription = stringResource(R.string.dashboard_auto_booked_success_cd),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )

@@ -8,7 +8,11 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import com.najmi.sciuro.core.ui.util.SciuroIcons
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
+import com.najmi.sciuro.core.ui.components.SciuroSectionHeader
 import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
 
@@ -53,7 +58,7 @@ fun IntelligenceSettingsScreen(
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = SciuroIcons.Back,
                         contentDescription = stringResource(R.string.linked_accounts_back),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -70,7 +75,7 @@ fun IntelligenceSettingsScreen(
                 contentPadding = PaddingValues(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 104.dp)
             ) {
                 item {
-                    SettingsSectionHeader(stringResource(R.string.settings_section_llm))
+                    SciuroSectionHeader(stringResource(R.string.settings_section_llm), icon = SciuroIcons.Star)
                 }
 
                 item {
@@ -169,10 +174,12 @@ fun IntelligenceSettingsScreen(
                 item {
                     SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.padding(16.dp).fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Icon(Icons.Filled.Star, contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(stringResource(R.string.settings_auto_confirm_recurring), style = MaterialTheme.typography.titleMedium)
                                 Text(

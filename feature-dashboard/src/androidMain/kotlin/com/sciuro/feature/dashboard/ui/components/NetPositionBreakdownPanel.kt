@@ -4,8 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,7 +43,7 @@ fun NetPositionBreakdownPanel(
                 color = Color.White.copy(alpha = 0.9f)
             )
             Icon(
-                imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                imageVector = if (isExpanded) SciuroIcons.ArrowUp else SciuroIcons.ArrowDown,
                 contentDescription = if (isExpanded) stringResource(R.string.dashboard_collapse_breakdown_cd) else stringResource(R.string.dashboard_expand_breakdown_cd),
                 tint = Color.White.copy(alpha = 0.9f)
             )

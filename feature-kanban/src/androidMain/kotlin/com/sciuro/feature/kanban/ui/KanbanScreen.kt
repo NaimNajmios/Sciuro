@@ -17,10 +17,8 @@ import androidx.compose.ui.unit.dp
 import com.sciuro.feature.kanban.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Delete
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.PillToggle
@@ -282,7 +280,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.kanban_add_tab_cd, selectedTab))
+                Icon(SciuroIcons.Add, contentDescription = stringResource(R.string.kanban_add_tab_cd, selectedTab))
             }
         }
     }
@@ -505,7 +503,7 @@ private fun ReviewColumn(
         Spacer(modifier = Modifier.height(4.dp))
 
         if (tasks.isEmpty()) {
-            EmptyStateView(message = stringResource(R.string.kanban_empty_tasks))
+            EmptyStateView(message = stringResource(R.string.kanban_empty_tasks), fallbackIcon = SciuroIcons.RateReview)
         } else {
             tasks.forEach { task ->
                 KanbanTaskCard(
@@ -535,22 +533,38 @@ private fun BillsColumn(
         val settledBills = bills.filter { it.status == BillStatus.SETTLED }
 
         if (bills.isEmpty()) {
-            EmptyStateView(message = stringResource(R.string.kanban_empty_bills))
+            EmptyStateView(message = stringResource(R.string.kanban_empty_bills), fallbackIcon = SciuroIcons.Receipt)
         } else {
             if (overdueBills.isNotEmpty()) {
-                Text(stringResource(R.string.kanban_section_overdue), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
+                    Icon(SciuroIcons.Warning, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.kanban_section_overdue), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+                }
                 overdueBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds, driftInfo = driftedAmounts[bill.obligation.id]) }
             }
             if (dueSoonBills.isNotEmpty()) {
-                Text(stringResource(R.string.kanban_section_due_soon), style = MaterialTheme.typography.titleMedium, color = com.najmi.sciuro.core.ui.theme.SignalWarning, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
+                    Icon(SciuroIcons.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp), tint = com.najmi.sciuro.core.ui.theme.SignalWarning)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.kanban_section_due_soon), style = MaterialTheme.typography.titleMedium, color = com.najmi.sciuro.core.ui.theme.SignalWarning)
+                }
                 dueSoonBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds, driftInfo = driftedAmounts[bill.obligation.id]) }
             }
             if (upcomingBills.isNotEmpty()) {
-                Text(stringResource(R.string.kanban_section_upcoming), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
+                    Icon(SciuroIcons.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.kanban_section_upcoming), style = MaterialTheme.typography.titleMedium)
+                }
                 upcomingBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds, driftInfo = driftedAmounts[bill.obligation.id]) }
             }
             if (settledBills.isNotEmpty()) {
-                Text("Settled", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
+                    Icon(SciuroIcons.Check, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Settled", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                }
                 settledBills.forEach { bill -> BillCard(bill = bill, onMarkPaid = onMarkPaid, onClick = { onClickBill(bill) }, isRecentlySettled = bill.obligation.id in recentlySettledIds, driftInfo = driftedAmounts[bill.obligation.id]) }
             }
         }
@@ -590,7 +604,7 @@ private fun BillCard(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (bill.status == BillStatus.OVERDUE) {
-                        Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.kanban_section_overdue), tint = MaterialTheme.colorScheme.error)
+                        Icon(SciuroIcons.Warning, contentDescription = stringResource(R.string.kanban_section_overdue), tint = MaterialTheme.colorScheme.error)
                     } else if (bill.status == BillStatus.SETTLED) {
                         Surface(
                             color = MaterialTheme.colorScheme.primaryContainer,
@@ -610,6 +624,8 @@ private fun BillCard(
             }
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedButton(onClick = { onMarkPaid(bill) }, modifier = Modifier.fillMaxWidth()) {
+                Icon(SciuroIcons.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.kanban_mark_as_paid))
             }
         }
@@ -631,7 +647,11 @@ private fun DebtsColumn(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Debts", style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(SciuroIcons.Payments, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Debts", style = MaterialTheme.typography.titleMedium)
+            }
             PillToggle(
                 options = DebtsFilter.entries.map { it.label },
                 selectedOption = debtsFilter.label,
@@ -647,7 +667,7 @@ private fun DebtsColumn(
         val archivedDebts = debtTasks.filter { it.debt.status == com.sciuro.core.debt.model.DebtStatus.ARCHIVED }
 
         if (debtTasks.isEmpty()) {
-            EmptyStateView(message = stringResource(R.string.kanban_empty_debts))
+            EmptyStateView(message = stringResource(R.string.kanban_empty_debts), fallbackIcon = SciuroIcons.Payments)
         } else {
             val noMotion = reducedMotion()
             activeDebts.forEach { debt ->
@@ -695,6 +715,8 @@ private fun DebtsColumn(
                                 onClick = { onRecordPayment(debt) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
+                                Icon(SciuroIcons.Payments, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(stringResource(R.string.kanban_record_payment))
                             }
                         }
@@ -703,7 +725,11 @@ private fun DebtsColumn(
             }
 
             if (completedDebts.isNotEmpty()) {
-                Text("Completed", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
+                    Icon(SciuroIcons.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Completed", style = MaterialTheme.typography.titleMedium)
+                }
                 completedDebts.forEach { debt ->
                     SciuroCard(modifier = Modifier.fillMaxWidth().alpha(0.5f)) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -736,7 +762,11 @@ private fun DebtsColumn(
             }
 
             if (archivedDebts.isNotEmpty()) {
-                Text("Archived", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
+                    Icon(SciuroIcons.Close, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Archived", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 archivedDebts.forEach { debt ->
                     SciuroCard(modifier = Modifier.fillMaxWidth().alpha(0.3f)) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -804,7 +834,7 @@ fun KanbanTaskCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Warning,
+                            imageVector = SciuroIcons.Warning,
                             contentDescription = stringResource(R.string.kanban_unassigned_account),
                             tint = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.size(16.dp)
@@ -904,11 +934,14 @@ fun KanbanTaskCard(
                     modifier = Modifier.weight(1f).height(52.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
+                    Icon(SciuroIcons.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.kanban_reject))
                 }
                 SciuroPrimaryButton(
                     text = stringResource(R.string.kanban_approve),
                     onClick = { onApprove(selectedAccount?.id, selectedDirection) },
+                    icon = SciuroIcons.Check,
                     enabled = selectedAccount != null,
                     modifier = Modifier.weight(1f)
                 )
@@ -979,6 +1012,8 @@ private fun AddBillSheet(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 OutlinedButton(onClick = { showDatePicker = true }) {
+                    Icon(SciuroIcons.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.kanban_pick_date))
                 }
             }
@@ -1060,6 +1095,7 @@ private fun AddBillSheet(
                         selectedAccount?.id
                     )
                 },
+                icon = SciuroIcons.Add,
                 enabled = isFormValid,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -1135,6 +1171,7 @@ private fun AddDebtSheet(
                         null
                     )
                 },
+                icon = SciuroIcons.Add,
                 enabled = name.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0,
                 modifier = Modifier.fillMaxWidth()
             )

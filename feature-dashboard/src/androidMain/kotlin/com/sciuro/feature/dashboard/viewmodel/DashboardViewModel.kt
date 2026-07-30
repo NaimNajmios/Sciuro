@@ -8,6 +8,8 @@ import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.model.TransactionIntent
 import com.sciuro.core.audit.repository.AuditRepository
+import com.sciuro.core.budget.engine.RunwayPredictor
+import com.sciuro.core.budget.engine.RunwayPrediction
 import com.sciuro.core.budget.repository.BudgetRepository
 import com.sciuro.core.ledger.db.Raw_event_staging
 import com.sciuro.core.ledger.repository.AccountRepository
@@ -66,7 +68,8 @@ data class DashboardState(
     val expectedIncomeAmount: Double = 0.0,
     val expectedIncomeDate: Long? = null,
     val lastMilestoneReached: Double = 0.0,
-    val weeklyDigest: WeeklyDigestData? = null
+    val weeklyDigest: WeeklyDigestData? = null,
+    val runwayPrediction: RunwayPrediction? = null
 )
 
 data class TransactionDetailData(
@@ -87,7 +90,8 @@ class DashboardViewModel(
     private val investmentRepository: InvestmentRepository,
     private val obligationRepository: ObligationRepository,
     private val incomeDetector: IncomeRecurrencePatternDetector,
-    private val settingsProvider: SettingsProvider
+    private val settingsProvider: SettingsProvider,
+    private val runwayPredictor: RunwayPredictor
 ) : ViewModel() {
     
     init {
@@ -202,6 +206,17 @@ class DashboardViewModel(
         val topCatName = topCategory?.key?.let { allCatMap[it]?.name }
         val weeklyDigest = if (weekCount > 0) WeeklyDigestData(weekTotal, topCatName, weekCount, unreviewed.size) else null
 
+        val thirtyDayOutflows = allTxs.filter {
+            it.direction == "OUTFLOW" && it.timestamp >= currentTimeMillis() - 30L * 24L * 60L * 60L * 1000L
+        }.map { it.amount }
+        val upcomingObligations = obligations.sortedBy { it.nextDueDate }.take(30).map { it.amount }
+        val prediction = runwayPredictor.predict(
+            accountBalance = totalAccounts,
+            recentOutflows = thirtyDayOutflows,
+            upcomingObligationAmounts = upcomingObligations,
+            upstreamIncome = if (incomePattern != null) incomePattern.amount else null
+        )
+
         DashboardState(
             isLoading = false,
             netPosition = netPosition,
@@ -218,7 +233,8 @@ class DashboardViewModel(
             expectedIncomeAmount = incomePattern?.amount ?: 0.0,
             expectedIncomeDate = incomePattern?.nextExpectedDate,
             lastMilestoneReached = settingsProvider.getLastMilestoneReached(),
-            weeklyDigest = weeklyDigest
+            weeklyDigest = weeklyDigest,
+            runwayPrediction = prediction
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DashboardState())
 

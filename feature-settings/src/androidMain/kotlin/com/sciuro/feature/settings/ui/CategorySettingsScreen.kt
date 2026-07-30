@@ -4,9 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.najmi.sciuro.core.ui.util.SciuroIcons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -52,7 +50,7 @@ fun CategorySettingsScreen(
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = SciuroIcons.Back,
                         contentDescription = stringResource(R.string.linked_accounts_back),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -99,7 +97,7 @@ fun CategorySettingsScreen(
                         ) {
                             Text(category.name, style = MaterialTheme.typography.bodyLarge)
                             IconButton(onClick = { categoryPendingDelete = category }) {
-                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.categories_delete), tint = MaterialTheme.colorScheme.error)
+                                Icon(SciuroIcons.Delete, contentDescription = stringResource(R.string.categories_delete), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -116,7 +114,7 @@ fun CategorySettingsScreen(
             FloatingActionButton(
                 onClick = { showAddDialog = true }
             ) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.categories_add))
+                Icon(SciuroIcons.Add, contentDescription = stringResource(R.string.categories_add))
             }
         }
     }
