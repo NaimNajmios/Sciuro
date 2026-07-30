@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
+import com.sciuro.core.ledger.db.Cash_adjustment
 import com.sciuro.core.ledger.db.Raw_event_staging
+import com.sciuro.core.ledger.db.Transaction_record
 import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.CashAdjustmentRepository
 import com.sciuro.core.ledger.repository.RawEventRepository
@@ -19,19 +21,38 @@ import com.sciuro.core.transfer.repository.TransferRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-sealed class TimelineItem {
-    data class TransactionItem(val tx: com.sciuro.core.ledger.db.Transaction_record) : TimelineItem()
-    data class AdjustmentItem(val adjustment: com.sciuro.core.ledger.db.Cash_adjustment) : TimelineItem()
+sealed interface TimelineItem {
+    data class TransactionItem(val tx: Transaction_record) : TimelineItem
+    data class AdjustmentItem(val adjustment: Cash_adjustment) : TimelineItem
 }
 
-data class AccountDetailState(
-    val account: com.sciuro.core.ledger.db.Account? = null,
-    val transactions: List<com.sciuro.core.ledger.db.Transaction_record> = emptyList(),
-    val adjustments: List<com.sciuro.core.ledger.db.Cash_adjustment> = emptyList(),
-    val selectedFilter: String = "All",
-    val timeline: List<TimelineItem> = emptyList(),
-    val spendingVelocity: SpendingVelocity? = null
-)
+sealed interface AccountDetailUiState {
+    data object Loading : AccountDetailUiState
+    data class Loaded(
+        val account: com.sciuro.core.ledger.db.Account,
+        val transactions: List<Transaction_record>,
+        val adjustments: List<Cash_adjustment>,
+        val selectedFilter: String,
+        val timeline: List<TimelineItem>,
+        val spendingVelocity: SpendingVelocity?
+    ) : AccountDetailUiState
+}
+
+sealed interface AccountDetailDialog {
+    data object None : AccountDetailDialog
+    data object AdjustBalance : AccountDetailDialog
+    data class TransactionDetail(val tx: Transaction_record) : AccountDetailDialog
+    data class EditTransaction(val tx: Transaction_record) : AccountDetailDialog
+    data object EditAccountDetails : AccountDetailDialog
+    data object ArchiveConfirm : AccountDetailDialog
+    data object DeleteConfirm : AccountDetailDialog
+    data class DeleteTransactionConfirm(val tx: Transaction_record) : AccountDetailDialog
+    data object ColorPicker : AccountDetailDialog
+    data object QrFullScreen : AccountDetailDialog
+    data class AdjustConfirm(val amount: Double, val reason: String, val remark: String?) : AccountDetailDialog
+    data class ColorConfirm(val color: String?) : AccountDetailDialog
+    data class EditAccountConfirm(val accountNumber: String?, val holderName: String?, val bankCode: String?) : AccountDetailDialog
+}
 
 data class TransactionDetailData(
     val auditLogs: List<AuditLog> = emptyList(),
@@ -60,17 +81,18 @@ class AccountDetailViewModel(
     val incomeCategories: StateFlow<List<com.sciuro.core.ledger.model.Category>> = categoryRepository.observeCategoriesByType("INFLOW")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val state: StateFlow<AccountDetailState> = combine(
+    val uiState: StateFlow<AccountDetailUiState> = combine(
         accountRepository.observeAccountById(accountId),
         transactionRepository.observeTransactionsForAccount(accountId),
         cashAdjustmentRepository.observeAdjustmentsForAccount(accountId),
         _selectedFilter
     ) { account, transactions, adjustments, filter ->
+        if (account == null) return@combine AccountDetailUiState.Loading
         val timeline = buildTimeline(transactions, adjustments, filter)
-        val velocity = if (transactions.isNotEmpty() && account != null && account.balance > 0) {
+        val velocity = if (transactions.isNotEmpty() && account.balance > 0) {
             VelocityCalculator().calculate(account.balance, transactions)
         } else null
-        AccountDetailState(
+        AccountDetailUiState.Loaded(
             account = account,
             transactions = transactions,
             adjustments = adjustments,
@@ -81,12 +103,12 @@ class AccountDetailViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = AccountDetailState()
+        initialValue = AccountDetailUiState.Loading
     )
 
     private fun buildTimeline(
-        transactions: List<com.sciuro.core.ledger.db.Transaction_record>,
-        adjustments: List<com.sciuro.core.ledger.db.Cash_adjustment>,
+        transactions: List<Transaction_record>,
+        adjustments: List<Cash_adjustment>,
         filter: String
     ): List<TimelineItem> {
         val items = mutableListOf<TimelineItem>()
@@ -104,7 +126,7 @@ class AccountDetailViewModel(
             "Expense" -> {
                 items.addAll(transactions.filter { it.direction == "OUTFLOW" }.map { TimelineItem.TransactionItem(it) })
             }
-            else -> { // "All"
+            else -> {
                 items.addAll(transactions.map { TimelineItem.TransactionItem(it) })
                 items.addAll(adjustments.map { TimelineItem.AdjustmentItem(it) })
                 items.sortByDescending {
@@ -153,22 +175,24 @@ class AccountDetailViewModel(
 
     fun updateAccountColor(color: String?) {
         viewModelScope.launch {
-            val account = state.value.account ?: return@launch
+            val s = uiState.value
+            if (s !is AccountDetailUiState.Loaded) return@launch
+            val a = s.account
             val domainAccount = com.sciuro.core.ledger.model.Account(
-                id = account.id,
-                name = account.name,
-                type = account.type,
-                currency = account.currency,
-                balance = account.balance,
-                associatedPackage = account.associated_package,
-                isSystem = account.is_system == 1L,
-                status = account.status,
+                id = a.id,
+                name = a.name,
+                type = a.type,
+                currency = a.currency,
+                balance = a.balance,
+                associatedPackage = a.associated_package,
+                isSystem = a.is_system == 1L,
+                status = a.status,
                 color = color,
-                accountNumber = account.account_number,
-                accountHolderName = account.account_holder_name,
-                bankInstitutionCode = account.bank_institution_code,
-                qrImagePath = account.qr_image_path,
-                qrPayloadText = account.qr_payload_text
+                accountNumber = a.account_number,
+                accountHolderName = a.account_holder_name,
+                bankInstitutionCode = a.bank_institution_code,
+                qrImagePath = a.qr_image_path,
+                qrPayloadText = a.qr_payload_text
             )
             accountRepository.updateAccount(domainAccount)
         }
@@ -176,22 +200,24 @@ class AccountDetailViewModel(
 
     fun updateAccountDetails(accountNumber: String?, accountHolderName: String?, bankInstitutionCode: String?) {
         viewModelScope.launch {
-            val account = state.value.account ?: return@launch
+            val s = uiState.value
+            if (s !is AccountDetailUiState.Loaded) return@launch
+            val a = s.account
             val domainAccount = com.sciuro.core.ledger.model.Account(
-                id = account.id,
-                name = account.name,
-                type = account.type,
-                currency = account.currency,
-                balance = account.balance,
-                associatedPackage = account.associated_package,
-                isSystem = account.is_system == 1L,
-                status = account.status,
-                color = account.color,
+                id = a.id,
+                name = a.name,
+                type = a.type,
+                currency = a.currency,
+                balance = a.balance,
+                associatedPackage = a.associated_package,
+                isSystem = a.is_system == 1L,
+                status = a.status,
+                color = a.color,
                 accountNumber = accountNumber,
                 accountHolderName = accountHolderName,
                 bankInstitutionCode = bankInstitutionCode,
-                qrImagePath = account.qr_image_path,
-                qrPayloadText = account.qr_payload_text
+                qrImagePath = a.qr_image_path,
+                qrPayloadText = a.qr_payload_text
             )
             accountRepository.updateAccount(domainAccount)
         }
@@ -199,28 +225,30 @@ class AccountDetailViewModel(
 
     fun updateQrImagePath(path: String?) {
         viewModelScope.launch {
-            val account = state.value.account ?: return@launch
+            val s = uiState.value
+            if (s !is AccountDetailUiState.Loaded) return@launch
+            val a = s.account
             val domainAccount = com.sciuro.core.ledger.model.Account(
-                id = account.id,
-                name = account.name,
-                type = account.type,
-                currency = account.currency,
-                balance = account.balance,
-                associatedPackage = account.associated_package,
-                isSystem = account.is_system == 1L,
-                status = account.status,
-                color = account.color,
-                accountNumber = account.account_number,
-                accountHolderName = account.account_holder_name,
-                bankInstitutionCode = account.bank_institution_code,
+                id = a.id,
+                name = a.name,
+                type = a.type,
+                currency = a.currency,
+                balance = a.balance,
+                associatedPackage = a.associated_package,
+                isSystem = a.is_system == 1L,
+                status = a.status,
+                color = a.color,
+                accountNumber = a.account_number,
+                accountHolderName = a.account_holder_name,
+                bankInstitutionCode = a.bank_institution_code,
                 qrImagePath = path,
-                qrPayloadText = account.qr_payload_text
+                qrPayloadText = a.qr_payload_text
             )
             accountRepository.updateAccount(domainAccount)
         }
     }
 
-    suspend fun loadTransactionDetail(tx: com.sciuro.core.ledger.db.Transaction_record): TransactionDetailData {
+    suspend fun loadTransactionDetail(tx: Transaction_record): TransactionDetailData {
         val auditLogs = auditRepository.getLogsForEntity(tx.id, EntityType.TRANSACTION)
         val transferLink = transferRepository.getTransferForTransaction(tx.id)
         val rawEvent = tx.raw_event_id?.let { rawEventRepository.getRawEventById(it) }
