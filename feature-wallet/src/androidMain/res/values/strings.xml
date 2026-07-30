@@ -110,6 +110,28 @@
     <string name="wallet_initial_balance_myr">Initial Balance (MYR)</string>
     <string name="wallet_complete_setup">Complete Setup</string>
 
+    <!-- OnboardingIntroScreen -->
+    <string name="wallet_intro_title">Track Your Money Automatically</string>
+    <string name="wallet_intro_subtitle">Sciuro reads your bank notifications to track every transaction without lifting a finger.</string>
+    <string name="wallet_intro_feature_1">Automatic transaction capture from bank notifications</string>
+    <string name="wallet_intro_feature_2">Smart categorization with learning over time</string>
+    <string name="wallet_intro_feature_3">Budgets, insights, and financial runway at a glance</string>
+    <string name="wallet_intro_get_started">Get Started</string>
+
+    <!-- OnboardingCategoriesScreen -->
+    <string name="wallet_categories_title">Choose Your Categories</string>
+    <string name="wallet_categories_description">Select the spending categories that apply to you. Disable ones you don\'t need.</string>
+    <string name="wallet_categories_hint">You can always add, remove, or rename categories later in Settings.</string>
+    <string name="wallet_expense_categories">Expenses</string>
+    <string name="wallet_income_categories">Income</string>
+    <string name="wallet_save_and_continue">Save &amp; Continue</string>
+
+    <!-- OnboardingBudgetScreen -->
+    <string name="wallet_budget_title">Set Monthly Budgets (Optional)</string>
+    <string name="wallet_budget_description">Optionally set a monthly spending limit for your top categories.</string>
+    <string name="wallet_budget_hint">Leave blank to skip a category. You can set budgets anytime later.</string>
+    <string name="wallet_set_budgets">Set Budgets</string>
+
     <!-- OnboardingBatteryScreen -->
     <string name="wallet_stay_reliable">Stay Reliable</string>
     <string name="wallet_battery_description">Sciuro needs to run in the background to capture your bank notifications passively. Battery optimization may prevent this, causing missed transactions.</string>

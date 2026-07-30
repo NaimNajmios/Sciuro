@@ -33,6 +33,7 @@ import com.najmi.sciuro.core.ui.components.SheetList
 import com.najmi.sciuro.core.ui.components.FastTransactionSheet
 import com.najmi.sciuro.core.ui.components.FastTxOption
 import com.najmi.sciuro.core.ui.components.PillToggle
+import com.najmi.sciuro.core.ui.components.DashboardSkeleton
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.sciuro.feature.dashboard.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -43,11 +44,12 @@ import com.najmi.sciuro.core.ui.components.formatAuditLogDetail
 
 import com.sciuro.feature.dashboard.ui.components.NetPositionBreakdownPanel
 import com.sciuro.feature.dashboard.ui.components.ReviewInboxBanner
+import com.sciuro.feature.dashboard.ui.components.CategoryReviewBanner
 import com.sciuro.feature.dashboard.ui.components.AutoBookedBanner
 import com.sciuro.feature.dashboard.ui.components.DashboardSummaryRow
-import com.sciuro.feature.dashboard.ui.components.AdjustmentBanner
 import com.sciuro.feature.dashboard.ui.components.TransactionHistoryHeader
 import com.sciuro.feature.dashboard.ui.components.TransactionList
+import com.sciuro.feature.dashboard.ui.components.TipBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +59,8 @@ fun DashboardScreen(
     val autoBookedCount by viewModel.autoBookedTransactionsCount.collectAsState()
     val autoBookedTxs by viewModel.autoBookedTransactions.collectAsState()
     val reviewSuggestions by viewModel.reviewSuggestions.collectAsState()
-    var selectedRange by remember { mutableStateOf("All Time") }
+    val autoConfirmedForCategoryReview by viewModel.autoConfirmedForCategoryReview.collectAsState()
+    var selectedRange by remember { mutableStateOf("This Month") }
     val typeFilter by viewModel.typeFilter.collectAsState()
     val filterOptions = listOf("All", "Income", "Expense")
     val startDate by viewModel.startDate.collectAsState()
@@ -71,6 +74,23 @@ fun DashboardScreen(
 
     LaunchedEffect(selectedRange, startDate, endDate) {
         when (selectedRange) {
+            "Today" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
+            }
+            "This Week" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.set(java.util.Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                viewModel.setDateRange(cal.timeInMillis, null)
+            }
             "This Month" -> {
                 val cal = java.util.Calendar.getInstance()
                 cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
@@ -82,9 +102,6 @@ fun DashboardScreen(
             }
             "Custom" -> {
                 viewModel.setDateRange(startDate, endDate)
-            }
-            else -> {
-                viewModel.setDateRange(null, null)
             }
         }
     }
@@ -161,6 +178,9 @@ fun DashboardScreen(
         }
     }
 
+    if (state.isLoading) {
+        DashboardSkeleton()
+    } else {
     Box(modifier = Modifier
         .nestedScroll(pullToRefreshState.nestedScrollConnection)
         .fillMaxSize()
@@ -176,6 +196,8 @@ fun DashboardScreen(
                         emptyList()
                     } else {
                         when (selectedRange) {
+                            "Today" -> state.balanceHistory.takeLast(1)
+                            "This Week" -> state.balanceHistory.takeLast(7)
                             "This Month" -> state.balanceHistory.takeLast(30)
                             else -> state.balanceHistory
                         }
@@ -185,7 +207,7 @@ fun DashboardScreen(
                 HeroPanel(
                     title = stringResource(R.string.dashboard_total_net_position),
                     heroFigure = { HeroFigure(state.netPosition) },
-                    toggleOptions = listOf("This Month", "All Time", "Custom"),
+                    toggleOptions = listOf("Today", "This Week", "This Month", "Custom"),
                     selectedToggle = selectedRange,
                     onToggleSelected = { 
                         selectedRange = it 
@@ -197,8 +219,7 @@ fun DashboardScreen(
                     content = {
                         NetPositionBreakdownPanel(
                             breakdown = state.netPositionBreakdown,
-                            accountsCount = state.accounts.size,
-                            recentAdjustmentCount = state.recentAdjustmentCount
+                            accountsCount = state.accounts.size
                         )
                         if (state.lastMilestoneReached > 0) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -239,6 +260,14 @@ fun DashboardScreen(
                             .padding(horizontal = 16.dp)
                             .padding(bottom = 80.dp)
                     ) {
+                        if (!settingsProvider.hasSeenDashboardTips()) {
+                            TipBanner(
+                                onDismiss = {
+                                    settingsProvider.setHasSeenDashboardTips(true)
+                                }
+                            )
+                        }
+
                         if (state.unreviewedTransactionsCount == 0 && state.activeBudgetsCount == 0 && state.allTransactions.isEmpty()) {
                             com.najmi.sciuro.core.ui.components.EmptyStateView(
                                 message = stringResource(R.string.dashboard_empty_state_initial)
@@ -259,6 +288,16 @@ fun DashboardScreen(
                                 )
                             }
                             
+                            CategoryReviewBanner(
+                                autoConfirmedTxs = autoConfirmedForCategoryReview,
+                                expenseCategories = state.expenseCategories,
+                                incomeCategories = state.incomeCategories,
+                                categoryMap = categoryMap,
+                                onChangeCategory = { txId, catId ->
+                                    viewModel.changeTransactionCategory(txId, catId)
+                                }
+                            )
+
                             AutoBookedBanner(
                                 autoBookedCount = autoBookedCount,
                                 autoBookedTxs = autoBookedTxs,
@@ -307,8 +346,6 @@ fun DashboardScreen(
                                 }
                             }
 
-                            AdjustmentBanner(adjustmentCount = state.recentAdjustmentCount)
-                            
                             TransactionHistoryHeader(
                                 typeFilter = typeFilter,
                                 filterOptions = filterOptions,
@@ -373,6 +410,7 @@ fun DashboardScreen(
             Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.dashboard_add_transaction_cd))
         }
     }
+    }
     
     if (showDatePickerDialog) {
         val dateRangePickerState = rememberDateRangePickerState()
@@ -381,7 +419,7 @@ fun DashboardScreen(
             onDismiss = {
                 showDatePickerDialog = false
                 if (startDate == null && endDate == null) {
-                    selectedRange = "All Time"
+                    selectedRange = "This Month"
                 }
             },
             onConfirm = { start, end ->

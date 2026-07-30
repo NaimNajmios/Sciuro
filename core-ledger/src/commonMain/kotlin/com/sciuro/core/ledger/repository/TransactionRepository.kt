@@ -364,6 +364,39 @@ class TransactionRepository(
             .mapToList(Dispatchers.Default)
     }
 
+    fun observeAllAutoConfirmed(sinceMs: Long): Flow<List<com.sciuro.core.ledger.db.Transaction_record>> {
+        return database.transactionRecordQueries.selectAllAutoConfirmed(sinceMs)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+    }
+
+    suspend fun updateTransactionCategory(transactionId: String, newCategoryId: String) {
+        val tx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
+        val now = currentTimeMillis()
+        database.transactionRecordQueries.updateCategory(newCategoryId, now, transactionId)
+
+        auditRepository.logMutation(
+            AuditLog(
+                id = generateUuid(),
+                entityType = EntityType.TRANSACTION,
+                entityId = transactionId,
+                action = AuditAction.RECLASSIFY,
+                beforeState = "category_id=${tx.category_id}",
+                afterState = "category_id=$newCategoryId",
+                source = AuditSource.USER_MANUAL,
+                confidence = null,
+                timestamp = now
+            )
+        )
+        eventBus.publish(DomainEvent.TransactionRecategorized(
+            transactionId = transactionId,
+            oldCategoryId = tx.category_id ?: "",
+            newCategoryId = newCategoryId,
+            merchant = tx.merchant,
+            accountId = tx.account_id
+        ))
+    }
+
     suspend fun undoAutoConfirm(transactionId: String) {
         val tx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
         val now = currentTimeMillis()

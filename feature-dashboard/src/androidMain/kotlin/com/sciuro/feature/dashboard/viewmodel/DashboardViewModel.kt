@@ -13,7 +13,6 @@ import com.sciuro.core.ledger.db.Raw_event_staging
 import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
-import com.sciuro.core.ledger.repository.CashAdjustmentRepository
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.transfer.model.TransferLink
 import com.sciuro.core.transfer.repository.TransferRepository
@@ -51,6 +50,7 @@ data class NetPositionBreakdown(
 )
 
 data class DashboardState(
+    val isLoading: Boolean = true,
     val netPosition: Double = 0.0,
     val netPositionBreakdown: NetPositionBreakdown = NetPositionBreakdown(),
     val unreviewedTransactionsCount: Int = 0,
@@ -60,7 +60,6 @@ data class DashboardState(
     val accounts: List<com.sciuro.core.ledger.db.Account> = emptyList(),
     val expenseCategories: List<com.sciuro.core.ledger.model.Category> = emptyList(),
     val incomeCategories: List<com.sciuro.core.ledger.model.Category> = emptyList(),
-    val recentAdjustmentCount: Int = 0,
     val balanceHistory: List<Float> = emptyList(),
     val runway: Double = 0.0,
     val hasIncomePattern: Boolean = false,
@@ -82,7 +81,6 @@ class DashboardViewModel(
     private val budgetRepository: BudgetRepository,
     private val categoryRepository: CategoryRepository,
     private val transferRepository: TransferRepository,
-    private val cashAdjustmentRepository: CashAdjustmentRepository,
     private val auditRepository: AuditRepository,
     private val rawEventRepository: RawEventRepository,
     private val debtRepository: DebtRepository,
@@ -154,9 +152,9 @@ class DashboardViewModel(
     val state: StateFlow<DashboardState> = combine(
         combine(accountRepository.observeAccounts(), transactionRepository.observeUnreviewedTransactions(), budgetRepository.observeBudgets(), ::Triple),
         combine(transactionRepository.observeAllTransactions(), _startDate, _endDate, ::Triple),
-        combine(categoryRepository.observeCategoriesByType("OUTFLOW"), categoryRepository.observeCategoriesByType("INFLOW"), cashAdjustmentRepository.observeAllAdjustments(), ::Triple),
+        combine(categoryRepository.observeCategoriesByType("OUTFLOW"), categoryRepository.observeCategoriesByType("INFLOW"), ::Pair),
         combine(debtRepository.observeDebts(), investmentRepository.observeInvestments(), obligationRepository.observeActiveObligations(), ::Triple)
-    ) { (accounts, unreviewed, budgets), (allTxs, start, end), (expenseCats, incomeCats, allAdjustments), (debts, investments, obligations) ->
+    ) { (accounts, unreviewed, budgets), (allTxs, start, end), (expenseCats, incomeCats), (debts, investments, obligations) ->
         
         val filteredTxs = allTxs.filter { tx ->
             val afterStart = start?.let { tx.timestamp >= it } ?: true
@@ -164,9 +162,6 @@ class DashboardViewModel(
             afterStart && beforeEnd
         }
 
-        val oneWeekAgo = currentTimeMillis() - 7L * 24L * 60L * 60L * 1000L
-        val recentAdjustments = allAdjustments.filter { it.timestamp > oneWeekAgo }
-        
         val balanceHistory = computeBalanceHistory(allTxs)
         
         val totalAccounts = accounts.sumOf { it.balance }
@@ -208,6 +203,7 @@ class DashboardViewModel(
         val weeklyDigest = if (weekCount > 0) WeeklyDigestData(weekTotal, topCatName, weekCount, unreviewed.size) else null
 
         DashboardState(
+            isLoading = false,
             netPosition = netPosition,
             netPositionBreakdown = breakdown,
             unreviewedTransactionsCount = unreviewed.size,
@@ -216,7 +212,6 @@ class DashboardViewModel(
             accounts = accounts,
             expenseCategories = expenseCats,
             incomeCategories = incomeCats,
-            recentAdjustmentCount = recentAdjustments.size,
             balanceHistory = balanceHistory,
             runway = runway,
             hasIncomePattern = incomePattern != null,
@@ -236,10 +231,20 @@ class DashboardViewModel(
         .observeRecentlyAutoConfirmed(currentTimeMillis() - 24L * 60L * 60L * 1000L)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val autoConfirmedForCategoryReview: StateFlow<List<com.sciuro.core.ledger.db.Transaction_record>> = transactionRepository
+        .observeAllAutoConfirmed(currentTimeMillis() - 24L * 60L * 60L * 1000L)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val reviewSuggestions: StateFlow<List<ReviewSuggestion>> = transactionRepository
         .observeUnreviewedTransactions()
         .map { txs -> computeSuggestions(txs) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun changeTransactionCategory(transactionId: String, newCategoryId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            transactionRepository.updateTransactionCategory(transactionId, newCategoryId)
+        }
+    }
 
     private suspend fun computeSuggestions(txs: List<com.sciuro.core.ledger.db.Transaction_record>): List<ReviewSuggestion> {
         if (txs.isEmpty()) return emptyList()

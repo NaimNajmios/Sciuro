@@ -45,4 +45,8 @@ interface SettingsProvider {
     fun setLastBackupTimestamp(timestamp: Long)
     fun getLastMilestoneReached(): Double
     fun setLastMilestoneReached(milestone: Double)
+    fun hasCompletedOnboarding(): Boolean
+    fun setHasCompletedOnboarding(completed: Boolean)
+    fun hasSeenDashboardTips(): Boolean
+    fun setHasSeenDashboardTips(seen: Boolean)
 }

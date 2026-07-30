@@ -203,4 +203,20 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setLastMilestoneReached(milestone: Double) {
         sharedPreferences.edit().putFloat("last_milestone_reached", milestone.toFloat()).apply()
     }
+
+    override fun hasCompletedOnboarding(): Boolean {
+        return sharedPreferences.getBoolean("has_completed_onboarding", false)
+    }
+
+    override fun setHasCompletedOnboarding(completed: Boolean) {
+        sharedPreferences.edit().putBoolean("has_completed_onboarding", completed).apply()
+    }
+
+    override fun hasSeenDashboardTips(): Boolean {
+        return sharedPreferences.getBoolean("has_seen_dashboard_tips", false)
+    }
+
+    override fun setHasSeenDashboardTips(seen: Boolean) {
+        sharedPreferences.edit().putBoolean("has_seen_dashboard_tips", seen).apply()
+    }
 }

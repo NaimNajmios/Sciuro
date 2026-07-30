@@ -394,7 +394,9 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.headlineSmall,
             )
             Spacer(modifier = Modifier.height(16.dp))
-            PalettePreference.entries.forEach { palette ->
+            PalettePreference.entries.filter {
+                it != PalettePreference.DYNAMIC || android.os.Build.VERSION.SDK_INT >= 31
+            }.forEach { palette ->
                 val isSelected = palette == palettePref
                 Row(
                     modifier = Modifier
@@ -439,6 +441,7 @@ private fun paletteDisplayName(palette: PalettePreference): String = when (palet
     PalettePreference.FOREST -> stringResource(R.string.palette_forest)
     PalettePreference.PLUM -> stringResource(R.string.palette_plum)
     PalettePreference.SLATE -> stringResource(R.string.palette_slate)
+    PalettePreference.DYNAMIC -> stringResource(R.string.palette_dynamic)
 }
 
 @Composable

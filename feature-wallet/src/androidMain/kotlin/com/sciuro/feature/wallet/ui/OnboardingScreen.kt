@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sciuro.feature.wallet.R
+import com.sciuro.feature.wallet.viewmodel.OnboardingStep
 import com.sciuro.feature.wallet.viewmodel.OnboardingViewModel
 import com.najmi.sciuro.core.ui.components.SciuroPrimaryButton
 import com.najmi.sciuro.core.ui.components.SciuroAmountField
@@ -18,8 +19,50 @@ import org.koin.androidx.compose.koinViewModel
 fun OnboardingScreen(
     viewModel: OnboardingViewModel = koinViewModel()
 ) {
+    val state by viewModel.state.collectAsState()
+
+    when (state.currentStep) {
+        OnboardingStep.Welcome -> {
+            OnboardingIntroScreen(
+                onContinue = { viewModel.advanceToWalletSetup() }
+            )
+        }
+
+        OnboardingStep.WalletSetup -> {
+            WalletSetupContent(
+                onComplete = { balance -> viewModel.setupPersonalWallet(balance) }
+            )
+        }
+
+        OnboardingStep.Categories -> {
+            OnboardingCategoriesScreen(
+                expenseCategories = state.expenseCategories,
+                incomeCategories = state.incomeCategories,
+                onSave = { enabledIds -> viewModel.saveCategoryPreferences(enabledIds) }
+            )
+        }
+
+        OnboardingStep.Budget -> {
+            OnboardingBudgetScreen(
+                expenseCategories = state.expenseCategories,
+                onSave = { budgets -> viewModel.createInitialBudgets(budgets) },
+                onSkip = { viewModel.skipBudgets() }
+            )
+        }
+
+        OnboardingStep.Complete -> {
+            // Handled by parent navigation
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WalletSetupContent(
+    onComplete: (Double) -> Unit
+) {
     var initialBalanceStr by remember { mutableStateOf("") }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -53,19 +96,19 @@ fun OnboardingScreen(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             SciuroAmountField(
                 value = initialBalanceStr,
                 onValueChange = { initialBalanceStr = it },
                 label = stringResource(R.string.wallet_initial_balance_myr)
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
             SciuroPrimaryButton(
                 text = stringResource(R.string.wallet_complete_setup),
                 onClick = {
                     val amount = initialBalanceStr.toDoubleOrNull() ?: 0.0
-                    viewModel.setupPersonalWallet(amount)
+                    onComplete(amount)
                 },
                 modifier = Modifier.fillMaxWidth()
             )

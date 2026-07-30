@@ -23,6 +23,19 @@ All notable changes to this project will be documented in this file.
 - **MerchantRuleRepository**: Added `accountRepository` param and `observeAllAccountRules()` / `deleteAccountRule()` methods.
 - **MerchantAccountRule.sq**: Added `selectAllMerchantAccountRules` query.
 
+### Phase K2 — UX Polish (Phase 2: Loading & Navigation)
+
+#### Added
+- **Shimmer skeleton loading** (`core-ui/components/SciuroSkeleton.kt`): Reusable `shimmerEffect()` modifier using animated gradient via `drawBehind` + `InfiniteTransition`. Skeleton variants: `DashboardSkeleton` (hero placeholder + 6 transaction rows), `BudgetCardSkeleton`, `AccountCardSkeleton`, `TransactionSkeletonRow`. Respects `reducedMotion()` — animation skipped when system setting active.
+- **Dashboard loading skeletons** (`DashboardScreen`): When `DashboardState.isLoading == true`, the screen shows `DashboardSkeleton()` instead of the full overlay. New `isLoading` field on `DashboardState` defaults to `true`, transitions to `false` on first combine emission.
+- **Predictive back gesture** (`MainActivity`): `OnBackInvokedCallback` registered on API 34+ to enable predictive system back animation. Manifest flag was already present.
+- **Dynamic Color (Material You)** (`Theme.kt`, `Color.kt`, `SettingsScreen`): New `PalettePreference.DYNAMIC` option. On API 31+, uses `dynamicLightColorScheme(context)` / `dynamicDarkColorScheme(context)` from device wallpaper. **Zero new dependencies** — already in the existing `material3` artifact. Conditional visibility in Settings UI (hidden below API 31).
+
+#### Changed
+- `DashboardState` now has `isLoading: Boolean = true` — set to `false` after first combine emission.
+- `PalettePreference` enum now includes `DYNAMIC` (6 presets + dynamic).
+- Settings theme picker filters out DYNAMIC on devices below API 31.
+
 ### Phase K2 — UX Polish (Phase 1: Tactile Polish)
 
 #### Added

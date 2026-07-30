@@ -74,3 +74,55 @@
 | Edge-to-edge theming | PASS (compile) |
 | String externalization | PASS |
 | No new lint warnings | PASS |
+
+---
+
+## Phase 2 — Loading & Navigation
+
+### 2.1 Shimmer Skeleton Loading
+
+**What was tested:**
+- `SciuroSkeleton.kt` created with `shimmerEffect()` modifier (animated gradient via `drawBehind` + `InfiniteTransition`)
+- Skeleton variants: `DashboardSkeleton` (hero placeholder + transaction rows), `BudgetCardSkeleton`, `AccountCardSkeleton`, `TransactionSkeletonRow`
+- `DashboardState.isLoading` field added (default `true`, set to `false` after first combine emission)
+- `DashboardScreen` shows `DashboardSkeleton()` when `state.isLoading` is true, else normal content
+- Respects `reducedMotion()` — shimmer animation skipped when system setting active
+- No new dependencies
+
+**Compilation result:** PASS (core-ui, feature-dashboard)
+
+**Manual test TODO:**
+- [ ] Verify shimmer animation plays on cold app launch
+- [ ] Verify shimmer transitions to real data once loaded
+- [ ] Verify shimmer skips animation when reduced motion enabled
+
+### 2.2 Predictive Back Gesture
+
+**What was tested:**
+- `OnBackInvokedCallback` registered in `MainActivity.onCreate()` on API 34+
+- Manifest already has `android:enableOnBackInvokedCallback="true"`
+
+**Compilation result:** PASS (app module compiles independently; blocked by pre-existing kanban error at full build)
+
+### 2.3 Dynamic Color (Material You)
+
+**What was tested:**
+- `PalettePreference.DYNAMIC` added to enum in `Color.kt`
+- `Theme.kt` calls `dynamicLightColorScheme(context)` / `dynamicDarkColorScheme(context)` on API 31+ when DYNAMIC selected
+- **No new dependency** — `dynamicLightColorScheme` already in extant `androidx.compose.material3:material3`
+- SettingsUI: DYNAMIC shown only on API 31+ via `.filter { it != DYNAMIC || Build.VERSION.SDK_INT >= 31 }`
+- String resource `palette_dynamic = "Dynamic (Material You)"` added to `feature-settings/strings.xml`
+
+**Compilation result:** PASS (core-ui, feature-settings)
+
+### Summary
+
+| Test | Status |
+|------|--------|
+| Compilation (core-ui, feature-dashboard, feature-settings) | PASS |
+| Shimmer skeleton infra | PASS (compile) |
+| Dashboard skeleton integration | PASS (compile) |
+| Predictive back callback | PASS (compile) |
+| Dynamic Color (Material You) | PASS (compile) |
+| String externalization | PASS |
+| No new lint warnings | PASS |

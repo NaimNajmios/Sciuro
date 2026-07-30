@@ -28,7 +28,7 @@ val AccountColorBrown = Color(0xFF795548)
 // ── Theme Palettes ──────────────────────────────────────────────────────────
 
 enum class PalettePreference {
-    MONOCHROME, AMBER, OCEAN, FOREST, PLUM, SLATE
+    MONOCHROME, AMBER, OCEAN, FOREST, PLUM, SLATE, DYNAMIC
 }
 
 data class PaletteColors(
@@ -155,4 +155,5 @@ fun paletteColors(palette: PalettePreference, dark: Boolean): PaletteColors = wh
     PalettePreference.FOREST -> if (dark) ForestDark else ForestLight
     PalettePreference.PLUM -> if (dark) PlumDark else PlumLight
     PalettePreference.SLATE -> if (dark) SlateDark else SlateLight
+    PalettePreference.DYNAMIC -> if (dark) MonochromeDark else MonochromeLight
 }

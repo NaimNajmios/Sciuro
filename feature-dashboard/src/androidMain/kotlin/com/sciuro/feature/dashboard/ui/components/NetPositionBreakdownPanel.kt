@@ -21,7 +21,6 @@ import com.sciuro.feature.dashboard.viewmodel.NetPositionBreakdown
 fun NetPositionBreakdownPanel(
     breakdown: NetPositionBreakdown,
     accountsCount: Int,
-    recentAdjustmentCount: Int,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
@@ -83,13 +82,6 @@ fun NetPositionBreakdownPanel(
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White.copy(alpha = 0.6f)
             )
-            if (recentAdjustmentCount > 0) {
-                Text(
-                    text = "$recentAdjustmentCount adjustments this week",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.6f)
-                )
-            }
         }
     }
 }

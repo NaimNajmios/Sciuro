@@ -245,6 +245,7 @@
     <string name="palette_forest">Forest</string>
     <string name="palette_plum">Plum</string>
     <string name="palette_slate">Slate</string>
+    <string name="palette_dynamic">Dynamic (Material You)</string>
 
     <!-- Settings Navigation -->
     <string name="settings_section_navigation">Preferences</string>

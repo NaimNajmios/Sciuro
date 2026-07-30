@@ -61,6 +61,11 @@ SELECT * FROM transaction_record
 WHERE review_tier = 'AUTO_UNDO' AND created_at > ?
 ORDER BY created_at DESC;
 
+selectAllAutoConfirmed:
+SELECT * FROM transaction_record
+WHERE review_tier IN ('AUTO_UNDO', 'AUTO_SILENT') AND is_reviewed = 1 AND created_at > ?
+ORDER BY created_at DESC;
+
 undoAutoConfirm:
 UPDATE transaction_record
 SET review_tier = 'MANUAL', is_reviewed = 0, auto_confirmed_at = NULL, updated_at = ?

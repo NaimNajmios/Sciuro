@@ -71,6 +71,23 @@
     <!-- TransactionHistoryHeader -->
     <string name="dashboard_transaction_history">Transaction History</string>
 
+    <!-- CategoryReviewBanner -->
+    <string name="dashboard_category_review_cd">Category Review</string>
+    <string name="dashboard_category_review">Category Review</string>
+    <string name="dashboard_uncategorized">Uncategorized</string>
+    <string name="dashboard_change">Change</string>
+    <string name="dashboard_choose_category">Choose a category</string>
+    <string name="dashboard_confirm">Confirm</string>
+    <string name="dashboard_n_more">+%d more</string>
+
+    <!-- TipBanner -->
+    <string name="dashboard_tip_notifications">Transactions will appear here as your bank notifications arrive</string>
+    <string name="dashboard_tip_swipe">Swipe right to approve a transaction, left to reject</string>
+    <string name="dashboard_tip_tap">Tap any transaction to view details and edit</string>
+    <string name="dashboard_next">Next</string>
+    <string name="dashboard_got_it">Got it</string>
+    <string name="dashboard_dismiss_cd">Dismiss</string>
+
     <!-- TransactionList -->
     <string name="dashboard_reviewed">Reviewed</string>
     <string name="dashboard_swipe_instructions">Swipe right to approve, left to reject</string>
