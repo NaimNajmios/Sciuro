@@ -8,6 +8,7 @@ Make the domain event bus durable so that no event is silently lost when subscri
 ### New files in `core-audit`
 - `DomainEventEnvelope.kt` - Durable event envelope with ID, sequence, type, schema version, and criticality flag
 - `DomainEventStore.kt` - Interface for durable event persistence and delivery state management
+- `DomainEventMetrics.kt` - Data class for bus health metrics (pending, dead-letter, retry, lag, drop counts)
 - `DomainEventCodec.kt` - Manual serializer/deserializer for all 27 DomainEvent variants
 - `InMemoryEventStore.kt` - In-memory implementation for testing
 - `DomainEventBusTest.kt` - Tests for durable publish, subscribe, acknowledgment
@@ -15,12 +16,12 @@ Make the domain event bus durable so that no event is silently lost when subscri
 - `DomainEventCodecTest.kt` - Tests for serialization roundtrips
 
 ### Modified files in `core-audit`
-- `DomainEventBus.kt` - Now accepts optional `DomainEventStore`, persists events durably before live emission, exposes `metrics()`, supports `subscribe()` for durable delivery
+- `DomainEventBus.kt` - Now accepts optional `DomainEventStore`, persists events durably before live emission, exposes `metrics()`, supports `subscribe()` for durable delivery. Buffer increased from 64 to 256 with explicit `DROP_OLDEST` overflow.
 - `build.gradle.kts` - Added `kotlinx-serialization-json` dependency
 
 ### New files in `core-ledger`
-- `DomainEventLog.sq` - SQLDelight table for immutable event log with indexes
-- `DomainEventDelivery.sq` - SQLDelight table for per-subscriber delivery state
+- `DomainEventLog.sq` - SQLDelight table for immutable event log with indexes on sequence, timestamp, type, and criticality
+- `DomainEventDelivery.sq` - SQLDelight table for per-subscriber delivery state with claim, acknowledge, failure, and dead-letter queries
 - `SqlDelightEventStore.kt` - SQLDelight implementation of `DomainEventStore`
 - `15.sqm` - Schema migration adding both tables
 
@@ -53,10 +54,18 @@ A `Channel<DomainEvent>` would make subscribers compete for events (point-to-poi
 ### Critical events
 `DebtFullyPaidOff` and `NetPositionMilestoneReached` are flagged as critical in the event log. They receive the same durable delivery as all other events.
 
-## Testing Notes
-- All 27 event types serialize and deserialize correctly
-- Two independent subscribers receive the same event independently
-- Expired leases allow retry
-- Dead-lettered events are not re-claimed
-- Historical events are replayed on subscriber startup
-- Developer Health tab shows pending deliveries, dead letters, retries, live drops, and subscriber lag
+## Test Results
+
+### core-audit tests (18 tests)
+- `DomainEventCodecTest`: 8 tests — all event type serialization roundtrips pass
+- `InMemoryEventStoreTest`: 11 tests — append, claim, acknowledge, independent subscribers, expired leases, failure recording, dead lettering, metrics, cleanup
+- `DomainEventBusTest`: 8 tests — publish persistence, live flow emission, durable subscriber delivery, historical replay, independent subscribers, idempotent subscribe, metrics, shutdown
+
+### core-ledger compilation
+- SQLDelight codegen produces `DomainEventLogQueries` and `DomainEventDeliveryQueries`
+- `SqlDelightEventStore` compiles successfully against generated queries
+
+### Notes
+- `DomainEventBus()` without arguments still works (no store) for backward compatibility with existing tests
+- `ON CONFLICT` UPSERT syntax was removed from SQLDelight queries in favor of `INSERT OR IGNORE` + separate UPDATE for compatibility with SQLDelight 2.0.1
+- Test method names use camelCase (not backticks) to avoid JUnit4 `ParentRunner` issues with parentheses in method names

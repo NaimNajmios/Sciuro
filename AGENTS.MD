@@ -30,7 +30,7 @@ app → feature-* → core-*
 - `feature-*` = Android-only (UI). Compose screens, ViewModels.
 - `app` = thin shell. Wires Koin modules, hosts `NavHost`, `Application` subclass. No business logic.
 - `core-ui` = shared Compose primitives and theming (a `core-*` module).
-- `core-*` **never** depends on `feature-*`. `feature-*` **never** imports another `feature-*`. Cross-feature communication goes through the Domain Event Bus.
+- `core-audit` owns the durable `DomainEventStore` interface, `DomainEventBus` (with `metrics()` and `subscribe()` APIs), `DomainEventCodec`, and `DomainEventEnvelope`. `core-ledger` implements `SqlDelightEventStore` backed by `domain_event_log` and `domain_event_delivery` tables (migration 15.sqm). The bus persists events durably before live emission. Per-subscriber acknowledgment ensures no event is silently lost. Cross-feature communication goes through the Domain Event Bus.
 
 New modules: `core-<noun>` for domain/persistence, `feature-<noun>` for UI. Koin modules go in `<Name>Module.kt` inside each module's `di/` package.
 
