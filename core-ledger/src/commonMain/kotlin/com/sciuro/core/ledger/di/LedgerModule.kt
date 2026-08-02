@@ -1,14 +1,17 @@
 package com.sciuro.core.ledger.di
 
 import com.sciuro.core.audit.events.DomainEventBus
+import com.sciuro.core.audit.events.DomainEventStore
 import com.sciuro.core.audit.repository.AuditRepository
-import com.sciuro.core.ledger.subscriber.NetPositionSubscriber
 import com.sciuro.core.ledger.audit.SqlDelightAuditRepository
+import com.sciuro.core.ledger.event.SqlDelightEventStore
+import com.sciuro.core.ledger.subscriber.NetPositionSubscriber
 import org.koin.dsl.module
 
 val ledgerModule = module {
     single<AuditRepository> { SqlDelightAuditRepository(get()) }
-    single { DomainEventBus() }
+    single<DomainEventStore> { SqlDelightEventStore(get()) }
+    single { DomainEventBus(eventStore = get()) }
     single { NetPositionSubscriber(get(), get(), get()) }
     single { com.sciuro.core.ledger.repository.AccountRepository(get(), get()) }
     single { com.sciuro.core.ledger.repository.CategoryRepository(get(), get()) }

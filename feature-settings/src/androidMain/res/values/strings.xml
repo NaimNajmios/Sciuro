@@ -170,6 +170,16 @@
     <string name="dev_health_dead_letters">Dead letters (7d)</string>
     <string name="dev_health_degraded">Match rate dropped from %1$s%% — format drift may be occurring.</string>
 
+    <!-- Developer Tab: Domain Events -->
+    <string name="dev_events_title">Domain Event Bus</string>
+    <string name="dev_events_subtitle">Durable delivery health across all subscribers</string>
+    <string name="dev_events_pending">Pending Deliveries</string>
+    <string name="dev_events_dead_letters">Dead Letters</string>
+    <string name="dev_events_retries">Retries</string>
+    <string name="dev_events_live_drops">Live Drops</string>
+    <string name="dev_events_oldest_age">Oldest Pending Age</string>
+    <string name="dev_events_lag">Subscriber Lag</string>
+
     <!-- Developer Tab: Pipeline Trace -->
     <string name="dev_trace_title">Recent pipeline events</string>
     <string name="dev_trace_no_data">No trace data yet. Process a notification to see traces.</string>

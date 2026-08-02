@@ -1,0 +1,40 @@
+CREATE TABLE domain_event_log (
+    event_id TEXT NOT NULL PRIMARY KEY,
+    sequence INTEGER NOT NULL UNIQUE,
+    event_type TEXT NOT NULL,
+    schema_version INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    occurred_at INTEGER NOT NULL,
+    producer TEXT,
+    critical INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX domain_event_log_sequence ON domain_event_log(sequence);
+CREATE INDEX domain_event_log_occurred_at ON domain_event_log(occurred_at);
+CREATE INDEX domain_event_log_event_type ON domain_event_log(event_type);
+CREATE INDEX domain_event_log_critical ON domain_event_log(critical);
+
+insertEvent:
+INSERT INTO domain_event_log(event_id, sequence, event_type, schema_version, payload_json, occurred_at, producer, critical)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+selectEventsAfter:
+SELECT * FROM domain_event_log
+WHERE sequence > ?
+ORDER BY sequence ASC;
+
+selectUnacknowledgedBySubscriber:
+SELECT e.* FROM domain_event_log e
+WHERE e.event_id NOT IN (
+    SELECT d.event_id FROM domain_event_delivery d
+    WHERE d.subscriber_id = ? AND d.status = 'ACKNOWLEDGED'
+)
+ORDER BY e.sequence ASC;
+
+selectEventById:
+SELECT * FROM domain_event_log
+WHERE event_id = ?;
+
+deleteEventsOlderThan:
+DELETE FROM domain_event_log
+WHERE occurred_at < ?;

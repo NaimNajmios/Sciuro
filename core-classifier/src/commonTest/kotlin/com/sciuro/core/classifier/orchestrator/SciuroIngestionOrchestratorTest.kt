@@ -161,6 +161,8 @@ private val dummyDb = object : com.sciuro.core.ledger.db.SciuroDatabase {
     override val transactionCorroborationQueries get() = throw UnsupportedOperationException()
     override val transactionRecordQueries get() = throw UnsupportedOperationException()
     override val transferLinkQueries get() = throw UnsupportedOperationException()
+    override val domainEventLogQueries get() = throw UnsupportedOperationException()
+    override val domainEventDeliveryQueries get() = throw UnsupportedOperationException()
     override fun transaction(noEnclosing: Boolean, body: app.cash.sqldelight.TransactionWithoutReturn.() -> Unit) {}
     override fun <R> transactionWithResult(noEnclosing: Boolean, bodyWithReturn: app.cash.sqldelight.TransactionWithReturn<R>.() -> R): R = throw UnsupportedOperationException()
 }

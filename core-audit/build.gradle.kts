@@ -22,7 +22,14 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(libs.koin.core)
+                api(libs.koin.core)
+                api(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.serialization.json)
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.core)
             }
         }

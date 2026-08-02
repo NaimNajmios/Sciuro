@@ -1,0 +1,80 @@
+CREATE TABLE domain_event_delivery (
+    event_id TEXT NOT NULL,
+    subscriber_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'PENDING',
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    available_at INTEGER NOT NULL DEFAULT 0,
+    lease_until INTEGER,
+    last_error TEXT,
+    acknowledged_at INTEGER,
+    PRIMARY KEY (event_id, subscriber_id)
+);
+
+CREATE INDEX domain_event_delivery_status ON domain_event_delivery(status);
+CREATE INDEX domain_event_delivery_subscriber ON domain_event_delivery(subscriber_id, status);
+CREATE INDEX domain_event_delivery_lease ON domain_event_delivery(lease_until);
+
+claimEvent:
+UPDATE domain_event_delivery
+SET status = 'PROCESSING',
+    attempt_count = attempt_count + 1,
+    lease_until = ?
+WHERE event_id = ? AND subscriber_id = ? AND (status = 'PENDING' OR status = 'RETRYABLE');
+
+insertDeliveryIfNotExists:
+INSERT OR IGNORE INTO domain_event_delivery(event_id, subscriber_id, status, attempt_count, available_at, lease_until)
+VALUES (?, ?, 'PENDING', 0, 0, NULL);
+
+acknowledgeDelivery:
+UPDATE domain_event_delivery
+SET status = 'ACKNOWLEDGED', acknowledged_at = ?
+WHERE event_id = ? AND subscriber_id = ?;
+
+recordDeliveryFailure:
+UPDATE domain_event_delivery
+SET status = 'RETRYABLE',
+    last_error = ?,
+    available_at = ?
+WHERE event_id = ? AND subscriber_id = ?;
+
+deadLetterDelivery:
+UPDATE domain_event_delivery
+SET status = 'DEAD_LETTER',
+    last_error = ?
+WHERE event_id = ? AND subscriber_id = ?;
+
+reclaimExpiredLeases:
+UPDATE domain_event_delivery
+SET status = 'RETRYABLE', available_at = ?, lease_until = NULL
+WHERE status = 'PROCESSING' AND lease_until < ?;
+
+selectPendingForSubscriber:
+SELECT e.* FROM domain_event_log e
+JOIN domain_event_delivery d ON e.event_id = d.event_id
+WHERE d.subscriber_id = ? AND d.status IN ('PENDING', 'RETRYABLE')
+  AND d.available_at <= ?
+ORDER BY e.sequence ASC;
+
+countDeadLetters:
+SELECT COUNT(*) FROM domain_event_delivery
+WHERE status = 'DEAD_LETTER';
+
+countRetries:
+SELECT COUNT(*) FROM domain_event_delivery
+WHERE status = 'RETRYABLE';
+
+countAllPending:
+SELECT COUNT(*) FROM domain_event_delivery
+WHERE status IN ('PENDING', 'RETRYABLE', 'PROCESSING');
+
+oldestPendingEvent:
+SELECT MIN(e.occurred_at) AS oldest_at FROM domain_event_log e
+JOIN domain_event_delivery d ON e.event_id = d.event_id
+WHERE d.status IN ('PENDING', 'RETRYABLE');
+
+deleteDeliveryByEvent:
+DELETE FROM domain_event_delivery WHERE event_id = ?;
+
+cleanupAcknowledged:
+DELETE FROM domain_event_delivery
+WHERE status = 'ACKNOWLEDGED' AND acknowledged_at < ?;

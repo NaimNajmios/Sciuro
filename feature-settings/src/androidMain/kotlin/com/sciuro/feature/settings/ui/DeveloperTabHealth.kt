@@ -25,6 +25,7 @@ fun DeveloperTabHealth(
     val healthData by viewModel.healthData.collectAsState()
     val priorHealthData by viewModel.priorHealthData.collectAsState()
     val metrics by viewModel.pipelineMetrics.collectAsState()
+    val eventBusMetrics by viewModel.eventBusMetrics.collectAsState()
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
@@ -143,6 +144,52 @@ fun DeveloperTabHealth(
             }
         }
 
+        item {
+            SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(stringResource(R.string.dev_events_title), style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.dev_events_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    if (eventBusMetrics != null) {
+                        val ebm = eventBusMetrics!!
+
+                        val pendingColor = when {
+                            ebm.pendingCount > 50 -> tokens.signalDanger
+                            ebm.pendingCount > 10 -> tokens.signalWarning
+                            else -> tokens.signalIncome
+                        }
+                        val deadColor = if (ebm.deadLetterCount > 0) tokens.signalDanger else tokens.signalIncome
+                        val retryColor = if (ebm.retryCount > 0) tokens.signalWarning else tokens.signalIncome
+                        val dropColor = if (ebm.liveDropCount > 0) tokens.signalDanger else tokens.signalIncome
+
+                        MetricRowColored(stringResource(R.string.dev_events_pending), ebm.pendingCount.toString(), pendingColor)
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRowColored(stringResource(R.string.dev_events_dead_letters), ebm.deadLetterCount.toString(), deadColor)
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRowColored(stringResource(R.string.dev_events_retries), ebm.retryCount.toString(), retryColor)
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRowColored(stringResource(R.string.dev_events_live_drops), ebm.liveDropCount.toString(), dropColor)
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRow(stringResource(R.string.dev_events_oldest_age), formatDuration(ebm.oldestPendingAgeMs))
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRow(stringResource(R.string.dev_events_lag), formatDuration(ebm.subscriberLagMs))
+                    } else {
+                        Text(
+                            stringResource(R.string.dev_health_no_data),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
@@ -196,5 +243,33 @@ private fun MetricRow(label: String, value: String) {
     ) {
         Text(label, style = MaterialTheme.typography.bodySmall)
         Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+private fun MetricRowColored(label: String, value: String, color: androidx.compose.ui.graphics.Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall)
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+    }
+}
+
+private fun formatDuration(ms: Long): String {
+    if (ms <= 0) return "0s"
+    val seconds = ms / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    return when {
+        hours > 0 -> "${hours}h ${minutes % 60}m"
+        minutes > 0 -> "${minutes}m ${seconds % 60}s"
+        else -> "${seconds}s"
     }
 }

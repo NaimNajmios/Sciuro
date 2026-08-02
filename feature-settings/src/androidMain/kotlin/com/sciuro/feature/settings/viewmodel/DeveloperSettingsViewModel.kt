@@ -16,6 +16,8 @@ import com.sciuro.core.audit.trace.PipelineTracer
 import com.sciuro.core.audit.trace.TraceOutcome
 import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.parsing.fixture.FixtureLibrary
+import com.sciuro.core.audit.events.DomainEventBus
+import com.sciuro.core.audit.events.DomainEventMetrics
 import com.sciuro.core.parsing.metrics.ParserHealthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -60,7 +62,8 @@ class DeveloperSettingsViewModel(
     val ingestionAllowlist: MutableIngestionAllowlist,
     val parserHealthRepository: ParserHealthRepository,
     val database: SciuroDatabase,
-    private val tracer: PipelineTracer
+    private val tracer: PipelineTracer,
+    private val eventBus: DomainEventBus? = null
 ) : ViewModel() {
 
     private val _simulationResult = MutableStateFlow<SimulationResult?>(null)
@@ -130,10 +133,14 @@ class DeveloperSettingsViewModel(
     private val _showOnlyAllowlisted = MutableStateFlow(true)
     val showOnlyAllowlisted: StateFlow<Boolean> = _showOnlyAllowlisted.asStateFlow()
 
+    private val _eventBusMetrics = MutableStateFlow<DomainEventMetrics?>(null)
+    val eventBusMetrics: StateFlow<DomainEventMetrics?> = _eventBusMetrics.asStateFlow()
+
     init {
         refreshCounts()
         loadHealthData()
         loadPipelineEvents()
+        loadEventBusMetrics()
     }
 
     fun setTraceFilter(status: String, pkg: String) {
@@ -205,6 +212,21 @@ class DeveloperSettingsViewModel(
 
     fun clearUiError() {
         _uiError.value = null
+    }
+
+    private fun loadEventBusMetrics() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val bus = eventBus ?: return@launch
+                _eventBusMetrics.value = bus.metrics()
+            } catch (e: Exception) {
+                _eventBusMetrics.value = null
+            }
+        }
+    }
+
+    fun refreshEventBusMetrics() {
+        loadEventBusMetrics()
     }
 
     fun simulateNotification(title: String, text: String, packageName: String) {
