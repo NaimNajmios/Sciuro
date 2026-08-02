@@ -1,6 +1,7 @@
 package com.sciuro.core.ledger.repository
 
 import com.sciuro.core.audit.model.AuditAction
+import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.Flow
 class CashAdjustmentRepository(
     auditRepository: AuditRepository,
     private val database: SciuroDatabase,
-    private val accountRepository: AccountRepository,
     private val eventBus: DomainEventBus
 ) : AuditableRepository(auditRepository) {
 
@@ -51,14 +51,7 @@ class CashAdjustmentRepository(
         val adjustmentId = generateUuid()
         val now = currentTimeMillis()
 
-        return withAudit(
-            entityType = EntityType.CASH_ADJUSTMENT,
-            entityId = adjustmentId,
-            action = AuditAction.CREATE,
-            beforeState = null,
-            afterState = "account=$accountId, amount=$amount, reason=$reason${remark?.let { ", remark=$it" } ?: ""}",
-            source = source
-        ) {
+        val created = database.transactionWithResult {
             database.cashAdjustmentQueries.insertAdjustment(
                 id = adjustmentId,
                 account_id = accountId,
@@ -69,35 +62,64 @@ class CashAdjustmentRepository(
                 created_at = now
             )
 
-            accountRepository.updateBalance(accountId, amount)
+            database.accountQueries.updateBalance(
+                balance = amount,
+                updated_at = now,
+                id = accountId
+            )
 
-            val created = database.cashAdjustmentQueries.selectAdjustmentsByAccountOrdered(accountId).executeAsList().firstOrNull()
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.CASH_ADJUSTMENT,
+                    entityId = adjustmentId,
+                    action = AuditAction.CREATE,
+                    beforeState = null,
+                    afterState = "account=$accountId, amount=$amount, reason=$reason${remark?.let { ", remark=$it" } ?: ""}",
+                    source = source,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
+
+            database.cashAdjustmentQueries.selectAdjustmentsByAccountOrdered(accountId).executeAsList().firstOrNull()
                 ?: throw IllegalStateException("Adjustment not found after insert")
-
-            eventBus.publish(DomainEvent.CashRecounted(
-                adjustmentId = adjustmentId,
-                variance = amount,
-                adjustmentType = reason
-            ))
-
-            created
         }
+
+        eventBus.publish(DomainEvent.CashRecounted(
+            adjustmentId = adjustmentId,
+            variance = amount,
+            adjustmentType = reason
+        ))
+
+        return created
     }
 
     suspend fun deleteAdjustment(adjustmentId: String) {
         val adjustment = database.cashAdjustmentQueries.selectAdjustmentsByAccountOrdered("").executeAsList()
             .find { it.id == adjustmentId } ?: return
 
-        withAudit(
-            entityType = EntityType.CASH_ADJUSTMENT,
-            entityId = adjustmentId,
-            action = AuditAction.DELETE,
-            beforeState = "account=${adjustment.account_id}, amount=${adjustment.amount}, reason=${adjustment.reason}",
-            afterState = null,
-            source = AuditSource.USER_MANUAL
-        ) {
-            accountRepository.updateBalance(adjustment.account_id, -adjustment.amount)
+        database.transaction {
+            database.accountQueries.updateBalance(
+                balance = -adjustment.amount,
+                updated_at = currentTimeMillis(),
+                id = adjustment.account_id
+            )
             database.cashAdjustmentQueries.deleteAdjustment(adjustmentId)
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.CASH_ADJUSTMENT,
+                    entityId = adjustmentId,
+                    action = AuditAction.DELETE,
+                    beforeState = "account=${adjustment.account_id}, amount=${adjustment.amount}, reason=${adjustment.reason}",
+                    afterState = null,
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = currentTimeMillis()
+                )
+            )
         }
     }
 

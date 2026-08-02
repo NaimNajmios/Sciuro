@@ -32,9 +32,10 @@ class TransferDetectionEngineTest {
     private lateinit var eventBus: DomainEventBus
 
     private val fakeAuditRepository = object : AuditRepository {
-        override suspend fun logMutation(log: AuditLog) {}
+        override fun logMutation(log: AuditLog) {}
         override suspend fun getLogsForEntity(entityId: String, entityType: EntityType) = emptyList<AuditLog>()
         override suspend fun getAllLogs() = emptyList<AuditLog>()
+        override fun getAuditIntegrityGaps(): Long = 0L
     }
 
     @BeforeTest

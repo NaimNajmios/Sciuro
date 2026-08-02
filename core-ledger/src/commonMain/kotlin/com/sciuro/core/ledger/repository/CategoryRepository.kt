@@ -1,15 +1,16 @@
 package com.sciuro.core.ledger.repository
 
 import com.sciuro.core.audit.model.AuditAction
+import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
+import com.sciuro.core.audit.util.generateUuid
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.model.Category
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.flow.Flow
@@ -21,15 +22,8 @@ class CategoryRepository(
 ) : AuditableRepository(auditRepository) {
 
     suspend fun createCategory(category: Category): Category {
-        return withAudit(
-            entityType = EntityType.CATEGORY,
-            entityId = category.id,
-            action = AuditAction.CREATE,
-            beforeState = null,
-            afterState = category.toString(),
-            source = AuditSource.USER_MANUAL
-        ) {
-            val now = currentTimeMillis()
+        val now = currentTimeMillis()
+        return database.transactionWithResult {
             database.categoryQueries.insertCategory(
                 id = category.id,
                 name = category.name,
@@ -39,26 +33,71 @@ class CategoryRepository(
                 created_at = now,
                 updated_at = now
             )
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.CATEGORY,
+                    entityId = category.id,
+                    action = AuditAction.CREATE,
+                    beforeState = null,
+                    afterState = category.toString(),
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
+
             category
         }
     }
 
-        suspend fun updateCategory(category: Category) {
-        withContext(Dispatchers.IO) {
+    suspend fun updateCategory(category: Category) {
+        val now = currentTimeMillis()
+        database.transaction {
             database.categoryQueries.updateCategory(
                 name = category.name,
                 type = category.type,
                 icon = category.icon,
                 color = category.color,
-                updated_at = currentTimeMillis(),
+                updated_at = now,
                 id = category.id
+            )
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.CATEGORY,
+                    entityId = category.id,
+                    action = AuditAction.UPDATE,
+                    beforeState = null,
+                    afterState = category.toString(),
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
         }
     }
 
     suspend fun deleteCategory(categoryId: String) {
-        withContext(Dispatchers.IO) {
+        val now = currentTimeMillis()
+        database.transaction {
             database.categoryQueries.deleteCategory(id = categoryId)
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.CATEGORY,
+                    entityId = categoryId,
+                    action = AuditAction.DELETE,
+                    beforeState = null,
+                    afterState = null,
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
         }
     }
     fun observeCategories(): Flow<List<Category>> {

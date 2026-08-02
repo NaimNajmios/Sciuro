@@ -60,21 +60,21 @@ class TransactionRepository(
                     id = transaction.accountId
                 )
             }
-        }
 
-        auditRepository.logMutation(
-            AuditLog(
-                id = generateUuid(),
-                entityType = EntityType.TRANSACTION,
-                entityId = transaction.id,
-                action = AuditAction.CREATE,
-                beforeState = null,
-                afterState = transaction.toString(),
-                source = source,
-                confidence = confidence,
-                timestamp = now
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.TRANSACTION,
+                    entityId = transaction.id,
+                    action = AuditAction.CREATE,
+                    beforeState = null,
+                    afterState = transaction.toString(),
+                    source = source,
+                    confidence = confidence,
+                    timestamp = now
+                )
             )
-        )
+        }
 
         eventBus.publish(DomainEvent.TransactionModified(transaction.id))
         return transaction
@@ -113,21 +113,21 @@ class TransactionRepository(
             )
 
             database.transactionRecordQueries.markAsReviewed(now, transactionId)
-        }
 
-        auditRepository.logMutation(
-            AuditLog(
-                id = generateUuid(),
-                entityType = EntityType.TRANSACTION,
-                entityId = transactionId,
-                action = AuditAction.RECLASSIFY,
-                beforeState = "is_reviewed=0, category_id=${oldTx.category_id}, account=${oldTx.account_id}",
-                afterState = "is_reviewed=1, category_id=$newCategoryId, account=$newAccountId",
-                source = AuditSource.USER_MANUAL,
-                confidence = null,
-                timestamp = now
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.TRANSACTION,
+                    entityId = transactionId,
+                    action = AuditAction.RECLASSIFY,
+                    beforeState = "is_reviewed=0, category_id=${oldTx.category_id}, account=${oldTx.account_id}",
+                    afterState = "is_reviewed=1, category_id=$newCategoryId, account=$newAccountId",
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
-        )
+        }
 
         val learnedCategoryId = newCategoryId ?: oldTx.category_id
         if (learnedCategoryId != null && oldTx.category_id != learnedCategoryId) {
@@ -148,21 +148,23 @@ class TransactionRepository(
         val tx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
         val now = currentTimeMillis()
 
-        database.transactionRecordQueries.markAsReviewed(now, transactionId)
+        database.transaction {
+            database.transactionRecordQueries.markAsReviewed(now, transactionId)
 
-        auditRepository.logMutation(
-            AuditLog(
-                id = generateUuid(),
-                entityType = EntityType.TRANSACTION,
-                entityId = transactionId,
-                action = AuditAction.UPDATE,
-                beforeState = "is_reviewed=0",
-                afterState = "is_reviewed=1",
-                source = AuditSource.USER_MANUAL,
-                confidence = null,
-                timestamp = now
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.TRANSACTION,
+                    entityId = transactionId,
+                    action = AuditAction.UPDATE,
+                    beforeState = "is_reviewed=0",
+                    afterState = "is_reviewed=1",
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
-        )
+        }
 
         if (tx.category_id != null) {
             eventBus.publish(
@@ -190,21 +192,21 @@ class TransactionRepository(
             database.transactionCorroborationQueries.deleteCorroborationsByTransactionId(transactionId)
             database.transferLinkQueries.deleteTransferLinkByTransactionId(transactionId)
             database.transactionRecordQueries.deleteTransaction(transactionId)
-        }
 
-        auditRepository.logMutation(
-            AuditLog(
-                id = generateUuid(),
-                entityType = EntityType.TRANSACTION,
-                entityId = transactionId,
-                action = AuditAction.DELETE,
-                beforeState = "Reject Transaction",
-                afterState = null,
-                source = AuditSource.USER_MANUAL,
-                confidence = null,
-                timestamp = now
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.TRANSACTION,
+                    entityId = transactionId,
+                    action = AuditAction.DELETE,
+                    beforeState = "Reject Transaction",
+                    afterState = null,
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
-        )
+        }
 
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
         eventBus.publish(DomainEvent.TransactionRejected(
@@ -225,21 +227,21 @@ class TransactionRepository(
                 database.accountQueries.updateBalance(balance = oldBalanceDelta, updated_at = now, id = oldTx.account_id)
             }
             database.transactionRecordQueries.deleteTransaction(transactionId)
-        }
 
-        auditRepository.logMutation(
-            AuditLog(
-                id = generateUuid(),
-                entityType = EntityType.TRANSACTION,
-                entityId = transactionId,
-                action = AuditAction.DELETE,
-                beforeState = oldTx.toString(),
-                afterState = null,
-                source = AuditSource.USER_MANUAL,
-                confidence = null,
-                timestamp = now
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.TRANSACTION,
+                    entityId = transactionId,
+                    action = AuditAction.DELETE,
+                    beforeState = oldTx.toString(),
+                    afterState = null,
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
-        )
+        }
 
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }
@@ -275,21 +277,21 @@ class TransactionRepository(
                 updated_at = now,
                 id = transactionId
             )
-        }
 
-        auditRepository.logMutation(
-            AuditLog(
-                id = generateUuid(),
-                entityType = EntityType.TRANSACTION,
-                entityId = transactionId,
-                action = AuditAction.UPDATE,
-                beforeState = oldTx.toString(),
-                afterState = "amount=$newAmount, merchant=$newMerchant, category=$newCategoryId, account=$newAccountId",
-                source = AuditSource.USER_MANUAL,
-                confidence = null,
-                timestamp = now
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.TRANSACTION,
+                    entityId = transactionId,
+                    action = AuditAction.UPDATE,
+                    beforeState = oldTx.toString(),
+                    afterState = "amount=$newAmount, merchant=$newMerchant, category=$newCategoryId, account=$newAccountId",
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
-        )
+        }
 
         if (newCategoryId != null && oldTx.category_id != newCategoryId) {
             eventBus.publish(
@@ -373,21 +375,23 @@ class TransactionRepository(
     suspend fun updateTransactionCategory(transactionId: String, newCategoryId: String) {
         val tx = database.transactionRecordQueries.selectTransactionById(transactionId).executeAsOneOrNull() ?: return
         val now = currentTimeMillis()
-        database.transactionRecordQueries.updateCategory(newCategoryId, now, transactionId)
+        database.transaction {
+            database.transactionRecordQueries.updateCategory(newCategoryId, now, transactionId)
 
-        auditRepository.logMutation(
-            AuditLog(
-                id = generateUuid(),
-                entityType = EntityType.TRANSACTION,
-                entityId = transactionId,
-                action = AuditAction.RECLASSIFY,
-                beforeState = "category_id=${tx.category_id}",
-                afterState = "category_id=$newCategoryId",
-                source = AuditSource.USER_MANUAL,
-                confidence = null,
-                timestamp = now
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.TRANSACTION,
+                    entityId = transactionId,
+                    action = AuditAction.RECLASSIFY,
+                    beforeState = "category_id=${tx.category_id}",
+                    afterState = "category_id=$newCategoryId",
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
-        )
+        }
         eventBus.publish(DomainEvent.TransactionRecategorized(
             transactionId = transactionId,
             oldCategoryId = tx.category_id ?: "",
@@ -408,21 +412,21 @@ class TransactionRepository(
             }
 
             database.transactionRecordQueries.undoAutoConfirm(now, transactionId)
-        }
 
-        auditRepository.logMutation(
-            AuditLog(
-                id = generateUuid(),
-                entityType = EntityType.TRANSACTION,
-                entityId = transactionId,
-                action = AuditAction.UPDATE,
-                beforeState = "review_tier=${tx.review_tier}, is_reviewed=${tx.is_reviewed}",
-                afterState = "review_tier=MANUAL, is_reviewed=0",
-                source = AuditSource.USER_MANUAL,
-                confidence = null,
-                timestamp = now
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.TRANSACTION,
+                    entityId = transactionId,
+                    action = AuditAction.UPDATE,
+                    beforeState = "review_tier=${tx.review_tier}, is_reviewed=${tx.is_reviewed}",
+                    afterState = "review_tier=MANUAL, is_reviewed=0",
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
-        )
+        }
 
         eventBus.publish(DomainEvent.TransactionModified(transactionId))
     }

@@ -1,11 +1,13 @@
 package com.sciuro.core.debt.repository
 
 import com.sciuro.core.audit.model.AuditAction
+import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
+import com.sciuro.core.audit.util.generateUuid
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.debt.model.Debt
 import com.sciuro.core.debt.model.DebtDirection
@@ -40,15 +42,8 @@ class DebtRepository(
     }
 
     suspend fun createDebt(debt: Debt): Debt {
-        return withAudit(
-            entityType = EntityType.DEBT,
-            entityId = debt.id,
-            action = AuditAction.CREATE,
-            beforeState = null,
-            afterState = debt.toString(),
-            source = AuditSource.USER_MANUAL
-        ) {
-            val now = currentTimeMillis()
+        val now = currentTimeMillis()
+        return database.transactionWithResult {
             database.debtQueries.insertDebt(
                 id = debt.id,
                 name = debt.name,
@@ -65,19 +60,28 @@ class DebtRepository(
                 created_at = now,
                 updated_at = now
             )
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.DEBT,
+                    entityId = debt.id,
+                    action = AuditAction.CREATE,
+                    beforeState = null,
+                    afterState = debt.toString(),
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
+
             debt
         }
     }
 
     suspend fun updateDebt(debt: Debt): Debt {
-        return withAudit(
-            entityType = EntityType.DEBT,
-            entityId = debt.id,
-            action = AuditAction.UPDATE,
-            beforeState = null,
-            afterState = debt.toString(),
-            source = AuditSource.USER_MANUAL
-        ) {
+        val now = currentTimeMillis()
+        return database.transactionWithResult {
             database.debtQueries.updateDebt(
                 name = debt.name,
                 principal_amount = debt.principalAmount,
@@ -86,53 +90,92 @@ class DebtRepository(
                 due_date = debt.dueDate,
                 counterparty_name = debt.counterpartyName,
                 notes = debt.notes,
-                updated_at = currentTimeMillis(),
+                updated_at = now,
                 id = debt.id
             )
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.DEBT,
+                    entityId = debt.id,
+                    action = AuditAction.UPDATE,
+                    beforeState = null,
+                    afterState = debt.toString(),
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
+
             debt
         }
     }
 
     suspend fun deleteDebt(id: String) {
-        withAudit(
-            entityType = EntityType.DEBT,
-            entityId = id,
-            action = AuditAction.DELETE,
-            beforeState = null,
-            afterState = null,
-            source = AuditSource.USER_MANUAL
-        ) {
+        val now = currentTimeMillis()
+        database.transaction {
             database.debtPaymentLinkQueries.deletePaymentLinksByDebt(id)
             database.debtQueries.deleteDebt(id)
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.DEBT,
+                    entityId = id,
+                    action = AuditAction.DELETE,
+                    beforeState = null,
+                    afterState = null,
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
         }
     }
 
     suspend fun markAsPaidOff(id: String) {
-        withAudit(
-            entityType = EntityType.DEBT,
-            entityId = id,
-            action = AuditAction.UPDATE,
-            beforeState = null,
-            afterState = "status: PAID_OFF",
-            source = AuditSource.USER_MANUAL
-        ) {
-            database.debtQueries.markDebtAsPaidOff(currentTimeMillis(), id)
+        val now = currentTimeMillis()
+        database.transaction {
+            database.debtQueries.markDebtAsPaidOff(now, id)
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.DEBT,
+                    entityId = id,
+                    action = AuditAction.UPDATE,
+                    beforeState = null,
+                    afterState = "status: PAID_OFF",
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
         }
     }
     
     suspend fun applyPayment(debtId: String, paymentAmount: Double) {
         val debt = database.debtQueries.selectAllDebts().executeAsList().find { it.id == debtId } ?: return
         val newBalance = (debt.remaining_balance - paymentAmount).coerceAtLeast(0.0)
+        val now = currentTimeMillis()
 
-        withAudit(
-            entityType = EntityType.DEBT,
-            entityId = debtId,
-            action = AuditAction.UPDATE,
-            beforeState = "balance: ${debt.remaining_balance}",
-            afterState = "balance: $newBalance",
-            source = AuditSource.SYSTEM_AUTO
-        ) {
-            database.debtQueries.updateDebtBalance(newBalance, currentTimeMillis(), debtId)
+        database.transaction {
+            database.debtQueries.updateDebtBalance(newBalance, now, debtId)
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.DEBT,
+                    entityId = debtId,
+                    action = AuditAction.UPDATE,
+                    beforeState = "balance: ${debt.remaining_balance}",
+                    afterState = "balance: $newBalance",
+                    source = AuditSource.SYSTEM_AUTO,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
         }
 
         if (newBalance <= 0.0) {

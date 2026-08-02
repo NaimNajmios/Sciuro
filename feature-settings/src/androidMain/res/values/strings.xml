@@ -169,6 +169,9 @@
     <string name="dev_health_llm_calls">LLM fallback calls (7d)</string>
     <string name="dev_health_dead_letters">Dead letters (7d)</string>
     <string name="dev_health_degraded">Match rate dropped from %1$s%% — format drift may be occurring.</string>
+    <string name="dev_health_audit_title">Audit Integrity</string>
+    <string name="dev_health_audit_subtitle">Transactions with no matching audit record</string>
+    <string name="dev_health_audit_gaps">Missing audits</string>
 
     <!-- Developer Tab: Domain Events -->
     <string name="dev_events_title">Domain Event Bus</string>

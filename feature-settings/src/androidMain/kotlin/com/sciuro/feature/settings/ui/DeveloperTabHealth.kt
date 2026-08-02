@@ -26,6 +26,7 @@ fun DeveloperTabHealth(
     val priorHealthData by viewModel.priorHealthData.collectAsState()
     val metrics by viewModel.pipelineMetrics.collectAsState()
     val eventBusMetrics by viewModel.eventBusMetrics.collectAsState()
+    val auditIntegrityGaps by viewModel.auditIntegrityGaps.collectAsState()
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
@@ -186,6 +187,24 @@ fun DeveloperTabHealth(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                }
+            }
+        }
+
+        item {
+            SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(stringResource(R.string.dev_health_audit_title), style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.dev_health_audit_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val gapColor = if (auditIntegrityGaps > 0L) tokens.signalDanger else tokens.signalIncome
+                    MetricRowColored(stringResource(R.string.dev_health_audit_gaps), auditIntegrityGaps.toString(), gapColor)
                 }
             }
         }

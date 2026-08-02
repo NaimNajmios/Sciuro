@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Phase T1 — Atomic Audit Writes & Audit Integrity
+
+#### Changed
+- **`AuditRepository.logMutation()` is now synchronous** (`core-audit`, `core-ledger/SqlDelightAuditRepository.kt`): Dropped `suspend` so the audit write can run inside SQLDelight's non-suspending `database.transaction { }` lambda (previously impossible, per phase-H1-pipeline-tracing notes).
+- **Atomic mutation + audit across every SQLDelight-backed mutation path**: `TransactionRepository` (book/review/approve/reject/delete/edit/updateCategory/undoAutoConfirm), `CashAdjustmentRepository`, `AccountRepository`, `CategoryRepository` (update/delete now audited — previously silent), `ReconciliationEngine`, `ObligationRepository`, `DebtRepository`, `InvestmentRepository`, `BudgetRepository`, `TransferRepository`. Each mutation now commits (or rolls back) together with its audit entry, so a crash can no longer leave a committed-but-unaudited change. Used `database.transactionWithResult { }` for value-returning mutations.
+- **Removed `withAudit` from `AuditableRepository`** — the wrapper executed the mutation before writing the audit as a separate statement. Repositories now write `auditRepository.logMutation(...)` inline inside their own transaction. `AuditableRepository` remains the shared `protected auditRepository` holder.
+- **Balance-update paths use direct queries** (`CashAdjustmentRepository.createAdjustment`/`deleteAdjustment`, `ReconciliationEngine`): replaced `AccountRepository.updateBalance()` (which carried its own audit wrapper) with `database.accountQueries.updateBalance(...)` inside the transaction. Removed the now-unused `AccountRepository.updateBalance()`.
+
+#### Added
+- **`auditIntegrityCheck` query** (`core-ledger/AuditLog.sq`): `SELECT COUNT(*) FROM transaction_record WHERE id NOT IN (SELECT entityId FROM audit_log_entity WHERE entityType = 'TRANSACTION')` — exposes transactions with no audit record. Exposed via `AuditRepository.getAuditIntegrityGaps()`.
+- **Audit Integrity card** in the Developer Options → Health tab: shows missing-audit count, green when zero, danger-red when nonzero. Wired through `DeveloperSettingsViewModel` (new `AuditRepository` dependency) and localized strings.
+- **`AuditAtomicityTest`** (`core-ledger/jvmTest`): 4 integration tests — mutation+audit commit together, audit-failure rollback (mutation and balance reverted), orphan-transaction detection, and clean-state zero-gap check.
+
 ### Phase R2 — Engine Trigger Persistence & Concurrency Hardening
 
 #### Changed

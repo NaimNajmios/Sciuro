@@ -22,3 +22,7 @@ ORDER BY timestamp DESC;
 getAllLogs:
 SELECT * FROM audit_log_entity
 ORDER BY timestamp DESC;
+
+auditIntegrityCheck:
+SELECT COUNT(*) FROM transaction_record
+WHERE id NOT IN (SELECT entityId FROM audit_log_entity WHERE entityType = 'TRANSACTION');

@@ -11,7 +11,7 @@ class SqlDelightAuditRepository(
     private val database: SciuroDatabase
 ) : AuditRepository {
 
-    override suspend fun logMutation(log: AuditLog) {
+    override fun logMutation(log: AuditLog) {
         database.auditLogQueries.insertLog(
             id = log.id,
             entityType = log.entityType.name,
@@ -23,6 +23,10 @@ class SqlDelightAuditRepository(
             confidence = log.confidence?.toDouble(),
             timestamp = log.timestamp
         )
+    }
+
+    override fun getAuditIntegrityGaps(): Long {
+        return database.auditLogQueries.auditIntegrityCheck().executeAsOne()
     }
 
     override suspend fun getLogsForEntity(entityId: String, entityType: EntityType): List<AuditLog> {

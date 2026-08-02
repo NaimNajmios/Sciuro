@@ -15,6 +15,7 @@ import com.sciuro.core.parsing.engine.SimulationResult
 import com.sciuro.core.audit.trace.PipelineTracer
 import com.sciuro.core.audit.trace.TraceOutcome
 import com.sciuro.core.audit.trace.TraceStage
+import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.parsing.fixture.FixtureLibrary
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.events.DomainEventMetrics
@@ -63,6 +64,7 @@ class DeveloperSettingsViewModel(
     val parserHealthRepository: ParserHealthRepository,
     val database: SciuroDatabase,
     private val tracer: PipelineTracer,
+    private val auditRepository: AuditRepository,
     private val eventBus: DomainEventBus? = null
 ) : ViewModel() {
 
@@ -136,6 +138,9 @@ class DeveloperSettingsViewModel(
     private val _eventBusMetrics = MutableStateFlow<DomainEventMetrics?>(null)
     val eventBusMetrics: StateFlow<DomainEventMetrics?> = _eventBusMetrics.asStateFlow()
 
+    private val _auditIntegrityGaps = MutableStateFlow<Long>(0L)
+    val auditIntegrityGaps: StateFlow<Long> = _auditIntegrityGaps.asStateFlow()
+
     init {
         refreshCounts()
         loadHealthData()
@@ -204,6 +209,8 @@ class DeveloperSettingsViewModel(
                 val deadLetters = outcomeCounts.filter { it.stage == "STAGING" && it.outcome == "FAILURE" }.sumOf { it.cnt }
                 
                 _pipelineMetrics.value = PipelineMetrics(llmTotal, deadLetters)
+
+                _auditIntegrityGaps.value = auditRepository.getAuditIntegrityGaps()
             } catch (e: Exception) {
                 _uiError.value = "Failed to load health data: ${e.message}"
             }

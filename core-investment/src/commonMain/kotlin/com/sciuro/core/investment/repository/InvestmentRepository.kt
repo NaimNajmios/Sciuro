@@ -1,11 +1,13 @@
 package com.sciuro.core.investment.repository
 
 import com.sciuro.core.audit.model.AuditAction
+import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
 import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
+import com.sciuro.core.audit.util.generateUuid
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.investment.model.Investment
 import app.cash.sqldelight.coroutines.asFlow
@@ -21,15 +23,8 @@ class InvestmentRepository(
 ) : AuditableRepository(auditRepository) {
 
     suspend fun createInvestment(investment: Investment): Investment {
-        return withAudit(
-            entityType = EntityType.INVESTMENT_ACCOUNT,
-            entityId = investment.id,
-            action = AuditAction.CREATE,
-            beforeState = null,
-            afterState = investment.toString(),
-            source = AuditSource.USER_MANUAL
-        ) {
-            val now = currentTimeMillis()
+        val now = currentTimeMillis()
+        return database.transactionWithResult {
             database.investmentQueries.insertInvestment(
                 id = investment.id,
                 asset_symbol = investment.assetSymbol,
@@ -43,6 +38,21 @@ class InvestmentRepository(
                 updated_at = now,
                 status = investment.status
             )
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.INVESTMENT_ACCOUNT,
+                    entityId = investment.id,
+                    action = AuditAction.CREATE,
+                    beforeState = null,
+                    afterState = investment.toString(),
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
+            )
+
             investment
         }
     }
@@ -54,15 +64,9 @@ class InvestmentRepository(
         val totalCostNew = unitsBought * purchasePrice
         val newUnitsHeld = investment.units_held + unitsBought
         val newAvgPrice = if (newUnitsHeld > 0) (totalCostOld + totalCostNew) / newUnitsHeld else 0.0
-        
-        withAudit(
-            entityType = EntityType.INVESTMENT_ACCOUNT,
-            entityId = investmentId,
-            action = AuditAction.UPDATE,
-            beforeState = "units: ${investment.units_held}, avg_price: ${investment.average_buy_price}",
-            afterState = "units: $newUnitsHeld, avg_price: $newAvgPrice",
-            source = AuditSource.SYSTEM_AUTO
-        ) {
+        val now = currentTimeMillis()
+
+        database.transaction {
             database.investmentQueries.updateInvestment(
                 asset_symbol = investment.asset_symbol,
                 asset_name = investment.asset_name,
@@ -71,21 +75,29 @@ class InvestmentRepository(
                 unit_type = investment.unit_type,
                 average_buy_price = newAvgPrice,
                 associated_account_id = investment.associated_account_id,
-                updated_at = currentTimeMillis(),
+                updated_at = now,
                 id = investmentId
+            )
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.INVESTMENT_ACCOUNT,
+                    entityId = investmentId,
+                    action = AuditAction.UPDATE,
+                    beforeState = "units: ${investment.units_held}, avg_price: ${investment.average_buy_price}",
+                    afterState = "units: $newUnitsHeld, avg_price: $newAvgPrice",
+                    source = AuditSource.SYSTEM_AUTO,
+                    confidence = null,
+                    timestamp = now
+                )
             )
         }
     }
     
     suspend fun updateInvestment(investment: Investment) {
-        withAudit(
-            entityType = EntityType.INVESTMENT_ACCOUNT,
-            entityId = investment.id,
-            action = AuditAction.UPDATE,
-            beforeState = "Update Investment",
-            afterState = investment.toString(),
-            source = AuditSource.USER_MANUAL
-        ) {
+        val now = currentTimeMillis()
+        database.transaction {
             database.investmentQueries.updateInvestment(
                 asset_symbol = investment.assetSymbol,
                 asset_name = investment.assetName,
@@ -94,25 +106,47 @@ class InvestmentRepository(
                 unit_type = investment.unitType,
                 average_buy_price = investment.averageBuyPrice,
                 associated_account_id = investment.associatedAccountId,
-                updated_at = currentTimeMillis(),
+                updated_at = now,
                 id = investment.id
+            )
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.INVESTMENT_ACCOUNT,
+                    entityId = investment.id,
+                    action = AuditAction.UPDATE,
+                    beforeState = "Update Investment",
+                    afterState = investment.toString(),
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
         }
     }
     
     suspend fun deleteInvestment(investmentId: String) {
-        withAudit(
-            entityType = EntityType.INVESTMENT_ACCOUNT,
-            entityId = investmentId,
-            action = AuditAction.DELETE,
-            beforeState = "Delete Investment",
-            afterState = null,
-            source = AuditSource.USER_MANUAL
-        ) {
+        val now = currentTimeMillis()
+        database.transaction {
             database.investmentQueries.updateInvestmentStatus(
                 status = "DELETED",
-                updated_at = currentTimeMillis(),
+                updated_at = now,
                 id = investmentId
+            )
+
+            auditRepository.logMutation(
+                AuditLog(
+                    id = generateUuid(),
+                    entityType = EntityType.INVESTMENT_ACCOUNT,
+                    entityId = investmentId,
+                    action = AuditAction.DELETE,
+                    beforeState = "Delete Investment",
+                    afterState = null,
+                    source = AuditSource.USER_MANUAL,
+                    confidence = null,
+                    timestamp = now
+                )
             )
         }
     }

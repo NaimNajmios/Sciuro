@@ -1,6 +1,7 @@
 package com.sciuro.core.ledger.engine
 
 import com.sciuro.core.audit.model.AuditAction
+import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
 import com.sciuro.core.audit.model.EntityType
 import com.sciuro.core.audit.repository.AuditRepository
@@ -8,12 +9,10 @@ import com.sciuro.core.audit.repository.AuditableRepository
 import com.sciuro.core.audit.util.currentTimeMillis
 import com.sciuro.core.audit.util.generateUuid
 import com.sciuro.core.ledger.db.SciuroDatabase
-import com.sciuro.core.ledger.repository.AccountRepository
 
 class ReconciliationEngine(
     auditRepository: AuditRepository,
-    private val database: SciuroDatabase,
-    private val accountRepository: AccountRepository
+    private val database: SciuroDatabase
 ) : AuditableRepository(auditRepository) {
 
     suspend fun reconcileAccount(accountId: String, declaredBalance: Double) {
@@ -47,16 +46,9 @@ class ReconciliationEngine(
             // Need to insert a cash adjustment
             val adjustmentId = generateUuid()
             
-            withAudit(
-                entityType = EntityType.CASH_ADJUSTMENT,
-                entityId = adjustmentId,
-                action = AuditAction.CREATE,
-                beforeState = "Calculated: $actualBalance",
-                afterState = "Declared: $declaredBalance, Diff: $diff",
-                source = AuditSource.USER_MANUAL
-            ) {
+            database.transaction {
                 val now = currentTimeMillis()
-                
+
                 database.cashAdjustmentQueries.insertAdjustment(
                     id = adjustmentId,
                     account_id = accountId,
@@ -66,9 +58,26 @@ class ReconciliationEngine(
                     timestamp = now,
                     created_at = now
                 )
-                
-                // Update the account balance directly with the diff
-                accountRepository.updateBalance(accountId, diff)
+
+                database.accountQueries.updateBalance(
+                    balance = diff,
+                    updated_at = now,
+                    id = accountId
+                )
+
+                auditRepository.logMutation(
+                    AuditLog(
+                        id = generateUuid(),
+                        entityType = EntityType.CASH_ADJUSTMENT,
+                        entityId = adjustmentId,
+                        action = AuditAction.CREATE,
+                        beforeState = "Calculated: $actualBalance",
+                        afterState = "Declared: $declaredBalance, Diff: $diff",
+                        source = AuditSource.USER_MANUAL,
+                        confidence = null,
+                        timestamp = now
+                    )
+                )
             }
         }
     }
