@@ -5,7 +5,7 @@ import com.sciuro.core.obligations.repository.ObligationRepository
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.events.DomainEvent
 
-class ObligationCycleMatcher(
+open class ObligationCycleMatcher(
     private val database: SciuroDatabase,
     private val obligationRepository: ObligationRepository,
     private val eventBus: DomainEventBus

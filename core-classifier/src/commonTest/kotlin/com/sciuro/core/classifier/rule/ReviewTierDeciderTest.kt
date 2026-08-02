@@ -29,6 +29,8 @@ class ReviewTierDeciderTest {
         override val transactionCorroborationQueries get() = throw UnsupportedOperationException()
         override val transactionRecordQueries get() = throw UnsupportedOperationException()
         override val transferLinkQueries get() = throw UnsupportedOperationException()
+        override val domainEventLogQueries get() = throw UnsupportedOperationException()
+        override val domainEventDeliveryQueries get() = throw UnsupportedOperationException()
         override fun transaction(noEnclosing: Boolean, body: TransactionWithoutReturn.() -> Unit) {
             body.invoke(object : TransactionWithoutReturn {
                 override fun afterCommit(function: () -> Unit) {}

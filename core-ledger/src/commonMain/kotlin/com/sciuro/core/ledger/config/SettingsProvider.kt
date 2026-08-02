@@ -49,4 +49,7 @@ interface SettingsProvider {
     fun setHasCompletedOnboarding(completed: Boolean)
     fun hasSeenDashboardTips(): Boolean
     fun setHasSeenDashboardTips(seen: Boolean)
+
+    fun getEngineLastRunMs(engineName: String): Long
+    fun setEngineLastRunMs(engineName: String, timestampMs: Long)
 }

@@ -187,7 +187,8 @@ private class FakeRawEventRepository(
                 attempt_count = 1L,
                 captured_at = 1000L,
                 last_error = null,
-                processed_at = null
+                processed_at = null,
+                is_read = 0L
             )
         }
     }

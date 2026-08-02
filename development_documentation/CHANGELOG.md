@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Phase R2 — Engine Trigger Persistence & Concurrency Hardening
+
+#### Changed
+- **Durable engine debounce timestamps** (`core-classifier/EngineTriggerUseCase.kt`, `core-ledger/SettingsProvider.kt`, `app/EncryptedSettingsProvider.kt`): Replaced the seven in-memory `var lastXxxRunMs` fields in `DefaultEngineTriggerUseCase` with persisted per-engine timestamps (`get/setEngineLastRunMs`, keyed `engine_last_run_<name>` in the existing `EncryptedSharedPreferences` store). After a crash-restart the 15s cooldowns resume from disk, eliminating the thundering-herd where all 7 full-scan engines re-fired on the first booked event.
+- **Concurrency-safe engine triggering** (`core-classifier/EngineTriggerUseCase.kt`): A debounce `Mutex` makes the check-and-reserve atomic and a per-engine `Mutex` (lazy keyed map) serializes each engine invocation, so concurrent events can no longer invoke the same engine simultaneously. Reservation is persisted before execution, preserving the failure-still-debounced contract.
+
+#### Added
+- **`DefaultEngineTriggerUseCaseTest`** (`core-classifier/commonTest`): 6 tests covering first-call-all-7, immediate-repeat suppression, per-engine timestamp persistence, persistence survival across a fresh instance (process-death simulation), failure isolation, and concurrent non-duplication. The 7 engine classes were made `open` for lightweight test doubles.
+
+#### Fixed
+- **Pre-existing test compilation** (`SciuroIngestionOrchestratorTest`, `ReviewTierDeciderTest`): G4-added `is_read` constructor param and `domainEventLogQueries`/`domainEventDeliveryQueries` fake-db properties were missing.
+
 ### Phase K3 — Scroll Fix & Dashboard Transaction Display
 
 #### Fixed

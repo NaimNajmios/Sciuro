@@ -8,11 +8,14 @@ import com.sciuro.core.budget.engine.BudgetEngine
 import com.sciuro.core.debt.engine.BnplRiskDetector
 import com.sciuro.core.debt.engine.DebtEngine
 import com.sciuro.core.investment.engine.InvestmentEngine
+import com.sciuro.core.ledger.config.SettingsProvider
 import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.obligations.engine.ObligationCycleMatcher
 import com.sciuro.core.obligations.engine.ObligationDetectionEngine
 import com.sciuro.core.parsing.model.StructuredDraft
 import com.sciuro.core.transfer.engine.TransferDetectionEngine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 interface EngineTriggerUseCase {
@@ -27,19 +30,36 @@ open class DefaultEngineTriggerUseCase(
     private val investmentEngine: InvestmentEngine,
     private val obligationDetectionEngine: ObligationDetectionEngine,
     private val bnplRiskDetector: BnplRiskDetector,
-    private val tracer: PipelineTracer
+    private val tracer: PipelineTracer,
+    private val settingsProvider: SettingsProvider
 ) : EngineTriggerUseCase {
     companion object {
         private const val ENGINE_DEBOUNCE_MS = 15_000L
     }
 
-    private var lastTransferRunMs = 0L
-    private var lastObligationCycleRunMs = 0L
-    private var lastBudgetRunMs = 0L
-    private var lastDebtRunMs = 0L
-    private var lastInvestmentRunMs = 0L
-    private var lastObligationRunMs = 0L
-    private var lastBnplRunMs = 0L
+    private val debounceMutex = Mutex()
+    private val engineMutexes = mutableMapOf<String, Mutex>()
+
+    private fun engineMutex(name: String): Mutex = engineMutexes.getOrPut(name) { Mutex() }
+
+    private fun loadLastRunMs(engineName: String): Long {
+        return settingsProvider.getEngineLastRunMs(engineName)
+    }
+
+    private fun persistLastRunMs(engineName: String, timestampMs: Long) {
+        settingsProvider.setEngineLastRunMs(engineName, timestampMs)
+    }
+
+    private suspend fun shouldRun(engineName: String, now: Long): Boolean {
+        debounceMutex.withLock {
+            val lastRunMs = loadLastRunMs(engineName)
+            if (now - lastRunMs > ENGINE_DEBOUNCE_MS) {
+                persistLastRunMs(engineName, now)
+                return true
+            }
+            return false
+        }
+    }
 
     override suspend fun triggerAll(
         transaction: Transaction,
@@ -48,66 +68,73 @@ open class DefaultEngineTriggerUseCase(
     ) {
         val now = currentTimeMillis()
 
-        if (now - lastTransferRunMs > ENGINE_DEBOUNCE_MS) {
-            runEngine(rawEventId, transaction.id, "transfer") {
-                transferDetectionEngine.onTransactionBooked(
-                    newTxId = transaction.id,
-                    newTxAccountId = transaction.accountId,
-                    newTxAmount = transaction.amount,
-                    newTxDirection = transaction.direction,
-                    newTxTimestamp = transaction.timestamp,
-                    counterpartyAccountNumber = draft.counterpartyAccountNumber
-                )
+        if (shouldRun("transfer", now)) {
+            engineMutex("transfer").withLock {
+                runEngine(rawEventId, transaction.id, "transfer") {
+                    transferDetectionEngine.onTransactionBooked(
+                        newTxId = transaction.id,
+                        newTxAccountId = transaction.accountId,
+                        newTxAmount = transaction.amount,
+                        newTxDirection = transaction.direction,
+                        newTxTimestamp = transaction.timestamp,
+                        counterpartyAccountNumber = draft.counterpartyAccountNumber
+                    )
+                }
             }
-            lastTransferRunMs = now
         }
 
-        if (now - lastObligationCycleRunMs > ENGINE_DEBOUNCE_MS) {
-            runEngine(rawEventId, transaction.id, "obligation_cycle") {
-                obligationCycleMatcher.onTransactionBooked(
-                    transactionId = transaction.id,
-                    amount = transaction.amount,
-                    direction = transaction.direction,
-                    categoryId = transaction.categoryId,
-                    merchant = transaction.merchant
-                )
+        if (shouldRun("obligation_cycle", now)) {
+            engineMutex("obligation_cycle").withLock {
+                runEngine(rawEventId, transaction.id, "obligation_cycle") {
+                    obligationCycleMatcher.onTransactionBooked(
+                        transactionId = transaction.id,
+                        amount = transaction.amount,
+                        direction = transaction.direction,
+                        categoryId = transaction.categoryId,
+                        merchant = transaction.merchant
+                    )
+                }
             }
-            lastObligationCycleRunMs = now
         }
 
-        if (now - lastBudgetRunMs > ENGINE_DEBOUNCE_MS) {
-            runEngine(rawEventId, transaction.id, "budget") {
-                budgetEngine.processBudgets()
+        if (shouldRun("budget", now)) {
+            engineMutex("budget").withLock {
+                runEngine(rawEventId, transaction.id, "budget") {
+                    budgetEngine.processBudgets()
+                }
             }
-            lastBudgetRunMs = now
         }
 
-        if (now - lastDebtRunMs > ENGINE_DEBOUNCE_MS) {
-            runEngine(rawEventId, transaction.id, "debt") {
-                debtEngine.processDebtPayments()
+        if (shouldRun("debt", now)) {
+            engineMutex("debt").withLock {
+                runEngine(rawEventId, transaction.id, "debt") {
+                    debtEngine.processDebtPayments()
+                }
             }
-            lastDebtRunMs = now
         }
 
-        if (now - lastInvestmentRunMs > ENGINE_DEBOUNCE_MS) {
-            runEngine(rawEventId, transaction.id, "investment") {
-                investmentEngine.processInvestments()
+        if (shouldRun("investment", now)) {
+            engineMutex("investment").withLock {
+                runEngine(rawEventId, transaction.id, "investment") {
+                    investmentEngine.processInvestments()
+                }
             }
-            lastInvestmentRunMs = now
         }
 
-        if (now - lastObligationRunMs > ENGINE_DEBOUNCE_MS) {
-            runEngine(rawEventId, transaction.id, "obligation_detect") {
-                obligationDetectionEngine.runDetection()
+        if (shouldRun("obligation_detect", now)) {
+            engineMutex("obligation_detect").withLock {
+                runEngine(rawEventId, transaction.id, "obligation_detect") {
+                    obligationDetectionEngine.runDetection()
+                }
             }
-            lastObligationRunMs = now
         }
 
-        if (now - lastBnplRunMs > ENGINE_DEBOUNCE_MS) {
-            runEngine(rawEventId, transaction.id, "bnpl") {
-                bnplRiskDetector.evaluate()
+        if (shouldRun("bnpl", now)) {
+            engineMutex("bnpl").withLock {
+                runEngine(rawEventId, transaction.id, "bnpl") {
+                    bnplRiskDetector.evaluate()
+                }
             }
-            lastBnplRunMs = now
         }
     }
 

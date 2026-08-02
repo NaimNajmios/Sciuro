@@ -8,7 +8,7 @@ import com.sciuro.core.audit.events.DomainEvent
 
 import com.sciuro.core.ledger.engine.TransactionMatchingEngine
 
-class DebtEngine(
+open class DebtEngine(
     private val database: SciuroDatabase,
     private val linkRepository: DebtPaymentLinkRepository,
     private val eventBus: DomainEventBus,

@@ -13,7 +13,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 
-class BudgetEngine(
+open class BudgetEngine(
     private val database: SciuroDatabase,
     private val eventBus: DomainEventBus,
     private val matchingEngine: TransactionMatchingEngine

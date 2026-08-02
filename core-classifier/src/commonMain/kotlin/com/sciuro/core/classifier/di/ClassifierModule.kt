@@ -45,7 +45,8 @@ val classifierModule = module {
             investmentEngine = get(),
             obligationDetectionEngine = get(),
             bnplRiskDetector = get(),
-            tracer = get()
+            tracer = get(),
+            settingsProvider = get()
         )
     }
     single {

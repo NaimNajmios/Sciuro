@@ -8,7 +8,7 @@ import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.transfer.model.TransferLink
 import com.sciuro.core.transfer.repository.TransferRepository
 
-class TransferDetectionEngine(
+open class TransferDetectionEngine(
     private val database: SciuroDatabase,
     private val transferRepository: TransferRepository,
     private val eventBus: DomainEventBus

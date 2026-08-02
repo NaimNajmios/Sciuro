@@ -41,7 +41,7 @@ Sciuro is an advanced, privacy-first personal finance and asset management appli
 
 ## Project Status
 
-The project is fully functional and has completed **Phase G4 (Domain Event Reliability)**, **Phase K3 (Scroll Fix & Dashboard Transaction Display)**, **Phase K2 (UX Polish — Complete)**, **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)**, **Phase S2 (Kanban/Debt/Obligation Edge Case Fixes)**, **Core-Classifier Edge-Case Hardening (Phases 1-4)**, **Pipeline Edge-Case Hardening**, **M1 — Merchant Rules UI (Dark Component Gap Closure)**, and **Dev-Tools-Pagination-Hero-Palette** (ingestion log pagination + mark-as-read, pipeline trace pagination, HeroPanel palette-aware colors) addressing cross-cutting architectural concerns.
+The project is fully functional and has completed **Phase G4 (Domain Event Reliability)**, **Phase K3 (Scroll Fix & Dashboard Transaction Display)**, **Phase K2 (UX Polish — Complete)**, **Phase K1 (UI Polish & Accessibility Pass)**, **Phase R2 (Engine Trigger Persistence & Concurrency Hardening)**, **Phase R1 (Reliability & Performance Hardening)**, **Phase N2 (User-Configurable Notification Preferences)**, **Phase J2 (Developer Options & Settings Redesign)**, **Phase S1 (Database Safety — Key-Loss Detection & Quarantine)**, **Phase S2 (Kanban/Debt/Obligation Edge Case Fixes)**, **Core-Classifier Edge-Case Hardening (Phases 1-4)**, **Pipeline Edge-Case Hardening**, **M1 — Merchant Rules UI (Dark Component Gap Closure)**, and **Dev-Tools-Pagination-Hero-Palette** (ingestion log pagination + mark-as-read, pipeline trace pagination, HeroPanel palette-aware colors) addressing cross-cutting architectural concerns.
 
 **Core-Classifier Edge-Case Hardening highlights:**
 - **16 edge cases resolved** across the `core-classifier` module: input validation (NaN amounts, blank merchants/packages, locale-dependent `lowercase()`), state/timing (cancellation-stranding, duplicate re-processing, false dedup), user behavior (account deletion orphaned merchant rules), and failure/degradation (parser null retry, infinite source reconnects).
@@ -79,6 +79,11 @@ The project is fully functional and has completed **Phase G4 (Domain Event Relia
 - **Error handling on write paths:** All ViewModel mutation operations now emit user-visible snackbar errors on failure. Detection engines wrap batch processing in try/catch with per-record granularity — one corrupt record no longer aborts the entire cycle.
 - **Orphaned link cleanup:** Deleting a debt removes associated `debt_payment_link` rows, preventing orphaned references and stale `SUM` queries.
 - **Audit coverage for fast-path mutations:** `obligationRepository.recordPayment()` and `advanceNextDueDate()` now emit audit log entries, closing the last unaudited mutation gap in the obligations domain.
+
+**Phase R2 highlights:**
+- **Durable engine debounce:** `DefaultEngineTriggerUseCase` now persists per-engine last-run timestamps via `SettingsProvider.get/setEngineLastRunMs` (`EncryptedSharedPreferences` keys `engine_last_run_*`). After a crash-restart the 15s cooldowns resume from disk instead of resetting to zero — the first booked event no longer triggers a thundering-herd of all 7 full-scan engines.
+- **Concurrency-safe triggering:** A debounce `Mutex` makes the check-and-reserve atomic, and a per-engine `Mutex` serializes each engine invocation. Concurrent events (4 live + 8 recovery) can no longer invoke the same engine twice.
+- **Failure contract preserved:** The reservation timestamp is persisted before execution, so a failed engine still respects its cooldown; the existing 15s window, engine order, failure isolation, and cancellation rethrow are unchanged.
 
 **Phase R1 highlights:**
 - **Atomic database transactions:** All transaction mutations now wrap insert + balance update in SQLDelight `database.transaction { }`, preventing orphaned transactions on crash.

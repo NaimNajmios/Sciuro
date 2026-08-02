@@ -76,6 +76,8 @@ class ObligationDetectionEngineTest {
         override fun setHasSeenBatteryPrompt(hasSeen: Boolean) {}
         override fun isDeveloperOptionsVisible(): Boolean = false
         override fun setDeveloperOptionsVisible(visible: Boolean) {}
+        override fun getEngineLastRunMs(engineName: String): Long = 0L
+        override fun setEngineLastRunMs(engineName: String, timestampMs: Long) {}
         override fun getLlmConfig(): LlmParsingConfig = LlmParsingConfig()
         override fun getLastBackupTimestamp(): Long = 0L
         override fun setLastBackupTimestamp(timestamp: Long) {}

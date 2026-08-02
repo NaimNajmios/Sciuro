@@ -219,4 +219,12 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
     override fun setHasSeenDashboardTips(seen: Boolean) {
         sharedPreferences.edit().putBoolean("has_seen_dashboard_tips", seen).apply()
     }
+
+    override fun getEngineLastRunMs(engineName: String): Long {
+        return sharedPreferences.getLong("engine_last_run_$engineName", 0L)
+    }
+
+    override fun setEngineLastRunMs(engineName: String, timestampMs: Long) {
+        sharedPreferences.edit().putLong("engine_last_run_$engineName", timestampMs).apply()
+    }
 }

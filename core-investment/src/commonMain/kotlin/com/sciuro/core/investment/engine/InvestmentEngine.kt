@@ -5,7 +5,7 @@ import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.engine.TransactionMatchingEngine
 
-class InvestmentEngine(
+open class InvestmentEngine(
     private val database: SciuroDatabase,
     private val eventBus: DomainEventBus,
     private val matchingEngine: TransactionMatchingEngine

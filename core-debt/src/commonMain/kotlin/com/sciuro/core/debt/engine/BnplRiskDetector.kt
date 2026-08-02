@@ -6,7 +6,7 @@ import com.sciuro.core.debt.model.DebtStatus
 import com.sciuro.core.debt.repository.DebtRepository
 import kotlinx.coroutines.flow.first
 
-class BnplRiskDetector(
+open class BnplRiskDetector(
     private val debtRepository: DebtRepository,
     private val eventBus: DomainEventBus
 ) {

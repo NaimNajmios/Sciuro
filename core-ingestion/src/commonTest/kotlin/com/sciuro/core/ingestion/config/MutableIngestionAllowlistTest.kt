@@ -50,6 +50,8 @@ private class FakeSettingsProvider : SettingsProvider {
     override fun setHasSeenBatteryPrompt(hasSeen: Boolean) {}
     override fun isDeveloperOptionsVisible(): Boolean = false
     override fun setDeveloperOptionsVisible(visible: Boolean) {}
+    override fun getEngineLastRunMs(engineName: String): Long = 0L
+    override fun setEngineLastRunMs(engineName: String, timestampMs: Long) {}
 }
 
 class MutableIngestionAllowlistTest {
