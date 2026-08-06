@@ -24,6 +24,14 @@ CREATE TABLE account_pair_confirmation (
     PRIMARY KEY (account_id_a, account_id_b)
 );
 
+CREATE TABLE account_pair_manual_confirmation (
+    account_id_a TEXT NOT NULL,
+    account_id_b TEXT NOT NULL,
+    confirmation_count INTEGER NOT NULL DEFAULT 0,
+    last_confirmed_at INTEGER NOT NULL,
+    PRIMARY KEY (account_id_a, account_id_b)
+);
+
 insertAccount:
 INSERT INTO account(id, name, type, currency, balance, associated_package, created_at, updated_at, is_system, status, color, account_number, account_holder_name, bank_institution_code, qr_image_path, qr_payload_text)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -68,6 +76,18 @@ SELECT * FROM account_pair_confirmation;
 selectPairedAccount:
 SELECT * FROM account_pair_confirmation
 WHERE account_id_a = ? OR account_id_b = ?;
+
+selectManualConfirmationCount:
+SELECT confirmation_count FROM account_pair_manual_confirmation WHERE account_id_a = ? AND account_id_b = ?;
+
+insertManualConfirmation:
+INSERT INTO account_pair_manual_confirmation(account_id_a, account_id_b, confirmation_count, last_confirmed_at)
+VALUES (?, ?, 1, ?);
+
+updateManualConfirmation:
+UPDATE account_pair_manual_confirmation
+SET confirmation_count = confirmation_count + 1, last_confirmed_at = ?
+WHERE account_id_a = ? AND account_id_b = ?;
 
 selectAccountByBankCode:
 SELECT * FROM account WHERE bank_institution_code = ? AND status != 'DELETED' LIMIT 1;

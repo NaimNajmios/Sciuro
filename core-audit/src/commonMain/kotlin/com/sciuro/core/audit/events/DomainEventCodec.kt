@@ -91,6 +91,7 @@ object DomainEventCodec {
             }
             is DomainEvent.TransferUnmatchedFlagged -> {
                 map["transactionId"] = event.transactionId
+                map["candidateTransactionId"] = event.candidateTransactionId
                 map["candidateRecipient"] = event.candidateRecipient
             }
             is DomainEvent.CashCredited -> {
@@ -211,6 +212,7 @@ object DomainEventCodec {
             )
             "TransferUnmatchedFlagged" -> DomainEvent.TransferUnmatchedFlagged(
                 transactionId = map["transactionId"]!!.jsonPrimitive.content,
+                candidateTransactionId = map["candidateTransactionId"]?.jsonPrimitive?.content ?: "",
                 candidateRecipient = map["candidateRecipient"]!!.jsonPrimitive.content
             )
             "CashCredited" -> DomainEvent.CashCredited(

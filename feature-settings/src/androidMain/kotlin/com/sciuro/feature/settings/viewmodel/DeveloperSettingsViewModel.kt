@@ -10,6 +10,7 @@ import com.sciuro.core.ledger.db.Raw_event_staging
 import com.sciuro.core.ledger.db.SciuroDatabase
 import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
+import com.sciuro.core.ledger.config.LlmUsageStore
 import com.sciuro.core.parsing.engine.SimulationEngine
 import com.sciuro.core.parsing.engine.SimulationResult
 import com.sciuro.core.audit.trace.PipelineTracer
@@ -53,7 +54,10 @@ data class TraceRow(
 
 data class PipelineMetrics(
     val llmCalls: Long,
-    val deadLetters: Long
+    val deadLetters: Long,
+    val dailyLlmCallCount: Long,
+    val dailyLlmCallLimit: Int,
+    val cacheHitRate: Float
 )
 
 data class DatabaseRecoveryMetrics(
@@ -75,7 +79,8 @@ class DeveloperSettingsViewModel(
     private val tracer: PipelineTracer,
     private val auditRepository: AuditRepository,
     private val eventBus: DomainEventBus? = null,
-    private val recoveryManager: DatabaseRecoveryManager
+    private val recoveryManager: DatabaseRecoveryManager,
+    private val usageStore: LlmUsageStore? = null
 ) : ViewModel() {
 
     private val _simulationResult = MutableStateFlow<SimulationResult?>(null)
@@ -217,12 +222,27 @@ class DeveloperSettingsViewModel(
                 
                 _healthData.value = parserHealthRepository.getMatchRatesSince(sinceMs)
                 _priorHealthData.value = parserHealthRepository.getMatchRatesInWindow(priorStart, sinceMs)
-                
-                val outcomeCounts = database.pipelineTraceQueries.countTraceByOutcomeSince(sinceMs).executeAsList()
-                val llmTotal = outcomeCounts.filter { it.stage == "PARSE_LLM" }.sumOf { it.cnt }
+
+                val outcomeCounts = database.pipelineTraceQueries.countTraceByOutcomeInRange(sinceMs, now).executeAsList()
                 val deadLetters = outcomeCounts.filter { it.stage == "STAGING" && it.outcome == "FAILURE" }.sumOf { it.cnt }
-                
-                _pipelineMetrics.value = PipelineMetrics(llmTotal, deadLetters)
+
+                val llmCalls = database.pipelineTraceQueries
+                    .countParseLlmProviderCallsInRange(sinceMs, now).executeAsOne()
+                val cacheHits = database.pipelineTraceQueries
+                    .countParseLlmCacheHitsInRange(sinceMs, now).executeAsOne()
+                val lookups = llmCalls + cacheHits
+                val cacheHitRate = if (lookups > 0L) cacheHits.toFloat() / lookups else 0f
+
+                val dailyCount = usageStore?.dailyLlmCallCount() ?: 0
+                val dailyLimit = usageStore?.dailyLlmCallLimit() ?: 50
+
+                _pipelineMetrics.value = PipelineMetrics(
+                    llmCalls = llmCalls,
+                    deadLetters = deadLetters,
+                    dailyLlmCallCount = dailyCount.toLong(),
+                    dailyLlmCallLimit = dailyLimit,
+                    cacheHitRate = cacheHitRate
+                )
 
                 _auditIntegrityGaps.value = auditRepository.getAuditIntegrityGaps()
             } catch (e: Exception) {

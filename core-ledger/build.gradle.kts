@@ -26,6 +26,7 @@ kotlin {
                 api(libs.koin.core)
                 api(libs.sqldelight.coroutines)
                 api(project(":core-audit"))
+                implementation(libs.kotlinx.datetime)
             }
         }
         val androidMain by getting {

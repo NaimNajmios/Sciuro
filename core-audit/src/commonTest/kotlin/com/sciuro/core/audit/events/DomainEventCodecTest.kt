@@ -52,6 +52,32 @@ class DomainEventCodecTest {
     }
 
     @Test
+    fun `serialize and deserialize roundtrip for TransferUnmatchedFlagged`() = runBlocking {
+        val event = DomainEvent.TransferUnmatchedFlagged(
+            transactionId = "tx_out",
+            candidateTransactionId = "tx_in",
+            candidateRecipient = "Payee Name"
+        )
+        val json = DomainEventCodec.serialize(event)
+        val eventType = DomainEventCodec.eventTypeOf(event)
+        val deserialized = DomainEventCodec.deserialize(eventType, json)
+        assertNotNull(deserialized)
+        assertTrue(deserialized is DomainEvent.TransferUnmatchedFlagged)
+        assertEquals("tx_out", deserialized.transactionId)
+        assertEquals("tx_in", deserialized.candidateTransactionId)
+        assertEquals("Payee Name", deserialized.candidateRecipient)
+    }
+
+    @Test
+    fun `deserialize TransferUnmatchedFlagged tolerates missing candidate transaction id`() = runBlocking {
+        val json = """{"transactionId":"tx_out","candidateRecipient":"Payee"}"""
+        val deserialized = DomainEventCodec.deserialize("TransferUnmatchedFlagged", json)
+        assertNotNull(deserialized)
+        assertTrue(deserialized is DomainEvent.TransferUnmatchedFlagged)
+        assertEquals("", deserialized.candidateTransactionId)
+    }
+
+    @Test
     fun `isCritical returns true for DebtFullyPaidOff`() {
         assertTrue(DomainEventCodec.isCritical("DebtFullyPaidOff"))
     }

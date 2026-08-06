@@ -3,10 +3,12 @@ package com.najmi.sciuro.config
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.sciuro.core.ledger.config.currentLocalDateKey
 import com.sciuro.core.ledger.config.LlmParsingConfig
+import com.sciuro.core.ledger.config.LlmUsageStore
 import com.sciuro.core.ledger.config.SettingsProvider
 
-class EncryptedSettingsProvider(context: Context) : SettingsProvider {
+class EncryptedSettingsProvider(context: Context) : SettingsProvider, LlmUsageStore {
 
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -226,5 +228,39 @@ class EncryptedSettingsProvider(context: Context) : SettingsProvider {
 
     override fun setEngineLastRunMs(engineName: String, timestampMs: Long) {
         sharedPreferences.edit().putLong("engine_last_run_$engineName", timestampMs).apply()
+    }
+
+    override fun dailyLlmCallCount(): Int {
+        if (storedLlmUsageDate() != currentLocalDateKey()) return 0
+        return sharedPreferences.getInt("llm_usage_count", 0)
+    }
+
+    override fun incrementDailyLlmCallCount(): Int {
+        val today = currentLocalDateKey()
+        val current = if (storedLlmUsageDate() == today) sharedPreferences.getInt("llm_usage_count", 0) else 0
+        val next = current + 1
+        sharedPreferences.edit()
+            .putString("llm_usage_date", today)
+            .putInt("llm_usage_count", next)
+            .commit()
+        return next
+    }
+
+    override fun dailyLlmCallLimit(): Int {
+        val limit = sharedPreferences.getInt("llm_daily_limit", DEFAULT_LLM_DAILY_LIMIT)
+        return if (limit <= 0) DEFAULT_LLM_DAILY_LIMIT else limit
+    }
+
+    override fun setDailyLlmCallLimit(limit: Int) {
+        sharedPreferences.edit().putInt("llm_daily_limit", limit.coerceIn(1, MAX_LLM_DAILY_LIMIT)).apply()
+    }
+
+    private fun storedLlmUsageDate(): String? {
+        return sharedPreferences.getString("llm_usage_date", null)
+    }
+
+    companion object {
+        private const val DEFAULT_LLM_DAILY_LIMIT = 50
+        private const val MAX_LLM_DAILY_LIMIT = 1000
     }
 }

@@ -38,6 +38,9 @@ fun KanbanDialogs(
     taskToApprove: Triple<KanbanTask, String?, String>?,
     onApproveConfirmed: (KanbanTask, String?, String) -> Unit,
     onApproveDismiss: () -> Unit,
+    taskToLink: KanbanTask?,
+    onLinkConfirmed: (KanbanTask) -> Unit,
+    onLinkDismiss: () -> Unit,
     paymentBill: BillTask?,
     onBillPaid: (BillTask) -> Unit,
     onBillPaymentDismiss: () -> Unit,
@@ -97,6 +100,16 @@ fun KanbanDialogs(
             confirmText = stringResource(R.string.kanban_confirm_approve),
             onConfirm = { onApproveConfirmed(task, accountId, direction) },
             onDismiss = onApproveDismiss
+        )
+    }
+
+    taskToLink?.let { task ->
+        SciuroConfirmationDialog(
+            title = stringResource(R.string.kanban_link_transfer_title),
+            message = stringResource(R.string.kanban_link_transfer_message, task.title),
+            confirmText = stringResource(R.string.kanban_link_as_transfer),
+            onConfirm = { onLinkConfirmed(task) },
+            onDismiss = onLinkDismiss
         )
     }
 

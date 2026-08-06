@@ -20,6 +20,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class SciuroParserPipelineTest {
 
@@ -121,6 +122,15 @@ class SciuroParserPipelineTest {
         val result = pipeline.process(rawEvent())
         assertNotNull(result)
         assertEquals(50.0, result.amount)
+    }
+
+    @Test
+    fun `LLM unavailable — deterministic fallback is marked untrusted`() = runBlocking {
+        val parser = DeterministicParser(listOf(TestRule(packageName, lowConfidenceDraft)))
+        val pipeline = SciuroParserPipeline(parser, noKeyLlmParser())
+        val result = pipeline.process(rawEvent())
+        assertNotNull(result)
+        assertTrue(result.isUntrustedFallback)
     }
 
     @Test

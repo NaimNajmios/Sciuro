@@ -2,6 +2,7 @@ package com.sciuro.feature.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sciuro.core.ledger.config.LlmUsageStore
 import com.sciuro.core.ledger.config.SettingsProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ data class IntelligenceSettingsUiState(
     val isLlmEnabled: Boolean = false,
     val apiKey: String = "",
     val llmModelName: String = "llama-3.1-8b-instant",
+    val dailyLlmLimit: Int = 50,
     val connectionTestState: ConnectionTestState = ConnectionTestState.Idle,
     val isObligationAutoConfirmEnabled: Boolean = false
 )
@@ -28,7 +30,8 @@ sealed interface ConnectionTestState {
 }
 
 class IntelligenceSettingsViewModel(
-    private val settingsProvider: SettingsProvider
+    private val settingsProvider: SettingsProvider,
+    private val llmUsageStore: LlmUsageStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(IntelligenceSettingsUiState())
@@ -43,6 +46,7 @@ class IntelligenceSettingsViewModel(
             isLlmEnabled = settingsProvider.isLlmEnabled(),
             apiKey = settingsProvider.getApiKey() ?: "",
             llmModelName = settingsProvider.getLlmModelName(),
+            dailyLlmLimit = llmUsageStore.dailyLlmCallLimit(),
             isObligationAutoConfirmEnabled = settingsProvider.isObligationAutoConfirmEnabled()
         )
     }
@@ -60,6 +64,12 @@ class IntelligenceSettingsViewModel(
     fun setLlmModelName(name: String) {
         settingsProvider.setLlmModelName(name)
         _uiState.value = _uiState.value.copy(llmModelName = name)
+    }
+
+    fun setDailyLlmLimit(limit: Int) {
+        val clamped = limit.coerceAtLeast(1)
+        llmUsageStore.setDailyLlmCallLimit(clamped)
+        _uiState.value = _uiState.value.copy(dailyLlmLimit = clamped)
     }
 
     fun setObligationAutoConfirmEnabled(enabled: Boolean) {

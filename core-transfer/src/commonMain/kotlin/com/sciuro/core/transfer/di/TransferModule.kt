@@ -5,6 +5,6 @@ import com.sciuro.core.transfer.repository.TransferRepository
 import org.koin.dsl.module
 
 val transferModule = module {
-    single { TransferRepository(get(), get(), get()) }
+    single { TransferRepository(get(), get(), get(), get()) }
     single { TransferDetectionEngine(get(), get(), get()) }
 }

@@ -2,6 +2,7 @@ package com.sciuro.core.transfer.engine
 
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.sciuro.core.audit.events.DomainEvent
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.model.AuditLog
 import com.sciuro.core.audit.model.AuditSource
@@ -13,6 +14,10 @@ import com.sciuro.core.ledger.model.Account
 import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.transfer.repository.TransferRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -30,6 +35,7 @@ class TransferDetectionEngineTest {
     private lateinit var transferRepository: TransferRepository
     private lateinit var engine: TransferDetectionEngine
     private lateinit var eventBus: DomainEventBus
+    private lateinit var engineEventBus: DomainEventBus
 
     private val fakeAuditRepository = object : AuditRepository {
         override fun logMutation(log: AuditLog) {}
@@ -47,8 +53,9 @@ class TransferDetectionEngineTest {
         eventBus = DomainEventBus()
         accountRepository = AccountRepository(fakeAuditRepository, database)
         transactionRepository = TransactionRepository(fakeAuditRepository, database, accountRepository, eventBus)
-        transferRepository = TransferRepository(fakeAuditRepository, database, transactionRepository)
-        engine = TransferDetectionEngine(database, transferRepository, DomainEventBus())
+        transferRepository = TransferRepository(fakeAuditRepository, database, transactionRepository, accountRepository)
+        engineEventBus = DomainEventBus()
+        engine = TransferDetectionEngine(database, transferRepository, engineEventBus)
     }
 
     @AfterTest
@@ -242,6 +249,40 @@ class TransferDetectionEngineTest {
 
         val link = transferRepository.getTransferForTransaction(inflowTxId)
         assertNull(link, "Tier 2 should NOT link unconfirmed pairs")
+    }
+
+    @Test
+    fun `Tier 2 heuristic publishes TransferUnmatchedFlagged with candidate transaction id`() = runBlocking {
+        val accountA = "acc_a"
+        val accountB = "acc_b"
+        accountRepository.createAccount(Account(id = accountA, name = "A", type = "Bank"))
+        accountRepository.createAccount(Account(id = accountB, name = "B", type = "Bank"))
+
+        val inflowTxId = bookInflowTransaction(accountId = accountB, amount = 75.0, timestamp = 1000L)
+
+        val received = mutableListOf<DomainEvent.TransferUnmatchedFlagged>()
+        val job = CoroutineScope(Dispatchers.Default).launch {
+            engineEventBus.events.collect { event ->
+                if (event is DomainEvent.TransferUnmatchedFlagged) received.add(event)
+            }
+        }
+
+        engine.onTransactionBooked(
+            newTxId = "outflow_1",
+            newTxAccountId = accountA,
+            newTxAmount = 75.0,
+            newTxDirection = "OUTFLOW",
+            newTxTimestamp = 100_000L,
+            counterpartyAccountNumber = null
+        )
+
+        delay(100)
+        job.cancel()
+
+        assertEquals(1, received.size, "exactly one TransferUnmatchedFlagged expected")
+        assertEquals("outflow_1", received[0].transactionId)
+        assertEquals(inflowTxId, received[0].candidateTransactionId)
+        assertNull(transferRepository.getTransferForTransaction("outflow_1"), "flagged pair must remain unlinked")
     }
 
     @Test

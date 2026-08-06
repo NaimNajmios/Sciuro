@@ -163,7 +163,7 @@ open class DefaultTransactionBookingUseCase(
                 )
             }
             val nowAuto = currentTimeMillis()
-            val isReviewed = tier != com.sciuro.core.audit.model.ReviewTier.MANUAL
+            val isReviewed = tier.isAutoReviewed
 
             val transaction = Transaction(
                 id = generateUuid(),

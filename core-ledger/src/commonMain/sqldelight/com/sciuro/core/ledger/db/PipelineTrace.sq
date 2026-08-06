@@ -55,14 +55,28 @@ GROUP BY raw_event_id
 ORDER BY last_at DESC
 LIMIT ?;
 
-countTraceByOutcomeSince:
+countTraceByOutcomeInRange:
 SELECT stage, outcome, COUNT(*) AS cnt
 FROM pipeline_trace
-WHERE created_at >= ?
+WHERE created_at >= :start AND created_at < :end
 GROUP BY stage, outcome
 ORDER BY cnt DESC;
 
-countTraceEventsSince:
+countTraceEventsInRange:
 SELECT COUNT(DISTINCT raw_event_id) AS event_count
 FROM pipeline_trace
-WHERE created_at >= ? AND raw_event_id IS NOT NULL;
+WHERE created_at >= :start AND created_at < :end AND raw_event_id IS NOT NULL;
+
+countParseLlmProviderCallsInRange:
+SELECT COUNT(*) AS cnt
+FROM pipeline_trace
+WHERE stage = 'PARSE_LLM'
+  AND created_at >= :start AND created_at < :end
+  AND detail_json LIKE '%provider_called=true%';
+
+countParseLlmCacheHitsInRange:
+SELECT COUNT(*) AS cnt
+FROM pipeline_trace
+WHERE stage = 'PARSE_LLM'
+  AND created_at >= :start AND created_at < :end
+  AND detail_json LIKE '%verdict=cache_hit%';

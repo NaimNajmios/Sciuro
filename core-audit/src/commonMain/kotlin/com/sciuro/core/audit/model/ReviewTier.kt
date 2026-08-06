@@ -4,5 +4,8 @@ enum class ReviewTier(val label: String) {
     MANUAL("manual"),
     AUTO_SILENT("auto_silent"),
     AUTO_UNDO("auto_undo"),
-    UNTRUSTED("untrusted")
+    UNTRUSTED("untrusted");
+
+    val isAutoReviewed: Boolean
+        get() = this == AUTO_SILENT || this == AUTO_UNDO
 }

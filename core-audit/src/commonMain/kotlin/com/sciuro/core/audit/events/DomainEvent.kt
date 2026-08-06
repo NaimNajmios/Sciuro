@@ -10,7 +10,7 @@ sealed interface DomainEvent {
     data class TransactionCategorized(val transactionId: String, val categoryId: String, val confidence: Double, val source: String, val merchant: String? = null) : DomainEvent
     data class TransactionRecategorized(val transactionId: String, val oldCategoryId: String, val newCategoryId: String, val merchant: String? = null, val accountId: String? = null) : DomainEvent
     data class TransferMatched(val transferLinkId: String, val sourceTxId: String, val destTxId: String, val matchMethod: String) : DomainEvent
-    data class TransferUnmatchedFlagged(val transactionId: String, val candidateRecipient: String) : DomainEvent
+    data class TransferUnmatchedFlagged(val transactionId: String, val candidateTransactionId: String, val candidateRecipient: String) : DomainEvent
     data class CashCredited(val cashAccountId: String, val amount: Double, val sourceEvent: String) : DomainEvent
     data class CashDebited(val cashAccountId: String, val amount: Double, val sourceEvent: String) : DomainEvent
     data class CashRecounted(val adjustmentId: String, val variance: Double, val adjustmentType: String) : DomainEvent

@@ -134,6 +134,19 @@ fun IntelligenceSettingsScreen(
 
                                     Spacer(modifier = Modifier.height(8.dp))
 
+                                    SciuroTextField(
+                                        value = uiState.dailyLlmLimit.toString(),
+                                        onValueChange = { newValue ->
+                                            newValue.toIntOrNull()?.let { viewModel.setDailyLlmLimit(it) }
+                                        },
+                                        label = stringResource(R.string.settings_llm_daily_limit),
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Button(
                                             onClick = { viewModel.testConnection() },

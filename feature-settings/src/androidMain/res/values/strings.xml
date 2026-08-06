@@ -21,6 +21,7 @@
     <string name="settings_llm_toggle">Use Groq Llama 3 for Fallback</string>
     <string name="settings_llm_api_key">Groq API Key</string>
     <string name="settings_llm_model">Groq LLM Model</string>
+    <string name="settings_llm_daily_limit">Daily LLM Call Limit</string>
     <string name="settings_test_connection">Test Connection</string>
     <string name="settings_connection_success">Success!</string>
     <string name="settings_section_automation">Automation</string>
@@ -167,6 +168,8 @@
     <string name="dev_health_pipeline_title">Pipeline Metrics</string>
     <string name="dev_health_pipeline_subtitle">Trace-based rates over the last 7 days</string>
     <string name="dev_health_llm_calls">LLM fallback calls (7d)</string>
+    <string name="dev_health_llm_daily">LLM calls today (limit %1$d)</string>
+    <string name="dev_health_cache_hit_rate">Cache hit rate (7d)</string>
     <string name="dev_health_dead_letters">Dead letters (7d)</string>
     <string name="dev_health_degraded">Match rate dropped from %1$s%% — format drift may be occurring.</string>
     <string name="dev_health_audit_title">Audit Integrity</string>

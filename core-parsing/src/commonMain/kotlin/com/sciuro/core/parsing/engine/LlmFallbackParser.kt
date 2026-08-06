@@ -5,6 +5,7 @@ import com.sciuro.core.audit.trace.TraceOutcome
 import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ledger.config.LlmParsingConfig
+import com.sciuro.core.ledger.config.LlmUsageStore
 import com.sciuro.core.parsing.llm.ChatMessage
 import com.sciuro.core.parsing.llm.ChatRequest
 import com.sciuro.core.parsing.llm.ChatResponse
@@ -22,6 +23,9 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import java.io.IOException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
@@ -31,7 +35,8 @@ class LlmFallbackParser(
     private val httpClient: HttpClient,
     private val apiKeyProvider: () -> String?,
     private val config: LlmParsingConfig = LlmParsingConfig(),
-    private val tracer: PipelineTracer? = null
+    private val tracer: PipelineTracer? = null,
+    private val usageStore: LlmUsageStore? = null
 ) {
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -61,6 +66,11 @@ class LlmFallbackParser(
 
     private var consecutiveFailures = 0
     private var circuitBrokenUntil: Long = 0
+
+    private val admissionGate = Mutex()
+
+    var lastCallTimestamp: Long = 0L
+        private set
 
     private data class CacheEntry(val draft: StructuredDraft, val timestamp: Long)
     private val cache = mutableMapOf<String, CacheEntry>()
@@ -92,21 +102,23 @@ class LlmFallbackParser(
             if (age <= CACHE_TTL_MS) {
                 tracer?.trace(event.id, null, TraceStage.PARSE_LLM, TraceOutcome.SUCCESS,
                     durationMs = 0, confidence = entry.draft.confidenceScore,
-                    detail = mapOf("verdict" to "cache_hit", "cache_age_ms" to "$age"))
+                    detail = mapOf("verdict" to "cache_hit", "cache_age_ms" to "$age", "provider_called" to "false"))
                 return entry.draft
             }
             cache.remove(cacheKey)
         }
 
         if (isCircuitBroken()) {
-            traceParse(event, "circuit_breaker_open", 0, mapOf("breaker_open" to "true"))
+            traceParse(event, "circuit_breaker_open", 0, mapOf("breaker_open" to "true"), providerCalled = false)
             return null
         }
 
         val apiKey = apiKeyProvider() ?: run {
-            traceParse(event, "llm_disabled_or_no_key", 0)
+            traceParse(event, "llm_disabled_or_no_key", 0, providerCalled = false)
             return null
         }
+
+        if (!admitCall(event)) return null
 
         val prompt = """
             Extract the financial transaction details from the following notification text.
@@ -297,11 +309,34 @@ class LlmFallbackParser(
         }
     }
 
+    private suspend fun admitCall(event: RawEvent): Boolean {
+        return admissionGate.withLock {
+            val limit = usageStore?.dailyLlmCallLimit() ?: config.dailyLlmCallLimit
+            val used = usageStore?.dailyLlmCallCount() ?: 0
+            if (used >= limit) {
+                traceParse(
+                    event, "daily_cap_exceeded", 0,
+                    mapOf("daily_count" to "$used", "daily_limit" to "$limit"),
+                    providerCalled = false
+                )
+                return@withLock false
+            }
+
+            val waitMs = lastCallTimestamp + config.minCallIntervalMs - System.currentTimeMillis()
+            if (waitMs > 0) delay(waitMs)
+
+            usageStore?.incrementDailyLlmCallCount()
+            lastCallTimestamp = System.currentTimeMillis()
+            return@withLock true
+        }
+    }
+
     private suspend fun traceParse(
         event: RawEvent,
         verdict: String,
         latencyMs: Long,
-        extra: Map<String, String?> = emptyMap()
+        extra: Map<String, String?> = emptyMap(),
+        providerCalled: Boolean = true
     ) {
         tracer?.trace(
             rawEventId = event.id,
@@ -314,7 +349,8 @@ class LlmFallbackParser(
                 "verdict" to verdict,
                 "model" to (extra["model"] ?: ""),
                 "consecutive_failures" to "$consecutiveFailures",
-                "breaker_open" to "${isCircuitBroken()}"
+                "breaker_open" to "${isCircuitBroken()}",
+                "provider_called" to "$providerCalled"
             )
         )
     }

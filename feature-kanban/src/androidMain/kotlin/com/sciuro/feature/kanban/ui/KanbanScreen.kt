@@ -98,6 +98,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     var showAddSheet by remember { mutableStateOf(false) }
 
     // Confirmation dialog states
+    var taskToLink by remember { mutableStateOf<KanbanTask?>(null) }
     var taskToApprove by remember { mutableStateOf<Triple<KanbanTask, String?, String>?>(null) }
     var debtToDelete by remember { mutableStateOf<DebtTask?>(null) }
     var debtToEdit by remember { mutableStateOf<DebtTask?>(null) }
@@ -252,6 +253,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
                             onApprove = { task, accountId, direction ->
                                 taskToApprove = Triple(task, accountId, direction)
                             },
+                            onLinkAsTransfer = { taskToLink = it },
                             transferCandidateIds = transferCandidateIds
                         )
                     }
@@ -296,6 +298,7 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
     val snackbarDebtCreated = stringResource(R.string.kanban_snackbar_debt_created)
     val snackbarBillDeleted = "Bill deleted"
     val snackbarBillUpdated = "Bill updated"
+    val snackbarTransferLinked = stringResource(R.string.kanban_snackbar_transfer_linked)
 
     KanbanDialogs(
         taskToReject = taskToReject,
@@ -326,6 +329,13 @@ fun KanbanScreen(viewModel: KanbanViewModel = koinViewModel()) {
             coroutineScope.launch { snackbarHostState.showSnackbar(snackbarTaskApproved) }
         },
         onApproveDismiss = { taskToApprove = null },
+        taskToLink = taskToLink,
+        onLinkConfirmed = { task ->
+            viewModel.linkTransferCandidate(task.id)
+            taskToLink = null
+            coroutineScope.launch { snackbarHostState.showSnackbar(snackbarTransferLinked) }
+        },
+        onLinkDismiss = { taskToLink = null },
         paymentBill = paymentBill,
         onBillPaid = { bill ->
             viewModel.markBillAsPaid(bill.obligation)
@@ -489,6 +499,7 @@ private fun ReviewColumn(
     onStatusChange: (String) -> Unit,
     onReject: (KanbanTask) -> Unit,
     onApprove: (KanbanTask, String?, String) -> Unit,
+    onLinkAsTransfer: (KanbanTask) -> Unit = {},
     transferCandidateIds: Set<String> = emptySet()
 ) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -511,6 +522,7 @@ private fun ReviewColumn(
                     accounts = accounts,
                     onApprove = { accountId, direction -> onApprove(task, accountId, direction) },
                     onReject = { onReject(task) },
+                    onLinkAsTransfer = { onLinkAsTransfer(task) },
                     isTransferCandidate = task.id in transferCandidateIds
                 )
             }
@@ -808,6 +820,7 @@ fun KanbanTaskCard(
     accounts: List<Account>,
     onApprove: (String?, String) -> Unit,
     onReject: () -> Unit,
+    onLinkAsTransfer: () -> Unit = {},
     isTransferCandidate: Boolean = false
 ) {
     var selectedAccount by remember(task.id) {
@@ -866,7 +879,7 @@ fun KanbanTaskCard(
                         shape = MaterialTheme.shapes.small
                     ) {
                         Text(
-                            "TRANSFER",
+                            stringResource(R.string.kanban_transfer_badge),
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall,
                             color = com.najmi.sciuro.core.ui.theme.SignalWarning
@@ -924,6 +937,19 @@ fun KanbanTaskCard(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (isTransferCandidate) {
+                OutlinedButton(
+                    onClick = onLinkAsTransfer,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = com.najmi.sciuro.core.ui.theme.SignalWarning)
+                ) {
+                    Icon(SciuroIcons.SwapHoriz, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.kanban_link_as_transfer))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -8,5 +8,7 @@ data class LlmParsingConfig(
     val maxRetries: Int = 3,
     val circuitBreakerThreshold: Int = 5,
     val cooldownMs: Long = 300_000,
-    val trustValidatedLlm: Boolean = false
+    val trustValidatedLlm: Boolean = false,
+    val dailyLlmCallLimit: Int = 50,
+    val minCallIntervalMs: Long = 2_000
 )

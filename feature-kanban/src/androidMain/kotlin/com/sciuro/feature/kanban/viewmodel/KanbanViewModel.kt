@@ -17,6 +17,7 @@ import com.sciuro.core.obligations.model.Obligation
 import com.sciuro.core.obligations.model.ObligationFrequency
 import com.sciuro.core.obligations.repository.ObligationRepository
 import com.sciuro.core.obligations.engine.ObligationCycleMatcher
+import com.sciuro.core.transfer.repository.TransferRepository
 import com.sciuro.feature.kanban.model.BillTask
 import com.sciuro.feature.kanban.model.DebtTask
 import com.sciuro.feature.kanban.model.KanbanTask
@@ -43,6 +44,7 @@ class KanbanViewModel(
     private val categoryRepository: CategoryRepository,
     private val obligationRepository: ObligationRepository,
     private val debtRepository: DebtRepository,
+    private val transferRepository: TransferRepository,
     eventBus: DomainEventBus
 ) : ViewModel() {
 
@@ -71,8 +73,10 @@ class KanbanViewModel(
     private val _driftedAmounts = MutableStateFlow<Map<String, Pair<Double, Double>>>(emptyMap())
     val driftedAmounts: StateFlow<Map<String, Pair<Double, Double>>> = _driftedAmounts.asStateFlow()
 
-    private val _transferCandidateIds = MutableStateFlow<Set<String>>(emptySet())
-    val transferCandidateIds: StateFlow<Set<String>> = _transferCandidateIds.asStateFlow()
+    private val _transferCandidates = MutableStateFlow<Map<String, String>>(emptyMap())
+    val transferCandidateIds: StateFlow<Set<String>> = _transferCandidates
+        .map { it.keys }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     fun refresh() {
         viewModelScope.launch {
@@ -94,7 +98,9 @@ class KanbanViewModel(
                         _animationTriggers.emit(event.obligationId)
                     }
                     is DomainEvent.TransferUnmatchedFlagged -> {
-                        _transferCandidateIds.value = _transferCandidateIds.value + event.transactionId
+                        if (event.candidateTransactionId.isNotBlank()) {
+                            _transferCandidates.value = _transferCandidates.value + (event.transactionId to event.candidateTransactionId)
+                        }
                     }
                     else -> {}
                 }
@@ -182,6 +188,31 @@ class KanbanViewModel(
                 _errorEvents.value = "Failed to ${if (newStatus == TaskStatus.DONE) "approve" else "reject"} transaction: ${e.message}"
             } finally {
                 _processingTaskIds.value = _processingTaskIds.value - taskId;
+            }
+        }
+    }
+
+    fun linkTransferCandidate(transactionId: String) {
+        if (transactionId in _processingTaskIds.value) return
+        _processingTaskIds.value = _processingTaskIds.value + transactionId
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val candidateId = _transferCandidates.value[transactionId]
+                if (candidateId == null) {
+                    _errorEvents.value = "Transfer candidate is no longer available"
+                    return@launch
+                }
+                val link = transferRepository.linkCandidatePair(transactionId, candidateId)
+                if (link == null) {
+                    _errorEvents.value = "Could not link transfer — the pair may already be linked"
+                    return@launch
+                }
+                _transferCandidates.value = _transferCandidates.value - transactionId
+            } catch (e: Exception) {
+                _errorEvents.value = "Failed to link transfer: ${e.message}"
+            } finally {
+                _processingTaskIds.value = _processingTaskIds.value - transactionId
             }
         }
     }

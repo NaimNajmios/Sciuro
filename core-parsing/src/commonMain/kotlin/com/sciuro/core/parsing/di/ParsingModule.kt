@@ -10,6 +10,7 @@ import com.sciuro.core.parsing.rule.bank.*
 import com.sciuro.core.parsing.rule.ewallet.*
 import com.sciuro.core.parsing.metrics.ParserHealthRepository
 import com.sciuro.core.ingestion.config.MutableIngestionAllowlist
+import com.sciuro.core.ledger.config.LlmUsageStore
 import com.sciuro.core.ledger.config.SettingsProvider
 import org.koin.dsl.module
 
@@ -57,7 +58,8 @@ val parsingModule = module {
                 if (settings.isLlmEnabled()) settings.getApiKey() else null
             },
             config = settings.getLlmConfig(),
-            tracer = get()
+            tracer = get(),
+            usageStore = getOrNull()
         )
     }
     

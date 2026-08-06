@@ -138,8 +138,19 @@ fun DeveloperTabHealth(
 
                     val llmTotal = metrics?.llmCalls ?: 0L
                     val deadLetters = metrics?.deadLetters ?: 0L
+                    val dailyCount = metrics?.dailyLlmCallCount ?: 0L
+                    val dailyLimit = metrics?.dailyLlmCallLimit ?: 50
+                    val cacheHitRate = metrics?.cacheHitRate ?: 0f
 
                     MetricRow(stringResource(R.string.dev_health_llm_calls), llmTotal.toString())
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    MetricRowColored(
+                        stringResource(R.string.dev_health_llm_daily, dailyCount, dailyLimit),
+                        "$dailyCount / $dailyLimit",
+                        if (dailyCount >= dailyLimit) tokens.signalDanger else tokens.signalIncome
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    MetricRow(stringResource(R.string.dev_health_cache_hit_rate), "${"%.0f".format(cacheHitRate * 100)}%")
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     MetricRow(stringResource(R.string.dev_health_dead_letters), deadLetters.toString())
                 }

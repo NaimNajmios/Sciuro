@@ -97,6 +97,7 @@ open class TransferDetectionEngine(
                 eventBus.publish(
                     DomainEvent.TransferUnmatchedFlagged(
                         transactionId = newTxId,
+                        candidateTransactionId = match.id,
                         candidateRecipient = match.merchant ?: match.id
                     )
                 )

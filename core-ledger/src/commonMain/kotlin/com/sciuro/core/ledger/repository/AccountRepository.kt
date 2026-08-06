@@ -162,6 +162,43 @@ class AccountRepository(
         database.accountQueries.insertAccountPairConfirmation(sorted[0], sorted[1], currentTimeMillis())
     }
 
+    /**
+     * Records one manual confirmation for the canonical account pair. When the
+     * running count reaches the threshold (3), the pair is inserted into
+     * account_pair_confirmation so the detection engine treats it as trusted.
+     * Returns the new confirmation count.
+     */
+    suspend fun recordManualConfirmation(accountIdA: String, accountIdB: String): Int {
+        val sorted = listOf(accountIdA, accountIdB).sorted()
+        val now = currentTimeMillis()
+        return database.transactionWithResult {
+            val existing = database.accountQueries.selectManualConfirmationCount(sorted[0], sorted[1]).executeAsOneOrNull()
+            if (existing == null) {
+                database.accountQueries.insertManualConfirmation(sorted[0], sorted[1], now)
+            } else {
+                database.accountQueries.updateManualConfirmation(now, sorted[0], sorted[1])
+            }
+            val count = database.accountQueries.selectManualConfirmationCount(sorted[0], sorted[1]).executeAsOne().toInt()
+            if (count >= MANUAL_CONFIRMATION_THRESHOLD) {
+                database.accountQueries.insertAccountPairConfirmation(sorted[0], sorted[1], now)
+                auditRepository.logMutation(
+                    AuditLog(
+                        id = generateUuid(),
+                        entityType = EntityType.ACCOUNT,
+                        entityId = sorted.joinToString(":"),
+                        action = AuditAction.UPDATE,
+                        beforeState = "manual_confirmation_count=$count",
+                        afterState = "account_pair_confirmation inserted (threshold reached)",
+                        source = AuditSource.USER_MANUAL,
+                        confidence = null,
+                        timestamp = now
+                    )
+                )
+            }
+            count
+        }
+    }
+
     suspend fun unlinkAccountPair(accountIdA: String, accountIdB: String) {
         val sorted = listOf(accountIdA, accountIdB).sorted()
         if (sorted.size != 2) return
@@ -230,5 +267,9 @@ class AccountRepository(
         return database.accountQueries.selectAccountById(accountId)
             .asFlow()
             .mapToOneOrNull(Dispatchers.Default)
+    }
+
+    companion object {
+        const val MANUAL_CONFIRMATION_THRESHOLD = 3
     }
 }

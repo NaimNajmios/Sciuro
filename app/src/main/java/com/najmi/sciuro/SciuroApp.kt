@@ -47,12 +47,14 @@ import com.sciuro.feature.widget.di.widgetModule
 
 import com.najmi.sciuro.trace.LogcatPipelineTracer
 import com.sciuro.core.audit.trace.PipelineTracer
+import com.sciuro.core.ledger.config.LlmUsageStore
 import com.sciuro.feature.settings.config.NotificationPreferencesStore
 import com.najmi.sciuro.worker.NightlyCheckWorker
 import com.sciuro.core.ledger.security.DatabaseRecoveryManager
 
 val appModule = module {
     single<SettingsProvider> { EncryptedSettingsProvider(get()) }
+    single<LlmUsageStore> { get<SettingsProvider>() as LlmUsageStore }
     single<PipelineTracer> { LogcatPipelineTracer(get()) }
     single { NotificationPreferencesStore(get()) }
     single { com.najmi.sciuro.subscriber.FinanceAppSuggestionSubscriber(get(), get()) }

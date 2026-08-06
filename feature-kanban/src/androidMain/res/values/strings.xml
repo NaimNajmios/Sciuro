@@ -70,6 +70,11 @@
     <string name="kanban_wallet_account">Wallet Account</string>
     <string name="kanban_reject">Reject</string>
     <string name="kanban_approve">Approve</string>
+    <string name="kanban_transfer_badge">TRANSFER</string>
+    <string name="kanban_link_as_transfer">Link as Transfer</string>
+    <string name="kanban_link_transfer_title">Link as Transfer?</string>
+    <string name="kanban_link_transfer_message">Link this flagged transaction as a transfer? Confirming repeatedly for the same account pair will enable automatic transfer detection.</string>
+    <string name="kanban_snackbar_transfer_linked">Transfer linked</string>
 
     <!-- Add Bill sheet -->
     <string name="kanban_add_bill_subscription">Add Bill / Subscription</string>

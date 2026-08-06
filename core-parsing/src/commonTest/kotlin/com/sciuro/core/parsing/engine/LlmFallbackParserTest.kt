@@ -3,6 +3,7 @@ package com.sciuro.core.parsing.engine
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ledger.config.LlmParsingConfig
+import com.sciuro.core.ledger.config.LlmUsageStore
 import com.sciuro.core.parsing.model.TransactionDirection
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -26,10 +27,12 @@ class LlmFallbackParserTest {
 
     private val testJson = Json { ignoreUnknownKeys = true; isLenient = true }
 
-    private fun rawEvent() = RawEvent(
-        id = "test-id", sourceType = SourceType.NOTIFICATION,
+    private val successBody = """{"choices":[{"message":{"role":"assistant","content":"{\"amount\":100.0,\"direction\":\"OUTFLOW\",\"merchant\":\"Test Merchant\"}"}}]}"""
+
+    private fun rawEvent(id: String = "test-id", text: String = "RM 100.00 paid to MERCHANT") = RawEvent(
+        id = id, sourceType = SourceType.NOTIFICATION,
         sourcePackageOrAddress = "com.test.app", title = "Payment",
-        text = "RM 100.00 paid to MERCHANT",
+        text = text,
         timestamp = 1000L
     )
 
@@ -46,6 +49,13 @@ class LlmFallbackParserTest {
                 }
             }
         }
+
+    private fun throwingMockClient() = HttpClient(MockEngine) {
+        install(ContentNegotiation) { json(testJson) }
+        engine {
+            addHandler { throw IllegalStateException("LLM provider should not have been called") }
+        }
+    }
 
     @Test
     fun `returns null when apiKey is null`() = runBlocking {
@@ -178,5 +188,106 @@ class LlmFallbackParserTest {
         assertTrue(parser.isCircuitBroken())
         delay(50)
         assertFalse(parser.isCircuitBroken())
+    }
+
+    @Test
+    fun `exhausted daily cap skips LLM and returns null`() = runBlocking {
+        val store = FakeUsageStore(count = 50, limit = 50)
+        val parser = LlmFallbackParser(
+            httpClient = throwingMockClient(),
+            apiKeyProvider = { "test-key" },
+            config = LlmParsingConfig(endpointUrl = "http://localhost:9999/v1/chat/completions"),
+            usageStore = store
+        )
+        assertNull(parser.parse(rawEvent()))
+        assertEquals(50, store.count)
+    }
+
+    @Test
+    fun `daily cap counter increments per provider call`() = runBlocking {
+        val store = FakeUsageStore()
+        val parser = LlmFallbackParser(
+            httpClient = mockClient(successBody),
+            apiKeyProvider = { "test-key" },
+            config = LlmParsingConfig(endpointUrl = "http://localhost:9999/v1/chat/completions"),
+            usageStore = store
+        )
+        assertNotNull(parser.parse(rawEvent("id-1", "RM 100.00 paid to MERCHANT")))
+        assertNotNull(parser.parse(rawEvent("id-2", "RM 200.00 paid to SHOP")))
+        assertEquals(2, store.count)
+    }
+
+    @Test
+    fun `cache hit does not consume daily quota`() = runBlocking {
+        val store = FakeUsageStore()
+        val parser = LlmFallbackParser(
+            httpClient = mockClient(successBody),
+            apiKeyProvider = { "test-key" },
+            config = LlmParsingConfig(endpointUrl = "http://localhost:9999/v1/chat/completions"),
+            usageStore = store
+        )
+        assertNotNull(parser.parse(rawEvent()))
+        assertEquals(1, store.count)
+        assertNotNull(parser.parse(rawEvent()))
+        assertEquals(1, store.count)
+    }
+
+    @Test
+    fun `missing api key does not consume daily quota`() = runBlocking {
+        val store = FakeUsageStore()
+        val parser = LlmFallbackParser(
+            httpClient = throwingMockClient(),
+            apiKeyProvider = { null },
+            config = LlmParsingConfig(endpointUrl = "http://localhost:9999/v1/chat/completions"),
+            usageStore = store
+        )
+        assertNull(parser.parse(rawEvent()))
+        assertEquals(0, store.count)
+    }
+
+    @Test
+    fun `daily cap reopens after store resets at midnight`() = runBlocking {
+        val store = FakeUsageStore(count = 50, limit = 50)
+        val parser = LlmFallbackParser(
+            httpClient = mockClient(successBody),
+            apiKeyProvider = { "test-key" },
+            config = LlmParsingConfig(endpointUrl = "http://localhost:9999/v1/chat/completions"),
+            usageStore = store
+        )
+        assertNull(parser.parse(rawEvent("id-1")))
+        store.count = 0
+        assertNotNull(parser.parse(rawEvent("id-2")))
+        assertEquals(1, store.count)
+    }
+
+    @Test
+    fun `enforces minimum gap between provider calls`() = runBlocking {
+        val store = FakeUsageStore()
+        val parser = LlmFallbackParser(
+            httpClient = mockClient(successBody),
+            apiKeyProvider = { "test-key" },
+            config = LlmParsingConfig(endpointUrl = "http://localhost:9999/v1/chat/completions", minCallIntervalMs = 150),
+            usageStore = store
+        )
+        val start = System.currentTimeMillis()
+        parser.parse(rawEvent("id-1", "RM 100.00 paid to MERCHANT"))
+        parser.parse(rawEvent("id-2", "RM 200.00 paid to SHOP"))
+        val elapsed = System.currentTimeMillis() - start
+        assertTrue(elapsed >= 120, "expected throttle delay between calls, got ${elapsed}ms")
+    }
+}
+
+private class FakeUsageStore(
+    var count: Int = 0,
+    var limit: Int = 50
+) : LlmUsageStore {
+    override fun dailyLlmCallCount(): Int = count
+    override fun incrementDailyLlmCallCount(): Int {
+        count++
+        return count
+    }
+    override fun dailyLlmCallLimit(): Int = limit
+    override fun setDailyLlmCallLimit(limit: Int) {
+        this.limit = limit
     }
 }
