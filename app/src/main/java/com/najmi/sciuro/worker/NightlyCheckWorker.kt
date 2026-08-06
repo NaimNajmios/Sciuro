@@ -6,15 +6,23 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.sciuro.feature.settings.config.NotificationPreferencesStore
 import com.sciuro.core.audit.util.currentTimeMillis
+import com.sciuro.core.audit.trace.PipelineTracer
+import com.sciuro.core.audit.trace.TraceOutcome
+import com.sciuro.core.audit.trace.TraceStage
 import com.sciuro.core.debt.model.DebtDirection
 import com.sciuro.core.debt.repository.DebtRepository
 import com.sciuro.core.ledger.config.SettingsProvider
 import com.sciuro.core.ledger.repository.AccountRepository
 import com.sciuro.core.ledger.repository.CategoryRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
+import com.sciuro.core.ledger.security.DatabaseIntegrityChecker
+import com.sciuro.core.ledger.security.DatabaseRecoveryManager
+import com.sciuro.core.ledger.security.IntegrityCheckPolicy
 import com.sciuro.core.obligations.engine.IncomeRecurrencePatternDetector
 import com.sciuro.core.obligations.repository.ObligationRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.Calendar
@@ -32,9 +40,12 @@ class NightlyCheckWorker(
     private val incomeDetector: IncomeRecurrencePatternDetector by inject()
     private val transactionRepository: TransactionRepository by inject()
     private val categoryRepository: CategoryRepository by inject()
+    private val recoveryManager: DatabaseRecoveryManager by inject()
+    private val tracer: PipelineTracer by inject()
 
     override suspend fun doWork(): Result {
         return try {
+            runIntegrityCheckIfDue()
             if (prefsStore.isEnabled(NotificationPreferencesStore.BACKUP_REMINDER)) {
                 checkBackupOverdue()
             }
@@ -55,6 +66,34 @@ class NightlyCheckWorker(
             Log.e(TAG, "Nightly check failed", e)
             Result.retry()
         }
+    }
+
+    private suspend fun runIntegrityCheckIfDue() {
+        val now = currentTimeMillis()
+        if (!IntegrityCheckPolicy.isDue(recoveryManager.getLastIntegrityCheckMs(), now)) return
+
+        val startMs = System.currentTimeMillis()
+        val result = withContext(Dispatchers.IO) {
+            DatabaseIntegrityChecker.check(applicationContext)
+        }
+        val durationMs = System.currentTimeMillis() - startMs
+
+        tracer.trace(
+            rawEventId = null,
+            transactionId = null,
+            stage = TraceStage.DATABASE_INTEGRITY,
+            outcome = if (result is DatabaseIntegrityChecker.IntegrityResult.Success) {
+                TraceOutcome.SUCCESS
+            } else {
+                TraceOutcome.FAILURE
+            },
+            durationMs = durationMs,
+            detail = mapOf("result" to result.message),
+            packageName = "database"
+        )
+
+        recoveryManager.setLastIntegrityCheckMs(now)
+        recoveryManager.setLastIntegrityResult(result.message)
     }
 
     private suspend fun checkBackupOverdue() {

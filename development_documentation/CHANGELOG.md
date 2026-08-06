@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Phase S3 — Database Recovery Interstitial & Weekly Integrity Checks
+
+#### Added
+- **Full-screen recovery interstitial** (`feature-settings/DatabaseRecoveryScreen.kt`, `app/recovery/DatabaseRecoveryGate.kt`): when a `sciuro.db.quarantined.*` database exists, launch shows "Your previous data could not be opened. It has been preserved" with **Import a backup** (reuses `EncryptedImporter`, v1/v2 + key recovery) and **Start fresh** (preserves the quarantined files). No silent empty dashboard.
+- **Quarantine bookkeeping** (`core-ledger/DatabaseRecoveryManager.kt`): `quarantine_count`, `last_quarantine_timestamp`, `recovery_acknowledged`, `last_integrity_check_ms`, `last_integrity_result` persisted in `EncryptedSharedPreferences` (`sciuro_db_secure_prefs`). Quarantine rename now verifies success and cleans WAL/SHM/journal sidecars.
+- **Eager startup validation** (`SciuroApp.onCreate`): the two-phase key-loss/corruption check runs before Koin driver creation so the recovery gate can see the quarantine on the very launch that detects it. While pending, ingestion listeners, subscribers, and periodic workers are not started and previously-scheduled DB-touching work is cancelled.
+- **Developer Health "Database Recovery" card**: quarantine count, last quarantine date, preserved-file count, last integrity check timestamp + result.
+- **Weekly `PRAGMA integrity_check`** (`NightlyCheckWorker` + `DatabaseIntegrityChecker`): runs at most once per 7 days (`IntegrityCheckPolicy`), outcome traced to `pipeline_trace` via new `DATABASE_INTEGRITY` stage.
+- **`QuarantineFiles` + `IntegrityCheckPolicy`** (commonMain) and JVM tests (9 new) for filename patterns and weekly-due boundaries.
+
+#### Fixed
+- **`core-ledger` `jvmTest` dependencies**: added `sqldelight-jdbc-driver` / `sqlite-driver` / `sqlite-jdbc` so the pre-existing `AuditAtomicityTest` compiles and runs.
+
+#### Changed
+- **`PlatformDatabaseModule`**: two-phase validation delegated to `DatabaseRecoveryManager` (registered as a Koin `single`); no behavioral regression on the healthy path.
+
 ### Phase T1 — Atomic Audit Writes & Audit Integrity
 
 #### Changed

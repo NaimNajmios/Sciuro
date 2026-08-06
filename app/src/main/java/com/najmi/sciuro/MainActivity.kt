@@ -44,6 +44,8 @@ import androidx.work.WorkManager
 import com.najmi.sciuro.worker.ReviewReminderWorker
 import java.util.concurrent.TimeUnit
 import com.sciuro.core.ledger.config.SettingsProvider
+import com.sciuro.core.ledger.security.DatabaseRecoveryManager
+import com.najmi.sciuro.recovery.DatabaseRecoveryGate
 import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
 
@@ -79,18 +81,24 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val recoveryPending = DatabaseRecoveryManager(this).isRecoveryPending()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !recoveryPending) {
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         
-        setupWorkers()
+        if (!recoveryPending) {
+            setupWorkers()
+        }
 
         setContent {
             SciuroTheme {
                 val settingsProvider: SettingsProvider = koinInject()
                 val lockEnabled = settingsProvider.isLockEnabled()
                 BiometricGate(activity = this@MainActivity, lockEnabled = lockEnabled) {
-                    SciuroMainScreen()
+                    DatabaseRecoveryGate {
+                        SciuroMainScreen()
+                    }
                 }
             }
         }

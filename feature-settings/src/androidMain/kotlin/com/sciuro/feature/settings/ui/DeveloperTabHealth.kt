@@ -27,6 +27,7 @@ fun DeveloperTabHealth(
     val metrics by viewModel.pipelineMetrics.collectAsState()
     val eventBusMetrics by viewModel.eventBusMetrics.collectAsState()
     val auditIntegrityGaps by viewModel.auditIntegrityGaps.collectAsState()
+    val recoveryMetrics by viewModel.recoveryMetrics.collectAsState()
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
@@ -209,6 +210,51 @@ fun DeveloperTabHealth(
             }
         }
 
+        item {
+            SciuroCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(stringResource(R.string.dev_recovery_title), style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.dev_recovery_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val rm = recoveryMetrics
+                    if (rm != null) {
+                        MetricRow(stringResource(R.string.dev_recovery_quarantine_count), rm.quarantineCount.toString())
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRow(
+                            stringResource(R.string.dev_recovery_last_quarantine),
+                            if (rm.lastQuarantineTimestamp > 0L) formatDate(rm.lastQuarantineTimestamp)
+                            else stringResource(R.string.dev_recovery_never)
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRow(stringResource(R.string.dev_recovery_quarantined_files), rm.quarantinedFileCount.toString())
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRow(
+                            stringResource(R.string.dev_recovery_last_integrity_check),
+                            if (rm.lastIntegrityCheckMs > 0L) formatDate(rm.lastIntegrityCheckMs)
+                            else stringResource(R.string.dev_recovery_never)
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        MetricRow(
+                            stringResource(R.string.dev_recovery_integrity_result),
+                            rm.lastIntegrityResult ?: stringResource(R.string.dev_recovery_never)
+                        )
+                    } else {
+                        Text(
+                            stringResource(R.string.dev_recovery_no_data),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
@@ -292,3 +338,6 @@ private fun formatDuration(ms: Long): String {
         else -> "${seconds}s"
     }
 }
+
+private fun formatDate(ms: Long): String =
+    java.text.DateFormat.getDateTimeInstance().format(java.util.Date(ms))

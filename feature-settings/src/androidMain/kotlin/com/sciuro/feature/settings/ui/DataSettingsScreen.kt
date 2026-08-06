@@ -21,7 +21,6 @@ import com.najmi.sciuro.core.ui.components.HeroPanel
 import com.najmi.sciuro.core.ui.components.SciuroCard
 import com.najmi.sciuro.core.ui.components.SciuroNavigationCard
 import com.najmi.sciuro.core.ui.components.SciuroSectionHeader
-import com.najmi.sciuro.core.ui.components.SciuroTextField
 import com.najmi.sciuro.core.ui.components.SheetList
 
 import com.sciuro.feature.settings.R
@@ -198,40 +197,3 @@ fun DataSettingsScreen(
     }
 }
 
-@Composable
-private fun BackupPasswordDialog(
-    title: String,
-    onConfirm: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var password by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column {
-                Text(stringResource(R.string.settings_backup_passphrase_description))
-                Spacer(modifier = Modifier.height(12.dp))
-                SciuroTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = stringResource(R.string.settings_backup_passphrase),
-                    singleLine = true
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { if (password.isNotBlank()) onConfirm(password) },
-                enabled = password.isNotBlank()
-            ) {
-                Text(stringResource(R.string.settings_confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.settings_cancel))
-            }
-        }
-    )
-}

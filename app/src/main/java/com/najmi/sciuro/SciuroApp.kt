@@ -49,6 +49,7 @@ import com.najmi.sciuro.trace.LogcatPipelineTracer
 import com.sciuro.core.audit.trace.PipelineTracer
 import com.sciuro.feature.settings.config.NotificationPreferencesStore
 import com.najmi.sciuro.worker.NightlyCheckWorker
+import com.sciuro.core.ledger.security.DatabaseRecoveryManager
 
 val appModule = module {
     single<SettingsProvider> { EncryptedSettingsProvider(get()) }
@@ -72,7 +73,14 @@ class SciuroApp : Application(), KoinComponent {
     
     override fun onCreate() {
         super.onCreate()
-        
+
+        // Detect key-loss/corruption BEFORE anything touches the database. A quarantined
+        // database is preserved and recorded; startup below is gated until the user either
+        // restores a backup or explicitly starts fresh.
+        val recoveryManager = DatabaseRecoveryManager(this)
+        recoveryManager.validateDatabaseOnStartup()
+        val recoveryPending = recoveryManager.isRecoveryPending()
+
         startKoin {
             androidContext(this@SciuroApp)
             modules(
@@ -112,30 +120,37 @@ class SciuroApp : Application(), KoinComponent {
         }
 
         // Start the ingestion orchestrator to process raw events
-        orchestrator.startListening(appScope)
-        ruleLearner.start(appScope)
-        netPositionSubscriber.start(appScope)
-        financeAppSuggestionSubscriber.start()
-        notificationSuppressionEngine.start()
-        universalEventSubscriber.start()
-        budgetReconciler.start(appScope)
+        if (!recoveryPending) {
+            orchestrator.startListening(appScope)
+            ruleLearner.start(appScope)
+            netPositionSubscriber.start(appScope)
+            financeAppSuggestionSubscriber.start()
+            notificationSuppressionEngine.start()
+            universalEventSubscriber.start()
+            budgetReconciler.start(appScope)
 
-        val reconciliationRequest = PeriodicWorkRequestBuilder<IngestionReconciliationWorker>(
-            15, TimeUnit.MINUTES
-        ).build()
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "ingestion_reconciliation",
-            ExistingPeriodicWorkPolicy.UPDATE,
-            reconciliationRequest
-        )
+            val reconciliationRequest = PeriodicWorkRequestBuilder<IngestionReconciliationWorker>(
+                15, TimeUnit.MINUTES
+            ).build()
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "ingestion_reconciliation",
+                ExistingPeriodicWorkPolicy.UPDATE,
+                reconciliationRequest
+            )
 
-        val nightlyRequest = PeriodicWorkRequestBuilder<NightlyCheckWorker>(
-            1, TimeUnit.DAYS
-        ).build()
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "nightly_check",
-            ExistingPeriodicWorkPolicy.UPDATE,
-            nightlyRequest
-        )
+            val nightlyRequest = PeriodicWorkRequestBuilder<NightlyCheckWorker>(
+                1, TimeUnit.DAYS
+            ).build()
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "nightly_check",
+                ExistingPeriodicWorkPolicy.UPDATE,
+                nightlyRequest
+            )
+        } else {
+            // While a quarantine awaits a decision, no background job may touch the database.
+            WorkManager.getInstance(this).cancelUniqueWork("ingestion_reconciliation")
+            WorkManager.getInstance(this).cancelUniqueWork("nightly_check")
+            WorkManager.getInstance(this).cancelUniqueWork("ReviewReminder")
+        }
     }
 }

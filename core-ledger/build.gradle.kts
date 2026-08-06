@@ -44,6 +44,7 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(libs.sqldelight.jdbc.driver)
                 implementation(libs.sqldelight.sqlite.driver)
                 implementation(libs.sqlite.jdbc)
             }

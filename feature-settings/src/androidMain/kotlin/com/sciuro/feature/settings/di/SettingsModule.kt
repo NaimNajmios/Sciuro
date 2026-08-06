@@ -16,7 +16,7 @@ val settingsModule = module {
     viewModel { NotificationSettingsViewModel(get(), get()) }
     viewModel { DataSettingsViewModel(get()) }
     viewModel { IntelligenceSettingsViewModel(get()) }
-    viewModel { DeveloperSettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { DeveloperSettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { LinkedAccountsViewModel(get()) }
     viewModel { MerchantRulesViewModel(get(), get()) }
     viewModel { InvestmentPriceViewModel(get(), get(), get()) }

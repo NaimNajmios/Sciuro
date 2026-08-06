@@ -316,4 +316,29 @@
     <string name="settings_show">Show</string>
     <string name="linked_accounts_existing_links">Existing Links</string>
     <string name="settings_ok">OK</string>
+
+    <!-- Database Recovery Screen -->
+    <string name="recovery_screen_title">Your previous data could not be opened</string>
+    <string name="recovery_screen_message">Your previous data has been preserved on this device and was not deleted. It was sealed because the database could not be opened.</string>
+    <string name="recovery_screen_preserved_title">Preserved data</string>
+    <string name="recovery_screen_quarantine_count">Preserved databases</string>
+    <string name="recovery_screen_last_quarantine">Last preserved</string>
+    <string name="recovery_screen_never">Never</string>
+    <string name="recovery_screen_import">Import a backup</string>
+    <string name="recovery_screen_import_title">Import Encrypted Backup</string>
+    <string name="recovery_screen_start_fresh">Start fresh</string>
+    <string name="recovery_screen_start_fresh_title">Start fresh?</string>
+    <string name="recovery_screen_start_fresh_confirm">Start with a new empty wallet? The preserved databases will stay on your device.</string>
+    <string name="recovery_screen_start_fresh_action">Start fresh</string>
+
+    <!-- Developer Tab: Database Recovery -->
+    <string name="dev_recovery_title">Database Recovery</string>
+    <string name="dev_recovery_subtitle">Quarantine and integrity history</string>
+    <string name="dev_recovery_quarantine_count">Quarantine events</string>
+    <string name="dev_recovery_last_quarantine">Last quarantine</string>
+    <string name="dev_recovery_quarantined_files">Preserved files</string>
+    <string name="dev_recovery_last_integrity_check">Last integrity check</string>
+    <string name="dev_recovery_integrity_result">Integrity result</string>
+    <string name="dev_recovery_never">Never</string>
+    <string name="dev_recovery_no_data">No database recovery events recorded.</string>
 </resources>

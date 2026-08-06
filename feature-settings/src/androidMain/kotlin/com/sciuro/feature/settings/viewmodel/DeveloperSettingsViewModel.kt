@@ -20,6 +20,7 @@ import com.sciuro.core.parsing.fixture.FixtureLibrary
 import com.sciuro.core.audit.events.DomainEventBus
 import com.sciuro.core.audit.events.DomainEventMetrics
 import com.sciuro.core.parsing.metrics.ParserHealthRepository
+import com.sciuro.core.ledger.security.DatabaseRecoveryManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +56,14 @@ data class PipelineMetrics(
     val deadLetters: Long
 )
 
+data class DatabaseRecoveryMetrics(
+    val quarantineCount: Int,
+    val lastQuarantineTimestamp: Long,
+    val quarantinedFileCount: Int,
+    val lastIntegrityCheckMs: Long,
+    val lastIntegrityResult: String?
+)
+
 class DeveloperSettingsViewModel(
     private val notificationSourceAdapter: NotificationSourceAdapter,
     private val transactionRepository: TransactionRepository,
@@ -65,7 +74,8 @@ class DeveloperSettingsViewModel(
     val database: SciuroDatabase,
     private val tracer: PipelineTracer,
     private val auditRepository: AuditRepository,
-    private val eventBus: DomainEventBus? = null
+    private val eventBus: DomainEventBus? = null,
+    private val recoveryManager: DatabaseRecoveryManager
 ) : ViewModel() {
 
     private val _simulationResult = MutableStateFlow<SimulationResult?>(null)
@@ -141,11 +151,15 @@ class DeveloperSettingsViewModel(
     private val _auditIntegrityGaps = MutableStateFlow<Long>(0L)
     val auditIntegrityGaps: StateFlow<Long> = _auditIntegrityGaps.asStateFlow()
 
+    private val _recoveryMetrics = MutableStateFlow<DatabaseRecoveryMetrics?>(null)
+    val recoveryMetrics: StateFlow<DatabaseRecoveryMetrics?> = _recoveryMetrics.asStateFlow()
+
     init {
         refreshCounts()
         loadHealthData()
         loadPipelineEvents()
         loadEventBusMetrics()
+        loadRecoveryMetrics()
     }
 
     fun setTraceFilter(status: String, pkg: String) {
@@ -234,6 +248,16 @@ class DeveloperSettingsViewModel(
 
     fun refreshEventBusMetrics() {
         loadEventBusMetrics()
+    }
+
+    private fun loadRecoveryMetrics() {
+        _recoveryMetrics.value = DatabaseRecoveryMetrics(
+            quarantineCount = recoveryManager.quarantineCount(),
+            lastQuarantineTimestamp = recoveryManager.lastQuarantineTimestamp(),
+            quarantinedFileCount = recoveryManager.listQuarantinedFiles().size,
+            lastIntegrityCheckMs = recoveryManager.getLastIntegrityCheckMs(),
+            lastIntegrityResult = recoveryManager.getLastIntegrityResult()
+        )
     }
 
     fun simulateNotification(title: String, text: String, packageName: String) {

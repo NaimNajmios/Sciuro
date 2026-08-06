@@ -10,5 +10,6 @@ enum class TraceStage {
     ACCOUNT_MATCH,
     BOOK,
     ENGINE,
-    EVENT
+    EVENT,
+    DATABASE_INTEGRITY
 }
