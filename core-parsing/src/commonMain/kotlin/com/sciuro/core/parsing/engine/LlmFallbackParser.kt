@@ -72,6 +72,9 @@ class LlmFallbackParser(
     var lastCallTimestamp: Long = 0L
         private set
 
+    var lastVerdict: String? = null
+        private set
+
     private data class CacheEntry(val draft: StructuredDraft, val timestamp: Long)
     private val cache = mutableMapOf<String, CacheEntry>()
 
@@ -338,6 +341,7 @@ class LlmFallbackParser(
         extra: Map<String, String?> = emptyMap(),
         providerCalled: Boolean = true
     ) {
+        lastVerdict = verdict
         tracer?.trace(
             rawEventId = event.id,
             transactionId = null,

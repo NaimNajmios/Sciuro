@@ -99,4 +99,28 @@
     <!-- PredictionCard -->
     <string name="dashboard_projected_runway">Projected Runway</string>
     <string name="dashboard_daily_burn">Daily burn: %s</string>
+
+    <!-- CaptureStatusRow -->
+    <string name="capture_status_active">Capture active · just now</string>
+    <string name="capture_status_stale_minutes">Last capture %1$d min ago</string>
+    <string name="capture_status_no_capture">No capture yet</string>
+    <string name="capture_status_stale">No capture in 24h</string>
+    <string name="capture_status_off">Notification access is off</string>
+    <string name="capture_status_activity_log">Activity Log</string>
+    <string name="capture_status_tap_cd">Capture status — open Activity Log</string>
+
+    <!-- ActivityLogScreen -->
+    <string name="activity_log_title">Activity Log</string>
+    <string name="activity_log_subtitle">Capture Activity</string>
+    <string name="activity_log_back_cd">Back</string>
+    <string name="activity_log_empty">No captured notifications yet. Once your bank notifications start coming in, they\'ll show up here.</string>
+    <string name="activity_status_parsed">Parsed</string>
+    <string name="activity_status_needs_review">Needs Review</string>
+    <string name="activity_status_dropped">Dropped</string>
+
+    <!-- ParseFailureBanner -->
+    <string name="parse_failure_banner_cd">Parse failure warning</string>
+    <string name="parse_failure_banner_title">Couldn\'t read a notification</string>
+    <string name="parse_failure_banner_message">We couldn\'t read a notification from %1$s. Add it manually so it isn\'t missed.</string>
+    <string name="parse_failure_banner_add">Add</string>
 </resources>

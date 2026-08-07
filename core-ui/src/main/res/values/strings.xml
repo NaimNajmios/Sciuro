@@ -25,6 +25,9 @@
     <string name="tx_save_transaction">Save Transaction</string>
     <string name="tx_manual_entry">Manual entry</string>
     <string name="tx_manual_entry_title">Manual Entry</string>
+    <string name="tx_badge_auto">Auto</string>
+    <string name="tx_badge_ai">AI</string>
+    <string name="tx_badge_manual">Manual</string>
     <string name="tx_details_title">Transaction Details</string>
     <string name="tx_part_of_transfer">Part of a transfer</string>
     <string name="tx_auto_parsed">Auto-parsed (regex)</string>

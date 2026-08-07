@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Phase U1 — User-Facing Ingestion Visibility
+
+#### Added
+- **Capture status indicator** on the Dashboard hero (`CaptureStatusRow`): dot colored green (capture within 5 min), amber (within 24 h), or red (no capture in 24 h / notification access disabled), with a freshness label. Tapping opens the new **Activity Log** screen.
+- **Activity Log screen** (`ActivityLogScreen` + `ActivityLogViewModel` + `activity_log` route): the last 10 captured notifications with status `Parsed` / `Needs Review` / `Dropped`, app-label resolution via `PackageLabelResolver`, relative timestamp, and a sanitized drop reason. Non-financial/ignored events are excluded.
+- **Transaction source badge** in `TransactionCard` (core-ui): a compact `Auto` (regex) / `AI` (LLM fallback) / `Manual` chip replaces the near-invisible 8dp confidence dot; confidence is retained in the accessibility description.
+- **One-time parse-failure banner** (`ParseFailureBanner`): when a financial notification fails to parse, the Dashboard shows "We couldn't read a notification from [Bank] — add it manually". Tapping opens the `FastTransactionSheet` prefilled with the bank label; dismiss or submit acknowledges via `user_alerted_at`. Acknowledgment persists across restarts.
+- **Normalized ingestion outcome** in `raw_event_staging` (migration `17.sqm`): `activity_status` (`CAPTURED`/`PARSED`/`NEEDS_REVIEW`/`DROPPED`/`IGNORED`), `financial_signal`, `activity_reason`, `user_alerted_at` + `idx_raw_event_activity`. New queries: `markActivityStatus`, `markUserAlerted`, `selectRecentActivity`, `selectUnacknowledgedParseFailures`.
+- **Reactive observables** on `RawEventRepository`: `observeLastCapturedAt()`, `observeRecentActivity(limit)`, `observeUnacknowledgedParseFailures(limit)`, plus `markActivityStatus`/`acknowledgeActivityAlert`.
+- **`CaptureStatus` freshness model** (`IngestionFreshness` in core-ledger): pure `freshness()` used by the Dashboard `CaptureStatus.compute`.
+
+#### Changed
+- **`SciuroParserPipeline.process()` returns a sealed `ParseResult`** (`Success(draft)` / `NotATransaction` / `Failure(reason)`) instead of a nullable draft, so a genuine parser failure is distinguishable from "this isn't a transaction". `LlmFallbackParser` now exposes `lastVerdict` for that classification.
+- **`DefaultTransactionBookingUseCase`** persists the activity outcome for every event: booked+reviewed → `PARSED`, booked+unreviewed → `NEEDS_REVIEW`, non-financial/not-a-transaction/duplicate → `IGNORED`, financial parse failure / invalid amount / unknown direction → `DROPPED` (with reason) + dead letter.
+- **`SciuroIngestionOrchestrator`** no longer dead-letters `null` booking results — the booking use case owns terminal-state transitions. This fixes duplicates being incorrectly moved to dead letter.
+- **Capture services** (`SciuroNotificationService`, `SmsReceiver`) persist `financial_signal` so failure classification is correct per source.
+- **`FastTransactionSheet`** accepts an `initialMerchant` prefill used by the parse-failure flow.
+
+#### Fixed
+- Duplicate events are now `IGNORED` + `markProcessed` instead of being dead-lettered by the orchestrator's blanket null-handling.
+
+#### Tests
+- `SciuroParserPipelineTest` (8): ParseResult classification incl. `NotATransaction` vs `Failure`.
+- `RawEventActivityTest` (4, core-ledger jvmTest): activity status persistence, recent-activity exclusion, unacknowledged parse-failure surfacing + acknowledgment.
+- `IngestionFreshnessTest` (6, core-ledger jvmTest): green/amber/red threshold boundaries.
+- Updated `SciuroIngestionOrchestratorTest` for the new booking-contract invariant.
+
 ### Phase S3 — Database Recovery Interstitial & Weekly Integrity Checks
 
 #### Added

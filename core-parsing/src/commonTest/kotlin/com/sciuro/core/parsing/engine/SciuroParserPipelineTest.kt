@@ -3,6 +3,7 @@ package com.sciuro.core.parsing.engine
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ingestion.model.SourceType
 import com.sciuro.core.ledger.config.LlmParsingConfig
+import com.sciuro.core.parsing.model.ParseResult
 import com.sciuro.core.parsing.model.StructuredDraft
 import com.sciuro.core.parsing.model.TransactionDirection
 import com.sciuro.core.parsing.rule.ParserRule
@@ -18,8 +19,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class SciuroParserPipelineTest {
@@ -92,9 +91,10 @@ class SciuroParserPipelineTest {
         val parser = DeterministicParser(listOf(TestRule(packageName, confidentDraft)))
         val pipeline = SciuroParserPipeline(parser, noKeyLlmParser())
         val result = pipeline.process(rawEvent())
-        assertNotNull(result)
-        assertEquals(100.0, result.amount)
-        assertEquals(TransactionDirection.OUTFLOW, result.direction)
+        assertTrue(result is ParseResult.Success)
+        val draft = result.draft
+        assertEquals(100.0, draft.amount)
+        assertEquals(TransactionDirection.OUTFLOW, draft.direction)
     }
 
     @Test
@@ -102,8 +102,8 @@ class SciuroParserPipelineTest {
         val parser = DeterministicParser(listOf(TestRule(packageName, null)))
         val pipeline = SciuroParserPipeline(parser, successLlmParser())
         val result = pipeline.process(rawEvent())
-        assertNotNull(result)
-        assertEquals(200.0, result.amount)
+        assertTrue(result is ParseResult.Success)
+        assertEquals(200.0, result.draft.amount)
     }
 
     @Test
@@ -111,8 +111,8 @@ class SciuroParserPipelineTest {
         val parser = DeterministicParser(listOf(TestRule(packageName, lowConfidenceDraft)))
         val pipeline = SciuroParserPipeline(parser, successLlmParser())
         val result = pipeline.process(rawEvent())
-        assertNotNull(result)
-        assertEquals(200.0, result.amount)
+        assertTrue(result is ParseResult.Success)
+        assertEquals(200.0, result.draft.amount)
     }
 
     @Test
@@ -120,8 +120,10 @@ class SciuroParserPipelineTest {
         val parser = DeterministicParser(listOf(TestRule(packageName, lowConfidenceDraft)))
         val pipeline = SciuroParserPipeline(parser, errorLlmParser())
         val result = pipeline.process(rawEvent())
-        assertNotNull(result)
-        assertEquals(50.0, result.amount)
+        assertTrue(result is ParseResult.Success)
+        val draft = result.draft
+        assertEquals(50.0, draft.amount)
+        assertTrue(draft.isUntrustedFallback)
     }
 
     @Test
@@ -129,8 +131,8 @@ class SciuroParserPipelineTest {
         val parser = DeterministicParser(listOf(TestRule(packageName, lowConfidenceDraft)))
         val pipeline = SciuroParserPipeline(parser, noKeyLlmParser())
         val result = pipeline.process(rawEvent())
-        assertNotNull(result)
-        assertTrue(result.isUntrustedFallback)
+        assertTrue(result is ParseResult.Success)
+        assertTrue(result.draft.isUntrustedFallback)
     }
 
     @Test
@@ -138,14 +140,35 @@ class SciuroParserPipelineTest {
         val parser = DeterministicParser(listOf(TestRule(packageName, lowConfidenceDraft)))
         val pipeline = SciuroParserPipeline(parser, noKeyLlmParser())
         val result = pipeline.process(rawEvent())
-        assertNotNull(result)
-        assertEquals(TransactionDirection.INFLOW, result.direction)
+        assertTrue(result is ParseResult.Success)
+        assertEquals(TransactionDirection.INFLOW, result.draft.direction)
     }
 
     @Test
-    fun `both deterministic and LLM return null`() = runBlocking {
+    fun `both deterministic and LLM return null — failure reason surfaced`() = runBlocking {
         val parser = DeterministicParser(listOf(TestRule(packageName, null)))
         val pipeline = SciuroParserPipeline(parser, errorLlmParser())
-        assertNull(pipeline.process(rawEvent()))
+        val result = pipeline.process(rawEvent())
+        assertTrue(result is ParseResult.Failure)
+    }
+
+    @Test
+    fun `LLM verdict not_a_transaction is not surfaced as failure`() = runBlocking {
+        val notATxLlmParser = LlmFallbackParser(
+            httpClient = HttpClient(MockEngine {
+                respond(
+                    content = """{"choices":[{"message":{"role":"assistant","content":"{\"is_transaction\":false}"}}]}""",
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }) {
+                install(ContentNegotiation) { json(testJson) }
+            },
+            apiKeyProvider = { "test-key" },
+            config = LlmParsingConfig(endpointUrl = "http://localhost:9999/v1/chat/completions")
+        )
+        val parser = DeterministicParser(listOf(TestRule(packageName, null)))
+        val pipeline = SciuroParserPipeline(parser, notATxLlmParser)
+        assertEquals(ParseResult.NotATransaction, pipeline.process(rawEvent()))
     }
 }

@@ -5,6 +5,7 @@ sealed class SciuroRoute(val route: String) {
     data object Dashboard : SciuroRoute("dashboard")
     data object Wallet : SciuroRoute("wallet")
     data object Kanban : SciuroRoute("kanban")
+    data object ActivityLog : SciuroRoute("activity_log")
     data object Budgets : SciuroRoute("budgets")
     data object Settings : SciuroRoute("settings")
     data object DebtOverview : SciuroRoute("debt_overview")
@@ -31,6 +32,7 @@ sealed class SciuroRoute(val route: String) {
     companion object {
         fun parentTabRoute(route: String): String? = when (route) {
             Dashboard.route, Wallet.route, Kanban.route, Budgets.route, Settings.route -> route
+            ActivityLog.route -> Dashboard.route
             AccountDetail.route -> Wallet.route
             CategoryDrilldown.route, CategoryTransactions.route -> Budgets.route
             CategorySettings.route, LinkedAccounts.route, DeveloperSettings.route,

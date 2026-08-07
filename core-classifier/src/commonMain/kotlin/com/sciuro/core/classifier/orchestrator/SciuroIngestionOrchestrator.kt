@@ -107,12 +107,10 @@ class SciuroIngestionOrchestrator(
     private suspend fun processOneEvent(rawEvent: RawEvent) {
         try {
             val result = bookingUseCase.book(rawEvent)
-            if (result == null) {
-                rawEventRepository.markDeadLetter(rawEvent.id, "Booking returned null")
-                tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.FAILURE,
-                    detail = mapOf("transition" to "DEAD_LETTER", "reason" to "booking_returned_null"))
-                return
-            }
+            // A null result means the event already reached a terminal state inside the booking
+            // use case (booked as ignored/duplicate, dropped as a financial parse failure, or
+            // moved to dead letter). Nothing further to do here.
+            if (result == null) return
 
             engineTriggerUseCase.triggerAll(
                 transaction = result.transaction,

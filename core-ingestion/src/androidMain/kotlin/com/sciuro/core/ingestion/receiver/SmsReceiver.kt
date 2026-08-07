@@ -91,7 +91,8 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
             title = rawEvent.title,
             text = rawEvent.text,
             timestamp = rawEvent.timestamp,
-            capturedAt = System.currentTimeMillis()
+            capturedAt = System.currentTimeMillis(),
+            financialSignal = if (isKnownBankSms) true else AggregatorHeuristicFilter.isFinancial(sender, body)
         )
 
         tracer.trace(rawEvent.id, null, TraceStage.CAPTURE, TraceOutcome.SUCCESS,

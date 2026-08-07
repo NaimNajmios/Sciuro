@@ -12,10 +12,12 @@ import com.sciuro.core.classifier.rule.CategoryResolver
 import com.sciuro.core.classifier.rule.ReviewTierDecider
 import com.sciuro.core.ingestion.model.RawEvent
 import com.sciuro.core.ledger.db.SciuroDatabase
+import com.sciuro.core.ledger.model.IngestionActivityStatus
 import com.sciuro.core.ledger.model.Transaction
 import com.sciuro.core.ledger.repository.RawEventRepository
 import com.sciuro.core.ledger.repository.TransactionRepository
 import com.sciuro.core.parsing.engine.SciuroParserPipeline
+import com.sciuro.core.parsing.model.ParseResult
 import com.sciuro.core.parsing.model.StructuredDraft
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,6 +49,11 @@ open class DefaultTransactionBookingUseCase(
         val staging = rawEventRepository.getRawEventById(rawEvent.id)
         if (staging != null && staging.attempt_count >= MAX_ATTEMPTS) {
             rawEventRepository.markDeadLetter(rawEvent.id, "Max attempt count exceeded (${staging.attempt_count})")
+            rawEventRepository.markActivityStatus(
+                rawEvent.id,
+                if (staging.financial_signal != 0L) IngestionActivityStatus.DROPPED else IngestionActivityStatus.IGNORED,
+                "max_attempts"
+            )
             tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.FAILURE,
                 detail = mapOf("transition" to "DEAD_LETTER", "reason" to "max_attempts", "attempts" to "${staging.attempt_count}"))
             return null
@@ -56,17 +63,39 @@ open class DefaultTransactionBookingUseCase(
             detail = mapOf("transition" to "PROCESSING", "source" to rawEvent.sourcePackageOrAddress))
 
         val parseStart = currentTimeMillis()
-        val draft = parserPipeline.process(rawEvent)
+        val parseResult = parserPipeline.process(rawEvent)
         val parseMs = currentTimeMillis() - parseStart
+        val financialSignal = staging?.financial_signal != 0L
 
-        if (draft == null) {
-            tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.DROP,
-                detail = mapOf("transition" to "RETRY_PENDING", "reason" to "parser_null", "duration_ms" to "$parseMs"))
-            return null
+        val draft = when (parseResult) {
+            is ParseResult.Success -> parseResult.draft
+            is ParseResult.NotATransaction -> {
+                rawEventRepository.markActivityStatus(rawEvent.id, IngestionActivityStatus.IGNORED, "not_a_transaction")
+                rawEventRepository.markProcessed(rawEvent.id)
+                tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.DROP,
+                    detail = mapOf("transition" to "PROCESSED", "reason" to "not_a_transaction", "duration_ms" to "$parseMs"))
+                return null
+            }
+            is ParseResult.Failure -> {
+                val reason = parseResult.reason
+                if (financialSignal) {
+                    rawEventRepository.markActivityStatus(rawEvent.id, IngestionActivityStatus.DROPPED, reason)
+                    rawEventRepository.markDeadLetter(rawEvent.id, "Parser failure: $reason")
+                    tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.DROP,
+                        detail = mapOf("transition" to "DEAD_LETTER", "reason" to reason, "duration_ms" to "$parseMs"))
+                } else {
+                    rawEventRepository.markActivityStatus(rawEvent.id, IngestionActivityStatus.IGNORED, reason)
+                    rawEventRepository.markProcessed(rawEvent.id)
+                    tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.DROP,
+                        detail = mapOf("transition" to "PROCESSED", "reason" to reason, "duration_ms" to "$parseMs"))
+                }
+                return null
+            }
         }
 
         if (draft.amount.isNaN() || draft.amount.isInfinite()) {
             rawEventRepository.markDeadLetter(rawEvent.id, "Invalid amount: ${draft.amount}")
+            rawEventRepository.markActivityStatus(rawEvent.id, IngestionActivityStatus.DROPPED, "invalid_amount")
             tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.DROP,
                 detail = mapOf("transition" to "DEAD_LETTER", "reason" to "invalid_amount"))
             return null
@@ -74,6 +103,7 @@ open class DefaultTransactionBookingUseCase(
 
         val directionName = draft.direction?.name ?: run {
             rawEventRepository.markDeadLetter(rawEvent.id, "Direction could not be determined")
+            rawEventRepository.markActivityStatus(rawEvent.id, IngestionActivityStatus.DROPPED, "unknown_direction")
             tracer.trace(rawEvent.id, null, TraceStage.STAGING, TraceOutcome.DROP,
                 detail = mapOf("transition" to "DEAD_LETTER", "reason" to "unknown_direction"))
             return null
@@ -104,6 +134,7 @@ open class DefaultTransactionBookingUseCase(
             if (duplicate != null) {
                 transactionRepository.attachCorroboratingSource(duplicate.id, rawEvent.id)
                 rawEventRepository.markProcessed(rawEvent.id)
+                rawEventRepository.markActivityStatus(rawEvent.id, IngestionActivityStatus.IGNORED, "duplicate")
                 tracer.trace(rawEvent.id, duplicate.id, TraceStage.DEDUP, TraceOutcome.SKIP,
                     detail = mapOf("duplicate_id" to duplicate.id))
                 return@book null
@@ -184,6 +215,11 @@ open class DefaultTransactionBookingUseCase(
 
             val auditSource = if (isHighConfidence) AuditSource.SYSTEM_AUTO else AuditSource.LLM_INFERRED
             transactionRepository.bookTransaction(transaction, source = auditSource)
+            rawEventRepository.markActivityStatus(
+                rawEvent.id,
+                if (isReviewed) IngestionActivityStatus.PARSED else IngestionActivityStatus.NEEDS_REVIEW,
+                "review_tier=${tier.label}"
+            )
             tracer.trace(rawEvent.id, transaction.id, TraceStage.BOOK, TraceOutcome.SUCCESS,
                 confidence = draft.confidenceScore,
                 detail = mapOf("is_reviewed" to "${transaction.isReviewed}", "review_tier" to tier.label, "extraction_method" to extractionMethod))

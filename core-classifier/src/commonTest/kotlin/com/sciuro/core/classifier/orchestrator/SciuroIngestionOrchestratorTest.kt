@@ -85,14 +85,14 @@ class SciuroIngestionOrchestratorTest {
         orchestrator.startListening(scope)
 
         var waited = 0
-        while (waited < 50 && fakeRawEventRepository.deadLetterCount < 1) {
+        while (waited < 50 && fakeBookingUseCase.deadLetterCount < 1) {
             delay(100)
             waited++
         }
 
         assertEquals(0, fakeBookingUseCase.bookedCount)
         assertEquals(0, fakeEngineTriggerUseCase.triggeredCount)
-        assertEquals(1, fakeRawEventRepository.deadLetterCount)
+        assertEquals(1, fakeBookingUseCase.deadLetterCount)
     }
 
     @Test
@@ -188,19 +188,25 @@ private class FakeRawEventRepository(
                 captured_at = 1000L,
                 last_error = null,
                 processed_at = null,
-                is_read = 0L
+                is_read = 0L,
+                activity_status = null,
+                financial_signal = 1L,
+                activity_reason = null,
+                user_alerted_at = null
             )
         }
     }
 
     override suspend fun persistRawEvent(
         id: String, sourceType: String, sourcePackageOrAddress: String,
-        title: String, text: String, timestamp: Long, capturedAt: Long
+        title: String, text: String, timestamp: Long, capturedAt: Long, financialSignal: Boolean
     ) {}
 
     override suspend fun markProcessing(id: String, error: String?) {}
     override suspend fun markProcessed(id: String) { processedCount++ }
     override suspend fun markDeadLetter(id: String, error: String) { deadLetterCount++ }
+    override suspend fun markActivityStatus(id: String, status: String, reason: String?) {}
+    override suspend fun acknowledgeActivityAlert(id: String) {}
     override suspend fun requeueRawEvent(id: String) {}
     override suspend fun getRawEventById(id: String): com.sciuro.core.ledger.db.Raw_event_staging? = null
     override suspend fun countStrandedEvents(staleProcessedBeforeMs: Long): Long = strandedCount.toLong()
@@ -211,6 +217,7 @@ private class FakeBookingUseCase(
     private val shouldSucceed: Boolean
 ) : TransactionBookingUseCase {
     var bookedCount = 0
+    var deadLetterCount = 0
 
     override suspend fun book(rawEvent: RawEvent): BookingResult? {
         if (shouldSucceed) {
@@ -245,6 +252,9 @@ private class FakeBookingUseCase(
                 rawEventId = rawEvent.id
             )
         } else {
+            // Mirrors DefaultTransactionBookingUseCase: a null result means the event already
+            // reached a terminal state (here, dead letter) inside the booking use case.
+            deadLetterCount++
             return null
         }
     }

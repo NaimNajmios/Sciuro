@@ -6,6 +6,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 open class RawEventRepository(
     private val database: SciuroDatabase
@@ -17,7 +18,8 @@ open class RawEventRepository(
         title: String,
         text: String,
         timestamp: Long,
-        capturedAt: Long = System.currentTimeMillis()
+        capturedAt: Long = System.currentTimeMillis(),
+        financialSignal: Boolean = true
     ) {
         database.rawEventStagingQueries.insertRawEvent(
             id = id,
@@ -26,7 +28,8 @@ open class RawEventRepository(
             title = title,
             text = text,
             timestamp = timestamp,
-            captured_at = capturedAt
+            captured_at = capturedAt,
+            financial_signal = if (financialSignal) 1L else 0L
         )
     }
 
@@ -106,5 +109,32 @@ open class RawEventRepository(
 
     open suspend fun purgeOldTraces(beforeMs: Long) {
         database.pipelineTraceQueries.deleteTraceOlderThan(beforeMs)
+    }
+
+    open suspend fun markActivityStatus(id: String, status: String, reason: String? = null) {
+        database.rawEventStagingQueries.markActivityStatus(activity_status = status, activity_reason = reason, id = id)
+    }
+
+    open suspend fun acknowledgeActivityAlert(id: String) {
+        database.rawEventStagingQueries.markUserAlerted(System.currentTimeMillis(), id)
+    }
+
+    open fun observeRecentActivity(limit: Long): Flow<List<Raw_event_staging>> {
+        return database.rawEventStagingQueries.selectRecentActivity(limit)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+    }
+
+    open fun observeUnacknowledgedParseFailures(limit: Long = 5): Flow<List<Raw_event_staging>> {
+        return database.rawEventStagingQueries.selectUnacknowledgedParseFailures(limit)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+    }
+
+    open fun observeLastCapturedAt(): Flow<Long?> {
+        return database.rawEventStagingQueries.selectLastCapturedAt()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list -> list.firstOrNull()?.last_captured_at }
     }
 }

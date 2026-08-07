@@ -1,6 +1,7 @@
 package com.sciuro.feature.dashboard.ui
 
 import android.app.Activity
+import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -20,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -54,16 +57,26 @@ import com.sciuro.feature.dashboard.ui.components.DashboardSummaryRow
 import com.sciuro.feature.dashboard.ui.components.TransactionHistoryHeader
 import com.sciuro.feature.dashboard.ui.components.TransactionList
 import com.sciuro.feature.dashboard.ui.components.TipBanner
+import com.sciuro.feature.dashboard.ui.components.CaptureStatusRow
+import com.sciuro.feature.dashboard.ui.components.ParseFailureBanner
+import com.sciuro.feature.dashboard.util.PackageLabelResolver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    settingsProvider: SettingsProvider = koinInject(),viewModel: DashboardViewModel = koinViewModel()) {
+    settingsProvider: SettingsProvider = koinInject(),
+    viewModel: DashboardViewModel = koinViewModel(),
+    onOpenActivityLog: () -> Unit = {}
+) {
     val state by viewModel.state.collectAsState()
     val autoBookedCount by viewModel.autoBookedTransactionsCount.collectAsState()
     val autoBookedTxs by viewModel.autoBookedTransactions.collectAsState()
     val reviewSuggestions by viewModel.reviewSuggestions.collectAsState()
     val autoConfirmedForCategoryReview by viewModel.autoConfirmedForCategoryReview.collectAsState()
+    val captureStatus by viewModel.captureStatus.collectAsState()
+    val parseFailures by viewModel.parseFailures.collectAsState()
     var selectedRange by remember { mutableStateOf("Today") }
     val typeFilter by viewModel.typeFilter.collectAsState()
     val filterOptions = listOf("All", "Income", "Expense")
@@ -71,6 +84,33 @@ fun DashboardScreen(
     val endDate by viewModel.endDate.collectAsState()
     val paginatedTransactions by viewModel.paginatedTransactions.collectAsState()
     var showDatePickerDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.setNotificationAccessEnabled(
+                    Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
+                        ?.contains(context.packageName) == true
+                )
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    val packageLabelResolver = remember { PackageLabelResolver(context) }
+    var manualFromDrop by remember {
+        mutableStateOf<com.sciuro.feature.dashboard.viewmodel.ParseFailureAlert?>(null)
+    }
+    val parseFailure = parseFailures.firstOrNull()
+    val parseFailureSourceLabel = parseFailure?.let {
+        packageLabelResolver.label(it.sourceType, it.sourcePackageOrAddress)
+    }
+    val addDialogInitialMerchant = manualFromDrop?.let {
+        packageLabelResolver.label(it.sourceType, it.sourcePackageOrAddress)
+    } ?: ""
 
     val categoryMap = remember(state.expenseCategories, state.incomeCategories) {
         (state.expenseCategories + state.incomeCategories).associateBy { it.id }
@@ -252,6 +292,12 @@ fun DashboardScreen(
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CaptureStatusRow(
+                            status = captureStatus,
+                            onClick = onOpenActivityLog
+                        )
                     }
                 )
             }
@@ -309,6 +355,19 @@ fun DashboardScreen(
                                 autoBookedTxs = autoBookedTxs,
                                 onUndo = { viewModel.undoAutoConfirm(it) }
                             )
+
+                            parseFailure?.let { failure ->
+                                ParseFailureBanner(
+                                    sourceLabel = parseFailureSourceLabel ?: failure.sourcePackageOrAddress,
+                                    onAddManually = {
+                                        manualFromDrop = failure
+                                        showAddTransactionDialog = true
+                                    },
+                                    onDismiss = {
+                                        viewModel.acknowledgeParseFailure(failure.rawEventId)
+                                    }
+                                )
+                            }
 
                             DashboardSummaryRow(
                                 activeBudgetsCount = state.activeBudgetsCount,
@@ -403,6 +462,7 @@ fun DashboardScreen(
         
         FloatingActionButton(
             onClick = {
+                manualFromDrop = null
                 newAmount = ""
                 newMerchant = ""
                 newDirection = "OUTFLOW"
@@ -460,23 +520,26 @@ fun DashboardScreen(
         val accountOptions = state.accounts.map { FastTxOption(it.id, it.name) }
         val expCatOptions = state.expenseCategories.map { FastTxOption(it.id, it.name) }
         val incCatOptions = state.incomeCategories.map { FastTxOption(it.id, it.name) }
-        
+
         FastTransactionSheet(
             presetLabels = settingsProvider.getQuickLabels(),
             accounts = accountOptions,
             expenseCategories = expCatOptions,
             incomeCategories = incCatOptions,
+            initialMerchant = addDialogInitialMerchant,
             onDismissRequest = { showAddTransactionDialog = false },
             onSubmit = { amount, direction, merchant, categoryId, accountId, destinationAccountId ->
-                viewModel.bookManualTransaction(
+                viewModel.addManualFromDroppedNotification(
                     amount = amount,
                     direction = direction,
                     merchant = merchant,
                     accountId = accountId,
                     categoryId = categoryId ?: (if (direction == "OUTFLOW") "cat_exp_9" else "cat_inc_6"),
-                    destinationAccountId = destinationAccountId
+                    destinationAccountId = destinationAccountId,
+                    rawEventId = manualFromDrop?.rawEventId
                 )
                 showAddTransactionDialog = false
+                manualFromDrop = null
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(msgSaved)
                 }

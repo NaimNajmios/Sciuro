@@ -128,23 +128,32 @@ fun TransactionCard(
                 }
             }
 
-            if (confidence != null && extractionMethod != null) {
-                val dotColor = when {
-                    extractionMethod == "MANUAL" -> t.signalIncome
-                    confidence >= 0.85f -> t.signalIncome
-                    confidence >= 0.50f -> t.signalWarning
-                    else -> t.signalDanger
+            if (extractionMethod != null) {
+                val (badgeText, badgeColor) = when (extractionMethod) {
+                    "MANUAL" -> stringResource(R.string.tx_badge_manual) to t.signalIncome
+                    "LLM_FALLBACK" -> stringResource(R.string.tx_badge_ai) to t.signalWarning
+                    else -> stringResource(R.string.tx_badge_auto) to t.signalIncome
                 }
-                val manualEntryLabel = stringResource(R.string.tx_manual_entry)
-                val confidenceLabel = if (extractionMethod == "MANUAL") manualEntryLabel else "Confidence ${(confidence * 100).toInt()} percent"
-                Box(
+                val badgeLabel = if (confidence != null && extractionMethod != "MANUAL") {
+                    "$badgeText · ${(confidence * 100).toInt()}%"
+                } else {
+                    badgeText
+                }
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = badgeColor.copy(alpha = 0.14f),
                     modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(dotColor)
-                        .semantics { contentDescription = confidenceLabel }
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+                        .padding(end = 6.dp)
+                        .semantics { contentDescription = badgeLabel }
+                ) {
+                    Text(
+                        text = badgeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = badgeColor,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
             }
 
             Text(

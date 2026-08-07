@@ -26,6 +26,7 @@ import com.najmi.sciuro.export.EncryptedImporter
 import com.sciuro.feature.budgets.ui.BudgetsScreen
 import com.sciuro.feature.budgets.ui.CategoryDrilldownScreen
 import com.sciuro.feature.budgets.ui.CategoryTransactionsScreen
+import com.sciuro.feature.dashboard.ui.ActivityLogScreen
 import com.sciuro.feature.dashboard.ui.DashboardScreen
 import com.sciuro.feature.debt.ui.DebtOverviewScreen
 import com.sciuro.feature.kanban.ui.KanbanScreen
@@ -69,7 +70,15 @@ fun SciuroNavGraph(
         }
 
         composable(SciuroRoute.Dashboard.route) {
-            DashboardScreen()
+            DashboardScreen(
+                onOpenActivityLog = {
+                    navController.navigate(SciuroRoute.ActivityLog.route)
+                }
+            )
+        }
+
+        composable(SciuroRoute.ActivityLog.route) {
+            ActivityLogScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(SciuroRoute.Wallet.route) {

@@ -103,6 +103,64 @@ class DashboardViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _notificationAccessEnabled = MutableStateFlow(true)
+    private val _now = MutableStateFlow(currentTimeMillis())
+
+    init {
+        viewModelScope.launch(Dispatchers.Default) {
+            while (true) {
+                delay(60_000)
+                _now.value = currentTimeMillis()
+            }
+        }
+    }
+
+    val captureStatus: StateFlow<CaptureStatus> = combine(
+        _notificationAccessEnabled, rawEventRepository.observeLastCapturedAt(), _now
+    ) { enabled, lastCapturedAt, now ->
+        CaptureStatus.compute(enabled, lastCapturedAt, now)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CaptureStatus.compute(true, null, currentTimeMillis()))
+
+    val parseFailures: StateFlow<List<ParseFailureAlert>> = rawEventRepository
+        .observeUnacknowledgedParseFailures()
+        .map { failures ->
+            failures.map {
+                ParseFailureAlert(
+                    rawEventId = it.id,
+                    sourceType = it.source_type,
+                    sourcePackageOrAddress = it.source_package_or_address,
+                    capturedAt = it.captured_at
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    fun setNotificationAccessEnabled(enabled: Boolean) {
+        _notificationAccessEnabled.value = enabled
+    }
+
+    fun acknowledgeParseFailure(rawEventId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            rawEventRepository.acknowledgeActivityAlert(rawEventId)
+        }
+    }
+
+    fun addManualFromDroppedNotification(
+        amount: Double,
+        direction: String,
+        merchant: String,
+        accountId: String?,
+        categoryId: String?,
+        destinationAccountId: String?,
+        rawEventId: String?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            bookManualTransaction(amount, direction, merchant, accountId, categoryId, destinationAccountId)
+            if (rawEventId != null) {
+                rawEventRepository.acknowledgeActivityAlert(rawEventId)
+            }
+        }
+    }
+
     private val _startDate = MutableStateFlow<Long?>(null)
     val startDate: StateFlow<Long?> = _startDate.asStateFlow()
 

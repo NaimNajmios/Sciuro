@@ -10,15 +10,19 @@ CREATE TABLE raw_event_staging (
     attempt_count INTEGER NOT NULL DEFAULT 0,
     last_error TEXT,
     processed_at INTEGER,
-    is_read INTEGER NOT NULL DEFAULT 0
+    is_read INTEGER NOT NULL DEFAULT 0,
+    activity_status TEXT,
+    financial_signal INTEGER NOT NULL DEFAULT 0,
+    activity_reason TEXT,
+    user_alerted_at INTEGER
 );
 
 CREATE INDEX idx_raw_event_status ON raw_event_staging(status);
 CREATE INDEX idx_raw_event_status_captured ON raw_event_staging(status, captured_at);
 
 insertRawEvent:
-INSERT INTO raw_event_staging(id, source_type, source_package_or_address, title, text, timestamp, captured_at, status)
-VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING');
+INSERT INTO raw_event_staging(id, source_type, source_package_or_address, title, text, timestamp, captured_at, status, financial_signal)
+VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', ?);
 
 markProcessing:
 UPDATE raw_event_staging SET status = 'PROCESSING', attempt_count = attempt_count + 1, last_error = ? WHERE id = ? AND status = 'PENDING';
@@ -109,3 +113,25 @@ UPDATE raw_event_staging SET is_read = 1 WHERE id = ?;
 
 markAllDeadLetterRead:
 UPDATE raw_event_staging SET is_read = 1 WHERE status = 'DEAD_LETTER';
+
+markActivityStatus:
+UPDATE raw_event_staging
+SET activity_status = ?, activity_reason = ?
+WHERE id = ?;
+
+markUserAlerted:
+UPDATE raw_event_staging
+SET user_alerted_at = ?
+WHERE id = ?;
+
+selectRecentActivity:
+SELECT * FROM raw_event_staging
+WHERE activity_status IN ('PARSED', 'NEEDS_REVIEW', 'DROPPED')
+ORDER BY captured_at DESC
+LIMIT ?;
+
+selectUnacknowledgedParseFailures:
+SELECT * FROM raw_event_staging
+WHERE activity_status = 'DROPPED' AND user_alerted_at IS NULL
+ORDER BY captured_at DESC
+LIMIT ?;

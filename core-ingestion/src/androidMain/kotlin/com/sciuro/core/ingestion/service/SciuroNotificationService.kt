@@ -86,6 +86,11 @@ class SciuroNotificationService : NotificationListenerService() {
         }
 
         val capturedAt = System.currentTimeMillis()
+        val financialSignal = if (allowlist.isDefaultAggregatorPackage(packageName)) {
+            AggregatorHeuristicFilter.isFinancial(title, text)
+        } else {
+            true
+        }
         val rawEvent = RawEvent(
             id = sessionId,
             sourceType = SourceType.NOTIFICATION,
@@ -102,7 +107,8 @@ class SciuroNotificationService : NotificationListenerService() {
             title = rawEvent.title,
             text = rawEvent.text,
             timestamp = rawEvent.timestamp,
-            capturedAt = capturedAt
+            capturedAt = capturedAt,
+            financialSignal = financialSignal
         )
 
         tracer.trace(rawEvent.id, null, TraceStage.CAPTURE, TraceOutcome.SUCCESS,

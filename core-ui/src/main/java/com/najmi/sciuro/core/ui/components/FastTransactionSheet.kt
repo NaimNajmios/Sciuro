@@ -37,6 +37,7 @@ fun FastTransactionSheet(
     accounts: List<FastTxOption>,
     expenseCategories: List<FastTxOption>,
     incomeCategories: List<FastTxOption>,
+    initialMerchant: String = "",
     onDismissRequest: () -> Unit,
     onSubmit: (amount: Double, direction: String, merchant: String, categoryId: String?, accountId: String?, destinationAccountId: String?) -> Unit
 ) {
@@ -45,7 +46,7 @@ fun FastTransactionSheet(
     var categoryId by remember { mutableStateOf<String?>(null) }
     var accountId by remember { mutableStateOf<String?>(accounts.firstOrNull()?.id) }
     var destinationAccountId by remember { mutableStateOf<String?>(accounts.firstOrNull { it.id != accountId }?.id) }
-    var merchant by remember { mutableStateOf(presetLabels.firstOrNull() ?: "") }
+    var merchant by remember { mutableStateOf(initialMerchant.ifEmpty { presetLabels.firstOrNull() ?: "" }) }
     
     var showCategoryError by remember { mutableStateOf(false) }
 
